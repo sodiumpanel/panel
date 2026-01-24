@@ -70,7 +70,7 @@ function init() {
     window.scrollTo(0, 0);
   });
 
-  if (!isAuthenticated() && !window.location.hash.match(/^\#\/(login|register)/)) {
+  if (!isAuthenticated() && !window.location.pathname.match(/^\/(login|register)/)) {
     router.navigate('/login');
   }
 }

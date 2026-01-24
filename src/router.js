@@ -7,7 +7,7 @@ class Router {
     this.notFoundHandler = null;
     this.transitioning = false;
 
-    window.addEventListener('hashchange', () => this.handleRoute());
+    window.addEventListener('popstate', () => this.handleRoute());
     window.addEventListener('load', () => this.handleRoute());
   }
 
@@ -31,7 +31,7 @@ class Router {
   }
 
   getPath() {
-    return window.location.hash.slice(1) || '/';
+    return window.location.pathname || '/';
   }
 
   matchRoute(path) {
@@ -140,7 +140,8 @@ class Router {
 
   navigate(path) {
     if (path === this.getPath()) return;
-    window.location.hash = path;
+    window.history.pushState({}, '', path);
+    this.handleRoute();
   }
 
   back() {
