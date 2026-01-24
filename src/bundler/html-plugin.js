@@ -31,11 +31,11 @@ export default function htmlPlugin(options = {}) {
         if (jsFiles.length > 0) {
           processedHtml = processedHtml.replace(
             '<!-- JS_INJECT -->',
-            `<script src="/${jsFiles[0]}"></script>`
+            `<script type="module" src="/${jsFiles[0]}"></script>`
           );
           processedHtml = processedHtml.replace(
             '</body>',
-            `  <script src="/${jsFiles[0]}"></script>\n</body>`
+            `  <script type="module" src="/${jsFiles[0]}"></script>\n</body>`
           );
         }
         
