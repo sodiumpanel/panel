@@ -7,9 +7,9 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "build": "node src/bundler/rollup.js",
-    "build:prod": "NODE_ENV=production node src/bundler/rollup.js",
-    "watch": "node src/bundler/watch.js"
+    "build": "node app.build.js",
+    "build:prod": "node app.build.js prod",
+    "watch": "node app.build.js dev"
   },
   "dependencies": {
     "archiver": "^7.0.1",
@@ -27,8 +27,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "chokidar": "^3.6.0",
-    "rollup": "^4.12.0",
+    "rollup-plugin-postcss": "^4.0.2",
     "sass": "^1.71.1"
   }
 }

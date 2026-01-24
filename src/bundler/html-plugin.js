@@ -1,59 +1,52 @@
-const fs = require('fs');
-const path = require('path');
+import { readFile } from 'fs/promises';
 
-const ROOT = path.resolve(__dirname, '../..');
+export default function htmlPlugin(options = {}) {
+  const {
+    template = 'src/templates/index.html',
+    filename = 'index.html'
+  } = options;
 
-function generate(assets = {}) {
-  const templatePath = path.join(ROOT, 'src/templates/index.html');
-  const outputPath = path.join(ROOT, 'dist/index.html');
-  
-  if (!fs.existsSync(templatePath)) {
-    console.log('⚠ No HTML template found, skipping...');
-    return;
-  }
-  
-  let html = fs.readFileSync(templatePath, 'utf8');
-  
-  const cssLink = assets.css 
-    ? `<link rel="stylesheet" href="${assets.css}">`
-    : '';
-  
-  const jsScript = assets.js 
-    ? `<script src="${assets.js}"></script>`
-    : '';
-  
-  html = html.replace('<!-- CSS_INJECT -->', cssLink);
-  html = html.replace('<!-- JS_INJECT -->', jsScript);
-  
-  html = html.replace(/\$\{CSS_FILE\}/g, assets.css || '');
-  html = html.replace(/\$\{JS_FILE\}/g, assets.js || '');
-  
-  fs.writeFileSync(outputPath, html);
-  console.log('✓ HTML generated');
+  return {
+    name: 'html-plugin',
+    async generateBundle(outputOptions, bundle) {
+      try {
+        const htmlContent = await readFile(template, 'utf8');
+        
+        const jsFiles = Object.keys(bundle).filter(file => file.endsWith('.js'));
+        const cssFiles = Object.keys(bundle).filter(file => file.endsWith('.css'));
+        
+        let processedHtml = htmlContent;
+        
+        if (cssFiles.length > 0) {
+          processedHtml = processedHtml.replace(
+            '<!-- CSS_INJECT -->',
+            `<link rel="stylesheet" href="/${cssFiles[0]}">`
+          );
+          processedHtml = processedHtml.replace(
+            '</head>',
+            `  <link rel="stylesheet" href="/${cssFiles[0]}">\n</head>`
+          );
+        }
+        
+        if (jsFiles.length > 0) {
+          processedHtml = processedHtml.replace(
+            '<!-- JS_INJECT -->',
+            `<script src="/${jsFiles[0]}"></script>`
+          );
+          processedHtml = processedHtml.replace(
+            '</body>',
+            `  <script src="/${jsFiles[0]}"></script>\n</body>`
+          );
+        }
+        
+        this.emitFile({
+          type: 'asset',
+          fileName: filename,
+          source: processedHtml
+        });
+      } catch (error) {
+        this.error(`Failed to process HTML template: ${error.message}`);
+      }
+    }
+  };
 }
-
-function injectAssets(html, assets) {
-  const headEnd = html.indexOf('</head>');
-  const bodyEnd = html.indexOf('</body>');
-  
-  if (headEnd === -1 || bodyEnd === -1) {
-    return html;
-  }
-  
-  let result = html;
-  
-  if (assets.css) {
-    const cssLink = `  <link rel="stylesheet" href="${assets.css}">\n  `;
-    result = result.slice(0, headEnd) + cssLink + result.slice(headEnd);
-  }
-  
-  const newBodyEnd = result.indexOf('</body>');
-  if (assets.js) {
-    const jsScript = `  <script src="${assets.js}"></script>\n  `;
-    result = result.slice(0, newBodyEnd) + jsScript + result.slice(newBodyEnd);
-  }
-  
-  return result;
-}
-
-module.exports = { generate, injectAssets };
