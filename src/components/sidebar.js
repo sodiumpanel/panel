@@ -4,8 +4,6 @@ const adminSections = [
   { id: 'overview', label: 'Overview', icon: 'home', path: '/admin' },
   { id: 'servers', label: 'Servers', icon: 'server', path: '/admin/servers' },
   { id: 'users', label: 'Users', icon: 'users', path: '/admin/users' },
-  { id: 'nodes', label: 'Nodes', icon: 'hard-drive', path: '/admin/nodes' },
-  { id: 'allocations', label: 'Allocations', icon: 'globe', path: '/admin/allocations' },
   { id: 'eggs', label: 'Eggs', icon: 'package', path: '/admin/eggs' },
   { id: 'nests', label: 'Nests', icon: 'folder', path: '/admin/nests' },
   { divider: true },

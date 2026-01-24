@@ -39,10 +39,7 @@ function registerRoutes() {
     .route('/admin/servers/new', () => import('./routes/admin/servers-new.js'), { lazy: true })
     .route('/admin/users', () => import('./routes/admin/users.js'), { lazy: true })
     .route('/admin/users/new', () => import('./routes/admin/users-new.js'), { lazy: true })
-    .route('/admin/nodes', () => import('./routes/admin/nodes.js'), { lazy: true })
-    .route('/admin/nodes/new', () => import('./routes/admin/nodes-new.js'), { lazy: true })
-    .route('/admin/nodes/:id/allocations', () => import('./routes/admin/allocations.js'), { lazy: true })
-    .route('/admin/allocations', () => import('./routes/admin/allocations.js'), { lazy: true })
+
     .route('/admin/eggs', () => import('./routes/admin/eggs.js'), { lazy: true })
     .route('/admin/nests', () => import('./routes/admin/nests.js'), { lazy: true })
     .route('/admin/settings', () => import('./routes/admin/settings.js'), { lazy: true })

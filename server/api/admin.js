@@ -3,7 +3,7 @@ import { auth } from '../middleware/auth.js';
 import { admin } from '../middleware/admin.js';
 import User from '../models/User.js';
 import Server from '../models/Server.js';
-import Node from '../models/Node.js';
+
 import Egg from '../models/Egg.js';
 import db from '../services/database.js';
 import bcrypt from 'bcryptjs';
@@ -19,39 +19,16 @@ router.get('/stats', async (req, res) => {
   try {
     const serverCount = db.prepare('SELECT COUNT(*) as count FROM servers').get();
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
-    const nodeCount = db.prepare('SELECT COUNT(*) as count FROM nodes').get();
     const eggCount = db.prepare('SELECT COUNT(*) as count FROM eggs').get();
     
     const onlineServers = db.prepare("SELECT COUNT(*) as count FROM servers WHERE status = 'online'").get();
-    
-    // Get total resources from nodes
-    const resources = db.prepare(`
-      SELECT 
-        SUM(memory) as totalMemory,
-        SUM(disk) as totalDisk
-      FROM nodes
-    `).get();
-
-    // Get used resources from servers
-    const usedResources = db.prepare(`
-      SELECT 
-        SUM(memory) as usedMemory,
-        SUM(disk) as usedDisk
-      FROM servers
-    `).get();
 
     res.json({
       data: {
         servers: serverCount?.count || 0,
         serversOnline: onlineServers?.count || 0,
         users: userCount?.count || 0,
-        nodes: nodeCount?.count || 0,
-        nodesOnline: nodeCount?.count || 0, // TODO: actual health check
-        eggs: eggCount?.count || 0,
-        totalMemory: resources?.totalMemory || 0,
-        usedMemory: usedResources?.usedMemory || 0,
-        totalDisk: resources?.totalDisk || 0,
-        usedDisk: usedResources?.usedDisk || 0
+        eggs: eggCount?.count || 0
       }
     });
   } catch (err) {
@@ -180,15 +157,10 @@ router.get('/servers', async (req, res) => {
       SELECT 
         s.*,
         u.username as owner_name,
-        n.name as node_name,
-        e.name as egg_name,
-        a.ip,
-        a.port
+        e.name as egg_name
       FROM servers s
       LEFT JOIN users u ON s.owner_id = u.id
-      LEFT JOIN nodes n ON s.node_id = n.id
       LEFT JOIN eggs e ON s.egg_id = e.id
-      LEFT JOIN allocations a ON s.allocation_id = a.id
       ORDER BY s.created_at DESC
     `).all();
 
@@ -351,27 +323,6 @@ router.delete('/nests/:id', async (req, res) => {
   }
 });
 
-// ========== ALLOCATION MANAGEMENT ==========
-
-// Delete allocation
-router.delete('/allocations/:id', async (req, res) => {
-  try {
-    const alloc = db.prepare('SELECT * FROM allocations WHERE id = ?').get(req.params.id);
-    if (!alloc) {
-      return res.status(404).json({ error: 'Allocation not found' });
-    }
-
-    if (alloc.server_id) {
-      return res.status(400).json({ error: 'Cannot delete allocation assigned to a server' });
-    }
-
-    db.prepare('DELETE FROM allocations WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ========== SETTINGS MANAGEMENT ==========
 
 // Get settings
@@ -423,11 +374,6 @@ router.post('/settings/clear-logs', async (req, res) => {
   } catch (err) {
     res.json({ success: true }); // Ignore if table doesn't exist
   }
-});
-
-// Rebuild nodes
-router.post('/settings/rebuild-nodes', async (req, res) => {
-  res.json({ success: true, message: 'Node configurations rebuilt' });
 });
 
 // Reset settings

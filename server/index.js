@@ -12,7 +12,7 @@ import scheduler from './services/scheduler.js';
 import backup from './services/backup.js';
 import authRoutes from './api/auth.js';
 import serverRoutes from './api/servers.js';
-import nodeRoutes from './api/nodes.js';
+
 import filesRoutes from './api/files.js';
 import adminRoutes from './api/admin.js';
 import backupRoutes from './api/backups.js';
@@ -41,7 +41,7 @@ async function startServer() {
 
   app.use('/api/auth', authRoutes);
   app.use('/api/servers', serverRoutes);
-  app.use('/api/nodes', nodeRoutes);
+
   app.use('/api/servers', filesRoutes);
   app.use('/api/servers', backupRoutes);
   app.use('/api/servers', scheduleRoutes);

@@ -7,20 +7,18 @@ class Server {
     const now = new Date().toISOString();
 
     const stmt = db.prepare(`
-      INSERT INTO servers (uuid, name, owner_id, node_id, egg_id, memory, disk, cpu, allocation_id, status, startup_command, docker_image, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO servers (uuid, name, owner_id, egg_id, memory, disk, cpu, status, startup_command, docker_image, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       uuid,
       data.name,
       data.owner_id,
-      data.node_id,
       data.egg_id,
       data.memory || 1024,
       data.disk || 10240,
       data.cpu || 100,
-      data.allocation_id,
       data.status || 'offline',
       data.startup_command || '',
       data.docker_image || '',
@@ -55,7 +53,7 @@ class Server {
     const fields = [];
     const values = [];
 
-    const allowedFields = ['name', 'node_id', 'egg_id', 'memory', 'disk', 'cpu', 'allocation_id', 'status', 'startup_command', 'docker_image'];
+    const allowedFields = ['name', 'egg_id', 'memory', 'disk', 'cpu', 'status', 'startup_command', 'docker_image'];
 
     for (const field of allowedFields) {
       if (data[field] !== undefined) {
@@ -92,17 +90,11 @@ class Server {
     const stmt = db.prepare(`
       SELECT 
         s.*,
-        n.name as node_name,
-        n.fqdn as node_fqdn,
         e.name as egg_name,
         e.docker_images as egg_docker_images,
-        a.ip as allocation_ip,
-        a.port as allocation_port,
         u.username as owner_username
       FROM servers s
-      LEFT JOIN nodes n ON s.node_id = n.id
       LEFT JOIN eggs e ON s.egg_id = e.id
-      LEFT JOIN allocations a ON s.allocation_id = a.id
       LEFT JOIN users u ON s.owner_id = u.id
       WHERE s.id = ?
     `);

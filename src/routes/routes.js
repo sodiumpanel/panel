@@ -122,16 +122,7 @@ export const routes = [
     component: () => import('./admin/users.js'),
     middleware: [middlewares.admin]
   },
-  {
-    path: '/admin/nodes',
-    component: () => import('./admin/nodes.js'),
-    middleware: [middlewares.admin]
-  },
-  {
-    path: '/admin/allocations',
-    component: () => import('./admin/allocations.js'),
-    middleware: [middlewares.admin]
-  },
+
   {
     path: '/admin/eggs',
     component: () => import('./admin/eggs.js'),

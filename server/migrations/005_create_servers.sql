@@ -4,9 +4,7 @@ CREATE TABLE IF NOT EXISTS servers (
   name TEXT NOT NULL,
   description TEXT,
   owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  node_id INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-  egg_id INTEGER NOT NULL REFERENCES eggs(id) ON DELETE RESTRICT,
-  allocation_id INTEGER REFERENCES allocations(id) ON DELETE SET NULL,
+  egg_id INTEGER REFERENCES eggs(id) ON DELETE SET NULL,
   memory INTEGER NOT NULL,
   disk INTEGER NOT NULL,
   cpu INTEGER DEFAULT 100,
@@ -24,5 +22,4 @@ CREATE TABLE IF NOT EXISTS servers (
 
 CREATE INDEX IF NOT EXISTS idx_servers_uuid ON servers(uuid);
 CREATE INDEX IF NOT EXISTS idx_servers_owner ON servers(owner_id);
-CREATE INDEX IF NOT EXISTS idx_servers_node ON servers(node_id);
 CREATE INDEX IF NOT EXISTS idx_servers_egg ON servers(egg_id);
