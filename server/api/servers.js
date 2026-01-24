@@ -2,7 +2,6 @@ import { Router } from 'express';
 import auth from '../middleware/auth.js';
 import admin from '../middleware/admin.js';
 import Server from '../models/Server.js';
-import Allocation from '../models/Allocation.js';
 
 const router = Router();
 
@@ -43,9 +42,7 @@ router.get('/:id', auth, (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const allocations = Allocation.findByServer(server.id);
-
-    res.json({ data: { ...server, allocations } });
+    res.json({ data: server });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -53,27 +50,22 @@ router.get('/:id', auth, (req, res) => {
 
 router.post('/', admin, (req, res) => {
   try {
-    const { name, owner_id, node_id, egg_id, memory, disk, cpu, allocation_id, startup_command, docker_image } = req.body;
+    const { name, owner_id, egg_id, memory, disk, cpu, startup_command, docker_image } = req.body;
 
-    if (!name || !owner_id || !node_id || !egg_id || !allocation_id) {
-      return res.status(400).json({ error: 'Missing required fields: name, owner_id, node_id, egg_id, allocation_id' });
+    if (!name || !owner_id) {
+      return res.status(400).json({ error: 'Missing required fields: name, owner_id' });
     }
 
     const server = Server.create({
       name,
       owner_id,
-      node_id,
       egg_id,
       memory,
       disk,
       cpu,
-      allocation_id,
       startup_command,
       docker_image
     });
-
-    Allocation.assign(allocation_id, server.id);
-    Allocation.setPrimary(allocation_id, server.id);
 
     res.status(201).json({ data: server });
   } catch (err) {
@@ -94,7 +86,7 @@ router.put('/:id', auth, (req, res) => {
     }
 
     const allowedFields = req.user.role === 'admin'
-      ? ['name', 'owner_id', 'node_id', 'egg_id', 'memory', 'disk', 'cpu', 'allocation_id', 'startup_command', 'docker_image']
+      ? ['name', 'owner_id', 'egg_id', 'memory', 'disk', 'cpu', 'startup_command', 'docker_image']
       : ['name', 'startup_command'];
 
     const updateData = {};
@@ -117,11 +109,6 @@ router.delete('/:id', admin, (req, res) => {
 
     if (!server) {
       return res.status(404).json({ error: 'Server not found' });
-    }
-
-    const allocations = Allocation.findByServer(server.id);
-    for (const alloc of allocations) {
-      Allocation.unassign(alloc.id);
     }
 
     Server.delete(server.id);
