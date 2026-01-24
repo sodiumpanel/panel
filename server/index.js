@@ -111,9 +111,8 @@ process.on('SIGINT', () => {
   scheduler.stop();
   docker.cleanup();
   db.close();
-  server.close(() => {
-    process.exit(0);
-  });
+  server.close();
+  process.exit(0);
 });
 
 export { app, server };
