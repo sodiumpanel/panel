@@ -110,8 +110,8 @@ export async function mount() {
           <p class="text-secondary">${server.egg_name || 'Unknown'} • ${server.memory}MB RAM</p>
         </div>
         <div class="server-card-actions">
-          <a href="#/server/${server.uuid}/console" class="btn btn-ghost btn-sm">${icon('terminal', 16)} Console</a>
-          <a href="#/server/${server.uuid}/files" class="btn btn-ghost btn-sm">${icon('folder', 16)} Files</a>
+          <a href="/server/${server.uuid}/console" class="btn btn-ghost btn-sm">${icon('terminal', 16)} Console</a>
+          <a href="/server/${server.uuid}/files" class="btn btn-ghost btn-sm">${icon('folder', 16)} Files</a>
           <button class="btn btn-${server.status === 'online' ? 'danger' : 'primary'} btn-sm power-btn" 
                   data-uuid="${server.uuid}" data-action="${server.status === 'online' ? 'stop' : 'start'}">
             ${icon(server.status === 'online' ? 'stop' : 'play', 16)}

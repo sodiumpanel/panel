@@ -117,7 +117,7 @@ export async function mount() {
         <td>${alloc.node_name}</td>
         <td>
           ${alloc.server_id 
-            ? `<a href="#/admin/servers/${alloc.server_id}" class="link">${alloc.server_name || `Server #${alloc.server_id}`}</a>` 
+            ? `<a href="/admin/servers/${alloc.server_id}" class="link">${alloc.server_name || `Server #${alloc.server_id}`}</a>` 
             : '<span class="text-secondary">Unassigned</span>'}
         </td>
         <td class="text-secondary">${alloc.notes || '-'}</td>

@@ -82,7 +82,7 @@ export async function mount() {
           </div>
         </div>
         <div class="nest-footer">
-          <a href="#/admin/eggs?nest=${nest.id}" class="btn btn-ghost btn-sm">
+          <a href="/admin/eggs?nest=${nest.id}" class="btn btn-ghost btn-sm">
             ${icon('package', 14)} View Eggs
           </a>
         </div>

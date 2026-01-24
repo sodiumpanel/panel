@@ -100,7 +100,7 @@ export async function mount() {
             </div>
           </div>
           <div class="node-footer">
-            <a href="#/admin/nodes/${node.id}/allocations" class="btn btn-ghost btn-sm">
+            <a href="/admin/nodes/${node.id}/allocations" class="btn btn-ghost btn-sm">
               ${icon('list', 14)} Allocations
             </a>
           </div>

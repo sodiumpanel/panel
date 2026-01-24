@@ -112,19 +112,19 @@ export default function() {
               <h2>Quick Actions</h2>
             </div>
             <div class="quick-actions">
-              <a href="#/admin/servers/new" class="action-card">
+              <a href="/admin/servers/new" class="action-card">
                 ${icon('plus', 20)}
                 <span>New Server</span>
               </a>
-              <a href="#/admin/users/new" class="action-card">
+              <a href="/admin/users/new" class="action-card">
                 ${icon('user-plus', 20)}
                 <span>New User</span>
               </a>
-              <a href="#/admin/nodes/new" class="action-card">
+              <a href="/admin/nodes/new" class="action-card">
                 ${icon('hard-drive', 20)}
                 <span>New Node</span>
               </a>
-              <a href="#/admin/eggs" class="action-card">
+              <a href="/admin/eggs" class="action-card">
                 ${icon('package', 20)}
                 <span>Manage Eggs</span>
               </a>

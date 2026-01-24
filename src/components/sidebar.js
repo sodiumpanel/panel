@@ -94,7 +94,7 @@ export function renderServerSidebar(serverId, active = 'console') {
     }
     const isActive = section.id === active;
     return `
-      <a href="#/server/${serverId}/${section.path}" class="sidebar-link ${isActive ? 'active' : ''}">
+      <a href="/server/${serverId}/${section.path}" class="sidebar-link ${isActive ? 'active' : ''}">
         ${icon(section.icon, 18)}
         <span>${section.label}</span>
       </a>

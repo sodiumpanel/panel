@@ -118,7 +118,7 @@ export async function mount() {
           <span class="badge badge-${server.status === 'online' ? 'success' : 'secondary'}">${server.status}</span>
         </td>
         <td>
-          <a href="#/server/${server.uuid}/console" class="server-link">${server.name}</a>
+          <a href="/server/${server.uuid}/console" class="server-link">${server.name}</a>
           <div class="text-secondary text-sm">${server.egg_name || 'Unknown Egg'}</div>
         </td>
         <td>${server.owner_name || 'Unknown'}</td>
