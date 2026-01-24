@@ -27,6 +27,8 @@ function registerRoutes() {
     .route('/server/:id/startup', () => import('./routes/server/startup.js'), { lazy: true })
     .route('/server/:id/settings', () => import('./routes/server/settings.js'), { lazy: true })
 
+    .route('/profile', () => import('./routes/account/profile.js'), { lazy: true })
+
     .route('/admin', () => import('./routes/admin/index.js'), { lazy: true })
     .route('/admin/servers', () => import('./routes/admin/servers.js'), { lazy: true })
     .route('/admin/users', () => import('./routes/admin/users.js'), { lazy: true })
