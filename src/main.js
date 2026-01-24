@@ -15,6 +15,7 @@ function registerRoutes() {
     .route('/register', () => import('./routes/auth/register.js'), { lazy: true })
 
     .route('/', () => import('./routes/dashboard/index.js'), { lazy: true })
+    .route('/dashboard', () => import('./routes/dashboard/index.js'), { lazy: true })
 
     .route('/servers', () => import('./routes/server/index.js'), { lazy: true })
     .route('/server/:id', () => import('./routes/server/console.js'), { lazy: true })
