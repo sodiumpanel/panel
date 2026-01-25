@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import { createReadStream, createWriteStream } from 'fs';
 import path from 'path';
 import archiver from 'archiver';
+import unzipper from 'unzipper';
 import { pipeline } from 'stream/promises';
 
 export default class FileSystem {
@@ -151,6 +152,18 @@ export default class FileSystem {
     await archive.finalize();
     
     return { path: outputName };
+  }
+
+  async extractArchive(uuid, archivePath, extractDir) {
+    const fullArchivePath = this.resolvePath(uuid, archivePath);
+    const fullExtractDir = this.resolvePath(uuid, extractDir);
+    
+    await fs.mkdir(fullExtractDir, { recursive: true });
+    
+    const readStream = createReadStream(fullArchivePath);
+    await pipeline(readStream, unzipper.Extract({ path: fullExtractDir }));
+    
+    return { success: true, path: extractDir };
   }
 
   async createBackup(uuid, name) {

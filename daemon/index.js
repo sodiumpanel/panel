@@ -230,7 +230,62 @@ app.post('/servers/:uuid/files/write', authMiddleware, async (req, res) => {
 
 app.post('/servers/:uuid/files/delete', authMiddleware, async (req, res) => {
   try {
-    await filesystem.deleteFile(req.params.uuid, req.body.path);
+    const paths = req.body.paths || [req.body.path];
+    for (const p of paths) {
+      await filesystem.deleteFile(req.params.uuid, p);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/servers/:uuid/files/mkdir', authMiddleware, async (req, res) => {
+  try {
+    await filesystem.createDirectory(req.params.uuid, req.body.path);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/servers/:uuid/files/rename', authMiddleware, async (req, res) => {
+  try {
+    await filesystem.rename(req.params.uuid, req.body.from, req.body.to);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/servers/:uuid/files/copy', authMiddleware, async (req, res) => {
+  try {
+    const { path: srcPath } = req.body;
+    const destPath = srcPath.replace(/(\.[^.]+)?$/, '_copy$1');
+    await filesystem.copy(req.params.uuid, srcPath, destPath);
+    res.json({ success: true, path: destPath });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/servers/:uuid/files/compress', authMiddleware, async (req, res) => {
+  try {
+    const { paths, destination } = req.body;
+    const outputName = destination || `archive_${Date.now()}.zip`;
+    const result = await filesystem.compress(req.params.uuid, paths, outputName);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/servers/:uuid/files/decompress', authMiddleware, async (req, res) => {
+  try {
+    const { path: archivePath } = req.body;
+    // Extract to same directory as the archive
+    const extractDir = archivePath.replace(/\.zip$/i, '');
+    await filesystem.extractArchive(req.params.uuid, archivePath, extractDir);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
