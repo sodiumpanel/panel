@@ -571,7 +571,8 @@ export async function mount() {
   if (!serversContainer) return;
   
   try {
-    const servers = await api.get('/servers');
+    const res = await api.get('/servers');
+    const servers = res.data || [];
     
     const stats = {
       total: servers.length,
