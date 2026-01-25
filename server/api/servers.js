@@ -338,4 +338,45 @@ router.post('/:id/install', auth, async (req, res) => {
   }
 });
 
+// ========== PUBLIC NESTS & EGGS ENDPOINTS ==========
+import db from '../services/database.js';
+
+// Get all nests (public, for server creation)
+router.get('/data/nests', auth, (req, res) => {
+  try {
+    const nests = db.prepare(`
+      SELECT id, uuid, name, description,
+        (SELECT COUNT(*) FROM eggs WHERE nest_id = nests.id) as egg_count
+      FROM nests
+      ORDER BY name
+    `).all();
+    res.json({ data: nests });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all eggs (public, for server creation)
+router.get('/data/eggs', auth, (req, res) => {
+  try {
+    const eggs = Egg.findAllWithDetails ? Egg.findAllWithDetails() : Egg.findAll();
+    res.json({ data: eggs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get egg by ID (public, for server settings)
+router.get('/data/eggs/:id', auth, (req, res) => {
+  try {
+    const egg = Egg.findById(req.params.id);
+    if (!egg) {
+      return res.status(404).json({ error: 'Egg not found' });
+    }
+    res.json({ data: egg });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

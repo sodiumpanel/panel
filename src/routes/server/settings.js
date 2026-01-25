@@ -169,7 +169,7 @@ export async function mount(params) {
 
   async function loadEgg(eggId) {
     try {
-      const res = await api.get(`/eggs/${eggId}`);
+      const res = await api.get(`/servers/data/eggs/${eggId}`);
       egg = res.data;
 
       const imageSelect = document.getElementById('docker-image');
