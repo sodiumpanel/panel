@@ -3,13 +3,15 @@ import { renderAdminSidebar } from '../../components/sidebar.js';
 import { icon } from '../../components/icon.js';
 import { api } from '../../utils/api.js';
 import { toast } from '../../components/toast.js';
+import { donutChart, progressBar } from '../../components/chart.js';
+import { formatBytes } from '../../utils/format.js';
 
 
 export default function() {
   return `
     ${renderNav()}
     <div class="admin-layout">
-      ${renderAdminSidebar('dashboard')}
+      ${renderAdminSidebar('overview')}
       <main class="admin-content">
         <div class="admin-header">
           <h1>Admin Dashboard</h1>
@@ -27,7 +29,7 @@ export default function() {
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon">${icon('hard-drive', 24)}</div>
+            <div class="stat-icon">${icon('cpu', 24)}</div>
             <div class="stat-info">
               <span class="stat-value" id="stat-nodes">—</span>
               <span class="stat-label">Nodes</span>
@@ -58,6 +60,30 @@ export default function() {
               <span class="stat-value" id="stat-eggs">—</span>
               <span class="stat-label">Eggs</span>
             </div>
+          </div>
+        </div>
+
+        <div class="charts-grid" id="resource-charts">
+          <div class="chart-card card">
+            <div class="chart-header">
+              <h3>${icon('memory', 16)} Memory Usage</h3>
+              <span class="chart-value" id="memory-value">—</span>
+            </div>
+            <div class="chart-content" id="memory-chart"></div>
+          </div>
+          <div class="chart-card card">
+            <div class="chart-header">
+              <h3>${icon('hard-drive', 16)} Disk Usage</h3>
+              <span class="chart-value" id="disk-value">—</span>
+            </div>
+            <div class="chart-content" id="disk-chart"></div>
+          </div>
+          <div class="chart-card card">
+            <div class="chart-header">
+              <h3>${icon('cpu', 16)} CPU Allocated</h3>
+              <span class="chart-value" id="cpu-value">—</span>
+            </div>
+            <div class="chart-content" id="cpu-chart"></div>
           </div>
         </div>
 
@@ -186,6 +212,38 @@ export async function mount() {
       const allocs = stats.allocations || { total: 0, used: 0 };
       document.getElementById('stat-allocations').textContent = allocs.total;
       document.getElementById('stat-allocations-used').textContent = `${allocs.used} used`;
+
+      // Update resource charts
+      const resources = stats.resources || { memory: { used: 0, total: 1 }, disk: { used: 0, total: 1 }, cpu: { used: 0, total: 100 } };
+      
+      document.getElementById('memory-chart').innerHTML = donutChart({
+        value: resources.memory.used,
+        max: resources.memory.total,
+        size: 100,
+        color: 'var(--accent)',
+        label: 'RAM'
+      });
+      document.getElementById('memory-value').textContent = 
+        `${formatBytes(resources.memory.used * 1024 * 1024)} / ${formatBytes(resources.memory.total * 1024 * 1024)}`;
+
+      document.getElementById('disk-chart').innerHTML = donutChart({
+        value: resources.disk.used,
+        max: resources.disk.total,
+        size: 100,
+        color: 'var(--success)',
+        label: 'Disk'
+      });
+      document.getElementById('disk-value').textContent = 
+        `${formatBytes(resources.disk.used * 1024 * 1024)} / ${formatBytes(resources.disk.total * 1024 * 1024)}`;
+
+      document.getElementById('cpu-chart').innerHTML = donutChart({
+        value: resources.cpu.used,
+        max: resources.cpu.total,
+        size: 100,
+        color: 'var(--warning)',
+        label: 'CPU'
+      });
+      document.getElementById('cpu-value').textContent = `${resources.cpu.used}% / ${resources.cpu.total}%`;
 
       // Update nodes status
       const nodesStatusText = document.getElementById('nodes-status-text');

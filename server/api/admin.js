@@ -48,6 +48,25 @@ router.get('/stats', async (req, res) => {
       LIMIT 5
     `).all();
 
+    // Resource usage totals
+    const totalNodeResources = db.prepare(`
+      SELECT 
+        COALESCE(SUM(memory), 0) as total_memory,
+        COALESCE(SUM(disk), 0) as total_disk
+      FROM nodes
+    `).get();
+
+    const usedResources = db.prepare(`
+      SELECT 
+        COALESCE(SUM(memory), 0) as used_memory,
+        COALESCE(SUM(disk), 0) as used_disk,
+        COALESCE(SUM(cpu), 0) as used_cpu
+      FROM servers
+    `).get();
+
+    // Calculate total CPU capacity (100% per node)
+    const totalCpu = (nodeCount?.count || 0) * 100;
+
     res.json({
       data: {
         servers: serverCount?.count || 0,
@@ -60,6 +79,20 @@ router.get('/stats', async (req, res) => {
           total: totalAllocations?.count || 0,
           used: usedAllocations?.count || 0,
           available: (totalAllocations?.count || 0) - (usedAllocations?.count || 0)
+        },
+        resources: {
+          memory: {
+            used: usedResources?.used_memory || 0,
+            total: totalNodeResources?.total_memory || 0
+          },
+          disk: {
+            used: usedResources?.used_disk || 0,
+            total: totalNodeResources?.total_disk || 0
+          },
+          cpu: {
+            used: usedResources?.used_cpu || 0,
+            total: totalCpu
+          }
         },
         recentServers,
         recentUsers

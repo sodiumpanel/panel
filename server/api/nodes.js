@@ -255,6 +255,7 @@ router.get('/daemons/connected', admin, (req, res) => {
       const stats = daemonManager.getDaemonStats(uuid);
       return {
         uuid,
+        nodeId: node?.id,
         name: node?.name || 'Unknown',
         stats
       };
