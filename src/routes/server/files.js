@@ -620,7 +620,7 @@ export async function mount(params) {
     try {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `/api/servers/${serverId}/files/upload`);
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('sodium_token')}`);
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {

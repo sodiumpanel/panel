@@ -42,8 +42,8 @@ export async function mount(params) {
   async function loadData() {
     try {
       const [dbRes, hostsRes] = await Promise.all([
-        api.get(`/databases/${serverId}/databases`),
-        api.get('/databases/hosts').catch(() => ({ data: [] }))
+        api.get(`/servers/${serverId}/databases`),
+        api.get('/database-hosts').catch(() => ({ data: [] }))
       ]);
       databases = dbRes.data || [];
       hosts = hostsRes.data || [];
@@ -131,7 +131,7 @@ export async function mount(params) {
         if (!confirmed) return;
 
         try {
-          const res = await api.post(`/databases/${serverId}/databases/${btn.dataset.id}/rotate-password`);
+          await api.post(`/servers/${serverId}/databases/${btn.dataset.id}/rotate-password`);
           toast.success('Password rotated');
           loadData();
         } catch (err) {
@@ -146,7 +146,7 @@ export async function mount(params) {
         if (!confirmed) return;
 
         try {
-          await api.delete(`/databases/${serverId}/databases/${btn.dataset.id}`);
+          await api.delete(`/servers/${serverId}/databases/${btn.dataset.id}`);
           toast.success('Database deleted');
           loadData();
         } catch (err) {
@@ -187,7 +187,7 @@ export async function mount(params) {
         { label: 'Cancel', class: 'btn-ghost', action: closeModal },
         { label: 'Create', class: 'btn-primary', action: async () => {
           try {
-            await api.post(`/databases/${serverId}/databases`, {
+            await api.post(`/servers/${serverId}/databases`, {
               host_id: document.getElementById('host_id').value,
               database_name: document.getElementById('db_name').value || undefined,
               remote: document.getElementById('remote').value

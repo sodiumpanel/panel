@@ -123,15 +123,46 @@ export async function mount(params) {
     }
   }
 
+  let daemonConnected = false;
+
   function updateStatus(status) {
     const badge = document.getElementById('server-status');
     badge.textContent = status;
-    badge.className = `badge badge-${status === 'online' ? 'success' : status === 'starting' ? 'warning' : 'danger'}`;
     
-    document.getElementById('btn-start').disabled = status === 'online' || status === 'starting';
-    document.getElementById('btn-stop').disabled = status === 'offline';
-    document.getElementById('btn-restart').disabled = status === 'offline';
-    document.getElementById('btn-kill').disabled = status === 'offline';
+    const statusColors = {
+      online: 'success',
+      starting: 'warning',
+      stopping: 'warning',
+      restarting: 'warning',
+      installing: 'info',
+      install_failed: 'danger',
+      error: 'danger',
+      offline: 'secondary'
+    };
+    badge.className = `badge badge-${statusColors[status] || 'secondary'}`;
+    
+    const isRunning = status === 'online' || status === 'starting' || status === 'restarting';
+    const isStopped = status === 'offline' || status === 'install_failed' || status === 'error';
+    
+    document.getElementById('btn-start').disabled = !daemonConnected || isRunning || status === 'installing';
+    document.getElementById('btn-stop').disabled = !daemonConnected || isStopped;
+    document.getElementById('btn-restart').disabled = !daemonConnected || isStopped;
+    document.getElementById('btn-kill').disabled = !daemonConnected || isStopped;
+  }
+
+  function updateDaemonStatus(connected) {
+    daemonConnected = connected;
+    const statusEl = document.getElementById('server-status');
+    if (!connected) {
+      const indicator = document.createElement('span');
+      indicator.className = 'daemon-disconnected';
+      indicator.title = 'Daemon not connected';
+      if (!document.querySelector('.daemon-disconnected')) {
+        statusEl.parentNode.insertBefore(indicator, statusEl.nextSibling);
+      }
+    } else {
+      document.querySelector('.daemon-disconnected')?.remove();
+    }
   }
 
   function connectWebSocket() {
@@ -139,13 +170,24 @@ export async function mount(params) {
     ws = new WebSocket(`${WS_URL}/console/${serverId}?token=${token}`);
 
     ws.onopen = () => {
-      appendLine('Connected to console', 'info');
+      appendLine('Connecting to console...', 'info');
     };
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       
-      if (data.type === 'output') {
+      if (data.type === 'connected') {
+        updateDaemonStatus(data.daemonConnected);
+        if (data.server) {
+          document.getElementById('server-name').textContent = data.server.name;
+          updateStatus(data.server.status);
+        }
+        if (data.daemonConnected) {
+          appendLine('Connected to console', 'info');
+        } else {
+          appendLine('Warning: Daemon not connected - power actions unavailable', 'error');
+        }
+      } else if (data.type === 'output') {
         appendLine(data.content);
       } else if (data.type === 'status') {
         updateStatus(data.status);
@@ -153,6 +195,10 @@ export async function mount(params) {
         document.getElementById('stat-cpu').textContent = `${data.cpu.toFixed(1)}%`;
         document.getElementById('stat-ram').textContent = formatBytes(data.memory);
         document.getElementById('stat-network').textContent = `↑${formatBytes(data.tx)} ↓${formatBytes(data.rx)}`;
+      } else if (data.type === 'install') {
+        appendLine(`[Install] ${data.output}`, 'info');
+      } else if (data.type === 'error') {
+        appendLine(`Error: ${data.message}`, 'error');
       }
     };
 
@@ -180,11 +226,20 @@ export async function mount(params) {
   }
 
   async function powerAction(action) {
+    if (!daemonConnected) {
+      toast.error('Daemon not connected - cannot perform power action');
+      return;
+    }
     try {
       await api.post(`/servers/${serverId}/power`, { action });
       toast.success(`${action} command sent`);
     } catch (err) {
-      toast.error(`Failed to ${action} server`);
+      if (err.status === 503) {
+        toast.error('Daemon not connected');
+        updateDaemonStatus(false);
+      } else {
+        toast.error(err.message || `Failed to ${action} server`);
+      }
     }
   }
 

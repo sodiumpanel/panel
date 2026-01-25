@@ -106,11 +106,16 @@ export async function mount() {
   
   let nodes = [];
   let editingId = null;
+  let connectedDaemons = new Set();
 
   async function loadNodes() {
     try {
-      const res = await api.get('/nodes');
-      nodes = res.data || [];
+      const [nodesRes, daemonsRes] = await Promise.all([
+        api.get('/nodes'),
+        api.get('/nodes/daemons/connected').catch(() => ({ data: [] }))
+      ]);
+      nodes = nodesRes.data || [];
+      connectedDaemons = new Set((daemonsRes.data || []).map(d => d.nodeId));
       renderNodes();
     } catch (err) {
       toast.error('Failed to load nodes');
@@ -123,23 +128,33 @@ export async function mount() {
       return;
     }
 
-    tbody.innerHTML = nodes.map(node => `
-      <tr data-id="${node.id}">
-        <td><div class="cell-title">${node.name}</div></td>
-        <td>${node.scheme}://${node.fqdn}:${node.daemon_port}</td>
-        <td>${formatBytes(node.memory * 1024 * 1024)}</td>
-        <td>${formatBytes(node.disk * 1024 * 1024)}</td>
-        <td>${node.server_count || 0}</td>
-        <td><span class="badge ${node.maintenance_mode ? 'badge-warning' : 'badge-success'}">${node.maintenance_mode ? 'Maintenance' : 'Online'}</span></td>
-        <td>
-          <div class="table-actions">
-            <button class="btn btn-ghost btn-sm" data-action="allocations" data-id="${node.id}">${icon('globe', 16)}</button>
-            <button class="btn btn-ghost btn-sm" data-action="edit" data-id="${node.id}">${icon('edit', 16)}</button>
-            <button class="btn btn-ghost btn-sm btn-danger" data-action="delete" data-id="${node.id}">${icon('trash', 16)}</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = nodes.map(node => {
+      const isConnected = connectedDaemons.has(node.id);
+      const statusBadge = node.maintenance_mode 
+        ? '<span class="badge badge-warning">Maintenance</span>'
+        : isConnected 
+          ? '<span class="badge badge-success">Connected</span>'
+          : '<span class="badge badge-danger">Disconnected</span>';
+      
+      return `
+        <tr data-id="${node.id}">
+          <td><div class="cell-title">${node.name}</div></td>
+          <td>${node.scheme}://${node.fqdn}:${node.daemon_port}</td>
+          <td>${formatBytes(node.memory * 1024 * 1024)}</td>
+          <td>${formatBytes(node.disk * 1024 * 1024)}</td>
+          <td>${node.server_count || 0}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm" data-action="status" data-id="${node.id}" title="View Status">${icon('activity', 16)}</button>
+              <button class="btn btn-ghost btn-sm" data-action="allocations" data-id="${node.id}">${icon('globe', 16)}</button>
+              <button class="btn btn-ghost btn-sm" data-action="edit" data-id="${node.id}">${icon('edit', 16)}</button>
+              <button class="btn btn-ghost btn-sm btn-danger" data-action="delete" data-id="${node.id}">${icon('trash', 16)}</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 
   function openModal(node = null) {
@@ -193,6 +208,15 @@ export async function mount() {
 
     if (action === 'edit') openModal(node);
     else if (action === 'allocations') navigate(`/admin/allocations?node=${id}`);
+    else if (action === 'status') {
+      try {
+        const res = await api.get(`/nodes/${id}/status`);
+        const status = res.data;
+        toast.info(`${node.name}: ${status.connected ? 'Connected' : 'Disconnected'}${status.stats ? ` | CPU: ${status.stats.cpu}%, RAM: ${formatBytes(status.stats.memory)}` : ''}`);
+      } catch (err) {
+        toast.error('Failed to get node status');
+      }
+    }
     else if (action === 'delete') {
       if (node.server_count > 0) {
         toast.error('Cannot delete node with active servers');

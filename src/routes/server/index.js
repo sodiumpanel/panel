@@ -131,7 +131,11 @@ export async function mount() {
           toast.success(`Server ${action} command sent`);
           setTimeout(loadData, 2000);
         } catch (err) {
-          toast.error(`Failed to ${action} server`);
+          if (err.status === 503) {
+            toast.error('Daemon not connected');
+          } else {
+            toast.error(err.message || `Failed to ${action} server`);
+          }
         }
         btn.disabled = false;
       });

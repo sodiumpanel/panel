@@ -198,10 +198,14 @@ export async function mount(params) {
     if (!confirmed) return;
 
     try {
-      await api.post(`/servers/${serverId}/reinstall`);
+      await api.post(`/servers/${serverId}/install`);
       toast.success('Server reinstall started');
     } catch (err) {
-      toast.error('Failed to reinstall server');
+      if (err.status === 503) {
+        toast.error('Daemon not connected');
+      } else {
+        toast.error(err.message || 'Failed to reinstall server');
+      }
     }
   });
 

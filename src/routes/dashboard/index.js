@@ -10,8 +10,11 @@ const STATUS_CONFIG = {
   online: { color: 'var(--success)', label: 'Online' },
   starting: { color: 'var(--warning)', label: 'Starting' },
   stopping: { color: 'var(--warning)', label: 'Stopping' },
-  offline: { color: 'var(--danger)', label: 'Offline' },
-  installing: { color: 'var(--info)', label: 'Installing' }
+  restarting: { color: 'var(--warning)', label: 'Restarting' },
+  offline: { color: 'var(--text-secondary)', label: 'Offline' },
+  installing: { color: 'var(--info)', label: 'Installing' },
+  install_failed: { color: 'var(--danger)', label: 'Install Failed' },
+  error: { color: 'var(--danger)', label: 'Error' }
 };
 
 function getStatusIndicator(status) {
@@ -641,7 +644,11 @@ function initServerActions() {
         }, 3000);
         
       } catch (err) {
-        toast.error(err.message || `Failed to ${action} server`);
+        if (err.status === 503) {
+          toast.error('Daemon not connected');
+        } else {
+          toast.error(err.message || `Failed to ${action} server`);
+        }
         btn.disabled = false;
         btn.innerHTML = originalContent;
       }

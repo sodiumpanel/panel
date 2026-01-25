@@ -6,7 +6,9 @@ export const SERVER_STATUS = {
   STARTING: 'starting',
   ONLINE: 'online',
   STOPPING: 'stopping',
+  RESTARTING: 'restarting',
   INSTALLING: 'installing',
+  INSTALL_FAILED: 'install_failed',
   SUSPENDED: 'suspended',
   ERROR: 'error'
 };
