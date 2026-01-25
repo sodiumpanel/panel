@@ -62,6 +62,7 @@ async function startServer() {
 
   const wss = new WebSocketServer({ noServer: true });
   const consoleWss = new WebSocketServer({ noServer: true });
+  const daemonWss = new WebSocketServer({ noServer: true });
 
   server.on('upgrade', (request, socket, head) => {
     const pathname = request.url.split('?')[0];
@@ -69,6 +70,10 @@ async function startServer() {
     if (pathname.startsWith('/ws/console/')) {
       consoleWss.handleUpgrade(request, socket, head, (ws) => {
         consoleWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/daemon') {
+      daemonWss.handleUpgrade(request, socket, head, (ws) => {
+        daemonWss.emit('connection', ws, request);
       });
     } else if (pathname === '/ws') {
       wss.handleUpgrade(request, socket, head, (ws) => {
@@ -80,6 +85,78 @@ async function startServer() {
   });
 
   setupConsoleWebSocket(consoleWss);
+
+  // Daemon WebSocket handler
+  const connectedDaemons = new Map();
+
+  daemonWss.on('connection', (ws, request) => {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const token = url.searchParams.get('token');
+    const uuid = url.searchParams.get('uuid');
+
+    console.log(`Daemon connecting: ${uuid}`);
+
+    let daemonInfo = { uuid, authenticated: false };
+
+    ws.on('message', (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+
+        switch (msg.type) {
+          case 'auth':
+            // TODO: Validate token against database
+            daemonInfo.authenticated = true;
+            daemonInfo.version = msg.version;
+            connectedDaemons.set(uuid, { ws, info: daemonInfo });
+            ws.send(JSON.stringify({ type: 'auth_success' }));
+            console.log(`Daemon authenticated: ${uuid}`);
+            break;
+
+          case 'heartbeat':
+            ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+            break;
+
+          case 'stats':
+            if (daemonInfo.authenticated) {
+              // Store stats in database or memory
+              daemonInfo.lastStats = msg.data;
+              daemonInfo.lastSeen = Date.now();
+            }
+            break;
+
+          case 'server_status':
+            if (daemonInfo.authenticated) {
+              // Update server status in database
+              console.log(`Server ${msg.uuid} status: ${msg.status}`);
+            }
+            break;
+
+          case 'server_output':
+            if (daemonInfo.authenticated) {
+              // Forward to console WebSocket clients
+            }
+            break;
+
+          case 'log':
+            if (daemonInfo.authenticated) {
+              console.log(`[Daemon ${uuid}] [${msg.level}] ${msg.message}`);
+            }
+            break;
+        }
+      } catch (err) {
+        console.error('Invalid daemon message:', err.message);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log(`Daemon disconnected: ${uuid}`);
+      connectedDaemons.delete(uuid);
+    });
+
+    ws.on('error', (err) => {
+      console.error(`Daemon ${uuid} error:`, err.message);
+    });
+  });
 
   wss.on('connection', (ws) => {
     ws.on('message', (data) => {
