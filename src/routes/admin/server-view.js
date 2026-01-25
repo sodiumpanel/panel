@@ -437,17 +437,19 @@ export async function mount(params) {
     document.getElementById('build-backups').value = server.limit_backups || 0;
     document.getElementById('build-allocations').value = server.limit_allocations || 1;
 
-    try {
-      const res = await api.get(`/nodes/${server.node_id}/allocations`);
-      allocations = res.data || [];
-      
-      const primarySelect = document.getElementById('build-primary-alloc');
-      primarySelect.innerHTML = allocations
-        .filter(a => !a.server_id || a.server_id === server.id)
-        .map(a => `<option value="${a.id}" ${a.id === server.allocation_id ? 'selected' : ''}>${a.ip}:${a.port}</option>`)
-        .join('');
-    } catch (err) {
-      console.error('Failed to load allocations', err);
+    if (server.node_id) {
+      try {
+        const res = await api.get(`/nodes/${server.node_id}/allocations`);
+        allocations = res.data || [];
+        
+        const primarySelect = document.getElementById('build-primary-alloc');
+        primarySelect.innerHTML = allocations
+          .filter(a => !a.server_id || a.server_id === server.id)
+          .map(a => `<option value="${a.id}" ${a.id === server.allocation_id ? 'selected' : ''}>${a.ip}:${a.port}</option>`)
+          .join('');
+      } catch (err) {
+        console.error('Failed to load allocations', err);
+      }
     }
   }
 
