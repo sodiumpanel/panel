@@ -6,7 +6,7 @@ import { toast } from '../../components/toast.js';
 import { confirmModal } from '../../components/modal.js';
 import { navigate } from '../../router.js';
 
-export default function(params) {
+export default function({ params }) {
   const serverId = params.id;
   
   return `

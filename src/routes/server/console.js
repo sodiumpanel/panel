@@ -7,7 +7,7 @@ import { getToken } from '../../utils/auth.js';
 import { formatBytes } from '../../utils/format.js';
 import { WS_URL } from '../../utils/constants.js';
 
-export default function(params) {
+export default function({ params }) {
   const serverId = params.id;
   
   return `

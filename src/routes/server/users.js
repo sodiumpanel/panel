@@ -15,7 +15,7 @@ const PERMISSION_GROUPS = {
   'Users': ['user.read', 'user.create', 'user.update', 'user.delete']
 };
 
-export default function(params) {
+export default function({ params }) {
   const serverId = params.id;
   
   return `

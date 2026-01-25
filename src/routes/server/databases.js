@@ -5,7 +5,7 @@ import { api } from '../../utils/api.js';
 import { toast } from '../../components/toast.js';
 import { openModal, closeModal, confirmModal } from '../../components/modal.js';
 
-export default function(params) {
+export default function({ params }) {
   const serverId = params.id;
   
   return `
