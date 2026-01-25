@@ -53,7 +53,7 @@ class Router {
   patternToRegex(pattern) {
     const escaped = pattern
       .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/\\:([a-zA-Z_][a-zA-Z0-9_]*)/g, '([^/]+)');
+      .replace(/:([a-zA-Z_][a-zA-Z0-9_]*)/g, '([^/]+)');
     return new RegExp(`^${escaped}$`);
   }
 
