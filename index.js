@@ -1266,9 +1266,9 @@ wss.on('connection', (clientWs, req) => {
   
   const wingsWs = new WebSocket(wingsWsUrl, {
     headers: {
-      'Authorization': `Bearer ${node.daemon_token}`,
-      'Origin': `${node.scheme}://${node.fqdn}`
-    }
+      'Authorization': `Bearer ${node.daemon_token}`
+    },
+    origin: `${node.scheme}://${node.fqdn}:${node.daemon_port}`
   });
   
   wingsWs.on('open', () => {
