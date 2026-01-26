@@ -1005,6 +1005,221 @@ app.post('/api/servers/:id/command', async (req, res) => {
   }
 });
 
+// ==================== WINGS REMOTE API ====================
+function authenticateNode(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  const nodes = loadNodes();
+  return nodes.nodes.find(n => n.daemon_token === token);
+}
+
+app.get('/api/remote/servers', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  
+  const page = parseInt(req.query.page) || 0;
+  const perPage = parseInt(req.query.per_page) || 50;
+  
+  const allServers = loadServers();
+  const nodeServers = allServers.servers.filter(s => s.node_id === node.id);
+  const eggs = loadEggs();
+  const users = loadUsers();
+  
+  const start = page * perPage;
+  const paginatedServers = nodeServers.slice(start, start + perPage);
+  
+  const data = paginatedServers.map(server => {
+    const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+    const user = users.users.find(u => u.id === server.user_id) || {};
+    
+    return {
+      uuid: server.uuid,
+      settings: {
+        uuid: server.uuid,
+        meta: {
+          name: server.name,
+          description: server.description || ''
+        },
+        suspended: server.suspended || false,
+        environment: server.environment || {},
+        invocation: server.startup || egg.startup || '',
+        skip_egg_scripts: false,
+        build: {
+          memory_limit: server.limits?.memory || 1024,
+          swap: server.limits?.swap || 0,
+          io_weight: server.limits?.io || 500,
+          cpu_limit: server.limits?.cpu || 100,
+          disk_space: server.limits?.disk || 5120,
+          threads: null
+        },
+        container: {
+          image: server.docker_image || egg.docker_image || ''
+        },
+        allocations: {
+          default: {
+            ip: server.allocation?.ip || '0.0.0.0',
+            port: server.allocation?.port || 25565
+          },
+          mappings: {
+            [server.allocation?.ip || '0.0.0.0']: [server.allocation?.port || 25565]
+          }
+        },
+        mounts: [],
+        egg: {
+          id: egg.id || '',
+          file_denylist: []
+        }
+      },
+      process_configuration: {
+        startup: {
+          done: ['Done'],
+          user_interaction: [],
+          strip_ansi: false
+        },
+        stop: {
+          type: 'command',
+          value: 'stop'
+        },
+        configs: []
+      }
+    };
+  });
+  
+  res.json({
+    data,
+    meta: {
+      current_page: page,
+      last_page: Math.ceil(nodeServers.length / perPage),
+      per_page: perPage,
+      total: nodeServers.length
+    }
+  });
+});
+
+app.post('/api/remote/servers/reset', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  
+  const data = loadServers();
+  data.servers = data.servers.map(s => {
+    if (s.node_id === node.id && (s.status === 'installing' || s.status === 'restoring_backup')) {
+      s.status = 'offline';
+    }
+    return s;
+  });
+  saveServers(data);
+  res.json({ success: true });
+});
+
+app.get('/api/remote/servers/:uuid', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  
+  const data = loadServers();
+  const server = data.servers.find(s => s.uuid === req.params.uuid && s.node_id === node.id);
+  if (!server) return res.status(404).json({ error: 'Server not found' });
+  
+  const eggs = loadEggs();
+  const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+  
+  res.json({
+    settings: {
+      uuid: server.uuid,
+      meta: { name: server.name, description: server.description || '' },
+      suspended: server.suspended || false,
+      environment: server.environment || {},
+      invocation: server.startup || egg.startup || '',
+      skip_egg_scripts: false,
+      build: {
+        memory_limit: server.limits?.memory || 1024,
+        swap: server.limits?.swap || 0,
+        io_weight: server.limits?.io || 500,
+        cpu_limit: server.limits?.cpu || 100,
+        disk_space: server.limits?.disk || 5120,
+        threads: null
+      },
+      container: { image: server.docker_image || egg.docker_image || '' },
+      allocations: {
+        default: { ip: server.allocation?.ip || '0.0.0.0', port: server.allocation?.port || 25565 },
+        mappings: { [server.allocation?.ip || '0.0.0.0']: [server.allocation?.port || 25565] }
+      },
+      mounts: [],
+      egg: { id: egg.id || '', file_denylist: [] }
+    },
+    process_configuration: {
+      startup: { done: ['Done'], user_interaction: [], strip_ansi: false },
+      stop: { type: 'command', value: 'stop' },
+      configs: []
+    }
+  });
+});
+
+app.get('/api/remote/servers/:uuid/install', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  
+  const data = loadServers();
+  const server = data.servers.find(s => s.uuid === req.params.uuid && s.node_id === node.id);
+  if (!server) return res.status(404).json({ error: 'Server not found' });
+  
+  const eggs = loadEggs();
+  const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+  
+  res.json({
+    container_image: server.docker_image || egg.docker_image || '',
+    entrypoint: 'bash',
+    script: egg.install_script || '#!/bin/bash\necho "No install script"'
+  });
+});
+
+app.post('/api/remote/servers/:uuid/install', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  
+  const data = loadServers();
+  const serverIndex = data.servers.findIndex(s => s.uuid === req.params.uuid && s.node_id === node.id);
+  if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
+  
+  data.servers[serverIndex].status = req.body.successful ? 'offline' : 'install_failed';
+  saveServers(data);
+  res.json({ success: true });
+});
+
+app.post('/api/remote/activity', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  res.json({ success: true });
+});
+
+app.post('/api/remote/sftp/auth', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
+  
+  const { username, password } = req.body;
+  if (!username) return res.status(400).json({ error: 'Invalid credentials' });
+  
+  const parts = username.split('.');
+  if (parts.length !== 2) return res.status(403).json({ error: 'Invalid credentials' });
+  
+  const [user, serverIdent] = parts;
+  const users = loadUsers();
+  const userObj = users.users.find(u => u.username.toLowerCase() === user.toLowerCase());
+  if (!userObj) return res.status(403).json({ error: 'Invalid credentials' });
+  
+  const servers = loadServers();
+  const server = servers.servers.find(s => 
+    (s.uuid === serverIdent || s.uuid.startsWith(serverIdent)) && 
+    (s.user_id === userObj.id || userObj.isAdmin)
+  );
+  if (!server) return res.status(403).json({ error: 'Invalid credentials' });
+  
+  res.json({
+    server: server.uuid,
+    permissions: ['*']
+  });
+});
+
 // ==================== USER LIMITS ====================
 app.get('/api/user/limits', (req, res) => {
   const { username } = req.query;
