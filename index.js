@@ -1277,12 +1277,7 @@ wss.on('connection', (clientWs, req) => {
     audience: [node.fqdn]
   });
   
-  const wingsWs = new WebSocket(wingsWsUrl, {
-    headers: {
-      'Authorization': `Bearer ${node.daemon_token}`
-    },
-    origin: `${node.scheme}://${node.fqdn}:${node.daemon_port}`
-  });
+  const wingsWs = new WebSocket(wingsWsUrl);
   
   wingsWs.on('open', () => {
     console.log('[WS PROXY] Connected to Wings, sending auth...');
