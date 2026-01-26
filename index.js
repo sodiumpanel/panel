@@ -757,12 +757,13 @@ app.post('/api/admin/eggs', (req, res) => {
   
   const data = loadEggs();
   const newEgg = {
-    id: (data.eggs.length + 1).toString(),
+    id: generateUUID(),
     nest_id: egg.nest_id,
     name: sanitizeText(egg.name),
     description: sanitizeText(egg.description || ''),
     author: sanitizeText(egg.author || ''),
-    docker_image: egg.docker_image,
+    docker_images: egg.docker_images || {},
+    docker_image: egg.docker_image || Object.values(egg.docker_images || {})[0] || '',
     startup: egg.startup,
     config: egg.config || {},
     variables: egg.variables || []
@@ -773,19 +774,33 @@ app.post('/api/admin/eggs', (req, res) => {
 });
 
 app.post('/api/admin/eggs/import', (req, res) => {
-  const { username, eggJson } = req.body;
+  const { username, nest_id, eggJson } = req.body;
   if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
   
   try {
     const imported = typeof eggJson === 'string' ? JSON.parse(eggJson) : eggJson;
     const data = loadEggs();
+    
+    // Handle docker_images object from Pterodactyl eggs
+    let docker_images = {};
+    let docker_image = '';
+    
+    if (imported.docker_images && typeof imported.docker_images === 'object') {
+      docker_images = imported.docker_images;
+      docker_image = Object.values(imported.docker_images)[0] || '';
+    } else if (imported.docker_image) {
+      docker_image = imported.docker_image;
+      docker_images = { 'Default': imported.docker_image };
+    }
+    
     const newEgg = {
-      id: (data.eggs.length + 1).toString(),
-      nest_id: imported.nest_id || '3',
+      id: generateUUID(),
+      nest_id: nest_id || imported.nest_id || '1',
       name: imported.name,
       description: imported.description || '',
       author: imported.author || '',
-      docker_image: imported.docker_image || imported.docker_images?.[0] || '',
+      docker_images,
+      docker_image,
       startup: imported.startup,
       config: imported.config || {},
       variables: (imported.variables || []).map(v => ({
@@ -800,8 +815,75 @@ app.post('/api/admin/eggs/import', (req, res) => {
     saveEggs(data);
     res.json({ success: true, egg: newEgg });
   } catch (e) {
-    res.status(400).json({ error: 'Invalid egg JSON' });
+    console.error('[EGG IMPORT] Error:', e.message);
+    res.status(400).json({ error: 'Invalid egg JSON: ' + e.message });
   }
+});
+
+app.put('/api/admin/nests/:id', (req, res) => {
+  const { username, nest } = req.body;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
+  
+  const data = loadNests();
+  const idx = data.nests.findIndex(n => n.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Nest not found' });
+  
+  data.nests[idx].name = sanitizeText(nest.name);
+  data.nests[idx].description = sanitizeText(nest.description || '');
+  saveNests(data);
+  
+  res.json({ success: true, nest: data.nests[idx] });
+});
+
+app.delete('/api/admin/nests/:id', (req, res) => {
+  const { username } = req.body;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
+  
+  const nestsData = loadNests();
+  nestsData.nests = nestsData.nests.filter(n => n.id !== req.params.id);
+  saveNests(nestsData);
+  
+  // Also delete eggs in this nest
+  const eggsData = loadEggs();
+  eggsData.eggs = eggsData.eggs.filter(e => e.nest_id !== req.params.id);
+  saveEggs(eggsData);
+  
+  res.json({ success: true });
+});
+
+app.put('/api/admin/eggs/:id', (req, res) => {
+  const { username, egg } = req.body;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
+  
+  const data = loadEggs();
+  const idx = data.eggs.findIndex(e => e.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Egg not found' });
+  
+  data.eggs[idx] = {
+    ...data.eggs[idx],
+    nest_id: egg.nest_id || data.eggs[idx].nest_id,
+    name: sanitizeText(egg.name),
+    description: sanitizeText(egg.description || ''),
+    author: sanitizeText(egg.author || ''),
+    docker_images: egg.docker_images || data.eggs[idx].docker_images || {},
+    docker_image: egg.docker_image || Object.values(egg.docker_images || {})[0] || data.eggs[idx].docker_image,
+    startup: egg.startup || data.eggs[idx].startup,
+    config: egg.config || data.eggs[idx].config
+  };
+  
+  saveEggs(data);
+  res.json({ success: true, egg: data.eggs[idx] });
+});
+
+app.delete('/api/admin/eggs/:id', (req, res) => {
+  const { username } = req.body;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
+  
+  const data = loadEggs();
+  data.eggs = data.eggs.filter(e => e.id !== req.params.id);
+  saveEggs(data);
+  
+  res.json({ success: true });
 });
 
 // ==================== ADMIN: SERVERS ====================

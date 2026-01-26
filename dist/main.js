@@ -4301,23 +4301,50 @@ async function loadNests(container, username) {
   try {
     const res = await fetch('/api/admin/nests');
     const data = await res.json();
+    const nests = data.nests || [];
+    const hasNests = nests.length > 0;
     
     container.innerHTML = `
       <div class="admin-section">
         <div class="section-header">
           <h2>Nests & Eggs</h2>
           <div>
-            <button class="btn btn-ghost" id="add-nest-btn"><span class="material-icons-outlined">add</span> Add Nest</button>
-            <button class="btn btn-primary" id="import-egg-btn"><span class="material-icons-outlined">upload</span> Import Egg</button>
+            <button class="btn btn-ghost" id="add-nest-btn"><span class="material-icons-outlined">create_new_folder</span> Add Nest</button>
+            ${hasNests ? `<button class="btn btn-primary" id="import-egg-btn"><span class="material-icons-outlined">upload</span> Import Egg</button>` : ''}
           </div>
+        </div>
+        
+        <div id="nest-form" class="card form-card" style="display:none;">
+          <h3 id="nest-form-title">Create Nest</h3>
+          <form id="create-nest-form">
+            <input type="hidden" name="nest_id" id="nest-id" />
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" name="name" id="nest-name" required />
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea name="description" id="nest-description" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="nest-submit-btn">Create</button>
+              <button type="button" class="btn btn-ghost" id="cancel-nest">Cancel</button>
+            </div>
+          </form>
         </div>
         
         <div id="import-egg-form" class="card form-card" style="display:none;">
           <h3>Import Pterodactyl Egg</h3>
           <form id="egg-import-form">
             <div class="form-group">
+              <label>Target Nest</label>
+              <select name="nest_id" id="import-nest-select" required>
+                ${nests.map(n => `<option value="${n.id}">${escapeHtml$3(n.name)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
               <label>Egg JSON</label>
-              <textarea name="eggJson" rows="10" placeholder="Paste egg JSON here..."></textarea>
+              <textarea name="eggJson" rows="10" placeholder="Paste Pterodactyl egg JSON here..."></textarea>
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">Import</button>
@@ -4326,43 +4353,136 @@ async function loadNests(container, username) {
           </form>
         </div>
         
-        <div class="nests-grid">
-          ${data.nests.map(nest => `
-            <div class="nest-card card">
-              <h3>${escapeHtml$3(nest.name)}</h3>
-              <p>${escapeHtml$3(nest.description)}</p>
-              <div class="eggs-list">
-                <h4>Eggs (${nest.eggs?.length || 0})</h4>
-                ${(nest.eggs || []).map(egg => `
-                  <div class="egg-item">
-                    <span class="egg-name">${escapeHtml$3(egg.name)}</span>
-                    <span class="egg-image">${escapeHtml$3(egg.docker_image?.split('/').pop() || '')}</span>
-                  </div>
-                `).join('') || '<div class="empty">No eggs</div>'}
+        <div id="egg-form" class="card form-card" style="display:none;">
+          <h3 id="egg-form-title">Create Egg</h3>
+          <form id="create-egg-form">
+            <input type="hidden" name="egg_id" id="egg-id" />
+            <div class="form-row">
+              <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" id="egg-name" required />
+              </div>
+              <div class="form-group">
+                <label>Nest</label>
+                <select name="nest_id" id="egg-nest-select" required>
+                  ${nests.map(n => `<option value="${n.id}">${escapeHtml$3(n.name)}</option>`).join('')}
+                </select>
               </div>
             </div>
-          `).join('')}
+            <div class="form-group">
+              <label>Description</label>
+              <textarea name="description" id="egg-description" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Author</label>
+              <input type="text" name="author" id="egg-author" value="admin@sodium.local" />
+            </div>
+            <div class="form-group">
+              <label>Docker Images</label>
+              <p class="form-hint">One per line. Format: Label|image:tag (e.g., Java 17|ghcr.io/pterodactyl/yolks:java_17)</p>
+              <textarea name="docker_images" id="egg-docker-images" rows="4" placeholder="Java 17|ghcr.io/pterodactyl/yolks:java_17"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Startup Command</label>
+              <textarea name="startup" id="egg-startup" rows="3" placeholder="java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Stop Command</label>
+              <input type="text" name="stop" id="egg-stop" value="^C" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="egg-submit-btn">Create</button>
+              <button type="button" class="btn btn-ghost" id="cancel-egg">Cancel</button>
+            </div>
+          </form>
         </div>
+        
+        ${!hasNests ? `
+          <div class="empty-state card">
+            <span class="material-icons-outlined icon">folder_off</span>
+            <h3>No Nests</h3>
+            <p>Create a nest first to organize your eggs</p>
+          </div>
+        ` : `
+          <div class="nests-grid">
+            ${nests.map(nest => `
+              <div class="nest-card card">
+                <div class="nest-header">
+                  <h3>${escapeHtml$3(nest.name)}</h3>
+                  <div class="nest-actions">
+                    <button class="btn btn-sm btn-ghost" onclick="editNest('${nest.id}')"><span class="material-icons-outlined">edit</span></button>
+                    <button class="btn btn-sm btn-ghost" onclick="addEggToNest('${nest.id}')"><span class="material-icons-outlined">add</span></button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteNest('${nest.id}')"><span class="material-icons-outlined">delete</span></button>
+                  </div>
+                </div>
+                <p class="nest-description">${escapeHtml$3(nest.description || '')}</p>
+                <div class="eggs-list">
+                  <h4>Eggs (${nest.eggs?.length || 0})</h4>
+                  ${(nest.eggs || []).length === 0 ? '<div class="empty">No eggs in this nest</div>' : ''}
+                  ${(nest.eggs || []).map(egg => `
+                    <div class="egg-item">
+                      <div class="egg-info">
+                        <span class="egg-name">${escapeHtml$3(egg.name)}</span>
+                        <span class="egg-images">${formatDockerImages(egg.docker_images, egg.docker_image)}</span>
+                      </div>
+                      <div class="egg-actions">
+                        <button class="btn btn-xs btn-ghost" onclick="editEgg('${egg.id}')"><span class="material-icons-outlined">edit</span></button>
+                        <button class="btn btn-xs btn-danger" onclick="deleteEgg('${egg.id}')"><span class="material-icons-outlined">delete</span></button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
       </div>
     `;
     
-    document.getElementById('add-nest-btn').onclick = async () => {
-      const name = prompt('Nest name:');
-      if (!name) return;
-      const description = prompt('Description:') || '';
+    // Add Nest
+    document.getElementById('add-nest-btn').onclick = () => {
+      document.getElementById('nest-form').style.display = 'block';
+      document.getElementById('nest-form-title').textContent = 'Create Nest';
+      document.getElementById('nest-submit-btn').textContent = 'Create';
+      document.getElementById('nest-id').value = '';
+      document.getElementById('nest-name').value = '';
+      document.getElementById('nest-description').value = '';
+    };
+    
+    document.getElementById('cancel-nest').onclick = () => {
+      document.getElementById('nest-form').style.display = 'none';
+    };
+    
+    document.getElementById('create-nest-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const nestId = document.getElementById('nest-id').value;
+      const name = document.getElementById('nest-name').value;
+      const description = document.getElementById('nest-description').value;
       
-      await fetch('/api/admin/nests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, nest: { name, description } })
-      });
+      if (nestId) {
+        await fetch(`/api/admin/nests/${nestId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, nest: { name, description } })
+        });
+      } else {
+        await fetch('/api/admin/nests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, nest: { name, description } })
+        });
+      }
       
       loadTab('nests');
     };
     
-    document.getElementById('import-egg-btn').onclick = () => {
-      document.getElementById('import-egg-form').style.display = 'block';
-    };
+    // Import Egg
+    const importBtn = document.getElementById('import-egg-btn');
+    if (importBtn) {
+      importBtn.onclick = () => {
+        document.getElementById('import-egg-form').style.display = 'block';
+      };
+    }
     
     document.getElementById('cancel-import').onclick = () => {
       document.getElementById('import-egg-form').style.display = 'none';
@@ -4371,23 +4491,175 @@ async function loadNests(container, username) {
     document.getElementById('egg-import-form').onsubmit = async (e) => {
       e.preventDefault();
       const form = new FormData(e.target);
+      const nestId = form.get('nest_id');
+      const eggJson = form.get('eggJson');
       
       const res = await fetch('/api/admin/eggs/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, eggJson: form.get('eggJson') })
+        body: JSON.stringify({ username, nest_id: nestId, eggJson })
       });
       
+      const data = await res.json();
       if (res.ok) {
         loadTab('nests');
       } else {
-        alert('Failed to import egg');
+        alert(data.error || 'Failed to import egg');
       }
     };
+    
+    // Create/Edit Egg form
+    document.getElementById('cancel-egg').onclick = () => {
+      document.getElementById('egg-form').style.display = 'none';
+    };
+    
+    document.getElementById('create-egg-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const eggId = document.getElementById('egg-id').value;
+      const dockerImagesRaw = document.getElementById('egg-docker-images').value;
+      
+      const docker_images = {};
+      dockerImagesRaw.split('\n').filter(l => l.trim()).forEach(line => {
+        const [label, image] = line.split('|').map(s => s.trim());
+        if (label && image) {
+          docker_images[label] = image;
+        } else if (label) {
+          docker_images[label] = label;
+        }
+      });
+      
+      const eggData = {
+        name: document.getElementById('egg-name').value,
+        nest_id: document.getElementById('egg-nest-select').value,
+        description: document.getElementById('egg-description').value,
+        author: document.getElementById('egg-author').value,
+        docker_images,
+        docker_image: Object.values(docker_images)[0] || '',
+        startup: document.getElementById('egg-startup').value,
+        config: {
+          stop: document.getElementById('egg-stop').value || '^C'
+        }
+      };
+      
+      if (eggId) {
+        await fetch(`/api/admin/eggs/${eggId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, egg: eggData })
+        });
+      } else {
+        await fetch('/api/admin/eggs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, egg: eggData })
+        });
+      }
+      
+      loadTab('nests');
+    };
+    
   } catch (e) {
+    console.error('Failed to load nests:', e);
     container.innerHTML = `<div class="error">Failed to load nests</div>`;
   }
 }
+
+function formatDockerImages(dockerImages, fallbackImage) {
+  if (dockerImages && typeof dockerImages === 'object') {
+    const keys = Object.keys(dockerImages);
+    if (keys.length > 0) {
+      return keys.length === 1 ? escapeHtml$3(keys[0]) : `${keys.length} images`;
+    }
+  }
+  if (fallbackImage) {
+    return escapeHtml$3(fallbackImage.split('/').pop() || fallbackImage);
+  }
+  return 'No image';
+}
+
+window.editNest = async function(nestId) {
+  const res = await fetch('/api/admin/nests');
+  const data = await res.json();
+  const nest = data.nests.find(n => n.id === nestId);
+  if (!nest) return;
+  
+  document.getElementById('nest-form').style.display = 'block';
+  document.getElementById('nest-form-title').textContent = 'Edit Nest';
+  document.getElementById('nest-submit-btn').textContent = 'Save';
+  document.getElementById('nest-id').value = nest.id;
+  document.getElementById('nest-name').value = nest.name;
+  document.getElementById('nest-description').value = nest.description || '';
+};
+
+window.deleteNest = async function(nestId) {
+  if (!confirm('Delete this nest and all its eggs?')) return;
+  const username = localStorage.getItem('username');
+  
+  await fetch(`/api/admin/nests/${nestId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username })
+  });
+  
+  loadTab('nests');
+};
+
+window.addEggToNest = function(nestId) {
+  document.getElementById('egg-form').style.display = 'block';
+  document.getElementById('egg-form-title').textContent = 'Create Egg';
+  document.getElementById('egg-submit-btn').textContent = 'Create';
+  document.getElementById('egg-id').value = '';
+  document.getElementById('egg-name').value = '';
+  document.getElementById('egg-nest-select').value = nestId;
+  document.getElementById('egg-description').value = '';
+  document.getElementById('egg-author').value = 'admin@sodium.local';
+  document.getElementById('egg-docker-images').value = '';
+  document.getElementById('egg-startup').value = '';
+  document.getElementById('egg-stop').value = '^C';
+};
+
+window.editEgg = async function(eggId) {
+  const res = await fetch('/api/admin/nests');
+  const data = await res.json();
+  let egg = null;
+  for (const nest of data.nests) {
+    egg = (nest.eggs || []).find(e => e.id === eggId);
+    if (egg) break;
+  }
+  if (!egg) return;
+  
+  let dockerImagesText = '';
+  if (egg.docker_images && typeof egg.docker_images === 'object') {
+    dockerImagesText = Object.entries(egg.docker_images).map(([k, v]) => `${k}|${v}`).join('\n');
+  } else if (egg.docker_image) {
+    dockerImagesText = egg.docker_image;
+  }
+  
+  document.getElementById('egg-form').style.display = 'block';
+  document.getElementById('egg-form-title').textContent = 'Edit Egg';
+  document.getElementById('egg-submit-btn').textContent = 'Save';
+  document.getElementById('egg-id').value = egg.id;
+  document.getElementById('egg-name').value = egg.name;
+  document.getElementById('egg-nest-select').value = egg.nest_id;
+  document.getElementById('egg-description').value = egg.description || '';
+  document.getElementById('egg-author').value = egg.author || '';
+  document.getElementById('egg-docker-images').value = dockerImagesText;
+  document.getElementById('egg-startup').value = egg.startup || '';
+  document.getElementById('egg-stop').value = egg.config?.stop || '^C';
+};
+
+window.deleteEgg = async function(eggId) {
+  if (!confirm('Delete this egg?')) return;
+  const username = localStorage.getItem('username');
+  
+  await fetch(`/api/admin/eggs/${eggId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username })
+  });
+  
+  loadTab('nests');
+};
 
 async function loadLocations(container, username) {
   try {

@@ -412,7 +412,7 @@
   
   .nests-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 20px;
     
     @media (max-width: 480px) {
@@ -421,17 +421,36 @@
     }
     
     .nest-card {
-      h3 {
-        font-size: 18px;
-        font-weight: 600;
+      .nest-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 8px;
+        gap: 12px;
         
-        @media (max-width: 768px) {
-          font-size: 16px;
+        h3 {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0;
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          
+          @media (max-width: 768px) {
+            font-size: 16px;
+          }
+        }
+        
+        .nest-actions {
+          display: flex;
+          gap: 4px;
+          flex-shrink: 0;
         }
       }
       
-      > p {
+      .nest-description {
         color: var(--text-secondary);
         font-size: 14px;
         margin-bottom: 20px;
@@ -450,20 +469,35 @@
         .egg-item {
           display: flex;
           justify-content: space-between;
-          padding: 10px;
+          align-items: center;
+          padding: 10px 12px;
           background: var(--bg-tertiary);
           border-radius: var(--radius-sm);
           margin-bottom: 8px;
-          gap: 8px;
-          flex-wrap: wrap;
+          gap: 12px;
           
-          .egg-name {
-            font-weight: 500;
+          .egg-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            flex: 1;
+            
+            .egg-name {
+              font-weight: 500;
+              font-size: 14px;
+            }
+            
+            .egg-images {
+              font-size: 12px;
+              color: var(--text-tertiary);
+            }
           }
           
-          .egg-image {
-            font-size: 12px;
-            color: var(--text-tertiary);
+          .egg-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
           }
         }
         
@@ -474,6 +508,37 @@
           padding: 20px;
         }
       }
+    }
+  }
+  
+  .btn-xs {
+    padding: 4px 6px;
+    font-size: 12px;
+    
+    .material-icons-outlined {
+      font-size: 16px;
+    }
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    
+    .icon {
+      font-size: 48px;
+      color: var(--text-tertiary);
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    p {
+      color: var(--text-secondary);
+      font-size: 14px;
     }
   }
 }

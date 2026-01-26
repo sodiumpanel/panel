@@ -3804,7 +3804,7 @@ input, textarea, select {
 }
 .admin-page .nests-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
 }
 @media (max-width: 480px) {
@@ -3813,17 +3813,34 @@ input, textarea, select {
     gap: 16px;
   }
 }
-.admin-page .nests-grid .nest-card h3 {
+.admin-page .nests-grid .nest-card .nest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+.admin-page .nests-grid .nest-card .nest-header h3 {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 @media (max-width: 768px) {
-  .admin-page .nests-grid .nest-card h3 {
+  .admin-page .nests-grid .nest-card .nest-header h3 {
     font-size: 16px;
   }
 }
-.admin-page .nests-grid .nest-card > p {
+.admin-page .nests-grid .nest-card .nest-header .nest-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.admin-page .nests-grid .nest-card .nest-description {
   color: var(--text-secondary);
   font-size: 14px;
   margin-bottom: 20px;
@@ -3839,25 +3856,63 @@ input, textarea, select {
 .admin-page .nests-grid .nest-card .eggs-list .egg-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px;
+  align-items: center;
+  padding: 10px 12px;
   background: var(--bg-tertiary);
   border-radius: var(--radius-sm);
   margin-bottom: 8px;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
-.admin-page .nests-grid .nest-card .eggs-list .egg-item .egg-name {
+.admin-page .nests-grid .nest-card .eggs-list .egg-item .egg-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.admin-page .nests-grid .nest-card .eggs-list .egg-item .egg-info .egg-name {
   font-weight: 500;
+  font-size: 14px;
 }
-.admin-page .nests-grid .nest-card .eggs-list .egg-item .egg-image {
+.admin-page .nests-grid .nest-card .eggs-list .egg-item .egg-info .egg-images {
   font-size: 12px;
   color: var(--text-tertiary);
+}
+.admin-page .nests-grid .nest-card .eggs-list .egg-item .egg-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
 }
 .admin-page .nests-grid .nest-card .eggs-list .empty {
   font-size: 14px;
   color: var(--text-tertiary);
   text-align: center;
   padding: 20px;
+}
+.admin-page .btn-xs {
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.admin-page .btn-xs .material-icons-outlined {
+  font-size: 16px;
+}
+.admin-page .empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+.admin-page .empty-state .icon {
+  font-size: 48px;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+}
+.admin-page .empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.admin-page .empty-state p {
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .pagination {
