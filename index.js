@@ -428,6 +428,7 @@ app.get('/api/auth/me', async (req, res) => {
 // ==================== STATUS PAGE (PUBLIC) ====================
 app.get('/api/status/nodes', async (req, res) => {
   const data = loadNodes();
+  const locations = loadLocations();
   const publicNodes = await Promise.all(data.nodes.map(async node => {
     let status = 'offline';
     let stats = { memory: 0, disk: 0 };
@@ -438,15 +439,30 @@ app.get('/api/status/nodes', async (req, res) => {
     } catch {}
     
     const servers = loadServers();
-    const serverCount = servers.servers.filter(s => s.node_id === node.id).length;
+    const nodeServers = servers.servers.filter(s => s.node_id === node.id);
+    const serverCount = nodeServers.length;
+    
+    // Calculate allocated resources
+    const allocatedMemory = nodeServers.reduce((sum, s) => sum + (s.limits?.memory || 0), 0);
+    const allocatedDisk = nodeServers.reduce((sum, s) => sum + (s.limits?.disk || 0), 0);
+    
+    const location = locations.locations.find(l => l.id === node.location_id);
     
     return {
       id: node.id,
       name: node.name,
-      location: node.location_id,
+      location: location?.short || 'Unknown',
       status,
-      memory: { total: node.memory, used: stats.memory_bytes || 0 },
-      disk: { total: node.disk, used: stats.disk_bytes || 0 },
+      memory: { 
+        total: node.memory, 
+        used: stats.memory_bytes || 0,
+        allocated: allocatedMemory
+      },
+      disk: { 
+        total: node.disk, 
+        used: stats.disk_bytes || 0,
+        allocated: allocatedDisk
+      },
       servers: serverCount
     };
   }));

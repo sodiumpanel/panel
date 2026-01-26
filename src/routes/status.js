@@ -34,14 +34,14 @@ export function renderStatus() {
           <span class="material-icons-outlined card-icon">memory</span>
           <div class="card-content">
             <span class="number" id="memory-usage">-</span>
-            <span class="label">Avg Memory</span>
+            <span class="label">Mem Alloc</span>
           </div>
         </div>
         <div class="summary-card">
-          <span class="material-icons-outlined card-icon">schedule</span>
+          <span class="material-icons-outlined card-icon">hard_drive</span>
           <div class="card-content">
             <span class="number" id="uptime">-</span>
-            <span class="label">Uptime</span>
+            <span class="label">Disk Alloc</span>
           </div>
         </div>
       </div>
@@ -87,19 +87,17 @@ async function loadStatus() {
     const total = data.nodes.length;
     const servers = data.nodes.reduce((sum, n) => sum + n.servers, 0);
     
-    // Calculate average memory usage
-    const memoryUsages = data.nodes
-      .filter(n => n.status === 'online' && n.memory.total > 0)
-      .map(n => (n.memory.used / (n.memory.total * 1024 * 1024)) * 100);
-    const avgMemory = memoryUsages.length > 0 
-      ? memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length 
-      : 0;
+    // Calculate total allocated resources
+    const totalAllocMem = data.nodes.reduce((sum, n) => sum + n.memory.allocated, 0);
+    const totalMem = data.nodes.reduce((sum, n) => sum + n.memory.total, 0);
+    const totalAllocDisk = data.nodes.reduce((sum, n) => sum + n.disk.allocated, 0);
+    const totalDisk = data.nodes.reduce((sum, n) => sum + n.disk.total, 0);
     
     // Update summary
     document.getElementById('nodes-online').textContent = `${online}/${total}`;
     document.getElementById('servers-total').textContent = servers;
-    document.getElementById('memory-usage').textContent = `${avgMemory.toFixed(0)}%`;
-    document.getElementById('uptime').textContent = '99.9%';
+    document.getElementById('memory-usage').textContent = totalMem > 0 ? `${((totalAllocMem / totalMem) * 100).toFixed(0)}%` : '0%';
+    document.getElementById('uptime').textContent = totalDisk > 0 ? `${((totalAllocDisk / totalDisk) * 100).toFixed(0)}%` : '0%';
     document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
     
     // Update global status
@@ -132,10 +130,10 @@ async function loadStatus() {
     }
     
     container.innerHTML = data.nodes.map(node => {
-      const memPercent = node.memory.total > 0 ? (node.memory.used / (node.memory.total * 1024 * 1024)) * 100 : 0;
-      const diskPercent = node.disk.total > 0 ? (node.disk.used / (node.disk.total * 1024 * 1024)) * 100 : 0;
-      const memClass = memPercent > 80 ? 'high' : memPercent > 60 ? 'medium' : '';
-      const diskClass = diskPercent > 80 ? 'high' : diskPercent > 60 ? 'medium' : '';
+      const memAllocPercent = node.memory.total > 0 ? (node.memory.allocated / node.memory.total) * 100 : 0;
+      const diskAllocPercent = node.disk.total > 0 ? (node.disk.allocated / node.disk.total) * 100 : 0;
+      const memAllocClass = memAllocPercent > 80 ? 'high' : memAllocPercent > 60 ? 'medium' : '';
+      const diskAllocClass = diskAllocPercent > 80 ? 'high' : diskAllocPercent > 60 ? 'medium' : '';
       
       return `
         <div class="node-status-card card ${node.status}">
@@ -162,19 +160,19 @@ async function loadStatus() {
             <div class="stat">
               <div class="stat-header">
                 <span class="label">Memory</span>
-                <span class="value ${memClass}">${memPercent.toFixed(1)}%</span>
+                <span class="value ${memAllocClass}">${node.memory.allocated} / ${node.memory.total} MB</span>
               </div>
               <div class="progress-bar">
-                <div class="progress ${memClass}" style="width: ${Math.min(memPercent, 100)}%"></div>
+                <div class="progress ${memAllocClass}" style="width: ${Math.min(memAllocPercent, 100)}%"></div>
               </div>
             </div>
             <div class="stat">
               <div class="stat-header">
                 <span class="label">Disk</span>
-                <span class="value ${diskClass}">${diskPercent.toFixed(1)}%</span>
+                <span class="value ${diskAllocClass}">${node.disk.allocated} / ${node.disk.total} MB</span>
               </div>
               <div class="progress-bar">
-                <div class="progress ${diskClass}" style="width: ${Math.min(diskPercent, 100)}%"></div>
+                <div class="progress ${diskAllocClass}" style="width: ${Math.min(diskAllocPercent, 100)}%"></div>
               </div>
             </div>
           </div>
