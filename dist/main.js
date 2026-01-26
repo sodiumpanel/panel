@@ -2273,27 +2273,6 @@ let currentServerId$2 = null;
 let serverData$2 = null;
 let eggData = null;
 
-const ALLOWED_DOCKER_IMAGES = [
-  { value: 'ghcr.io/pterodactyl/yolks:java_21', label: 'Java 21 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:java_17', label: 'Java 17 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:java_16', label: 'Java 16 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:java_11', label: 'Java 11 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:java_8', label: 'Java 8 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:nodejs_20', label: 'Node.js 20 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:nodejs_18', label: 'Node.js 18 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:nodejs_16', label: 'Node.js 16 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:python_3.12', label: 'Python 3.12 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:python_3.11', label: 'Python 3.11 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:python_3.10', label: 'Python 3.10 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:golang_1.21', label: 'Go 1.21 (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/yolks:rust_latest', label: 'Rust Latest (Yolks)' },
-  { value: 'ghcr.io/pterodactyl/games:source', label: 'Source Engine (Games)' },
-  { value: 'ghcr.io/pterodactyl/games:rust', label: 'Rust Game (Games)' },
-  { value: 'ghcr.io/pterodactyl/games:arma3', label: 'Arma 3 (Games)' },
-  { value: 'ghcr.io/pterodactyl/installers:debian', label: 'Debian (Installers)' },
-  { value: 'ghcr.io/pterodactyl/installers:alpine', label: 'Alpine (Installers)' },
-];
-
 function renderStartupTab() {
   return `
     <div class="startup-tab">
@@ -2362,14 +2341,10 @@ function renderStartupForm(server, egg) {
       
       <div class="form-section">
         <h4>Docker Image</h4>
-        <p class="form-hint">Select a Docker image from the approved list.</p>
+        <p class="form-hint">Select a Docker image available for this egg.</p>
         <div class="form-group">
           <select name="docker_image" class="select-input">
-            ${ALLOWED_DOCKER_IMAGES.map(img => `
-              <option value="${escapeHtml$1(img.value)}" ${(server.docker_image || egg?.docker_image) === img.value ? 'selected' : ''}>
-                ${escapeHtml$1(img.label)}
-              </option>
-            `).join('')}
+            ${getDockerImagesOptions(server, egg)}
           </select>
         </div>
       </div>
@@ -2440,6 +2415,26 @@ function renderStartupForm(server, egg) {
       resetToDefaults();
     }
   };
+}
+
+function getDockerImagesOptions(server, egg) {
+  const currentImage = server.docker_image || egg?.docker_image || '';
+  const eggImages = egg?.docker_images || {};
+  
+  const images = Object.entries(eggImages);
+  
+  if (images.length === 0) {
+    if (currentImage) {
+      return `<option value="${escapeHtml$1(currentImage)}" selected>${escapeHtml$1(currentImage)}</option>`;
+    }
+    return '<option value="">No images available</option>';
+  }
+  
+  return images.map(([label, value]) => `
+    <option value="${escapeHtml$1(value)}" ${currentImage === value ? 'selected' : ''}>
+      ${escapeHtml$1(label)}
+    </option>
+  `).join('');
 }
 
 function getEnvironmentFromForm() {
