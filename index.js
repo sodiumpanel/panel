@@ -926,6 +926,34 @@ app.post('/api/servers/:id/command', async (req, res) => {
   }
 });
 
+app.get('/api/servers/:id/websocket', async (req, res) => {
+  const { username } = req.query;
+  
+  const data = loadServers();
+  const server = data.servers.find(s => s.id === req.params.id);
+  if (!server) return res.status(404).json({ error: 'Server not found' });
+  
+  const users = loadUsers();
+  const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
+  if (!user || (server.user_id !== user.id && !user.isAdmin)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  
+  const nodes = loadNodes();
+  const node = nodes.nodes.find(n => n.id === server.node_id);
+  if (!node) return res.status(400).json({ error: 'Node not available' });
+  
+  const wsScheme = node.scheme === 'https' ? 'wss' : 'ws';
+  const wsUrl = `${wsScheme}://${node.fqdn}:${node.daemon_port}/api/servers/${server.uuid}/ws`;
+  
+  res.json({
+    data: {
+      token: node.daemon_token,
+      socket: wsUrl
+    }
+  });
+});
+
 // ==================== WINGS REMOTE API ====================
 function authenticateNode(req) {
   const authHeader = req.headers.authorization;
