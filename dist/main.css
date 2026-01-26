@@ -1371,10 +1371,12 @@ input, textarea, select {
 .servers-page {
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
 }
 @media (max-width: 768px) {
   .servers-page {
     max-width: 100%;
+    padding: 0;
   }
 }
 .servers-page .page-header {
@@ -1522,10 +1524,12 @@ input, textarea, select {
 .server-console-page {
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
 }
 @media (max-width: 768px) {
   .server-console-page {
     max-width: 100%;
+    padding: 0;
   }
 }
 .server-console-page .page-header {

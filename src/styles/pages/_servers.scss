@@ -1,9 +1,11 @@
 .servers-page {
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
   
   @media (max-width: 768px) {
     max-width: 100%;
+    padding: 0;
   }
   
   .page-header {
@@ -177,9 +179,11 @@
 .server-console-page {
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
   
   @media (max-width: 768px) {
     max-width: 100%;
+    padding: 0;
   }
   
   .page-header {
