@@ -1105,11 +1105,15 @@ app.post('/api/remote/servers/:uuid/install', (req, res) => {
   const node = authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
+  console.log('Install status received:', req.body);
+  
   const data = loadServers();
   const serverIndex = data.servers.findIndex(s => s.uuid === req.params.uuid && s.node_id === node.id);
   if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
   
-  data.servers[serverIndex].status = req.body.successful ? 'offline' : 'install_failed';
+  const successful = req.body.successful === true || req.body.successful === 'true';
+  data.servers[serverIndex].status = successful ? 'offline' : 'install_failed';
+  console.log('Server status set to:', data.servers[serverIndex].status);
   saveServers(data);
   res.json({ success: true });
 });
