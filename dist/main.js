@@ -301,7 +301,7 @@ function renderDashboard() {
   }, 1000);
 }
 
-function escapeHtml$1(str) {
+function escapeHtml$2(str) {
   if (typeof str !== 'string') return '';
   return str
     .replace(/&/g, '&amp;')
@@ -325,7 +325,7 @@ function escapeUrl(url) {
 
 function sanitizeText(text, maxLength = 1000) {
   if (typeof text !== 'string') return '';
-  return escapeHtml$1(text.slice(0, maxLength).trim());
+  return escapeHtml$2(text.slice(0, maxLength).trim());
 }
 
 function isValidUrl(url) {
@@ -348,9 +348,9 @@ function createSafeElement(tag, attributes = {}, textContent = '') {
     } else if (key === 'class') {
       el.className = value;
     } else if (key.startsWith('data-')) {
-      el.setAttribute(key, escapeHtml$1(value));
+      el.setAttribute(key, escapeHtml$2(value));
     } else {
-      el.setAttribute(key, escapeHtml$1(value));
+      el.setAttribute(key, escapeHtml$2(value));
     }
   }
   
@@ -405,8 +405,8 @@ function renderProfile() {
               <span class="material-icons-outlined">person</span>
             </div>
             <div class="avatar-info">
-              <h3 id="profile-display-name">${escapeHtml$1(displayName)}</h3>
-              <span class="username">@${escapeHtml$1(username)}</span>
+              <h3 id="profile-display-name">${escapeHtml$2(displayName)}</h3>
+              <span class="username">@${escapeHtml$2(username)}</span>
             </div>
           </div>
         </div>
@@ -428,7 +428,7 @@ function renderProfile() {
               <label for="display-name">Display Name</label>
               <div class="input-wrapper">
                 <span class="material-icons-outlined">badge</span>
-                <input type="text" id="display-name" name="displayName" value="${escapeHtml$1(displayName)}" maxlength="50" placeholder="Your display name">
+                <input type="text" id="display-name" name="displayName" value="${escapeHtml$2(displayName)}" maxlength="50" placeholder="Your display name">
               </div>
               <small class="form-hint">This is how others will see you</small>
             </div>
@@ -560,7 +560,7 @@ function renderProfile() {
       const data = await res.json();
       
       if (data.error) {
-        messageEl.textContent = escapeHtml$1(data.error);
+        messageEl.textContent = escapeHtml$2(data.error);
         messageEl.className = 'message error';
       } else {
         messageEl.textContent = 'Profile updated successfully!';
@@ -568,10 +568,10 @@ function renderProfile() {
         localStorage.setItem('displayName', displayName);
         
         const profileDisplayName = document.getElementById('profile-display-name');
-        if (profileDisplayName) profileDisplayName.textContent = escapeHtml$1(displayName);
+        if (profileDisplayName) profileDisplayName.textContent = escapeHtml$2(displayName);
         
         const navDisplayName = document.querySelector('.user-display-name');
-        if (navDisplayName) navDisplayName.textContent = escapeHtml$1(displayName);
+        if (navDisplayName) navDisplayName.textContent = escapeHtml$2(displayName);
       }
     } catch (err) {
       messageEl.textContent = 'Connection error. Please try again.';
@@ -1037,7 +1037,7 @@ async function loadUserProfile(targetUsername) {
                 return `
                   <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="link-item">
                     <span class="material-icons-outlined">${linkIcons[key] || 'link'}</span>
-                    <span>${escapeHtml$1(linkLabels[key] || key)}</span>
+                    <span>${escapeHtml$2(linkLabels[key] || key)}</span>
                     <span class="material-icons-outlined external">open_in_new</span>
                   </a>
                 `;
@@ -1059,8 +1059,8 @@ async function loadUserProfile(targetUsername) {
             ${avatarHtml}
           </div>
           <div class="user-info">
-            <h1>${escapeHtml$1(user.displayName || user.username)}</h1>
-            <span class="user-username">@${escapeHtml$1(user.username)}</span>
+            <h1>${escapeHtml$2(user.displayName || user.username)}</h1>
+            <span class="user-username">@${escapeHtml$2(user.username)}</span>
             ${isPrivate ? '<span class="private-badge"><span class="material-icons-outlined">lock</span> Private Profile</span>' : ''}
           </div>
         </div>
@@ -1068,7 +1068,7 @@ async function loadUserProfile(targetUsername) {
         ${!isPrivate && user.bio ? `
           <div class="user-bio">
             <h3>About</h3>
-            <p>${escapeHtml$1(user.bio)}</p>
+            <p>${escapeHtml$2(user.bio)}</p>
           </div>
         ` : ''}
         
@@ -1201,7 +1201,7 @@ async function loadServers() {
     container.innerHTML = data.servers.map(server => `
       <div class="server-card card" data-id="${server.id}">
         <div class="server-header">
-          <h3>${escapeHtml$1(server.name)}</h3>
+          <h3>${escapeHtml$2(server.name)}</h3>
           <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
         </div>
         <div class="server-info">
@@ -1619,7 +1619,7 @@ function cleanupConsoleTab() {
 }
 
 let currentPath = '/';
-let currentServerId$1 = null;
+let currentServerId$2 = null;
 let isEditing = false;
 let editingPath = null;
 
@@ -1674,7 +1674,7 @@ function renderFilesTab() {
 
 function initFilesTab(serverId) {
   currentPath = '/';
-  currentServerId$1 = serverId;
+  currentServerId$2 = serverId;
   isEditing = false;
   editingPath = null;
   loadFiles(serverId, currentPath);
@@ -2030,7 +2030,7 @@ async function editFile(serverId, path) {
   }
 }
 
-function escapeHtml(text) {
+function escapeHtml$1(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
@@ -2111,6 +2111,253 @@ function cleanupFilesTab() {
   currentPath = '/';
 }
 
+let currentServerId$1 = null;
+let serverData$1 = null;
+let eggData = null;
+
+function renderStartupTab() {
+  return `
+    <div class="startup-tab">
+      <div class="card">
+        <div class="card-header">
+          <h3>Startup Configuration</h3>
+        </div>
+        <div class="startup-content" id="startup-content">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function initStartupTab(serverId) {
+  currentServerId$1 = serverId;
+  await loadStartupData(serverId);
+}
+
+async function loadStartupData(serverId) {
+  const username = localStorage.getItem('username');
+  const content = document.getElementById('startup-content');
+  
+  try {
+    const [serverRes, startupRes] = await Promise.all([
+      fetch(`/api/servers/${serverId}?username=${encodeURIComponent(username)}`),
+      fetch(`/api/servers/${serverId}/startup?username=${encodeURIComponent(username)}`)
+    ]);
+    
+    const serverJson = await serverRes.json();
+    const startupJson = await startupRes.json();
+    
+    if (serverJson.error || startupJson.error) {
+      content.innerHTML = `<div class="error">${serverJson.error || startupJson.error}</div>`;
+      return;
+    }
+    
+    serverData$1 = serverJson.server;
+    eggData = startupJson.egg;
+    
+    renderStartupForm(serverData$1, eggData);
+  } catch (e) {
+    console.error('Failed to load startup data:', e);
+    content.innerHTML = '<div class="error">Failed to load startup configuration</div>';
+  }
+}
+
+function renderStartupForm(server, egg) {
+  const content = document.getElementById('startup-content');
+  const variables = egg?.variables || [];
+  
+  content.innerHTML = `
+    <form id="startup-form" class="startup-form">
+      <div class="form-section">
+        <h4>Startup Command</h4>
+        <p class="form-hint">This command is executed when the server starts. Use {{VARIABLE}} syntax for variables.</p>
+        <div class="form-group">
+          <textarea name="startup" id="startup-command" rows="3" spellcheck="false">${escapeHtml(server.startup || egg?.startup || '')}</textarea>
+        </div>
+        <div class="startup-preview">
+          <span class="preview-label">Preview:</span>
+          <code id="startup-preview">${escapeHtml(parseStartupCommand(server.startup || egg?.startup || '', server.environment || {}))}</code>
+        </div>
+      </div>
+      
+      <div class="form-section">
+        <h4>Docker Image</h4>
+        <div class="form-group">
+          <input type="text" name="docker_image" value="${escapeHtml(server.docker_image || egg?.docker_image || '')}" placeholder="ghcr.io/image:tag" />
+        </div>
+      </div>
+      
+      <div class="form-section">
+        <h4>Environment Variables</h4>
+        <p class="form-hint">Configure the variables used by the egg for this server.</p>
+        
+        <div class="variables-list">
+          ${variables.length === 0 ? '<div class="empty">No variables defined for this egg</div>' : ''}
+          ${variables.map(v => `
+            <div class="variable-item">
+              <div class="variable-header">
+                <label for="var-${v.env_variable}">${escapeHtml(v.name)}</label>
+                <code class="variable-key">${escapeHtml(v.env_variable)}</code>
+              </div>
+              <p class="variable-description">${escapeHtml(v.description || '')}</p>
+              <input 
+                type="text" 
+                id="var-${v.env_variable}"
+                name="env_${v.env_variable}" 
+                value="${escapeHtml(server.environment?.[v.env_variable] ?? v.default_value ?? '')}"
+                placeholder="${escapeHtml(v.default_value || '')}"
+                data-var="${v.env_variable}"
+              />
+              ${v.rules ? `<span class="variable-rules">${escapeHtml(v.rules)}</span>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="save-startup">
+          <span class="material-icons-outlined">save</span>
+          Save Changes
+        </button>
+        <button type="button" class="btn btn-ghost" id="reset-startup">
+          <span class="material-icons-outlined">restart_alt</span>
+          Reset to Egg Defaults
+        </button>
+      </div>
+    </form>
+  `;
+  
+  const form = document.getElementById('startup-form');
+  const startupInput = document.getElementById('startup-command');
+  const previewEl = document.getElementById('startup-preview');
+  
+  const updatePreview = () => {
+    const env = getEnvironmentFromForm();
+    const cmd = startupInput.value;
+    previewEl.textContent = parseStartupCommand(cmd, env);
+  };
+  
+  startupInput.addEventListener('input', updatePreview);
+  
+  document.querySelectorAll('.variable-item input').forEach(input => {
+    input.addEventListener('input', updatePreview);
+  });
+  
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    saveStartup();
+  };
+  
+  document.getElementById('reset-startup').onclick = () => {
+    if (confirm('Reset startup configuration to egg defaults?')) {
+      resetToDefaults();
+    }
+  };
+}
+
+function getEnvironmentFromForm() {
+  const env = {};
+  document.querySelectorAll('.variable-item input[data-var]').forEach(input => {
+    env[input.dataset.var] = input.value;
+  });
+  return env;
+}
+
+function parseStartupCommand(command, environment) {
+  if (!command) return '';
+  
+  let parsed = command;
+  
+  for (const [key, value] of Object.entries(environment)) {
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+    parsed = parsed.replace(regex, value || '');
+    
+    const envRegex = new RegExp(`\\$\\{${key}\\}`, 'g');
+    parsed = parsed.replace(envRegex, value || '');
+  }
+  
+  parsed = parsed.replace(/\{\{[A-Z_]+\}\}/g, '');
+  parsed = parsed.replace(/\$\{[A-Z_]+\}/g, '');
+  
+  return parsed;
+}
+
+async function saveStartup() {
+  const username = localStorage.getItem('username');
+  const saveBtn = document.getElementById('save-startup');
+  
+  const startup = document.getElementById('startup-command').value;
+  const dockerImage = document.querySelector('input[name="docker_image"]').value;
+  const environment = getEnvironmentFromForm();
+  
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  
+  try {
+    const res = await fetch(`/api/servers/${currentServerId$1}/startup`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username,
+        startup,
+        docker_image: dockerImage,
+        environment
+      })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      setTimeout(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+      }, 1500);
+    } else {
+      alert(data.error || 'Failed to save');
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+    }
+  } catch (e) {
+    console.error('Failed to save startup:', e);
+    alert('Failed to save startup configuration');
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+  }
+}
+
+async function resetToDefaults() {
+  if (!eggData) return;
+  
+  document.getElementById('startup-command').value = eggData.startup || '';
+  document.querySelector('input[name="docker_image"]').value = eggData.docker_image || '';
+  
+  (eggData.variables || []).forEach(v => {
+    const input = document.getElementById(`var-${v.env_variable}`);
+    if (input) {
+      input.value = v.default_value || '';
+    }
+  });
+  
+  const env = getEnvironmentFromForm();
+  document.getElementById('startup-preview').textContent = 
+    parseStartupCommand(eggData.startup || '', env);
+}
+
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function cleanupStartupTab() {
+  currentServerId$1 = null;
+  serverData$1 = null;
+  eggData = null;
+}
+
 let currentServerId = null;
 let serverLimits = null;
 let currentTab$1 = 'console';
@@ -2119,7 +2366,7 @@ let serverData = null;
 const tabs = [
   { id: 'console', label: 'Console', icon: 'terminal' },
   { id: 'files', label: 'Files', icon: 'folder' },
-  { id: 'startup', label: 'Startup', icon: 'play_circle', disabled: true },
+  { id: 'startup', label: 'Startup', icon: 'play_circle' },
   { id: 'settings', label: 'Settings', icon: 'settings', disabled: true }
 ];
 
@@ -2257,6 +2504,10 @@ function switchTab(tabId) {
       content.innerHTML = renderFilesTab();
       initFilesTab(currentServerId);
       break;
+    case 'startup':
+      content.innerHTML = renderStartupTab();
+      initStartupTab(currentServerId);
+      break;
     default:
       content.innerHTML = `<div class="card"><p>Coming soon...</p></div>`;
   }
@@ -2269,6 +2520,9 @@ function cleanupCurrentTab() {
       break;
     case 'files':
       cleanupFilesTab();
+      break;
+    case 'startup':
+      cleanupStartupTab();
       break;
   }
 }
@@ -2509,7 +2763,7 @@ async function loadStatus() {
           <div class="node-header">
             <div class="node-info">
               <span class="node-indicator ${node.status}"></span>
-              <h3>${escapeHtml$1(node.name)}</h3>
+              <h3>${escapeHtml$2(node.name)}</h3>
             </div>
             <span class="status-badge status-${node.status}">${node.status}</span>
           </div>
@@ -2521,7 +2775,7 @@ async function loadStatus() {
             </span>
             <span class="meta-item">
               <span class="material-icons-outlined">location_on</span>
-              ${escapeHtml$1(node.location || 'Unknown')}
+              ${escapeHtml$2(node.location || 'Unknown')}
             </span>
           </div>
           
@@ -2839,8 +3093,8 @@ async function loadNodes(container, username) {
               ${data.nodes.length === 0 ? '<tr><td colspan="5" class="empty">No nodes</td></tr>' : ''}
               ${data.nodes.map(node => `
                 <tr>
-                  <td>${escapeHtml$1(node.name)}</td>
-                  <td>${escapeHtml$1(node.fqdn)}</td>
+                  <td>${escapeHtml$2(node.name)}</td>
+                  <td>${escapeHtml$2(node.fqdn)}</td>
                   <td>${node.memory} MB</td>
                   <td>${node.disk} MB</td>
                   <td>
@@ -2860,12 +3114,12 @@ async function loadNodes(container, username) {
           ${data.nodes.map(node => `
             <div class="admin-card">
               <div class="card-header">
-                <h4>${escapeHtml$1(node.name)}</h4>
+                <h4>${escapeHtml$2(node.name)}</h4>
               </div>
               <div class="card-info">
                 <div class="info-row">
                   <span class="label">FQDN</span>
-                  <span class="value">${escapeHtml$1(node.fqdn)}</span>
+                  <span class="value">${escapeHtml$2(node.fqdn)}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Memory</span>
@@ -2899,7 +3153,7 @@ async function loadNodes(container, username) {
     const locRes = await fetch('/api/admin/locations');
     const locData = await locRes.json();
     document.getElementById('node-location').innerHTML = locData.locations.map(l => 
-      `<option value="${l.id}">${escapeHtml$1(l.long)} (${escapeHtml$1(l.short)})</option>`
+      `<option value="${l.id}">${escapeHtml$2(l.long)} (${escapeHtml$2(l.short)})</option>`
     ).join('');
     
     document.getElementById('add-node-btn').onclick = () => {
@@ -2948,16 +3202,16 @@ window.editNode = async function(nodeId) {
         <form id="edit-node-form">
           <div class="form-group">
             <label>Name</label>
-            <input type="text" name="name" value="${escapeHtml$1(node.name)}" required />
+            <input type="text" name="name" value="${escapeHtml$2(node.name)}" required />
           </div>
           <div class="form-group">
             <label>Description</label>
-            <input type="text" name="description" value="${escapeHtml$1(node.description || '')}" />
+            <input type="text" name="description" value="${escapeHtml$2(node.description || '')}" />
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>FQDN</label>
-              <input type="text" name="fqdn" value="${escapeHtml$1(node.fqdn)}" required />
+              <input type="text" name="fqdn" value="${escapeHtml$2(node.fqdn)}" required />
             </div>
             <div class="form-group">
               <label>Scheme</label>
@@ -2995,7 +3249,7 @@ window.editNode = async function(nodeId) {
             <div class="form-group">
               <label>Location</label>
               <select name="location_id">
-                ${locData.locations.map(l => `<option value="${l.id}" ${l.id === node.location_id ? 'selected' : ''}>${escapeHtml$1(l.long)}</option>`).join('')}
+                ${locData.locations.map(l => `<option value="${l.id}" ${l.id === node.location_id ? 'selected' : ''}>${escapeHtml$2(l.long)}</option>`).join('')}
               </select>
             </div>
           </div>
@@ -3055,7 +3309,7 @@ window.showDeployCommand = async function(nodeId) {
       <div class="modal-content">
         <h2>Deploy Command</h2>
         <p>Run this command on your node to configure Wings:</p>
-        <pre class="config-output" style="white-space:pre-wrap;word-break:break-all;">${escapeHtml$1(data.command)}</pre>
+        <pre class="config-output" style="white-space:pre-wrap;word-break:break-all;">${escapeHtml$2(data.command)}</pre>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(this.closest('.modal').querySelector('.config-output').textContent);this.textContent='Copied!'">Copy</button>
           <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
@@ -3088,7 +3342,7 @@ window.showNodeConfig = async function(nodeId) {
       <div class="modal-content">
         <h2>Wings Configuration</h2>
         <p>Copy this configuration to <code>/etc/pterodactyl/config.yml</code> on your node:</p>
-        <pre class="config-output">${escapeHtml$1(yamlConfig)}</pre>
+        <pre class="config-output">${escapeHtml$2(yamlConfig)}</pre>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(this.closest('.modal').querySelector('.config-output').textContent);this.textContent='Copied!'">Copy</button>
           <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
@@ -3223,7 +3477,7 @@ async function loadServersTab(container, username) {
               ${data.servers.length === 0 ? '<tr><td colspan="5" class="empty">No servers</td></tr>' : ''}
               ${data.servers.map(s => `
                 <tr>
-                  <td>${escapeHtml$1(s.name)}</td>
+                  <td>${escapeHtml$2(s.name)}</td>
                   <td>${s.user_id?.substring(0, 8) || '--'}</td>
                   <td>${s.limits?.memory || 0}MB / ${s.limits?.disk || 0}MB / ${s.limits?.cpu || 0}%</td>
                   <td><span class="status-badge status-${s.status}">${s.status}</span></td>
@@ -3245,19 +3499,19 @@ async function loadServersTab(container, username) {
     const usersRes = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}&per_page=100`);
     const usersData = await usersRes.json();
     document.getElementById('server-user').innerHTML = usersData.users.map(u => 
-      `<option value="${u.id}">${escapeHtml$1(u.username)}</option>`
+      `<option value="${u.id}">${escapeHtml$2(u.username)}</option>`
     ).join('');
     
     const nodesRes = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}&per_page=100`);
     const nodesData = await nodesRes.json();
     document.getElementById('server-node').innerHTML = nodesData.nodes.map(n => 
-      `<option value="${n.id}">${escapeHtml$1(n.name)}</option>`
+      `<option value="${n.id}">${escapeHtml$2(n.name)}</option>`
     ).join('');
     
     const eggsRes = await fetch('/api/admin/eggs');
     const eggsData = await eggsRes.json();
     document.getElementById('server-egg').innerHTML = eggsData.eggs.map(e => 
-      `<option value="${e.id}">${escapeHtml$1(e.name)}</option>`
+      `<option value="${e.id}">${escapeHtml$2(e.name)}</option>`
     ).join('');
     
     document.getElementById('add-server-btn').onclick = () => {
@@ -3327,8 +3581,8 @@ async function loadUsers(container, username) {
             <tbody>
               ${data.users.map(u => `
                 <tr>
-                  <td>${escapeHtml$1(u.username)}</td>
-                  <td>${escapeHtml$1(u.displayName || u.username)}</td>
+                  <td>${escapeHtml$2(u.username)}</td>
+                  <td>${escapeHtml$2(u.displayName || u.username)}</td>
                   <td>${u.isAdmin ? '✓' : '✗'}</td>
                   <td>${u.limits ? `${u.limits.servers} servers, ${u.limits.memory}MB` : 'Default'}</td>
                   <td>
@@ -3345,13 +3599,13 @@ async function loadUsers(container, username) {
           ${data.users.map(u => `
             <div class="admin-card">
               <div class="card-header">
-                <h4>${escapeHtml$1(u.username)}</h4>
+                <h4>${escapeHtml$2(u.username)}</h4>
                 <span class="status ${u.isAdmin ? 'status-online' : ''}">${u.isAdmin ? 'Admin' : 'User'}</span>
               </div>
               <div class="card-info">
                 <div class="info-row">
                   <span class="label">Display Name</span>
-                  <span class="value">${escapeHtml$1(u.displayName || u.username)}</span>
+                  <span class="value">${escapeHtml$2(u.displayName || u.username)}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Limits</span>
@@ -3439,14 +3693,14 @@ async function loadNests(container, username) {
         <div class="nests-grid">
           ${data.nests.map(nest => `
             <div class="nest-card card">
-              <h3>${escapeHtml$1(nest.name)}</h3>
-              <p>${escapeHtml$1(nest.description)}</p>
+              <h3>${escapeHtml$2(nest.name)}</h3>
+              <p>${escapeHtml$2(nest.description)}</p>
               <div class="eggs-list">
                 <h4>Eggs (${nest.eggs?.length || 0})</h4>
                 ${(nest.eggs || []).map(egg => `
                   <div class="egg-item">
-                    <span class="egg-name">${escapeHtml$1(egg.name)}</span>
-                    <span class="egg-image">${escapeHtml$1(egg.docker_image?.split('/').pop() || '')}</span>
+                    <span class="egg-name">${escapeHtml$2(egg.name)}</span>
+                    <span class="egg-image">${escapeHtml$2(egg.docker_image?.split('/').pop() || '')}</span>
                   </div>
                 `).join('') || '<div class="empty">No eggs</div>'}
               </div>
@@ -3525,8 +3779,8 @@ async function loadLocations(container, username) {
               ${data.locations.map(l => `
                 <tr>
                   <td>${l.id}</td>
-                  <td>${escapeHtml$1(l.short)}</td>
-                  <td>${escapeHtml$1(l.long)}</td>
+                  <td>${escapeHtml$2(l.short)}</td>
+                  <td>${escapeHtml$2(l.long)}</td>
                   <td>
                     <button class="btn btn-sm btn-danger" onclick="deleteLocation('${l.id}')">Delete</button>
                   </td>
@@ -3541,12 +3795,12 @@ async function loadLocations(container, username) {
           ${data.locations.map(l => `
             <div class="admin-card">
               <div class="card-header">
-                <h4>${escapeHtml$1(l.short)}</h4>
+                <h4>${escapeHtml$2(l.short)}</h4>
               </div>
               <div class="card-info">
                 <div class="info-row">
                   <span class="label">Full Name</span>
-                  <span class="value">${escapeHtml$1(l.long)}</span>
+                  <span class="value">${escapeHtml$2(l.long)}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">ID</span>

@@ -1046,6 +1046,86 @@ async function getServerAndNode(serverId, username) {
   return { server, node, user };
 }
 
+// ==================== SERVER STARTUP ====================
+app.get('/api/servers/:id/startup', async (req, res) => {
+  const { username } = req.query;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server } = result;
+  
+  const eggs = loadEggs();
+  const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+  
+  res.json({
+    startup: server.startup,
+    docker_image: server.docker_image,
+    environment: server.environment || {},
+    egg: {
+      id: egg.id,
+      name: egg.name,
+      startup: egg.startup,
+      docker_image: egg.docker_image,
+      variables: egg.variables || []
+    }
+  });
+});
+
+app.put('/api/servers/:id/startup', async (req, res) => {
+  const { username, startup, docker_image, environment } = req.body;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  const data = loadServers();
+  const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
+  if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
+  
+  if (startup !== undefined) {
+    data.servers[serverIndex].startup = startup;
+  }
+  if (docker_image !== undefined) {
+    data.servers[serverIndex].docker_image = docker_image;
+  }
+  if (environment && typeof environment === 'object') {
+    data.servers[serverIndex].environment = {
+      ...data.servers[serverIndex].environment,
+      ...environment
+    };
+  }
+  
+  saveServers(data);
+  
+  try {
+    const eggs = loadEggs();
+    const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+    
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/sync`, {
+      uuid: server.uuid,
+      suspended: server.suspended || false,
+      environment: data.servers[serverIndex].environment,
+      invocation: data.servers[serverIndex].startup || egg.startup || '',
+      skip_egg_scripts: false,
+      build: {
+        memory_limit: server.limits?.memory || 1024,
+        swap: server.limits?.swap || 0,
+        io_weight: server.limits?.io || 500,
+        cpu_limit: server.limits?.cpu || 100,
+        disk_space: server.limits?.disk || 5120
+      },
+      container: {
+        image: data.servers[serverIndex].docker_image || egg.docker_image || ''
+      }
+    });
+  } catch (e) {
+    console.log('[STARTUP] Failed to sync with Wings:', e.message);
+  }
+  
+  res.json({ success: true, server: data.servers[serverIndex] });
+});
+
+// ==================== FILE MANAGER ====================
 app.get('/api/servers/:id/files/list', async (req, res) => {
   const { username, path } = req.query;
   const result = await getServerAndNode(req.params.id, username);
