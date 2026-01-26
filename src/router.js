@@ -147,9 +147,10 @@ export function router() {
     mountShell(route.options?.sidebar !== false && isAuthenticated);
     clearMain();
     
+    // Update active link in sidebar instead of replacing it
     const existingSidebar = document.getElementById('sidebar');
     if (existingSidebar && route.options?.sidebar !== false && isAuthenticated) {
-      existingSidebar.replaceWith(renderSidebar());
+      updateSidebarActiveLink(path);
     }
     
     route.render();
@@ -161,4 +162,18 @@ export function router() {
       newAppEl.classList.add('fade-in');
     }
   }, 150);
+}
+
+function updateSidebarActiveLink(currentPath) {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  
+  sidebar.querySelectorAll('.nav-link').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPath) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
 }
