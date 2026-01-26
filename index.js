@@ -1706,11 +1706,11 @@ app.post('/api/servers', async (req, res) => {
   const node = bestNode;
   
   try {
-    await wingsRequest(node, 'POST', '/api/servers', {
+    const wingsPayload = {
       uuid: newServer.uuid,
       start_on_completion: false,
       suspended: false,
-      environment: newServer.environment,
+      environment: newServer.environment || {},
       invocation: newServer.startup,
       skip_egg_scripts: false,
       build: {
@@ -1718,16 +1718,34 @@ app.post('/api/servers', async (req, res) => {
         swap: newServer.limits.swap,
         io_weight: newServer.limits.io,
         cpu_limit: newServer.limits.cpu,
-        disk_space: newServer.limits.disk
+        disk_space: newServer.limits.disk,
+        threads: null
       },
-      container: { image: newServer.docker_image },
+      container: { 
+        image: newServer.docker_image 
+      },
       allocations: {
-        default: { ip: newServer.allocation.ip, port: newServer.allocation.port },
-        mappings: { [newServer.allocation.ip]: [newServer.allocation.port] }
+        default: { 
+          ip: newServer.allocation.ip, 
+          port: newServer.allocation.port 
+        },
+        mappings: { 
+          [newServer.allocation.ip]: [newServer.allocation.port] 
+        }
+      },
+      mounts: [],
+      egg: {
+        id: egg.id || '',
+        file_denylist: []
       }
-    });
-    newServer.status = 'offline';
+    };
+    
+    console.log('[SERVER CREATE] Sending to Wings:', JSON.stringify(wingsPayload, null, 2));
+    
+    await wingsRequest(node, 'POST', '/api/servers', wingsPayload);
+    newServer.status = 'installing';
   } catch (e) {
+    console.error('[SERVER CREATE] Wings error:', e.message);
     newServer.status = 'install_failed';
     newServer.install_error = e.message;
   }
