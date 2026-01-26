@@ -870,17 +870,7 @@ app.get('/api/servers/:id', async (req, res) => {
     return res.status(403).json({ error: 'Forbidden' });
   }
   
-  const nodes = loadNodes();
-  const node = nodes.nodes.find(n => n.id === server.node_id);
-  let resources = null;
-  
-  if (node) {
-    try {
-      resources = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/resources`);
-    } catch {}
-  }
-  
-  res.json({ server, resources });
+  res.json({ server });
 });
 
 app.post('/api/servers/:id/power', async (req, res) => {
