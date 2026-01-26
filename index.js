@@ -1595,9 +1595,10 @@ app.get('/api/nodes/:id/ports', (req, res) => {
 
 // ==================== USER: CREATE SERVER ====================
 app.post('/api/servers', async (req, res) => {
-  const { username, name, node_id, egg_id, port, memory, disk, cpu } = req.body;
+  const { username, name, egg_id, memory, disk, cpu } = req.body;
   
   if (!username) return res.status(400).json({ error: 'Username required' });
+  if (!name) return res.status(400).json({ error: 'Server name required' });
   
   const users = loadUsers();
   const user = users.users.find(u => u.username.toLowerCase() === username.toLowerCase());
@@ -1614,10 +1615,9 @@ app.post('/api/servers', async (req, res) => {
     cpu: acc.cpu + (s.limits?.cpu || 0)
   }), { servers: 0, memory: 0, disk: 0, cpu: 0 });
   
-  const requestedMemory = parseInt(memory) || 1024;
-  const requestedDisk = parseInt(disk) || 5120;
+  const requestedMemory = parseInt(memory) || 512;
+  const requestedDisk = parseInt(disk) || 1024;
   const requestedCpu = parseInt(cpu) || 100;
-  const requestedPort = parseInt(port);
   
   if (usedResources.servers + 1 > userLimits.servers) {
     return res.status(400).json({ error: 'Server limit reached' });
@@ -1632,38 +1632,46 @@ app.post('/api/servers', async (req, res) => {
     return res.status(400).json({ error: 'CPU limit exceeded' });
   }
   
-  const nodes = loadNodes();
-  const node = nodes.nodes.find(n => n.id === node_id);
-  if (!node) return res.status(400).json({ error: 'Invalid node' });
-  
-  const nodeResources = getNodeAvailableResources(node_id);
-  if (!nodeResources) return res.status(400).json({ error: 'Could not get node resources' });
-  
-  if (requestedMemory > nodeResources.available_memory) {
-    return res.status(400).json({ error: 'Node does not have enough memory' });
-  }
-  if (requestedDisk > nodeResources.available_disk) {
-    return res.status(400).json({ error: 'Node does not have enough disk space' });
-  }
-  
-  if (!requestedPort) {
-    return res.status(400).json({ error: 'Port is required' });
-  }
-  
-  const allocationStart = node.allocation_start || 25565;
-  const allocationEnd = node.allocation_end || 25665;
-  
-  if (requestedPort < allocationStart || requestedPort > allocationEnd) {
-    return res.status(400).json({ error: `Port must be between ${allocationStart} and ${allocationEnd}` });
-  }
-  
-  if (!nodeResources.available_ports.includes(requestedPort)) {
-    return res.status(400).json({ error: 'Port is already in use' });
-  }
-  
   const eggs = loadEggs();
   const egg = eggs.eggs.find(e => e.id === egg_id);
   if (!egg) return res.status(400).json({ error: 'Invalid egg' });
+  
+  // Find the best node (least used with available resources)
+  const nodes = loadNodes();
+  let bestNode = null;
+  let bestNodeResources = null;
+  let lowestUsage = Infinity;
+  
+  for (const n of nodes.nodes) {
+    if (n.maintenance_mode) continue;
+    
+    const resources = getNodeAvailableResources(n.id);
+    if (!resources) continue;
+    
+    // Check if node has enough resources
+    if (resources.available_memory < requestedMemory) continue;
+    if (resources.available_disk < requestedDisk) continue;
+    if (resources.available_ports.length === 0) continue;
+    
+    // Calculate usage percentage
+    const memoryUsage = 1 - (resources.available_memory / n.memory);
+    const diskUsage = 1 - (resources.available_disk / n.disk);
+    const avgUsage = (memoryUsage + diskUsage) / 2;
+    
+    if (avgUsage < lowestUsage) {
+      lowestUsage = avgUsage;
+      bestNode = n;
+      bestNodeResources = resources;
+    }
+  }
+  
+  if (!bestNode || !bestNodeResources) {
+    return res.status(400).json({ error: 'No available nodes with enough resources' });
+  }
+  
+  // Pick random available port
+  const availablePorts = bestNodeResources.available_ports;
+  const randomPort = availablePorts[Math.floor(Math.random() * availablePorts.length)];
   
   const uuid = generateUUID();
   const newServer = {
@@ -1672,7 +1680,7 @@ app.post('/api/servers', async (req, res) => {
     name: sanitizeText(name),
     description: '',
     user_id: user.id,
-    node_id: node_id,
+    node_id: bestNode.id,
     egg_id: egg_id,
     docker_image: egg.docker_image,
     startup: egg.startup,
@@ -1689,11 +1697,13 @@ app.post('/api/servers', async (req, res) => {
       allocations: 1
     },
     environment: {},
-    allocation: { ip: '0.0.0.0', port: requestedPort },
+    allocation: { ip: '0.0.0.0', port: randomPort },
     status: 'installing',
     suspended: false,
     created_at: new Date().toISOString()
   };
+  
+  const node = bestNode;
   
   try {
     await wingsRequest(node, 'POST', '/api/servers', {
