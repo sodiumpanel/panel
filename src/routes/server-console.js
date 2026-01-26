@@ -123,52 +123,35 @@ async function loadServerDetails(serverId) {
 async function connectWebSocket(serverId) {
   const username = localStorage.getItem('username');
   
-  try {
-    const res = await fetch(`/api/servers/${serverId}/websocket?username=${encodeURIComponent(username)}`);
-    const data = await res.json();
-    
-    if (data.error) {
-      appendConsole(`[ERROR] ${data.error}`);
-      return;
+  appendConsole('[SYSTEM] Connecting to console...');
+  
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${serverId}&username=${encodeURIComponent(username)}`;
+  
+  consoleSocket = new WebSocket(wsUrl);
+  
+  consoleSocket.onopen = () => {
+    appendConsole('[SYSTEM] Connected to console');
+  };
+  
+  consoleSocket.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data);
+      handleSocketMessage(message);
+    } catch (e) {
+      console.error('Failed to parse WebSocket message:', e);
     }
-    
-    const { token, socket } = data.data;
-    
-    appendConsole('[SYSTEM] Connecting to console...');
-    
-    consoleSocket = new WebSocket(socket);
-    
-    consoleSocket.onopen = () => {
-      appendConsole('[SYSTEM] WebSocket connected, authenticating...');
-      consoleSocket.send(JSON.stringify({
-        event: 'auth',
-        args: [token]
-      }));
-    };
-    
-    consoleSocket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        handleSocketMessage(message);
-      } catch (e) {
-        console.error('Failed to parse WebSocket message:', e);
-      }
-    };
-    
-    consoleSocket.onclose = () => {
-      appendConsole('[SYSTEM] Connection closed');
-      setTimeout(() => connectWebSocket(serverId), 5000);
-    };
-    
-    consoleSocket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      appendConsole('[ERROR] WebSocket connection failed');
-    };
-    
-  } catch (e) {
-    console.error('Failed to connect WebSocket:', e);
-    appendConsole('[ERROR] Failed to connect to console');
-  }
+  };
+  
+  consoleSocket.onclose = () => {
+    appendConsole('[SYSTEM] Connection closed');
+    setTimeout(() => connectWebSocket(serverId), 5000);
+  };
+  
+  consoleSocket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+    appendConsole('[ERROR] WebSocket connection failed');
+  };
 }
 
 function handleSocketMessage(message) {

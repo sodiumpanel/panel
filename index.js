@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
@@ -1218,6 +1219,98 @@ app.get('/api/user/limits', (req, res) => {
 
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+const wss = new WebSocketServer({ server, path: '/ws/console' });
+
+wss.on('connection', (clientWs, req) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const serverId = url.searchParams.get('server');
+  const username = url.searchParams.get('username');
+  
+  if (!serverId || !username) {
+    clientWs.close(4001, 'Missing parameters');
+    return;
+  }
+  
+  const users = loadUsers();
+  const user = users.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  if (!user) {
+    clientWs.close(4002, 'User not found');
+    return;
+  }
+  
+  const servers = loadServers();
+  const serverData = servers.servers.find(s => s.id === serverId);
+  if (!serverData) {
+    clientWs.close(4003, 'Server not found');
+    return;
+  }
+  
+  if (serverData.user_id !== user.id && !user.isAdmin) {
+    clientWs.close(4004, 'Forbidden');
+    return;
+  }
+  
+  const nodes = loadNodes();
+  const node = nodes.nodes.find(n => n.id === serverData.node_id);
+  if (!node) {
+    clientWs.close(4005, 'Node not available');
+    return;
+  }
+  
+  const wsScheme = node.scheme === 'https' ? 'wss' : 'ws';
+  const wingsWsUrl = `${wsScheme}://${node.fqdn}:${node.daemon_port}/api/servers/${serverData.uuid}/ws`;
+  
+  console.log(`[WS PROXY] Connecting to Wings: ${wingsWsUrl}`);
+  
+  const wingsWs = new WebSocket(wingsWsUrl, {
+    headers: {
+      'Authorization': `Bearer ${node.daemon_token}`,
+      'Origin': `${node.scheme}://${node.fqdn}`
+    }
+  });
+  
+  wingsWs.on('open', () => {
+    console.log('[WS PROXY] Connected to Wings');
+    wingsWs.send(JSON.stringify({
+      event: 'auth',
+      args: [node.daemon_token]
+    }));
+  });
+  
+  wingsWs.on('message', (data) => {
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(data.toString());
+    }
+  });
+  
+  wingsWs.on('close', () => {
+    console.log('[WS PROXY] Wings connection closed');
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.close();
+    }
+  });
+  
+  wingsWs.on('error', (err) => {
+    console.error('[WS PROXY] Wings error:', err.message);
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.close(4006, 'Wings connection error');
+    }
+  });
+  
+  clientWs.on('message', (data) => {
+    if (wingsWs.readyState === WebSocket.OPEN) {
+      wingsWs.send(data.toString());
+    }
+  });
+  
+  clientWs.on('close', () => {
+    console.log('[WS PROXY] Client disconnected');
+    if (wingsWs.readyState === WebSocket.OPEN) {
+      wingsWs.close();
+    }
+  });
 });
 
 server.listen(PORT, () => {
