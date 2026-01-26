@@ -72,12 +72,14 @@ function initTerminal() {
     },
     fontFamily: '"JetBrains Mono", "Fira Code", "Monaco", "Menlo", monospace',
     fontSize: 13,
-    lineHeight: 1.2,
+    lineHeight: 1.4,
     cursorBlink: true,
     cursorStyle: 'bar',
     scrollback: 5000,
-    convertEol: true,
-    disableStdin: true
+    convertEol: false,
+    disableStdin: true,
+    cols: 120,
+    rows: 30
   });
   
   fitAddon = new FitAddon();
@@ -159,14 +161,7 @@ function handleSocketMessage(message) {
       
     case 'console output':
       if (args && args[0] && terminal) {
-        const lines = args[0].split(/\r?\n/);
-        lines.forEach((line, index) => {
-          if (index < lines.length - 1) {
-            terminal.writeln(line);
-          } else if (line) {
-            terminal.write(line);
-          }
-        });
+        terminal.write(args[0]);
       }
       break;
       
@@ -184,12 +179,7 @@ function handleSocketMessage(message) {
       
     case 'install output':
       if (args && args[0] && terminal) {
-        const lines = args[0].split(/\r?\n/);
-        lines.forEach((line, index) => {
-          if (line || index < lines.length - 1) {
-            terminal.writeln(`\x1b[33m${line}\x1b[0m`);
-          }
-        });
+        terminal.write(`\x1b[33m${args[0]}\x1b[0m`);
       }
       break;
       
