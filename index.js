@@ -1008,12 +1008,18 @@ app.post('/api/servers/:id/command', async (req, res) => {
 // ==================== WINGS REMOTE API ====================
 function authenticateNode(req) {
   const authHeader = req.headers.authorization;
+  console.log('Auth header:', authHeader);
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const credentials = authHeader.slice(7);
-  const [tokenId, token] = credentials.split('.');
-  if (!tokenId || !token) return null;
+  const dotIndex = credentials.indexOf('.');
+  if (dotIndex === -1) return null;
+  const tokenId = credentials.substring(0, dotIndex);
+  const token = credentials.substring(dotIndex + 1);
+  console.log('TokenId:', tokenId, 'Token:', token);
   const nodes = loadNodes();
-  return nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
+  const node = nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
+  console.log('Found node:', node ? node.name : 'null');
+  return node;
 }
 
 app.get('/api/remote/servers', (req, res) => {
