@@ -1437,7 +1437,7 @@ wss.on('connection', (clientWs, req) => {
   wingsWs.on('message', (data) => {
     if (clientWs.readyState === WebSocket.OPEN) {
       let message = data.toString();
-      message = message.replace(/\[Pterodactyl Daemon\]/g, '[Sodium Daemon]');
+      message = message.replace(/\[Pterodactyl Daemon\]:?/g, 'Sodium Daemon:');
       clientWs.send(message);
     }
   });
