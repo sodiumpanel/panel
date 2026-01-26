@@ -1,4 +1,25 @@
 let currentPath = '/';
+let currentServerId = null;
+let isEditing = false;
+let editingPath = null;
+
+const EDITABLE_EXTENSIONS = [
+  'txt', 'log', 'md', 'json', 'yml', 'yaml', 'toml', 'xml',
+  'js', 'ts', 'jsx', 'tsx', 'css', 'scss', 'less', 'html', 'htm',
+  'php', 'py', 'rb', 'java', 'c', 'cpp', 'h', 'hpp', 'cs',
+  'sh', 'bash', 'bat', 'ps1', 'cmd',
+  'properties', 'cfg', 'conf', 'ini', 'env',
+  'sql', 'lua', 'go', 'rs', 'swift', 'kt', 'gradle',
+  'dockerfile', 'makefile', 'gitignore', 'htaccess'
+];
+
+function isEditable(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const name = filename.toLowerCase();
+  return EDITABLE_EXTENSIONS.includes(ext) || 
+         EDITABLE_EXTENSIONS.includes(name) ||
+         !filename.includes('.');
+}
 
 export function renderFilesTab() {
   return `
@@ -33,6 +54,9 @@ export function renderFilesTab() {
 
 export function initFilesTab(serverId) {
   currentPath = '/';
+  currentServerId = serverId;
+  isEditing = false;
+  editingPath = null;
   loadFiles(serverId, currentPath);
   
   document.getElementById('btn-refresh').onclick = () => loadFiles(serverId, currentPath);
@@ -110,10 +134,12 @@ function renderFilesList(files, serverId) {
         <span class="file-meta">${file.is_directory ? '--' : formatBytes(file.size)} • ${formatDate(file.modified_at)}</span>
       </div>
       <div class="file-actions">
-        ${!file.is_directory ? `
+        ${!file.is_directory && isEditable(file.name) ? `
           <button class="btn btn-sm btn-ghost btn-edit" title="Edit">
             <span class="material-icons-outlined">edit</span>
           </button>
+        ` : ''}
+        ${!file.is_directory ? `
           <button class="btn btn-sm btn-ghost btn-download" title="Download">
             <span class="material-icons-outlined">download</span>
           </button>
@@ -298,7 +324,117 @@ async function renameFile(serverId, oldName) {
 }
 
 async function editFile(serverId, path) {
-  alert('File editor coming soon!');
+  const username = localStorage.getItem('username');
+  const filesList = document.getElementById('files-list');
+  const filename = path.split('/').pop();
+  
+  filesList.innerHTML = '<div class="files-loading">Loading file...</div>';
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/contents?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
+    const data = await res.json();
+    
+    if (data.error) {
+      alert(data.error);
+      loadFiles(serverId, currentPath);
+      return;
+    }
+    
+    isEditing = true;
+    editingPath = path;
+    
+    const container = document.querySelector('.files-tab .card');
+    container.innerHTML = `
+      <div class="file-editor">
+        <div class="editor-header">
+          <div class="editor-title">
+            <button class="btn btn-ghost btn-sm" id="btn-back">
+              <span class="material-icons-outlined">arrow_back</span>
+            </button>
+            <span class="editor-filename">${filename}</span>
+          </div>
+          <div class="editor-actions">
+            <button class="btn btn-primary btn-sm" id="btn-save">
+              <span class="material-icons-outlined">save</span>
+              Save
+            </button>
+          </div>
+        </div>
+        <div class="editor-content">
+          <textarea id="file-content" spellcheck="false">${escapeHtml(data.content || '')}</textarea>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('btn-back').onclick = () => {
+      isEditing = false;
+      editingPath = null;
+      initFilesTab(serverId);
+    };
+    
+    document.getElementById('btn-save').onclick = () => saveFile(serverId, path);
+    
+    document.getElementById('file-content').addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        saveFile(serverId, path);
+      }
+      
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const textarea = e.target;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
+      }
+    });
+    
+  } catch (e) {
+    console.error('Failed to load file:', e);
+    alert('Failed to load file');
+    loadFiles(serverId, currentPath);
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function saveFile(serverId, path) {
+  const username = localStorage.getItem('username');
+  const content = document.getElementById('file-content').value;
+  const saveBtn = document.getElementById('btn-save');
+  
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/write`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, path, content })
+    });
+    
+    if (res.ok) {
+      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      setTimeout(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+      }, 1500);
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Failed to save file');
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+    }
+  } catch (e) {
+    alert('Failed to save file');
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+  }
 }
 
 async function downloadFile(serverId, path) {

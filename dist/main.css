@@ -2013,6 +2013,81 @@ input, textarea, select {
   transition: opacity 0.15s ease;
 }
 
+.file-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.editor-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.editor-filename {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editor-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.editor-content textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 300px;
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  resize: none;
+  -moz-tab-size: 2;
+    -o-tab-size: 2;
+       tab-size: 2;
+}
+.editor-content textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.editor-content textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.editor-content textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.editor-content textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.editor-content textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 @media (max-width: 768px) {
   .server-page {
     gap: 0.75rem;
