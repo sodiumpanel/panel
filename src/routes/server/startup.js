@@ -2,6 +2,27 @@ let currentServerId = null;
 let serverData = null;
 let eggData = null;
 
+const ALLOWED_DOCKER_IMAGES = [
+  { value: 'ghcr.io/pterodactyl/yolks:java_21', label: 'Java 21 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:java_17', label: 'Java 17 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:java_16', label: 'Java 16 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:java_11', label: 'Java 11 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:java_8', label: 'Java 8 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:nodejs_20', label: 'Node.js 20 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:nodejs_18', label: 'Node.js 18 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:nodejs_16', label: 'Node.js 16 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:python_3.12', label: 'Python 3.12 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:python_3.11', label: 'Python 3.11 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:python_3.10', label: 'Python 3.10 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:golang_1.21', label: 'Go 1.21 (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/yolks:rust_latest', label: 'Rust Latest (Yolks)' },
+  { value: 'ghcr.io/pterodactyl/games:source', label: 'Source Engine (Games)' },
+  { value: 'ghcr.io/pterodactyl/games:rust', label: 'Rust Game (Games)' },
+  { value: 'ghcr.io/pterodactyl/games:arma3', label: 'Arma 3 (Games)' },
+  { value: 'ghcr.io/pterodactyl/installers:debian', label: 'Debian (Installers)' },
+  { value: 'ghcr.io/pterodactyl/installers:alpine', label: 'Alpine (Installers)' },
+];
+
 export function renderStartupTab() {
   return `
     <div class="startup-tab">
@@ -70,8 +91,15 @@ function renderStartupForm(server, egg) {
       
       <div class="form-section">
         <h4>Docker Image</h4>
+        <p class="form-hint">Select a Docker image from the approved list.</p>
         <div class="form-group">
-          <input type="text" name="docker_image" value="${escapeHtml(server.docker_image || egg?.docker_image || '')}" placeholder="ghcr.io/image:tag" />
+          <select name="docker_image" class="select-input">
+            ${ALLOWED_DOCKER_IMAGES.map(img => `
+              <option value="${escapeHtml(img.value)}" ${(server.docker_image || egg?.docker_image) === img.value ? 'selected' : ''}>
+                ${escapeHtml(img.label)}
+              </option>
+            `).join('')}
+          </select>
         </div>
       </div>
       
@@ -175,7 +203,7 @@ async function saveStartup() {
   const saveBtn = document.getElementById('save-startup');
   
   const startup = document.getElementById('startup-command').value;
-  const dockerImage = document.querySelector('input[name="docker_image"]').value;
+  const dockerImage = document.querySelector('select[name="docker_image"]').value;
   const environment = getEnvironmentFromForm();
   
   saveBtn.disabled = true;
@@ -218,7 +246,11 @@ async function resetToDefaults() {
   if (!eggData) return;
   
   document.getElementById('startup-command').value = eggData.startup || '';
-  document.querySelector('input[name="docker_image"]').value = eggData.docker_image || '';
+  
+  const dockerSelect = document.querySelector('select[name="docker_image"]');
+  if (dockerSelect && eggData.docker_image) {
+    dockerSelect.value = eggData.docker_image;
+  }
   
   (eggData.variables || []).forEach(v => {
     const input = document.getElementById(`var-${v.env_variable}`);
