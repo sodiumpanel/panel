@@ -1009,9 +1009,11 @@ app.post('/api/servers/:id/command', async (req, res) => {
 function authenticateNode(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const token = authHeader.slice(7);
+  const credentials = authHeader.slice(7);
+  const [tokenId, token] = credentials.split('.');
+  if (!tokenId || !token) return null;
   const nodes = loadNodes();
-  return nodes.nodes.find(n => n.daemon_token === token);
+  return nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
 }
 
 app.get('/api/remote/servers', (req, res) => {
