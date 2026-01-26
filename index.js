@@ -1182,6 +1182,70 @@ app.get('/api/servers/:id/startup', async (req, res) => {
   });
 });
 
+function validateVariableValue(value, rulesString) {
+  if (!rulesString) return null;
+  
+  const parts = rulesString.split('|');
+  const rules = {
+    required: false,
+    nullable: false,
+    type: null,
+    min: null,
+    max: null,
+    in: []
+  };
+  
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed === 'required') rules.required = true;
+    else if (trimmed === 'nullable') rules.nullable = true;
+    else if (trimmed === 'string') rules.type = 'string';
+    else if (trimmed === 'numeric' || trimmed === 'integer') rules.type = 'number';
+    else if (trimmed === 'boolean') rules.type = 'boolean';
+    else if (trimmed.startsWith('min:')) rules.min = parseInt(trimmed.split(':')[1]);
+    else if (trimmed.startsWith('max:')) rules.max = parseInt(trimmed.split(':')[1]);
+    else if (trimmed.startsWith('in:')) rules.in = trimmed.split(':')[1].split(',');
+  }
+  
+  const strValue = String(value ?? '');
+  
+  if (rules.required && strValue === '') {
+    return 'This field is required';
+  }
+  
+  if (rules.nullable && strValue === '') {
+    return null;
+  }
+  
+  if (rules.type === 'number' && strValue !== '') {
+    if (isNaN(Number(strValue))) {
+      return 'Must be a number';
+    }
+    const num = Number(strValue);
+    if (rules.min !== null && num < rules.min) {
+      return `Minimum value is ${rules.min}`;
+    }
+    if (rules.max !== null && num > rules.max) {
+      return `Maximum value is ${rules.max}`;
+    }
+  }
+  
+  if (rules.type === 'string' && strValue !== '') {
+    if (rules.min !== null && strValue.length < rules.min) {
+      return `Minimum length is ${rules.min}`;
+    }
+    if (rules.max !== null && strValue.length > rules.max) {
+      return `Maximum length is ${rules.max}`;
+    }
+  }
+  
+  if (rules.in.length > 0 && strValue !== '' && !rules.in.includes(strValue)) {
+    return `Must be one of: ${rules.in.join(', ')}`;
+  }
+  
+  return null;
+}
+
 app.put('/api/servers/:id/startup', async (req, res) => {
   const { username, startup, docker_image, environment } = req.body;
   const result = await getServerAndNode(req.params.id, username);
@@ -1192,6 +1256,38 @@ app.put('/api/servers/:id/startup', async (req, res) => {
   const data = loadServers();
   const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
   if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
+  
+  // Validate environment variables
+  const eggs = loadEggs();
+  const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+  const variables = egg.variables || [];
+  
+  if (environment && typeof environment === 'object') {
+    const validationErrors = {};
+    
+    for (const variable of variables) {
+      const value = environment[variable.env_variable];
+      const error = validateVariableValue(value, variable.rules);
+      if (error) {
+        validationErrors[variable.env_variable] = error;
+      }
+    }
+    
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        validation_errors: validationErrors 
+      });
+    }
+  }
+  
+  // Validate docker_image is allowed
+  if (docker_image && egg.docker_images) {
+    const allowedImages = Object.values(egg.docker_images);
+    if (allowedImages.length > 0 && !allowedImages.includes(docker_image)) {
+      return res.status(400).json({ error: 'Invalid Docker image' });
+    }
+  }
   
   if (startup !== undefined) {
     data.servers[serverIndex].startup = startup;

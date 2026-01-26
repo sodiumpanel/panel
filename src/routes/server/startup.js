@@ -2,6 +2,156 @@ let currentServerId = null;
 let serverData = null;
 let eggData = null;
 
+function parseRules(rulesString) {
+  const rules = {
+    required: false,
+    nullable: false,
+    type: null,
+    min: null,
+    max: null,
+    in: [],
+    regex: null
+  };
+  
+  if (!rulesString) return rules;
+  
+  const parts = rulesString.split('|');
+  for (const part of parts) {
+    const trimmed = part.trim();
+    
+    if (trimmed === 'required') rules.required = true;
+    else if (trimmed === 'nullable') rules.nullable = true;
+    else if (trimmed === 'string') rules.type = 'string';
+    else if (trimmed === 'numeric' || trimmed === 'integer') rules.type = 'number';
+    else if (trimmed === 'boolean') rules.type = 'boolean';
+    else if (trimmed.startsWith('min:')) rules.min = parseInt(trimmed.split(':')[1]);
+    else if (trimmed.startsWith('max:')) rules.max = parseInt(trimmed.split(':')[1]);
+    else if (trimmed.startsWith('in:')) rules.in = trimmed.split(':')[1].split(',');
+    else if (trimmed.startsWith('regex:')) rules.regex = trimmed.split(':').slice(1).join(':');
+  }
+  
+  return rules;
+}
+
+function renderVariableInput(variable, currentValue, rules) {
+  const id = `var-${variable.env_variable}`;
+  const dataAttr = `data-var="${variable.env_variable}" data-rules="${escapeHtml(variable.rules || '')}"`;
+  const placeholder = escapeHtml(variable.default_value || '');
+  const value = escapeHtml(currentValue);
+  
+  // Boolean type - render as toggle/select
+  if (rules.type === 'boolean') {
+    const isTrue = currentValue === '1' || currentValue === 'true' || currentValue === true;
+    return `
+      <select id="${id}" name="env_${variable.env_variable}" class="select-input" ${dataAttr}>
+        <option value="0" ${!isTrue ? 'selected' : ''}>False (0)</option>
+        <option value="1" ${isTrue ? 'selected' : ''}>True (1)</option>
+      </select>
+    `;
+  }
+  
+  // Has predefined options - render as select
+  if (rules.in.length > 0) {
+    return `
+      <select id="${id}" name="env_${variable.env_variable}" class="select-input" ${dataAttr}>
+        ${rules.in.map(opt => `
+          <option value="${escapeHtml(opt)}" ${currentValue === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>
+        `).join('')}
+      </select>
+    `;
+  }
+  
+  // Number type
+  if (rules.type === 'number') {
+    return `
+      <input 
+        type="number" 
+        id="${id}"
+        name="env_${variable.env_variable}" 
+        value="${value}"
+        placeholder="${placeholder}"
+        ${dataAttr}
+        ${rules.min !== null ? `min="${rules.min}"` : ''}
+        ${rules.max !== null ? `max="${rules.max}"` : ''}
+        ${rules.required ? 'required' : ''}
+      />
+    `;
+  }
+  
+  // Default: text input
+  return `
+    <input 
+      type="text" 
+      id="${id}"
+      name="env_${variable.env_variable}" 
+      value="${value}"
+      placeholder="${placeholder}"
+      ${dataAttr}
+      ${rules.max !== null ? `maxlength="${rules.max}"` : ''}
+      ${rules.required ? 'required' : ''}
+    />
+  `;
+}
+
+function validateVariable(value, rulesString) {
+  const rules = parseRules(rulesString);
+  const errors = [];
+  
+  // Check required
+  if (rules.required && (value === '' || value === null || value === undefined)) {
+    errors.push('This field is required');
+    return errors;
+  }
+  
+  // If nullable and empty, skip other validations
+  if (rules.nullable && (value === '' || value === null || value === undefined)) {
+    return errors;
+  }
+  
+  // Type validations
+  if (rules.type === 'number' && value !== '') {
+    if (isNaN(Number(value))) {
+      errors.push('Must be a number');
+    } else {
+      const num = Number(value);
+      if (rules.min !== null && num < rules.min) {
+        errors.push(`Minimum value is ${rules.min}`);
+      }
+      if (rules.max !== null && num > rules.max) {
+        errors.push(`Maximum value is ${rules.max}`);
+      }
+    }
+  }
+  
+  if (rules.type === 'string' && value !== '') {
+    if (rules.min !== null && value.length < rules.min) {
+      errors.push(`Minimum length is ${rules.min} characters`);
+    }
+    if (rules.max !== null && value.length > rules.max) {
+      errors.push(`Maximum length is ${rules.max} characters`);
+    }
+  }
+  
+  // In validation
+  if (rules.in.length > 0 && value !== '' && !rules.in.includes(value)) {
+    errors.push(`Must be one of: ${rules.in.join(', ')}`);
+  }
+  
+  // Regex validation
+  if (rules.regex && value !== '') {
+    try {
+      const regex = new RegExp(rules.regex);
+      if (!regex.test(value)) {
+        errors.push('Invalid format');
+      }
+    } catch (e) {
+      // Invalid regex, skip
+    }
+  }
+  
+  return errors;
+}
+
 export function renderStartupTab() {
   return `
     <div class="startup-tab">
@@ -84,24 +234,30 @@ function renderStartupForm(server, egg) {
         
         <div class="variables-list">
           ${variables.length === 0 ? '<div class="empty">No variables defined for this egg</div>' : ''}
-          ${variables.map(v => `
+          ${variables.map(v => {
+            const rules = parseRules(v.rules || '');
+            const currentValue = server.environment?.[v.env_variable] ?? v.default_value ?? '';
+            return `
             <div class="variable-item">
               <div class="variable-header">
-                <label for="var-${v.env_variable}">${escapeHtml(v.name)}</label>
+                <label for="var-${v.env_variable}">
+                  ${escapeHtml(v.name)}
+                  ${rules.required ? '<span class="required">*</span>' : ''}
+                </label>
                 <code class="variable-key">${escapeHtml(v.env_variable)}</code>
               </div>
               <p class="variable-description">${escapeHtml(v.description || '')}</p>
-              <input 
-                type="text" 
-                id="var-${v.env_variable}"
-                name="env_${v.env_variable}" 
-                value="${escapeHtml(server.environment?.[v.env_variable] ?? v.default_value ?? '')}"
-                placeholder="${escapeHtml(v.default_value || '')}"
-                data-var="${v.env_variable}"
-              />
-              ${v.rules ? `<span class="variable-rules">${escapeHtml(v.rules)}</span>` : ''}
+              ${renderVariableInput(v, currentValue, rules)}
+              <div class="variable-meta">
+                ${rules.required ? '<span class="rule-badge required">Required</span>' : '<span class="rule-badge optional">Optional</span>'}
+                ${rules.type ? `<span class="rule-badge type">${escapeHtml(rules.type)}</span>` : ''}
+                ${rules.min !== null ? `<span class="rule-badge">Min: ${rules.min}</span>` : ''}
+                ${rules.max !== null ? `<span class="rule-badge">Max: ${rules.max}</span>` : ''}
+                ${rules.in.length > 0 ? `<span class="rule-badge">Options: ${rules.in.join(', ')}</span>` : ''}
+              </div>
+              <div class="variable-error" id="error-${v.env_variable}"></div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       </div>
       
@@ -168,10 +324,34 @@ function getDockerImagesOptions(server, egg) {
 
 function getEnvironmentFromForm() {
   const env = {};
-  document.querySelectorAll('.variable-item input[data-var]').forEach(input => {
+  document.querySelectorAll('.variable-item input[data-var], .variable-item select[data-var]').forEach(input => {
     env[input.dataset.var] = input.value;
   });
   return env;
+}
+
+function validateAllVariables() {
+  let hasErrors = false;
+  
+  document.querySelectorAll('.variable-item input[data-var], .variable-item select[data-var]').forEach(input => {
+    const varName = input.dataset.var;
+    const rules = input.dataset.rules || '';
+    const value = input.value;
+    const errorEl = document.getElementById(`error-${varName}`);
+    
+    const errors = validateVariable(value, rules);
+    
+    if (errors.length > 0) {
+      hasErrors = true;
+      input.classList.add('input-error');
+      if (errorEl) errorEl.textContent = errors.join(', ');
+    } else {
+      input.classList.remove('input-error');
+      if (errorEl) errorEl.textContent = '';
+    }
+  });
+  
+  return !hasErrors;
 }
 
 function parseStartupCommand(command, environment) {
@@ -196,6 +376,12 @@ function parseStartupCommand(command, environment) {
 async function saveStartup() {
   const username = localStorage.getItem('username');
   const saveBtn = document.getElementById('save-startup');
+  
+  // Validate before saving
+  if (!validateAllVariables()) {
+    alert('Please fix the validation errors before saving');
+    return;
+  }
   
   const startup = document.getElementById('startup-command').value;
   const dockerImage = document.querySelector('select[name="docker_image"]').value;
