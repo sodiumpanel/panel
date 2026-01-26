@@ -1502,7 +1502,7 @@ function handleSocketMessage(message) {
       
     case 'console output':
       if (args && args[0] && terminal) {
-        console.log('Console output raw:', JSON.stringify(args[0]));
+        alert('Raw: ' + JSON.stringify(args[0]).substring(0, 500));
         terminal.write(args[0]);
       }
       break;
