@@ -139,6 +139,9 @@ function generateToken() {
 }
 
 async function wingsRequest(node, method, endpoint, data = null) {
+  const url = `${node.scheme}://${node.fqdn}:${node.daemon_port}${endpoint}`;
+  console.log(`[WINGS OUT] ${method} ${url}`);
+  
   const headers = {
     'Authorization': `Bearer ${node.daemon_token}`,
     'Content-Type': 'application/json',
@@ -148,13 +151,15 @@ async function wingsRequest(node, method, endpoint, data = null) {
   if (data) options.body = JSON.stringify(data);
   
   try {
-    const response = await fetch(`${node.scheme}://${node.fqdn}:${node.daemon_port}${endpoint}`, options);
+    const response = await fetch(url, options);
+    console.log(`[WINGS OUT] Response: ${response.status}`);
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.error || `HTTP ${response.status}`);
     }
     return response.json().catch(() => ({}));
   } catch (error) {
+    console.log(`[WINGS OUT] Error: ${error.message}`);
     throw error;
   }
 }
@@ -934,17 +939,14 @@ app.post('/api/servers/:id/command', async (req, res) => {
 // ==================== WINGS REMOTE API ====================
 function authenticateNode(req) {
   const authHeader = req.headers.authorization;
-  console.log('Auth header:', authHeader);
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const credentials = authHeader.slice(7);
   const dotIndex = credentials.indexOf('.');
   if (dotIndex === -1) return null;
   const tokenId = credentials.substring(0, dotIndex);
   const token = credentials.substring(dotIndex + 1);
-  console.log('TokenId:', tokenId, 'Token:', token);
   const nodes = loadNodes();
   const node = nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
-  console.log('Found node:', node ? node.name : 'null');
   return node;
 }
 
