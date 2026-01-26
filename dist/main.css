@@ -3105,6 +3105,76 @@ input, textarea, select {
   padding: 20px;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+}
+@media (max-width: 480px) {
+  .pagination {
+    gap: 8px;
+    padding: 12px;
+  }
+}
+.pagination .page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+@media (max-width: 480px) {
+  .pagination .page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+}
+.pagination .page-btn .material-icons-outlined {
+  font-size: 18px;
+}
+.pagination .page-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+.pagination .page-btn.active {
+  background: var(--accent);
+  color: white;
+}
+.pagination .page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pagination .page-info {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+@media (max-width: 480px) {
+  .pagination .page-info {
+    font-size: 13px;
+  }
+}
+.pagination .page-total {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+@media (max-width: 480px) {
+  .pagination .page-total {
+    display: none;
+  }
+}
+
 .error-page {
   display: flex;
   flex-direction: column;

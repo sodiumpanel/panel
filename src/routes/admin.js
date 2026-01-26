@@ -1,6 +1,42 @@
 import { escapeHtml } from '../utils/security.js';
 
 let currentTab = 'nodes';
+let currentPage = { nodes: 1, servers: 1, users: 1 };
+const perPage = 10;
+
+function renderPagination(meta, onPageChange) {
+  if (meta.total_pages <= 1) return '';
+  
+  let pages = '';
+  for (let i = 1; i <= meta.total_pages; i++) {
+    pages += `<button class="page-btn ${i === meta.current_page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  }
+  
+  return `
+    <div class="pagination">
+      <button class="page-btn" data-page="${meta.current_page - 1}" ${meta.current_page <= 1 ? 'disabled' : ''}>
+        <span class="material-icons-outlined">chevron_left</span>
+      </button>
+      <span class="page-info">${meta.current_page} / ${meta.total_pages}</span>
+      <button class="page-btn" data-page="${meta.current_page + 1}" ${meta.current_page >= meta.total_pages ? 'disabled' : ''}>
+        <span class="material-icons-outlined">chevron_right</span>
+      </button>
+      <span class="page-total">(${meta.total} total)</span>
+    </div>
+  `;
+}
+
+function setupPaginationListeners(tab) {
+  document.querySelectorAll('.pagination .page-btn').forEach(btn => {
+    btn.onclick = () => {
+      const page = parseInt(btn.dataset.page);
+      if (page >= 1) {
+        currentPage[tab] = page;
+        loadTab(tab);
+      }
+    };
+  });
+}
 
 export async function renderAdmin() {
   const app = document.getElementById('app');
@@ -87,7 +123,7 @@ async function loadTab(tab) {
 
 async function loadNodes(container, username) {
   try {
-    const res = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}`);
+    const res = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}&page=${currentPage.nodes}&per_page=${perPage}`);
     const data = await res.json();
     
     container.innerHTML = `
@@ -213,8 +249,12 @@ async function loadNodes(container, username) {
             </div>
           `).join('')}
         </div>
+        
+        ${renderPagination(data.meta)}
       </div>
     `;
+    
+    setupPaginationListeners('nodes');
     
     const locRes = await fetch('/api/admin/locations');
     const locData = await locRes.json();
@@ -466,7 +506,7 @@ window.deleteNode = async function(nodeId) {
 
 async function loadServersTab(container, username) {
   try {
-    const res = await fetch(`/api/admin/servers?username=${encodeURIComponent(username)}`);
+    const res = await fetch(`/api/admin/servers?username=${encodeURIComponent(username)}&page=${currentPage.servers}&per_page=${perPage}`);
     const data = await res.json();
     
     container.innerHTML = `
@@ -555,16 +595,20 @@ async function loadServersTab(container, username) {
             </tbody>
           </table>
         </div>
+        
+        ${renderPagination(data.meta)}
       </div>
     `;
     
-    const usersRes = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}`);
+    setupPaginationListeners('servers');
+    
+    const usersRes = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}&per_page=100`);
     const usersData = await usersRes.json();
     document.getElementById('server-user').innerHTML = usersData.users.map(u => 
       `<option value="${u.id}">${escapeHtml(u.username)}</option>`
     ).join('');
     
-    const nodesRes = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}`);
+    const nodesRes = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}&per_page=100`);
     const nodesData = await nodesRes.json();
     document.getElementById('server-node').innerHTML = nodesData.nodes.map(n => 
       `<option value="${n.id}">${escapeHtml(n.name)}</option>`
@@ -620,7 +664,7 @@ window.deleteServer = async function(serverId) {
 
 async function loadUsers(container, username) {
   try {
-    const res = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}`);
+    const res = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}&page=${currentPage.users}&per_page=${perPage}`);
     const data = await res.json();
     
     container.innerHTML = `
@@ -681,8 +725,12 @@ async function loadUsers(container, username) {
             </div>
           `).join('')}
         </div>
+        
+        ${renderPagination(data.meta)}
       </div>
     `;
+    
+    setupPaginationListeners('users');
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load users</div>`;
   }

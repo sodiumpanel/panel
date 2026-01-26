@@ -471,9 +471,25 @@ app.get('/api/status/nodes', async (req, res) => {
 
 // ==================== ADMIN: NODES ====================
 app.get('/api/admin/nodes', (req, res) => {
-  const { username } = req.query;
+  const { username, page = 1, per_page = 10 } = req.query;
   if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
-  res.json(loadNodes());
+  
+  const data = loadNodes();
+  const total = data.nodes.length;
+  const totalPages = Math.ceil(total / per_page);
+  const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
+  const start = (currentPage - 1) * per_page;
+  const nodes = data.nodes.slice(start, start + parseInt(per_page));
+  
+  res.json({
+    nodes,
+    meta: {
+      current_page: currentPage,
+      per_page: parseInt(per_page),
+      total,
+      total_pages: totalPages
+    }
+  });
 });
 
 app.post('/api/admin/nodes', (req, res) => {
@@ -656,12 +672,26 @@ app.delete('/api/admin/locations/:id', (req, res) => {
 
 // ==================== ADMIN: USERS ====================
 app.get('/api/admin/users', (req, res) => {
-  const { username } = req.query;
+  const { username, page = 1, per_page = 10 } = req.query;
   if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
   
   const data = loadUsers();
-  const users = data.users.map(({ password, ...u }) => u);
-  res.json({ users });
+  const allUsers = data.users.map(({ password, ...u }) => u);
+  const total = allUsers.length;
+  const totalPages = Math.ceil(total / per_page);
+  const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
+  const start = (currentPage - 1) * per_page;
+  const users = allUsers.slice(start, start + parseInt(per_page));
+  
+  res.json({
+    users,
+    meta: {
+      current_page: currentPage,
+      per_page: parseInt(per_page),
+      total,
+      total_pages: totalPages
+    }
+  });
 });
 
 app.put('/api/admin/users/:id', (req, res) => {
@@ -764,9 +794,25 @@ app.post('/api/admin/eggs/import', (req, res) => {
 
 // ==================== ADMIN: SERVERS ====================
 app.get('/api/admin/servers', (req, res) => {
-  const { username } = req.query;
+  const { username, page = 1, per_page = 10 } = req.query;
   if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
-  res.json(loadServers());
+  
+  const data = loadServers();
+  const total = data.servers.length;
+  const totalPages = Math.ceil(total / per_page);
+  const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
+  const start = (currentPage - 1) * per_page;
+  const servers = data.servers.slice(start, start + parseInt(per_page));
+  
+  res.json({
+    servers,
+    meta: {
+      current_page: currentPage,
+      per_page: parseInt(per_page),
+      total,
+      total_pages: totalPages
+    }
+  });
 });
 
 app.post('/api/admin/servers', async (req, res) => {
