@@ -174,6 +174,12 @@ app.use((req, res, next) => {
   }
   next();
 });
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/remote')) {
+    console.log(`[REMOTE] ${req.method} ${req.path}`);
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'dist')));
 
 app.post('/api/auth/register', async (req, res) => {
