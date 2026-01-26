@@ -159,7 +159,21 @@ async function wingsRequest(node, method, endpoint, data = null) {
   }
 }
 
-app.use(express.json());
+app.use(express.json({ strict: false }));
+app.use(express.text({ type: 'application/json' }));
+app.use((req, res, next) => {
+  if (req.body === 'null' || req.body === null || req.body === '') {
+    req.body = {};
+  }
+  if (typeof req.body === 'string') {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch {
+      req.body = {};
+    }
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'dist')));
 
 app.post('/api/auth/register', async (req, res) => {
