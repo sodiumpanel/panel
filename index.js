@@ -462,15 +462,8 @@ app.post('/api/admin/nodes', (req, res) => {
   res.json({ success: true, node: newNode });
 });
 
-app.get('/api/admin/nodes/:id/config', (req, res) => {
-  const { username } = req.query;
-  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
-  
-  const data = loadNodes();
-  const node = data.nodes.find(n => n.id === req.params.id);
-  if (!node) return res.status(404).json({ error: 'Node not found' });
-  
-  const config = {
+function generateNodeConfig(node) {
+  return {
     debug: false,
     uuid: node.id,
     token_id: node.daemon_token_id,
@@ -482,9 +475,65 @@ app.get('/api/admin/nodes/:id/config', (req, res) => {
       upload_limit: node.upload_size
     },
     system: { data: '/var/lib/pterodactyl/volumes', sftp: { bind_port: node.daemon_sftp_port } },
-    remote: loadConfig().panel.url + '/api/remote'
+    docker: {
+      network: {
+        name: 'pterodactyl_nw',
+        interfaces: {
+          v4: {
+            subnet: '172.50.0.0/16',
+            gateway: '172.50.0.1'
+          }
+        }
+      }
+    },
+    remote: loadConfig().panel?.url ? loadConfig().panel.url + '/api/remote' : 'http://localhost:3000/api/remote'
   };
-  res.json({ config });
+}
+
+function configToYaml(obj, indent = 0) {
+  let yaml = '';
+  const spaces = '  '.repeat(indent);
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) continue;
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      yaml += `${spaces}${key}:\n${configToYaml(value, indent + 1)}`;
+    } else if (typeof value === 'boolean') {
+      yaml += `${spaces}${key}: ${value}\n`;
+    } else if (typeof value === 'number') {
+      yaml += `${spaces}${key}: ${value}\n`;
+    } else {
+      yaml += `${spaces}${key}: "${value}"\n`;
+    }
+  }
+  return yaml;
+}
+
+app.get('/api/admin/nodes/:id/config', (req, res) => {
+  const { username } = req.query;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
+  
+  const data = loadNodes();
+  const node = data.nodes.find(n => n.id === req.params.id);
+  if (!node) return res.status(404).json({ error: 'Node not found' });
+  
+  res.json({ config: generateNodeConfig(node) });
+});
+
+app.get('/api/admin/nodes/:id/deploy', (req, res) => {
+  const { username } = req.query;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Forbidden' });
+  
+  const data = loadNodes();
+  const node = data.nodes.find(n => n.id === req.params.id);
+  if (!node) return res.status(404).json({ error: 'Node not found' });
+  
+  const config = generateNodeConfig(node);
+  const yamlConfig = configToYaml(config);
+  const escapedYaml = yamlConfig.replace(/'/g, "'\\''");
+  
+  const command = `mkdir -p /etc/pterodactyl && echo '${escapedYaml}' > /etc/pterodactyl/config.yml && systemctl restart wings`;
+  
+  res.json({ command });
 });
 
 app.put('/api/admin/nodes/:id', (req, res) => {

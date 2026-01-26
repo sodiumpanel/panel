@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Data (contains sensitive user info, tokens, etc.)
+data/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Archives
+*.zip
+*.tar.gz
