@@ -1176,6 +1176,7 @@ app.get('/api/servers/:id/startup', async (req, res) => {
       name: egg.name,
       startup: egg.startup,
       docker_image: egg.docker_image,
+      docker_images: egg.docker_images || {},
       variables: egg.variables || []
     }
   });
