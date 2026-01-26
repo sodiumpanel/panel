@@ -5,7 +5,7 @@ import { renderSettings } from './settings.js';
 import { renderNotFound } from './notfound.js';
 import { renderUser } from './user.js';
 import { renderServers, cleanupServers } from './servers.js';
-import { renderServerConsole, cleanupServerConsole } from './server-console.js';
+import { renderServerPage, cleanupServerPage } from './server/index.js';
 import { renderStatus, cleanupStatus } from './status.js';
 import { renderAdmin, cleanupAdmin } from './admin.js';
 
@@ -91,10 +91,10 @@ export function getUserRoute(username) {
 
 export function getServerRoute(serverId) {
   return {
-    render: () => renderServerConsole(serverId),
-    cleanup: cleanupServerConsole,
+    render: () => renderServerPage(serverId),
+    cleanup: cleanupServerPage,
     options: {
-      title: 'Console',
+      title: 'Server',
       auth: true,
       sidebar: true
     }

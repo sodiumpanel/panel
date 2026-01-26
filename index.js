@@ -956,6 +956,153 @@ app.get('/api/servers/:id/websocket', async (req, res) => {
   });
 });
 
+// ==================== FILE MANAGER ====================
+async function getServerAndNode(serverId, username) {
+  const data = loadServers();
+  const server = data.servers.find(s => s.id === serverId);
+  if (!server) return { error: 'Server not found', status: 404 };
+  
+  const users = loadUsers();
+  const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
+  if (!user || (server.user_id !== user.id && !user.isAdmin)) {
+    return { error: 'Forbidden', status: 403 };
+  }
+  
+  const nodes = loadNodes();
+  const node = nodes.nodes.find(n => n.id === server.node_id);
+  if (!node) return { error: 'Node not available', status: 400 };
+  
+  return { server, node, user };
+}
+
+app.get('/api/servers/:id/files/list', async (req, res) => {
+  const { username, path } = req.query;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    const files = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/files/list-directory?directory=${encodeURIComponent(path || '/')}`);
+    res.json({ files });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/servers/:id/files/folder', async (req, res) => {
+  const { username, path } = req.body;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/create-directory`, { name: path, path: '/' });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/servers/:id/files/write', async (req, res) => {
+  const { username, path, content } = req.body;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/write?file=${encodeURIComponent(path)}`, content, true);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/servers/:id/files/delete', async (req, res) => {
+  const { username, path } = req.body;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/delete`, { root: '/', files: [path.replace(/^\//, '')] });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/servers/:id/files/rename', async (req, res) => {
+  const { username, from, to } = req.body;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    await wingsRequest(node, 'PUT', `/api/servers/${server.uuid}/files/rename`, { 
+      root: '/', 
+      files: [{ from: from.replace(/^\//, ''), to: to.replace(/^\//, '') }] 
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/servers/:id/files/contents', async (req, res) => {
+  const { username, path } = req.query;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    const url = `${node.scheme}://${node.fqdn}:${node.daemon_port}/api/servers/${server.uuid}/files/contents?file=${encodeURIComponent(path)}`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${node.daemon_token}`,
+        'Accept': 'text/plain'
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const content = await response.text();
+    res.json({ content });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/servers/:id/files/download', async (req, res) => {
+  const { username, path } = req.query;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  
+  const { server, node } = result;
+  
+  try {
+    const url = `${node.scheme}://${node.fqdn}:${node.daemon_port}/api/servers/${server.uuid}/files/contents?file=${encodeURIComponent(path)}`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${node.daemon_token}`
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const filename = path.split('/').pop();
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ==================== WINGS REMOTE API ====================
 function authenticateNode(req) {
   const authHeader = req.headers.authorization;

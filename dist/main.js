@@ -1099,7 +1099,7 @@ async function loadUserProfile(targetUsername) {
   }
 }
 
-let pollInterval$2 = null;
+let pollInterval$1 = null;
 
 function renderServers() {
   const app = document.getElementById('app');
@@ -1129,7 +1129,7 @@ function renderServers() {
   loadServers();
   loadLimits();
   
-  pollInterval$2 = setInterval(loadServers, 10000);
+  pollInterval$1 = setInterval(loadServers, 10000);
 }
 
 async function loadLimits() {
@@ -1248,130 +1248,48 @@ window.serverPower = async function(serverId, action) {
 };
 
 function cleanupServers() {
-  if (pollInterval$2) {
-    clearInterval(pollInterval$2);
-    pollInterval$2 = null;
+  if (pollInterval$1) {
+    clearInterval(pollInterval$1);
+    pollInterval$1 = null;
   }
 }
 
-let pollInterval$1 = null;
 let consoleSocket = null;
+let statusCallback = null;
+let resourcesCallback = null;
+let serverIdGetter = null;
 
-function renderServerConsole(serverId) {
-  const app = document.getElementById('app');
-  
-  app.innerHTML = `
-    <div class="server-console-page">
-      <div class="page-header">
-        <a href="/servers" class="btn btn-ghost"><span class="material-icons-outlined">arrow_back</span> Back</a>
-        <h1 id="server-name">Loading...</h1>
-      </div>
-      
-      <div class="console-layout">
-        <div class="console-main">
-          <div class="card console-card">
-            <div class="console-header">
-              <h3>Console</h3>
-              <div class="power-buttons">
-                <button class="btn btn-success btn-sm" id="btn-start">Start</button>
-                <button class="btn btn-warning btn-sm" id="btn-restart">Restart</button>
-                <button class="btn btn-danger btn-sm" id="btn-stop">Stop</button>
-                <button class="btn btn-danger btn-sm" id="btn-kill">Kill</button>
-              </div>
-            </div>
-            <div class="console-output" id="console-output">
-              <div class="console-placeholder">Connecting to server...</div>
-            </div>
-            <div class="console-input">
-              <input type="text" id="command-input" placeholder="Type a command..." />
-              <button class="btn btn-primary" id="send-command">Send</button>
-            </div>
-          </div>
+function setConsoleCallbacks(onStatus, onResources, getServerId) {
+  statusCallback = onStatus;
+  resourcesCallback = onResources;
+  serverIdGetter = getServerId;
+}
+
+function renderConsoleTab() {
+  return `
+    <div class="console-tab">
+      <div class="card console-card">
+        <div class="console-output" id="console-output">
+          <div class="console-placeholder">Connecting to server...</div>
         </div>
-        
-        <div class="console-sidebar">
-          <div class="card">
-            <h3>Resources</h3>
-            <div id="resources-display">
-              <div class="resource-item">
-                <span class="label">Status</span>
-                <span class="value" id="res-status">--</span>
-              </div>
-              <div class="resource-item">
-                <span class="label">CPU</span>
-                <span class="value" id="res-cpu">--</span>
-              </div>
-              <div class="resource-item">
-                <span class="label">Memory</span>
-                <span class="value" id="res-memory">--</span>
-              </div>
-              <div class="resource-item">
-                <span class="label">Disk</span>
-                <span class="value" id="res-disk">--</span>
-              </div>
-              <div class="resource-item">
-                <span class="label">Network ↑</span>
-                <span class="value" id="res-net-tx">--</span>
-              </div>
-              <div class="resource-item">
-                <span class="label">Network ↓</span>
-                <span class="value" id="res-net-rx">--</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h3>Server Info</h3>
-            <div id="server-info">
-              <div class="info-item">
-                <span class="label">Address</span>
-                <span class="value" id="info-address">--</span>
-              </div>
-              <div class="info-item">
-                <span class="label">Node</span>
-                <span class="value" id="info-node">--</span>
-              </div>
-            </div>
-          </div>
+        <div class="console-input">
+          <input type="text" id="command-input" placeholder="Type a command..." />
+          <button class="btn btn-primary" id="send-command">
+            <span class="material-icons-outlined">send</span>
+          </button>
         </div>
       </div>
     </div>
   `;
-  
-  loadServerDetails(serverId);
+}
+
+function initConsoleTab(serverId) {
   connectWebSocket(serverId);
-  
-  document.getElementById('btn-start').onclick = () => powerAction(serverId, 'start');
-  document.getElementById('btn-restart').onclick = () => powerAction(serverId, 'restart');
-  document.getElementById('btn-stop').onclick = () => powerAction(serverId, 'stop');
-  document.getElementById('btn-kill').onclick = () => powerAction(serverId, 'kill');
   
   document.getElementById('send-command').onclick = () => sendCommand(serverId);
   document.getElementById('command-input').onkeypress = (e) => {
     if (e.key === 'Enter') sendCommand(serverId);
   };
-}
-
-async function loadServerDetails(serverId) {
-  const username = localStorage.getItem('username');
-  
-  try {
-    const res = await fetch(`/api/servers/${serverId}?username=${encodeURIComponent(username)}`);
-    const data = await res.json();
-    
-    if (data.error) {
-      document.getElementById('server-name').textContent = 'Error';
-      return;
-    }
-    
-    const server = data.server;
-    
-    document.getElementById('server-name').textContent = server.name;
-    document.getElementById('info-address').textContent = `${server.allocation?.ip}:${server.allocation?.port}`;
-    document.getElementById('info-node').textContent = server.node_id?.substring(0, 8) || '--';
-  } catch (e) {
-    console.error('Failed to load server:', e);
-  }
 }
 
 async function connectWebSocket(serverId) {
@@ -1398,8 +1316,10 @@ async function connectWebSocket(serverId) {
   };
   
   consoleSocket.onclose = () => {
-    appendConsole('[SYSTEM] Connection closed');
-    setTimeout(() => connectWebSocket(serverId), 5000);
+    if (serverIdGetter && serverIdGetter() === serverId) {
+      appendConsole('[SYSTEM] Connection closed, reconnecting...');
+      setTimeout(() => connectWebSocket(serverId), 5000);
+    }
   };
   
   consoleSocket.onerror = (error) => {
@@ -1433,19 +1353,14 @@ function handleSocketMessage(message) {
       break;
       
     case 'status':
-      if (args && args[0]) {
-        const status = args[0];
-        const statusEl = document.getElementById('res-status');
-        if (statusEl) {
-          statusEl.textContent = status;
-          statusEl.className = `value status-${status}`;
-        }
+      if (args && args[0] && statusCallback) {
+        statusCallback(args[0]);
       }
       break;
       
     case 'stats':
-      if (args && args[0]) {
-        updateResources(args[0]);
+      if (args && args[0] && resourcesCallback) {
+        resourcesCallback(args[0]);
       }
       break;
       
@@ -1471,42 +1386,6 @@ function handleSocketMessage(message) {
       
     default:
       console.log('Unhandled WebSocket event:', event, args);
-  }
-}
-
-function updateResources(stats) {
-  const cpuEl = document.getElementById('res-cpu');
-  const memEl = document.getElementById('res-memory');
-  const diskEl = document.getElementById('res-disk');
-  const netTxEl = document.getElementById('res-net-tx');
-  const netRxEl = document.getElementById('res-net-rx');
-  
-  if (cpuEl) cpuEl.textContent = `${(stats.cpu_absolute || 0).toFixed(1)}%`;
-  if (memEl) memEl.textContent = formatBytes(stats.memory_bytes || 0);
-  if (diskEl) diskEl.textContent = formatBytes(stats.disk_bytes || 0);
-  if (netTxEl) netTxEl.textContent = formatBytes(stats.network?.tx_bytes || 0);
-  if (netRxEl) netRxEl.textContent = formatBytes(stats.network?.rx_bytes || 0);
-}
-
-async function powerAction(serverId, action) {
-  const username = localStorage.getItem('username');
-  
-  try {
-    const res = await fetch(`/api/servers/${serverId}/power`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, action })
-    });
-    
-    if (res.ok) {
-      appendConsole(`[SYSTEM] Power action: ${action}`);
-      loadServerDetails(serverId);
-    } else {
-      const data = await res.json();
-      appendConsole(`[ERROR] ${data.error}`);
-    }
-  } catch (e) {
-    appendConsole(`[ERROR] Failed to execute power action`);
   }
 }
 
@@ -1544,6 +1423,8 @@ async function sendCommand(serverId) {
 
 function appendConsole(text) {
   const output = document.getElementById('console-output');
+  if (!output) return;
+  
   const placeholder = output.querySelector('.console-placeholder');
   if (placeholder) placeholder.remove();
   
@@ -1554,6 +1435,595 @@ function appendConsole(text) {
   output.scrollTop = output.scrollHeight;
 }
 
+function cleanupConsoleTab() {
+  if (consoleSocket) {
+    consoleSocket.close();
+    consoleSocket = null;
+  }
+}
+
+let currentPath = '/';
+
+function renderFilesTab() {
+  return `
+    <div class="files-tab">
+      <div class="card">
+        <div class="files-toolbar">
+          <div class="files-breadcrumb" id="files-breadcrumb">
+            <span class="breadcrumb-item" data-path="/">/</span>
+          </div>
+          <div class="files-actions">
+            <button class="btn btn-sm btn-ghost" id="btn-refresh" title="Refresh">
+              <span class="material-icons-outlined">refresh</span>
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-new-folder" title="New Folder">
+              <span class="material-icons-outlined">create_new_folder</span>
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-new-file" title="New File">
+              <span class="material-icons-outlined">note_add</span>
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-upload" title="Upload">
+              <span class="material-icons-outlined">upload</span>
+            </button>
+          </div>
+        </div>
+        <div class="files-list" id="files-list">
+          <div class="files-loading">Loading files...</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initFilesTab(serverId) {
+  currentPath = '/';
+  loadFiles(serverId, currentPath);
+  
+  document.getElementById('btn-refresh').onclick = () => loadFiles(serverId, currentPath);
+  document.getElementById('btn-new-folder').onclick = () => createNewFolder(serverId);
+  document.getElementById('btn-new-file').onclick = () => createNewFile(serverId);
+  document.getElementById('btn-upload').onclick = () => uploadFile(serverId);
+}
+
+async function loadFiles(serverId, path) {
+  const username = localStorage.getItem('username');
+  const filesList = document.getElementById('files-list');
+  
+  filesList.innerHTML = '<div class="files-loading">Loading files...</div>';
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/list?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
+    const data = await res.json();
+    
+    if (data.error) {
+      filesList.innerHTML = `<div class="files-error">${data.error}</div>`;
+      return;
+    }
+    
+    currentPath = path;
+    updateBreadcrumb(path, serverId);
+    renderFilesList(data.files || [], serverId);
+  } catch (e) {
+    console.error('Failed to load files:', e);
+    filesList.innerHTML = '<div class="files-error">Failed to load files</div>';
+  }
+}
+
+function updateBreadcrumb(path, serverId) {
+  const breadcrumb = document.getElementById('files-breadcrumb');
+  const parts = path.split('/').filter(p => p);
+  
+  let html = `<span class="breadcrumb-item clickable" data-path="/">/</span>`;
+  let currentPath = '';
+  
+  parts.forEach((part, i) => {
+    currentPath += '/' + part;
+    const isLast = i === parts.length - 1;
+    html += `<span class="breadcrumb-separator">/</span>`;
+    html += `<span class="breadcrumb-item ${isLast ? '' : 'clickable'}" data-path="${currentPath}">${part}</span>`;
+  });
+  
+  breadcrumb.innerHTML = html;
+  
+  breadcrumb.querySelectorAll('.breadcrumb-item.clickable').forEach(item => {
+    item.onclick = () => loadFiles(serverId, item.dataset.path);
+  });
+}
+
+function renderFilesList(files, serverId) {
+  const filesList = document.getElementById('files-list');
+  
+  if (files.length === 0) {
+    filesList.innerHTML = '<div class="files-empty">This directory is empty</div>';
+    return;
+  }
+  
+  const sorted = [...files].sort((a, b) => {
+    if (a.is_directory && !b.is_directory) return -1;
+    if (!a.is_directory && b.is_directory) return 1;
+    return a.name.localeCompare(b.name);
+  });
+  
+  filesList.innerHTML = sorted.map(file => `
+    <div class="file-item ${file.is_directory ? 'directory' : 'file'}" data-name="${file.name}">
+      <div class="file-icon">
+        <span class="material-icons-outlined">${file.is_directory ? 'folder' : getFileIcon(file.name)}</span>
+      </div>
+      <div class="file-info">
+        <span class="file-name">${file.name}</span>
+        <span class="file-meta">${file.is_directory ? '--' : formatBytes$1(file.size)} • ${formatDate(file.modified_at)}</span>
+      </div>
+      <div class="file-actions">
+        ${!file.is_directory ? `
+          <button class="btn btn-sm btn-ghost btn-edit" title="Edit">
+            <span class="material-icons-outlined">edit</span>
+          </button>
+          <button class="btn btn-sm btn-ghost btn-download" title="Download">
+            <span class="material-icons-outlined">download</span>
+          </button>
+        ` : ''}
+        <button class="btn btn-sm btn-ghost btn-rename" title="Rename">
+          <span class="material-icons-outlined">drive_file_rename_outline</span>
+        </button>
+        <button class="btn btn-sm btn-ghost btn-delete" title="Delete">
+          <span class="material-icons-outlined">delete</span>
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  filesList.querySelectorAll('.file-item.directory').forEach(item => {
+    item.querySelector('.file-info').onclick = () => {
+      const name = item.dataset.name;
+      const newPath = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
+      loadFiles(serverId, newPath);
+    };
+  });
+  
+  filesList.querySelectorAll('.file-item .btn-edit').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const name = btn.closest('.file-item').dataset.name;
+      editFile(serverId, currentPath === '/' ? `/${name}` : `${currentPath}/${name}`);
+    };
+  });
+  
+  filesList.querySelectorAll('.file-item .btn-delete').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const name = btn.closest('.file-item').dataset.name;
+      deleteFile(serverId, currentPath === '/' ? `/${name}` : `${currentPath}/${name}`);
+    };
+  });
+  
+  filesList.querySelectorAll('.file-item .btn-rename').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const name = btn.closest('.file-item').dataset.name;
+      renameFile(serverId, name);
+    };
+  });
+  
+  filesList.querySelectorAll('.file-item .btn-download').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const name = btn.closest('.file-item').dataset.name;
+      downloadFile(serverId, currentPath === '/' ? `/${name}` : `${currentPath}/${name}`);
+    };
+  });
+}
+
+function getFileIcon(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const icons = {
+    'js': 'javascript', 'ts': 'javascript', 'json': 'data_object',
+    'html': 'html', 'css': 'css', 'scss': 'css',
+    'md': 'description', 'txt': 'description', 'log': 'description',
+    'yml': 'settings', 'yaml': 'settings', 'toml': 'settings',
+    'properties': 'settings', 'cfg': 'settings', 'conf': 'settings',
+    'jar': 'inventory_2', 'zip': 'folder_zip', 'tar': 'folder_zip', 'gz': 'folder_zip',
+    'png': 'image', 'jpg': 'image', 'jpeg': 'image', 'gif': 'image', 'svg': 'image',
+    'sh': 'terminal', 'bat': 'terminal', 'ps1': 'terminal'
+  };
+  return icons[ext] || 'insert_drive_file';
+}
+
+function formatBytes$1(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '--';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function createNewFolder(serverId) {
+  const name = prompt('Folder name:');
+  if (!name) return;
+  
+  const username = localStorage.getItem('username');
+  const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/folder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, path })
+    });
+    
+    if (res.ok) {
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Failed to create folder');
+    }
+  } catch (e) {
+    alert('Failed to create folder');
+  }
+}
+
+async function createNewFile(serverId) {
+  const name = prompt('File name:');
+  if (!name) return;
+  
+  const username = localStorage.getItem('username');
+  const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/write`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, path, content: '' })
+    });
+    
+    if (res.ok) {
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Failed to create file');
+    }
+  } catch (e) {
+    alert('Failed to create file');
+  }
+}
+
+async function deleteFile(serverId, path) {
+  if (!confirm(`Delete ${path}?`)) return;
+  
+  const username = localStorage.getItem('username');
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, path })
+    });
+    
+    if (res.ok) {
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Failed to delete');
+    }
+  } catch (e) {
+    alert('Failed to delete');
+  }
+}
+
+async function renameFile(serverId, oldName) {
+  const newName = prompt('New name:', oldName);
+  if (!newName || newName === oldName) return;
+  
+  const username = localStorage.getItem('username');
+  const from = currentPath === '/' ? `/${oldName}` : `${currentPath}/${oldName}`;
+  const to = currentPath === '/' ? `/${newName}` : `${currentPath}/${newName}`;
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, from, to })
+    });
+    
+    if (res.ok) {
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Failed to rename');
+    }
+  } catch (e) {
+    alert('Failed to rename');
+  }
+}
+
+async function editFile(serverId, path) {
+  alert('File editor coming soon!');
+}
+
+async function downloadFile(serverId, path) {
+  const username = localStorage.getItem('username');
+  window.open(`/api/servers/${serverId}/files/download?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
+}
+
+async function uploadFile(serverId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const username = localStorage.getItem('username');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('username', username);
+    formData.append('path', currentPath);
+    
+    try {
+      const res = await fetch(`/api/servers/${serverId}/files/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (res.ok) {
+        loadFiles(serverId, currentPath);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to upload');
+      }
+    } catch (e) {
+      alert('Failed to upload');
+    }
+  };
+  input.click();
+}
+
+function cleanupFilesTab() {
+  currentPath = '/';
+}
+
+let currentServerId = null;
+let serverLimits = null;
+let currentTab$1 = 'console';
+let serverData = null;
+
+const tabs = [
+  { id: 'console', label: 'Console', icon: 'terminal' },
+  { id: 'files', label: 'Files', icon: 'folder' },
+  { id: 'databases', label: 'Databases', icon: 'storage', disabled: true },
+  { id: 'schedules', label: 'Schedules', icon: 'schedule', disabled: true },
+  { id: 'backups', label: 'Backups', icon: 'backup', disabled: true },
+  { id: 'network', label: 'Network', icon: 'lan', disabled: true },
+  { id: 'startup', label: 'Startup', icon: 'play_circle', disabled: true },
+  { id: 'settings', label: 'Settings', icon: 'settings', disabled: true }
+];
+
+function renderServerPage(serverId) {
+  currentServerId = serverId;
+  const app = document.getElementById('app');
+  
+  app.innerHTML = `
+    <div class="server-page">
+      <div class="server-header">
+        <div class="server-header-left">
+          <a href="/servers" class="btn btn-ghost btn-sm">
+            <span class="material-icons-outlined">arrow_back</span>
+          </a>
+          <div class="server-title">
+            <h1 id="server-name">Loading...</h1>
+            <span class="server-status" id="server-status">--</span>
+          </div>
+        </div>
+        <div class="server-header-right">
+          <div class="server-address" id="server-address">--</div>
+          <div class="power-buttons">
+            <button class="btn btn-success btn-sm" id="btn-start" title="Start">
+              <span class="material-icons-outlined">play_arrow</span>
+            </button>
+            <button class="btn btn-warning btn-sm" id="btn-restart" title="Restart">
+              <span class="material-icons-outlined">refresh</span>
+            </button>
+            <button class="btn btn-danger btn-sm" id="btn-stop" title="Stop">
+              <span class="material-icons-outlined">stop</span>
+            </button>
+            <button class="btn btn-danger btn-sm" id="btn-kill" title="Kill">
+              <span class="material-icons-outlined">power_settings_new</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="server-tabs">
+        ${tabs.map(tab => `
+          <button class="server-tab ${tab.id === currentTab$1 ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}" 
+                  data-tab="${tab.id}" ${tab.disabled ? 'disabled' : ''}>
+            <span class="material-icons-outlined">${tab.icon}</span>
+            <span>${tab.label}</span>
+          </button>
+        `).join('')}
+      </div>
+      
+      <div class="server-content">
+        <div class="server-main" id="tab-content"></div>
+        <div class="server-sidebar">
+          <div class="card resources-card">
+            <h4>Resources</h4>
+            <div class="resource-bars">
+              <div class="resource-bar-item">
+                <div class="resource-bar-header">
+                  <span>CPU</span>
+                  <span id="res-cpu-text">0%</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="resource-bar-fill cpu" id="res-cpu-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="resource-bar-item">
+                <div class="resource-bar-header">
+                  <span>Memory</span>
+                  <span id="res-mem-text">0 MB</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="resource-bar-fill memory" id="res-mem-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="resource-bar-item">
+                <div class="resource-bar-header">
+                  <span>Disk</span>
+                  <span id="res-disk-text">0 MB</span>
+                </div>
+                <div class="resource-bar">
+                  <div class="resource-bar-fill disk" id="res-disk-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="resource-stats">
+              <div class="resource-stat">
+                <span class="material-icons-outlined">arrow_upward</span>
+                <span id="res-net-tx">0 B</span>
+              </div>
+              <div class="resource-stat">
+                <span class="material-icons-outlined">arrow_downward</span>
+                <span id="res-net-rx">0 B</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  setConsoleCallbacks(updateServerStatus, updateServerResources, getServerId);
+  loadServerDetails(serverId);
+  switchTab(currentTab$1);
+  
+  document.querySelectorAll('.server-tab:not(.disabled)').forEach(tab => {
+    tab.onclick = () => switchTab(tab.dataset.tab);
+  });
+  
+  document.getElementById('btn-start').onclick = () => powerAction(serverId, 'start');
+  document.getElementById('btn-restart').onclick = () => powerAction(serverId, 'restart');
+  document.getElementById('btn-stop').onclick = () => powerAction(serverId, 'stop');
+  document.getElementById('btn-kill').onclick = () => powerAction(serverId, 'kill');
+}
+
+function switchTab(tabId) {
+  cleanupCurrentTab();
+  
+  currentTab$1 = tabId;
+  
+  document.querySelectorAll('.server-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabId);
+  });
+  
+  const content = document.getElementById('tab-content');
+  
+  switch (tabId) {
+    case 'console':
+      content.innerHTML = renderConsoleTab();
+      initConsoleTab(currentServerId);
+      break;
+    case 'files':
+      content.innerHTML = renderFilesTab();
+      initFilesTab(currentServerId);
+      break;
+    default:
+      content.innerHTML = `<div class="card"><p>Coming soon...</p></div>`;
+  }
+}
+
+function cleanupCurrentTab() {
+  switch (currentTab$1) {
+    case 'console':
+      cleanupConsoleTab();
+      break;
+    case 'files':
+      cleanupFilesTab();
+      break;
+  }
+}
+
+async function loadServerDetails(serverId) {
+  const username = localStorage.getItem('username');
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+    
+    if (data.error) {
+      document.getElementById('server-name').textContent = 'Error';
+      return;
+    }
+    
+    serverData = data.server;
+    serverLimits = serverData.limits;
+    
+    document.getElementById('server-name').textContent = serverData.name;
+    document.getElementById('server-address').textContent = 
+      `${serverData.allocation?.ip}:${serverData.allocation?.port}`;
+  } catch (e) {
+    console.error('Failed to load server:', e);
+  }
+}
+
+async function powerAction(serverId, action) {
+  const username = localStorage.getItem('username');
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/power`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, action })
+    });
+    
+    if (!res.ok) {
+      const data = await res.json();
+      console.error('Power action failed:', data.error);
+    }
+  } catch (e) {
+    console.error('Failed to execute power action:', e);
+  }
+}
+
+function updateServerStatus(status) {
+  const statusEl = document.getElementById('server-status');
+  if (statusEl) {
+    statusEl.textContent = status;
+    statusEl.className = `server-status status-${status}`;
+  }
+}
+
+function updateServerResources(stats) {
+  const limits = serverLimits;
+  const cpuPercent = Math.min(100, stats.cpu_absolute || 0);
+  const memPercent = limits?.memory ? Math.min(100, ((stats.memory_bytes || 0) / (limits.memory * 1024 * 1024)) * 100) : 0;
+  const diskPercent = limits?.disk ? Math.min(100, ((stats.disk_bytes || 0) / (limits.disk * 1024 * 1024)) * 100) : 0;
+  
+  const cpuBar = document.getElementById('res-cpu-bar');
+  const memBar = document.getElementById('res-mem-bar');
+  const diskBar = document.getElementById('res-disk-bar');
+  
+  if (cpuBar) cpuBar.style.width = `${cpuPercent}%`;
+  if (memBar) memBar.style.width = `${memPercent}%`;
+  if (diskBar) diskBar.style.width = `${diskPercent}%`;
+  
+  const cpuText = document.getElementById('res-cpu-text');
+  const memText = document.getElementById('res-mem-text');
+  const diskText = document.getElementById('res-disk-text');
+  const netTx = document.getElementById('res-net-tx');
+  const netRx = document.getElementById('res-net-rx');
+  
+  if (cpuText) cpuText.textContent = `${cpuPercent.toFixed(1)}%`;
+  if (memText) memText.textContent = formatBytes(stats.memory_bytes || 0);
+  if (diskText) diskText.textContent = formatBytes(stats.disk_bytes || 0);
+  if (netTx) netTx.textContent = formatBytes(stats.network?.tx_bytes || 0);
+  if (netRx) netRx.textContent = formatBytes(stats.network?.rx_bytes || 0);
+}
+
 function formatBytes(bytes) {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -1562,15 +2032,15 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function cleanupServerConsole() {
-  if (pollInterval$1) {
-    clearInterval(pollInterval$1);
-    pollInterval$1 = null;
-  }
-  if (consoleSocket) {
-    consoleSocket.close();
-    consoleSocket = null;
-  }
+function cleanupServerPage() {
+  cleanupCurrentTab();
+  currentServerId = null;
+  serverData = null;
+  currentTab$1 = 'console';
+}
+
+function getServerId() {
+  return currentServerId;
 }
 
 let pollInterval = null;
@@ -2592,10 +3062,10 @@ function getUserRoute(username) {
 
 function getServerRoute(serverId) {
   return {
-    render: () => renderServerConsole(serverId),
-    cleanup: cleanupServerConsole,
+    render: () => renderServerPage(serverId),
+    cleanup: cleanupServerPage,
     options: {
-      title: 'Console',
+      title: 'Server',
       auth: true,
       sidebar: true
     }
