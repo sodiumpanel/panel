@@ -374,156 +374,6 @@ app.put('/api/user/password', async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-// ==================== WINGS REMOTE API ====================
-// Estos endpoints son llamados por Wings para sincronizarse con el panel
-
-app.get('/api/remote/servers', (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  
-  const token = auth.substring(7);
-  const nodes = loadNodes();
-  const node = nodes.nodes.find(n => n.daemon_token === token);
-  
-  if (!node) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
-  
-  const servers = loadServers();
-  const nodeServers = servers.servers
-    .filter(s => s.node_id === node.id)
-    .map(s => ({
-      uuid: s.uuid,
-      settings: {
-        uuid: s.uuid,
-        suspended: s.suspended || false,
-        environment: s.environment || {},
-        invocation: s.startup,
-        skip_egg_scripts: false,
-        build: {
-          memory_limit: s.limits.memory,
-          swap: s.limits.swap || 0,
-          io_weight: s.limits.io || 500,
-          cpu_limit: s.limits.cpu,
-          disk_space: s.limits.disk,
-          threads: null
-        },
-        container: {
-          image: s.docker_image
-        },
-        allocations: {
-          default: {
-            ip: s.allocation.ip,
-            port: s.allocation.port
-          },
-          mappings: {}
-        }
-      },
-      process_configuration: {
-        startup: { done: ['Server started'] },
-        stop: { type: 'command', value: 'stop' },
-        configs: []
-      }
-    }));
-  
-  res.json({ data: nodeServers });
-});
-
-app.post('/api/remote/servers/:uuid/install', (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(401).json({ error: 'Unauthorized' });
-  
-  const servers = loadServers();
-  const idx = servers.servers.findIndex(s => s.uuid === req.params.uuid);
-  
-  if (idx !== -1) {
-    servers.servers[idx].status = req.body.successful ? 'offline' : 'install_failed';
-    saveServers(servers);
-  }
-  
-  res.json({ success: true });
-});
-
-app.post('/api/remote/activity', (req, res) => {
-  res.json({ success: true });
-});
-
-app.post('/api/remote/sftp/auth', async (req, res) => {
-  const { username, password } = req.body;
-  
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Missing credentials' });
-  }
-  
-  const [user, serverUuid] = username.split('.');
-  
-  const users = loadUsers();
-  const userObj = users.users.find(u => u.username.toLowerCase() === user.toLowerCase());
-  
-  if (!userObj) {
-    return res.status(403).json({ error: 'Invalid credentials' });
-  }
-  
-  const valid = await bcrypt.compare(password, userObj.password);
-  if (!valid) {
-    return res.status(403).json({ error: 'Invalid credentials' });
-  }
-  
-  const servers = loadServers();
-  const server = servers.servers.find(s => s.uuid === serverUuid);
-  
-  if (!server || (server.user_id !== userObj.id && !userObj.isAdmin)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-  
-  res.json({
-    server: server.uuid,
-    permissions: ['*']
-  });
-});
-
-app.get('/api/remote/servers/:uuid', (req, res) => {
-  const servers = loadServers();
-  const server = servers.servers.find(s => s.uuid === req.params.uuid);
-  
-  if (!server) {
-    return res.status(404).json({ error: 'Server not found' });
-  }
-  
-  const eggs = loadEggs();
-  const egg = eggs.eggs.find(e => e.id === server.egg_id);
-  
-  res.json({
-    uuid: server.uuid,
-    settings: {
-      uuid: server.uuid,
-      suspended: server.suspended || false,
-      environment: server.environment || {},
-      invocation: server.startup,
-      skip_egg_scripts: false,
-      build: {
-        memory_limit: server.limits.memory,
-        swap: server.limits.swap || 0,
-        io_weight: server.limits.io || 500,
-        cpu_limit: server.limits.cpu,
-        disk_space: server.limits.disk
-      },
-      container: { image: server.docker_image },
-      allocations: {
-        default: { ip: server.allocation.ip, port: server.allocation.port },
-        mappings: {}
-      }
-    },
-    process_configuration: {
-      startup: JSON.parse(egg?.config?.startup || '{"done":"started"}'),
-      stop: { type: 'command', value: egg?.config?.stop || 'stop' },
-      configs: []
-    }
-  });
-});
-
 // ==================== USER SESSION ====================
 app.get('/api/auth/me', async (req, res) => {
   const { username, password } = req.query;
@@ -1098,7 +948,7 @@ app.get('/api/remote/servers', (req, res) => {
     data,
     meta: {
       current_page: page,
-      last_page: Math.ceil(nodeServers.length / perPage),
+      last_page: Math.max(0, Math.ceil(nodeServers.length / perPage) - 1),
       per_page: perPage,
       total: nodeServers.length
     }
@@ -1200,31 +1050,47 @@ app.post('/api/remote/activity', (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/remote/sftp/auth', (req, res) => {
+app.post('/api/remote/sftp/auth', async (req, res) => {
   const node = authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
-  const { username, password } = req.body;
-  if (!username) return res.status(400).json({ error: 'Invalid credentials' });
+  const { type, username, password } = req.body;
+  const user = req.body.user || username;
   
-  const parts = username.split('.');
-  if (parts.length !== 2) return res.status(403).json({ error: 'Invalid credentials' });
+  if (!user || !password) {
+    return res.status(400).json({ error: 'Invalid credentials' });
+  }
   
-  const [user, serverIdent] = parts;
+  const parts = user.split('.');
+  if (parts.length !== 2) {
+    return res.status(403).json({ error: 'Invalid credentials' });
+  }
+  
+  const [userName, serverIdent] = parts;
   const users = loadUsers();
-  const userObj = users.users.find(u => u.username.toLowerCase() === user.toLowerCase());
-  if (!userObj) return res.status(403).json({ error: 'Invalid credentials' });
+  const userObj = users.users.find(u => u.username.toLowerCase() === userName.toLowerCase());
+  if (!userObj) {
+    return res.status(403).json({ error: 'Invalid credentials' });
+  }
+  
+  const isValidPassword = await bcrypt.compare(password, userObj.password);
+  if (!isValidPassword) {
+    return res.status(403).json({ error: 'Invalid credentials' });
+  }
   
   const servers = loadServers();
   const server = servers.servers.find(s => 
     (s.uuid === serverIdent || s.uuid.startsWith(serverIdent)) && 
     (s.user_id === userObj.id || userObj.isAdmin)
   );
-  if (!server) return res.status(403).json({ error: 'Invalid credentials' });
+  if (!server) {
+    return res.status(403).json({ error: 'Invalid credentials' });
+  }
   
   res.json({
     server: server.uuid,
-    permissions: ['*']
+    permissions: ['*'],
+    user: userObj.id
   });
 });
 
