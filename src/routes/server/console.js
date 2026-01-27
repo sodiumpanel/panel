@@ -171,7 +171,6 @@ function handleSocketMessage(message) {
       break;
       
     case 'stats':
-      writeInfo(`stats: ${JSON.stringify(args[0])}`);
       if (args && args[0] && resourcesCallback) {
         resourcesCallback(args[0]);
       }

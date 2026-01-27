@@ -339,10 +339,10 @@ export function updateServerStatus(status) {
 }
 
 export function updateServerResources(stats) {
-  const limits = serverLimits;
   const cpuPercent = Math.min(100, stats.cpu_absolute || 0);
-  const memPercent = limits?.memory ? Math.min(100, ((stats.memory_bytes || 0) / (limits.memory * 1024 * 1024)) * 100) : 0;
-  const diskPercent = limits?.disk ? Math.min(100, ((stats.disk_bytes || 0) / (limits.disk * 1024 * 1024)) * 100) : 0;
+  const memPercent = stats.memory_limit_bytes ? Math.min(100, (stats.memory_bytes / stats.memory_limit_bytes) * 100) : 0;
+  const diskLimit = serverLimits?.disk ? serverLimits.disk * 1024 * 1024 : 0;
+  const diskPercent = diskLimit ? Math.min(100, (stats.disk_bytes / diskLimit) * 100) : 0;
   
   sparkHistory.cpu.push(cpuPercent);
   sparkHistory.mem.push(memPercent);
