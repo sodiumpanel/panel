@@ -2814,10 +2814,12 @@ input, textarea, select {
   transition: opacity 0.15s ease;
 }
 
-.upload-indicator {
+.upload-indicator,
+.extract-indicator {
   background: rgba(var(--primary-rgb), 0.05);
 }
-.upload-indicator .file-icon {
+.upload-indicator .file-icon,
+.extract-indicator .file-icon {
   background: rgba(var(--primary-rgb), 0.15);
   color: var(--accent);
 }

@@ -39469,54 +39469,19 @@ async function compressSelectedFiles(serverId) {
 }
 
 function showDecompressDialog(serverId, filename) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
-    <div class="modal">
-      <div class="modal-header">
-        <h3>Extract ${filename}</h3>
-        <button class="btn btn-ghost btn-sm modal-close">
-          <span class="material-icons-outlined">close</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Extract to:</label>
-          <div class="radio-group">
-            <label class="radio-label">
-              <input type="radio" name="extract-location" value="here" checked>
-              Current folder
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="extract-location" value="folder">
-              New folder (${filename.replace(/\.(zip|tar|tar\.gz|tgz|gz|rar|7z)$/i, '')})
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" id="btn-cancel-extract">Cancel</button>
-        <button class="btn btn-primary" id="btn-confirm-extract">Extract</button>
-      </div>
-    </div>
-  `;
+  const folderName = filename.replace(/\.(zip|tar|tar\.gz|tgz|gz|rar|7z)$/i, '');
   
-  document.body.appendChild(modal);
-  
-  const close = () => modal.remove();
-  modal.querySelector('.modal-close').onclick = close;
-  modal.querySelector('#btn-cancel-extract').onclick = close;
-  modal.onclick = (e) => { if (e.target === modal) close(); };
-  
-  modal.querySelector('#btn-confirm-extract').onclick = async () => {
-    const extractHere = modal.querySelector('input[name="extract-location"]:checked').value === 'here';
-    close();
+  confirm$1(`Extract "${filename}" to current folder?`, {
+    title: 'Extract Archive',
+    confirmText: 'Extract Here',
+    cancelText: 'New Folder'
+  }).then(async (extractHere) => {
+    if (extractHere === null) return;
     
     if (!extractHere) {
-      const folderName = filename.replace(/\.(zip|tar|tar\.gz|tgz|gz|rar|7z)$/i, '');
       const folderPath = currentPath === '/' ? `/${folderName}` : `${currentPath}/${folderName}`;
-      
       const username = localStorage.getItem('username');
+      
       await fetch(`/api/servers/${serverId}/files/folder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39527,13 +39492,36 @@ function showDecompressDialog(serverId, filename) {
     } else {
       await decompressFile(serverId, filename, currentPath, currentPath);
     }
+  });
+}
+
+function showExtractIndicator(filename) {
+  const filesList = document.getElementById('files-list');
+  
+  const el = document.createElement('div');
+  el.className = 'file-item extract-indicator';
+  el.innerHTML = `
+    <div class="file-select"></div>
+    <div class="file-icon">
+      <span class="material-icons-outlined rotating">unarchive</span>
+    </div>
+    <div class="file-info">
+      <span class="file-name">Extracting ${filename}...</span>
+      <span class="file-meta">Please wait</span>
+    </div>
+  `;
+  
+  filesList.insertBefore(el, filesList.firstChild);
+  
+  return {
+    remove: () => el.remove()
   };
 }
 
 async function decompressFile(serverId, filename, archiveDir, extractTo) {
   const username = localStorage.getItem('username');
   
-  info('Extracting...');
+  const indicator = showExtractIndicator(filename);
   
   try {
     const res = await fetch(`/api/servers/${serverId}/files/decompress`, {
@@ -39547,6 +39535,8 @@ async function decompressFile(serverId, filename, archiveDir, extractTo) {
       })
     });
     
+    indicator.remove();
+    
     if (res.ok) {
       success('Extracted successfully');
       loadFiles(serverId, currentPath);
@@ -39555,6 +39545,7 @@ async function decompressFile(serverId, filename, archiveDir, extractTo) {
       error(data.error || 'Failed to extract');
     }
   } catch (e) {
+    indicator.remove();
     error('Failed to extract');
   }
 }

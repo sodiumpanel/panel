@@ -518,7 +518,8 @@
 }
 
 // Upload indicator
-.upload-indicator {
+.upload-indicator,
+.extract-indicator {
   background: rgba(var(--primary-rgb), 0.05);
   
   .file-icon {
