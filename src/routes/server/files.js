@@ -1,10 +1,12 @@
 import * as toast from '../../utils/toast.js';
+import { createEditor } from '../../utils/editor.js';
 
 let currentPath = '/';
 let currentServerId = null;
 let isEditing = false;
 let editingPath = null;
 let selectedFiles = new Set();
+let editorInstance = null;
 
 const EDITABLE_EXTENSIONS = [
   'txt', 'log', 'md', 'json', 'yml', 'yaml', 'toml', 'xml',
@@ -630,37 +632,33 @@ async function editFile(serverId, path) {
             </button>
           </div>
         </div>
-        <div class="editor-content">
-          <textarea id="file-content" spellcheck="false"></textarea>
-        </div>
+        <div class="editor-content" id="editor-container"></div>
       </div>
     `;
     
-    document.getElementById('file-content').value = data.content || '';
+    if (editorInstance) {
+      editorInstance.destroy();
+    }
+    
+    const editorContainer = document.getElementById('editor-container');
+    editorInstance = createEditor(
+      editorContainer,
+      data.content || '',
+      filename,
+      () => saveFile(serverId, path)
+    );
     
     document.getElementById('btn-back').onclick = () => {
+      if (editorInstance) {
+        editorInstance.destroy();
+        editorInstance = null;
+      }
       isEditing = false;
       editingPath = null;
       initFilesTab(serverId);
     };
     
     document.getElementById('btn-save').onclick = () => saveFile(serverId, path);
-    
-    document.getElementById('file-content').addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        saveFile(serverId, path);
-      }
-      
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const textarea = e.target;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        textarea.value = textarea.value.substring(0, start) + '  ' + textarea.value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + 2;
-      }
-    });
     
   } catch (e) {
     console.error('Failed to load file:', e);
@@ -671,7 +669,7 @@ async function editFile(serverId, path) {
 
 async function saveFile(serverId, path) {
   const username = localStorage.getItem('username');
-  const content = document.getElementById('file-content').value;
+  const content = editorInstance ? editorInstance.getValue() : '';
   const saveBtn = document.getElementById('btn-save');
   
   saveBtn.disabled = true;
