@@ -1796,9 +1796,9 @@ function handleSocketMessage(message) {
       break;
       
     case 'stats':
-      writeInfo(`stats[0] keys: ${JSON.stringify(Object.keys(args[0] || {}))}`);
       if (args && args[0] && resourcesCallback) {
-        resourcesCallback(args[0]);
+        const stats = typeof args[0] === 'string' ? JSON.parse(args[0]) : args[0];
+        resourcesCallback(stats);
       }
       break;
       
