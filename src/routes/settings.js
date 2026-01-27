@@ -1,4 +1,5 @@
 import { navigate } from '../router.js';
+import { getTheme, setTheme, getAvailableThemes } from '../utils/theme.js';
 
 export function renderSettings() {
   const app = document.getElementById('app');
@@ -20,18 +21,22 @@ export function renderSettings() {
             <h3>Appearance</h3>
           </div>
           
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title">Theme</span>
-              <span class="setting-description">Choose your preferred color scheme</span>
-            </div>
-            <div class="setting-control">
-              <select id="theme-select" class="select-input">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-                <option value="system">System</option>
-              </select>
-            </div>
+          <div class="theme-grid" id="theme-grid">
+            ${getAvailableThemes().map(t => `
+              <button class="theme-card ${getTheme() === t.id ? 'active' : ''}" data-theme="${t.id}">
+                <div class="theme-preview" data-preview="${t.id}">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-content">
+                    <div class="preview-header"></div>
+                    <div class="preview-cards">
+                      <div class="preview-card"></div>
+                      <div class="preview-card"></div>
+                    </div>
+                  </div>
+                </div>
+                <span class="theme-name">${t.name}</span>
+              </button>
+            `).join('')}
           </div>
         </div>
         
@@ -163,9 +168,15 @@ export function renderSettings() {
     navigate('/auth');
   });
   
-  const themeSelect = app.querySelector('#theme-select');
-  themeSelect.addEventListener('change', () => {
-    saveSettings({ theme: themeSelect.value });
+  const themeGrid = app.querySelector('#theme-grid');
+  themeGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.theme-card');
+    if (!card) return;
+    const theme = card.dataset.theme;
+    setTheme(theme);
+    themeGrid.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    saveSettings({ theme });
   });
   
   const notificationsToggle = app.querySelector('#notifications-toggle');
@@ -260,11 +271,18 @@ async function loadSettings() {
     if (data.user?.settings) {
       const { theme, notifications, privacy } = data.user.settings;
       
-      const themeSelect = document.getElementById('theme-select');
       const notificationsToggle = document.getElementById('notifications-toggle');
       const privacySelect = document.getElementById('privacy-select');
       
-      if (themeSelect && theme) themeSelect.value = theme;
+      if (theme) {
+        setTheme(theme);
+        const themeGrid = document.getElementById('theme-grid');
+        if (themeGrid) {
+          themeGrid.querySelectorAll('.theme-card').forEach(c => {
+            c.classList.toggle('active', c.dataset.theme === theme);
+          });
+        }
+      }
       if (notificationsToggle) notificationsToggle.checked = notifications !== false;
       if (privacySelect && privacy) privacySelect.value = privacy;
     }

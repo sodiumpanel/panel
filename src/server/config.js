@@ -6,12 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT_DIR = path.resolve(__dirname, '../../');
 export const DATA_DIR = path.join(ROOT_DIR, 'data');
 
-export const DATA_FILE = path.join(DATA_DIR, 'users.json');
-export const NODES_FILE = path.join(DATA_DIR, 'nodes.json');
-export const SERVERS_FILE = path.join(DATA_DIR, 'servers.json');
-export const NESTS_FILE = path.join(DATA_DIR, 'nests.json');
-export const EGGS_FILE = path.join(DATA_DIR, 'eggs.json');
-export const LOCATIONS_FILE = path.join(DATA_DIR, 'locations.json');
+export const DB_FILE = path.join(DATA_DIR, 'sodium.db');
 export const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 
 export const DEFAULT_CONFIG = {

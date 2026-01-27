@@ -34,6 +34,7 @@ router.post('/register', async (req, res) => {
   
   const hashedPassword = await bcrypt.hash(password, 10);
   const defaults = config.defaults || {};
+  const isFirstUser = data.users.length === 0;
   const newUser = {
     id: Date.now().toString(),
     username: sanitizeText(username),
@@ -42,6 +43,7 @@ router.post('/register', async (req, res) => {
     bio: '',
     avatar: '',
     links: {},
+    isAdmin: isFirstUser,
     limits: {
       servers: defaults.servers || 2,
       memory: defaults.memory || 2048,
