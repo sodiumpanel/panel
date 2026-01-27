@@ -1796,7 +1796,7 @@ function handleSocketMessage(message) {
       break;
       
     case 'stats':
-      writeInfo(`stats: cpu=${args[0]?.cpu_absolute?.toFixed(1)}% mem=${args[0]?.memory_bytes} cb=${!!resourcesCallback}`);
+      writeInfo(`stats: ${JSON.stringify(args[0])}`);
       if (args && args[0] && resourcesCallback) {
         resourcesCallback(args[0]);
       }
