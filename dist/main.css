@@ -1218,6 +1218,22 @@ input, textarea, select {
     font-size: 14px;
   }
 }
+.settings-section > div:not(.section-header):not(.setting-item),
+.settings-section > form:not(.setting-item) {
+  padding: 16px 20px;
+}
+@media (max-width: 480px) {
+  .settings-section > div:not(.section-header):not(.setting-item),
+  .settings-section > form:not(.setting-item) {
+    padding: 14px 16px;
+  }
+}
+.settings-section .form-group {
+  margin-bottom: 16px;
+}
+.settings-section .form-group:last-child {
+  margin-bottom: 0;
+}
 
 .setting-item {
   display: flex;

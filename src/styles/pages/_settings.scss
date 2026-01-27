@@ -88,6 +88,23 @@
       }
     }
   }
+  
+  > div:not(.section-header):not(.setting-item),
+  > form:not(.setting-item) {
+    padding: 16px 20px;
+    
+    @media (max-width: 480px) {
+      padding: 14px 16px;
+    }
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .setting-item {
