@@ -17,9 +17,16 @@
     
     @media (max-width: 480px) {
       margin-bottom: 16px;
-      flex-direction: column;
-      gap: 12px;
-      align-items: flex-start;
+    }
+    
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      @media (max-width: 480px) {
+        gap: 12px;
+      }
     }
     
     h1 {

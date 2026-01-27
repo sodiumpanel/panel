@@ -9,11 +9,17 @@ export function renderServers() {
   app.innerHTML = `
     <div class="servers-page">
       <div class="page-header">
-        <h1>My Servers</h1>
-        <button class="btn btn-primary" id="create-server-btn">
-          <span class="material-icons-outlined">add</span>
-          Create Server
-        </button>
+        <div class="page-header-left">
+          <h1>My Servers</h1>
+          <button class="btn btn-primary" id="create-server-btn">
+            <span class="material-icons-outlined">add</span>
+            Create Server
+          </button>
+        </div>
+      </div>
+      
+      <div class="servers-grid" id="servers-list">
+        <div class="loading-spinner"></div>
       </div>
       
       <div class="resource-limits card">
@@ -23,10 +29,6 @@ export function renderServers() {
             <span class="label">Loading...</span>
           </div>
         </div>
-      </div>
-      
-      <div class="servers-grid" id="servers-list">
-        <div class="loading-spinner"></div>
       </div>
     </div>
   `;

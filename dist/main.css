@@ -1593,9 +1593,16 @@ input, textarea, select {
 @media (max-width: 480px) {
   .servers-page .page-header {
     margin-bottom: 16px;
-    flex-direction: column;
+  }
+}
+.servers-page .page-header .page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+@media (max-width: 480px) {
+  .servers-page .page-header .page-header-left {
     gap: 12px;
-    align-items: flex-start;
   }
 }
 .servers-page .page-header h1 {
