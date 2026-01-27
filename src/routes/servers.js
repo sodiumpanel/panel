@@ -9,21 +9,22 @@ export function renderServers() {
   app.innerHTML = `
     <div class="servers-page">
       <div class="page-header">
-        <div class="page-header-left">
-          <h1>My Servers</h1>
-          <button class="btn btn-primary" id="create-server-btn">
-            <span class="material-icons-outlined">add</span>
-            Create Server
-          </button>
-        </div>
+        <h1>My Servers</h1>
+        <button class="btn btn-primary" id="create-server-btn">
+          <span class="material-icons-outlined">add</span>
+          Create Server
+        </button>
       </div>
       
       <div class="servers-grid" id="servers-list">
         <div class="loading-spinner"></div>
       </div>
       
-      <div class="resource-limits card">
-        <h3>Resource Usage</h3>
+      <div class="settings-section resource-limits">
+        <div class="section-header">
+          <span class="material-icons-outlined">analytics</span>
+          <h3>Resource Usage</h3>
+        </div>
         <div class="limits-grid" id="limits-display">
           <div class="limit-item">
             <span class="label">Loading...</span>
@@ -106,34 +107,37 @@ async function loadServers() {
     }
     
     container.innerHTML = data.servers.map(server => `
-      <div class="server-card card" data-id="${server.id}">
-        <div class="server-header">
+      <div class="settings-section server-card" data-id="${server.id}">
+        <div class="section-header">
+          <span class="material-icons-outlined">dns</span>
           <h3>${escapeHtml(server.name)}</h3>
           <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
         </div>
-        <div class="server-info">
-          <div class="info-row">
-            <span class="label">Memory</span>
-            <span class="value">${server.limits?.memory || 0} MB</span>
+        <div class="server-card-content">
+          <div class="server-actions">
+            <button class="btn btn-success btn-sm" onclick="serverPower('${server.id}', 'start')">Start</button>
+            <button class="btn btn-warning btn-sm" onclick="serverPower('${server.id}', 'restart')">Restart</button>
+            <button class="btn btn-danger btn-sm" onclick="serverPower('${server.id}', 'stop')">Stop</button>
+            <a href="/server/${server.id}" class="btn btn-primary btn-sm">Console</a>
           </div>
-          <div class="info-row">
-            <span class="label">Disk</span>
-            <span class="value">${server.limits?.disk || 0} MB</span>
+          <div class="server-info">
+            <div class="info-row">
+              <span class="label">Memory</span>
+              <span class="value">${server.limits?.memory || 0} MB</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Disk</span>
+              <span class="value">${server.limits?.disk || 0} MB</span>
+            </div>
+            <div class="info-row">
+              <span class="label">CPU</span>
+              <span class="value">${server.limits?.cpu || 0}%</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Address</span>
+              <span class="value">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
+            </div>
           </div>
-          <div class="info-row">
-            <span class="label">CPU</span>
-            <span class="value">${server.limits?.cpu || 0}%</span>
-          </div>
-          <div class="info-row">
-            <span class="label">Address</span>
-            <span class="value">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
-          </div>
-        </div>
-        <div class="server-actions">
-          <button class="btn btn-success btn-sm" onclick="serverPower('${server.id}', 'start')">Start</button>
-          <button class="btn btn-warning btn-sm" onclick="serverPower('${server.id}', 'restart')">Restart</button>
-          <button class="btn btn-danger btn-sm" onclick="serverPower('${server.id}', 'stop')">Stop</button>
-          <a href="/server/${server.id}" class="btn btn-primary btn-sm">Console</a>
         </div>
       </div>
     `).join('');
