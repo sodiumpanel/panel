@@ -672,6 +672,28 @@ input, textarea, select {
   color: var(--text-tertiary);
 }
 
+.text-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+.text-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+.text-input::-moz-placeholder {
+  color: var(--text-tertiary);
+}
+.text-input::placeholder {
+  color: var(--text-tertiary);
+}
+
 .select-input {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -2609,6 +2631,21 @@ input, textarea, select {
   flex: 1;
   font-family: monospace;
   font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+.console-input input::-moz-placeholder {
+  color: var(--text-tertiary);
+}
+.console-input input::placeholder {
+  color: var(--text-tertiary);
+}
+.console-input input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .files-tab {

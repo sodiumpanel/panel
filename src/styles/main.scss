@@ -598,6 +598,27 @@ input, textarea, select {
   }
 }
 
+.text-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--transition-fast);
+  
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+  
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+}
+
 .select-input {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
