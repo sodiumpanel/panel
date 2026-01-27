@@ -2494,7 +2494,7 @@ function renderStartupForm(server, egg) {
       <code id="startup-preview">${escapeHtml$1(parseStartupCommand(server.startup || egg?.startup || '', server.environment || {}))}</code>
     </div>
     
-    <div class="form-group">
+    <div class="form-group" style="margin-top: 20px;">
       <label>Docker Image</label>
       <div class="input-wrapper">
         <span class="material-icons-outlined">inventory_2</span>
