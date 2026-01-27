@@ -38975,16 +38975,16 @@ function renderFilesTab() {
             <span class="breadcrumb-item" data-path="/">/</span>
           </div>
           <div class="files-actions">
-            <button class="btn btn-sm btn-ghost" id="btn-refresh" title="Refresh">
+            <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
               <span class="material-icons-outlined">refresh</span>
             </button>
-            <button class="btn btn-sm btn-ghost" id="btn-new-folder" title="New Folder">
+            <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
               <span class="material-icons-outlined">create_new_folder</span>
             </button>
-            <button class="btn btn-sm btn-ghost" id="btn-new-file" title="New File">
+            <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
               <span class="material-icons-outlined">note_add</span>
             </button>
-            <button class="btn btn-sm btn-ghost" id="btn-upload" title="Upload">
+            <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
               <span class="material-icons-outlined">upload</span>
             </button>
           </div>
@@ -38994,16 +38994,16 @@ function renderFilesTab() {
             <span id="selection-count">0</span> selected
           </div>
           <div class="selection-actions">
-            <button class="btn btn-sm btn-ghost" id="btn-move" title="Move">
+            <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
               <span class="material-icons-outlined">drive_file_move</span>
             </button>
-            <button class="btn btn-sm btn-ghost" id="btn-compress" title="Compress">
+            <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
               <span class="material-icons-outlined">archive</span>
             </button>
-            <button class="btn btn-sm btn-ghost" id="btn-delete-selected" title="Delete">
+            <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
               <span class="material-icons-outlined">delete</span>
             </button>
-            <button class="btn btn-sm btn-ghost" id="btn-clear-selection" title="Clear">
+            <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
               <span class="material-icons-outlined">close</span>
             </button>
           </div>
@@ -39082,15 +39082,22 @@ function updateBreadcrumb(path, serverId) {
   const breadcrumb = document.getElementById('files-breadcrumb');
   const parts = path.split('/').filter(p => p);
   
-  let html = `<span class="breadcrumb-item clickable" data-path="/">/</span>`;
-  let currentPath = '';
+  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">home</span></span>`;
   
-  parts.forEach((part, i) => {
-    currentPath += '/' + part;
-    const isLast = i === parts.length - 1;
+  if (parts.length === 0) {
+    // En home, no mostrar nada más
+  } else if (parts.length === 1) {
+    // home/carpeta
     html += `<span class="breadcrumb-separator">/</span>`;
-    html += `<span class="breadcrumb-item ${isLast ? '' : 'clickable'}" data-path="${currentPath}">${part}</span>`;
-  });
+    html += `<span class="breadcrumb-item" data-path="/${parts[0]}">${parts[0]}</span>`;
+  } else {
+    // home/.../ultima_carpeta
+    const lastPath = '/' + parts.join('/');
+    html += `<span class="breadcrumb-separator">/</span>`;
+    html += `<span class="breadcrumb-ellipsis">...</span>`;
+    html += `<span class="breadcrumb-separator">/</span>`;
+    html += `<span class="breadcrumb-item" data-path="${lastPath}">${parts[parts.length - 1]}</span>`;
+  }
   
   breadcrumb.innerHTML = html;
   
@@ -39764,16 +39771,16 @@ function restoreFilesList(serverId) {
         <span class="breadcrumb-item" data-path="/">/</span>
       </div>
       <div class="files-actions">
-        <button class="btn btn-sm btn-ghost" id="btn-refresh" title="Refresh">
+        <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
           <span class="material-icons-outlined">refresh</span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="btn-new-folder" title="New Folder">
+        <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
           <span class="material-icons-outlined">create_new_folder</span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="btn-new-file" title="New File">
+        <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
           <span class="material-icons-outlined">note_add</span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="btn-upload" title="Upload">
+        <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
           <span class="material-icons-outlined">upload</span>
         </button>
       </div>
@@ -39783,16 +39790,16 @@ function restoreFilesList(serverId) {
         <span id="selection-count">0</span> selected
       </div>
       <div class="selection-actions">
-        <button class="btn btn-sm btn-ghost" id="btn-move" title="Move">
+        <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
           <span class="material-icons-outlined">drive_file_move</span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="btn-compress" title="Compress">
+        <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
           <span class="material-icons-outlined">archive</span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="btn-delete-selected" title="Delete">
+        <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
           <span class="material-icons-outlined">delete</span>
         </button>
-        <button class="btn btn-sm btn-ghost" id="btn-clear-selection" title="Clear">
+        <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
           <span class="material-icons-outlined">close</span>
         </button>
       </div>

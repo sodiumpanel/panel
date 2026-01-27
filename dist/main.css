@@ -576,6 +576,31 @@ input, textarea, select {
   width: 100%;
 }
 
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.btn-sm .material-icons-outlined {
+  font-size: 18px;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.btn-xs .material-icons-outlined {
+  font-size: 16px;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -2630,6 +2655,12 @@ input, textarea, select {
 .breadcrumb-separator {
   color: var(--text-tertiary);
   opacity: 0.5;
+}
+
+.breadcrumb-ellipsis {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  font-size: 0.875rem;
 }
 
 .files-actions {

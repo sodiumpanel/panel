@@ -495,6 +495,34 @@ input, textarea, select {
   width: 100%;
 }
 
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  
+  .material-icons-outlined {
+    font-size: 18px;
+  }
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 12px;
+  
+  .material-icons-outlined {
+    font-size: 16px;
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  
+  &:hover:not(:disabled) {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+}
+
 .form-group {
   margin-bottom: 20px;
   
