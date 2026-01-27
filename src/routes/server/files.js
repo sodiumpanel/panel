@@ -1,5 +1,6 @@
 import * as toast from '../../utils/toast.js';
 import { createEditor } from '../../utils/editor.js';
+import * as modal from '../../utils/modal.js';
 
 let currentPath = '/';
 let currentServerId = null;
@@ -324,7 +325,7 @@ function formatDate(dateStr) {
 }
 
 async function createNewFolder(serverId) {
-  const name = prompt('Folder name:');
+  const name = await modal.prompt('Enter folder name:', { title: 'New Folder', placeholder: 'folder-name' });
   if (!name) return;
   
   const username = localStorage.getItem('username');
@@ -349,7 +350,7 @@ async function createNewFolder(serverId) {
 }
 
 async function createNewFile(serverId) {
-  const name = prompt('File name:');
+  const name = await modal.prompt('Enter file name:', { title: 'New File', placeholder: 'file.txt' });
   if (!name) return;
   
   const username = localStorage.getItem('username');
@@ -374,7 +375,12 @@ async function createNewFile(serverId) {
 }
 
 async function deleteFile(serverId, path) {
-  if (!confirm(`Delete ${path}?`)) return;
+  const confirmed = await modal.confirm(`Are you sure you want to delete "${path.split('/').pop()}"?`, { 
+    title: 'Delete File', 
+    confirmText: 'Delete', 
+    danger: true 
+  });
+  if (!confirmed) return;
   
   const username = localStorage.getItem('username');
   
@@ -398,7 +404,13 @@ async function deleteFile(serverId, path) {
 
 async function deleteSelectedFiles(serverId) {
   if (selectedFiles.size === 0) return;
-  if (!confirm(`Delete ${selectedFiles.size} file(s)?`)) return;
+  
+  const confirmed = await modal.confirm(`Are you sure you want to delete ${selectedFiles.size} file(s)?`, {
+    title: 'Delete Files',
+    confirmText: 'Delete All',
+    danger: true
+  });
+  if (!confirmed) return;
   
   const username = localStorage.getItem('username');
   const files = Array.from(selectedFiles);
@@ -423,7 +435,11 @@ async function deleteSelectedFiles(serverId) {
 }
 
 async function renameFile(serverId, oldName) {
-  const newName = prompt('New name:', oldName);
+  const newName = await modal.prompt('Enter new name:', { 
+    title: 'Rename', 
+    defaultValue: oldName,
+    confirmText: 'Rename'
+  });
   if (!newName || newName === oldName) return;
   
   const username = localStorage.getItem('username');
@@ -451,7 +467,12 @@ async function renameFile(serverId, oldName) {
 async function moveSelectedFiles(serverId) {
   if (selectedFiles.size === 0) return;
   
-  const destination = prompt('Move to (path):', currentPath);
+  const destination = await modal.prompt('Enter destination path:', {
+    title: 'Move Files',
+    defaultValue: currentPath,
+    placeholder: '/path/to/folder',
+    confirmText: 'Move'
+  });
   if (!destination || destination === currentPath) return;
   
   const username = localStorage.getItem('username');
