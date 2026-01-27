@@ -812,6 +812,21 @@
   }
 }
 
+.variables-section {
+  margin-top: 24px;
+  
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 8px 0;
+  }
+  
+  > .form-hint {
+    margin-bottom: 16px;
+  }
+}
+
 .variables-list {
   display: flex;
   flex-direction: column;
