@@ -3013,13 +3013,14 @@ input, textarea, select {
     gap: 0.75rem;
   }
   .server-header {
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     padding: 0.75rem 1rem;
   }
   .server-header-left {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
   }
   .server-title {
     flex: 1;
@@ -3032,8 +3033,7 @@ input, textarea, select {
     text-overflow: ellipsis;
   }
   .server-header-right {
-    width: 100%;
-    justify-content: flex-end;
+    flex-shrink: 0;
   }
   .power-buttons .btn {
     padding: 0.375rem;
