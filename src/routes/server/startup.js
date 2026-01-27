@@ -161,11 +161,12 @@ export function renderStartupTab() {
             <span class="material-icons-outlined">terminal</span>
             <h3>Startup Configuration</h3>
           </div>
-          <div class="startup-content" id="startup-content">
+          <div id="startup-card-content">
             <div class="loading-spinner"></div>
           </div>
         </div>
       </div>
+      <div class="startup-content" id="startup-content"></div>
     </div>
   `;
 }
@@ -204,36 +205,72 @@ async function loadStartupData(serverId) {
 }
 
 function renderStartupForm(server, egg) {
-  const content = document.getElementById('startup-content');
+  const cardContent = document.getElementById('startup-card-content');
+  const externalContent = document.getElementById('startup-content');
   const variables = egg?.variables || [];
   
-  content.innerHTML = `
-    <form id="startup-form" class="startup-form">
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-title">Startup Command</span>
-          <span class="setting-description">This command is executed when the server starts</span>
-        </div>
+  // Content inside the card
+  cardContent.innerHTML = `
+    <div class="form-group">
+      <label>Startup Command</label>
+      <div class="textarea-wrapper">
+        <textarea name="startup" id="startup-command" rows="3" spellcheck="false" placeholder="java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar">${escapeHtml(server.startup || egg?.startup || '')}</textarea>
       </div>
-      <div class="form-group" style="margin-bottom: 12px;">
-        <textarea name="startup" id="startup-command" rows="3" spellcheck="false">${escapeHtml(server.startup || egg?.startup || '')}</textarea>
-      </div>
-      <div class="startup-preview" style="margin-bottom: 20px;">
-        <span class="preview-label">Preview:</span>
-        <code id="startup-preview">${escapeHtml(parseStartupCommand(server.startup || egg?.startup || '', server.environment || {}))}</code>
-      </div>
-      
-      <div class="setting-item">
-        <div class="setting-info">
-          <span class="setting-title">Docker Image</span>
-          <span class="setting-description">Select the Docker image for this server</span>
-        </div>
+      <small class="form-hint">Use {{VARIABLE}} syntax for variables</small>
+    </div>
+    <div class="startup-preview">
+      <span class="preview-label">Preview:</span>
+      <code id="startup-preview">${escapeHtml(parseStartupCommand(server.startup || egg?.startup || '', server.environment || {}))}</code>
+    </div>
+    
+    <div class="form-group">
+      <label>Docker Image</label>
+      <div class="input-wrapper">
+        <span class="material-icons-outlined">inventory_2</span>
         <select name="docker_image" class="select-input">
           ${getDockerImagesOptions(server, egg)}
         </select>
       </div>
+    </div>
+  `;
+  
+  // Content outside the card (variables + save button)
+  externalContent.innerHTML = `
+    <form id="startup-form" class="startup-form">
+      <div class="variables-section">
+        <h4>Environment Variables</h4>
+        <p class="form-hint">Configure the variables used by this server.</p>
+        
+        <div class="variables-list">
+          ${variables.length === 0 ? '<div class="empty">No variables defined for this egg</div>' : ''}
+          ${variables.map(v => {
+            const rules = parseRules(v.rules || '');
+            const currentValue = server.environment?.[v.env_variable] ?? v.default_value ?? '';
+            return `
+            <div class="variable-item">
+              <div class="variable-header">
+                <label for="var-${v.env_variable}">
+                  ${escapeHtml(v.name)}
+                  ${rules.required ? '<span class="required">*</span>' : ''}
+                </label>
+                <code class="variable-key">${escapeHtml(v.env_variable)}</code>
+              </div>
+              <p class="variable-description">${escapeHtml(v.description || '')}</p>
+              ${renderVariableInput(v, currentValue, rules)}
+              <div class="variable-meta">
+                ${rules.required ? '<span class="rule-badge required">Required</span>' : '<span class="rule-badge optional">Optional</span>'}
+                ${rules.type ? `<span class="rule-badge type">${escapeHtml(rules.type)}</span>` : ''}
+                ${rules.min !== null ? `<span class="rule-badge">Min: ${rules.min}</span>` : ''}
+                ${rules.max !== null ? `<span class="rule-badge">Max: ${rules.max}</span>` : ''}
+                ${rules.in.length > 0 ? `<span class="rule-badge">Options: ${rules.in.join(', ')}</span>` : ''}
+              </div>
+              <div class="variable-error" id="error-${v.env_variable}"></div>
+            </div>
+          `}).join('')}
+        </div>
+      </div>
       
-      <div class="form-actions" style="margin-top: 16px; margin-bottom: 24px;">
+      <div class="form-actions">
         <button type="submit" class="btn btn-primary" id="save-startup">
           <span class="material-icons-outlined">save</span>
           Save Changes
@@ -244,39 +281,6 @@ function renderStartupForm(server, egg) {
         </button>
       </div>
     </form>
-    
-    <div class="variables-section">
-      <h4>Environment Variables</h4>
-      <p class="form-hint">Configure the variables used by this server.</p>
-      
-      <div class="variables-list">
-        ${variables.length === 0 ? '<div class="empty">No variables defined for this egg</div>' : ''}
-        ${variables.map(v => {
-          const rules = parseRules(v.rules || '');
-          const currentValue = server.environment?.[v.env_variable] ?? v.default_value ?? '';
-          return `
-          <div class="variable-item">
-            <div class="variable-header">
-              <label for="var-${v.env_variable}">
-                ${escapeHtml(v.name)}
-                ${rules.required ? '<span class="required">*</span>' : ''}
-              </label>
-              <code class="variable-key">${escapeHtml(v.env_variable)}</code>
-            </div>
-            <p class="variable-description">${escapeHtml(v.description || '')}</p>
-            ${renderVariableInput(v, currentValue, rules)}
-            <div class="variable-meta">
-              ${rules.required ? '<span class="rule-badge required">Required</span>' : '<span class="rule-badge optional">Optional</span>'}
-              ${rules.type ? `<span class="rule-badge type">${escapeHtml(rules.type)}</span>` : ''}
-              ${rules.min !== null ? `<span class="rule-badge">Min: ${rules.min}</span>` : ''}
-              ${rules.max !== null ? `<span class="rule-badge">Max: ${rules.max}</span>` : ''}
-              ${rules.in.length > 0 ? `<span class="rule-badge">Options: ${rules.in.join(', ')}</span>` : ''}
-            </div>
-            <div class="variable-error" id="error-${v.env_variable}"></div>
-          </div>
-        `}).join('')}
-      </div>
-    </div>
   `;
   
   const form = document.getElementById('startup-form');

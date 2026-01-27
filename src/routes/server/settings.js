@@ -84,12 +84,17 @@ function renderDetailsForm(server) {
     <form id="details-form" class="settings-form">
       <div class="form-group">
         <label for="server-name">Server Name</label>
-        <input type="text" id="server-name" name="name" value="${escapeHtml(server.name)}" maxlength="50" required />
+        <div class="input-wrapper">
+          <span class="material-icons-outlined">badge</span>
+          <input type="text" id="server-name" name="name" value="${escapeHtml(server.name)}" maxlength="50" required />
+        </div>
       </div>
       
       <div class="form-group">
         <label for="server-description">Description</label>
-        <textarea id="server-description" name="description" rows="3" maxlength="200" placeholder="Optional server description...">${escapeHtml(server.description || '')}</textarea>
+        <div class="textarea-wrapper">
+          <textarea id="server-description" name="description" rows="3" maxlength="200" placeholder="Optional server description...">${escapeHtml(server.description || '')}</textarea>
+        </div>
       </div>
       
       <div class="form-info">
