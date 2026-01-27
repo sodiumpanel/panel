@@ -2605,9 +2605,9 @@ input, textarea, select {
 
 .spark-line {
   fill: none;
-  stroke-width: 1.5;
+  stroke-width: 1;
   stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linejoin: miter;
 }
 .spark-line.cpu {
   stroke: var(--accent);

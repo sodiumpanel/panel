@@ -264,9 +264,9 @@
 
 .spark-line {
   fill: none;
-  stroke-width: 1.5;
+  stroke-width: 1;
   stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linejoin: miter;
   
   &.cpu {
     stroke: var(--accent);
