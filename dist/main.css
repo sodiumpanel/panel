@@ -2369,7 +2369,7 @@ input, textarea, select {
 .server-tabs {
   display: flex;
   gap: 8px;
-  margin: 0 0 24px 0;
+  margin-left: 6px;
   border-bottom: 1px solid var(--border);
   padding: 4px 0;
   overflow-x: auto;
