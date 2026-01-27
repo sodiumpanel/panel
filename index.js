@@ -2149,6 +2149,45 @@ app.get('/api/user/limits', (req, res) => {
   res.json({ limits, used });
 });
 
+// ==================== ADMIN: PANEL SETTINGS ====================
+app.get('/api/admin/settings', (req, res) => {
+  const { username } = req.query;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Access denied' });
+  
+  const config = loadConfig();
+  res.json({ config });
+});
+
+app.put('/api/admin/settings', (req, res) => {
+  const { username, config: newConfig } = req.body;
+  if (!isAdmin(username)) return res.status(403).json({ error: 'Access denied' });
+  
+  const config = loadConfig();
+  
+  if (newConfig.panel) {
+    config.panel.name = sanitizeText(newConfig.panel.name || config.panel.name);
+    config.panel.url = sanitizeUrl(newConfig.panel.url) || config.panel.url;
+  }
+  
+  if (newConfig.registration !== undefined) {
+    config.registration = {
+      enabled: Boolean(newConfig.registration.enabled)
+    };
+  }
+  
+  if (newConfig.defaults) {
+    config.defaults = {
+      servers: parseInt(newConfig.defaults.servers) || 2,
+      memory: parseInt(newConfig.defaults.memory) || 2048,
+      disk: parseInt(newConfig.defaults.disk) || 10240,
+      cpu: parseInt(newConfig.defaults.cpu) || 200
+    };
+  }
+  
+  saveConfig(config);
+  res.json({ success: true, config });
+});
+
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
@@ -2252,45 +2291,6 @@ wss.on('connection', (clientWs, req) => {
       wingsWs.close();
     }
   });
-});
-
-// ==================== ADMIN: PANEL SETTINGS ====================
-app.get('/api/admin/settings', (req, res) => {
-  const { username } = req.query;
-  if (!isAdmin(username)) return res.status(403).json({ error: 'Access denied' });
-  
-  const config = loadConfig();
-  res.json({ config });
-});
-
-app.put('/api/admin/settings', (req, res) => {
-  const { username, config: newConfig } = req.body;
-  if (!isAdmin(username)) return res.status(403).json({ error: 'Access denied' });
-  
-  const config = loadConfig();
-  
-  if (newConfig.panel) {
-    config.panel.name = sanitizeText(newConfig.panel.name || config.panel.name);
-    config.panel.url = sanitizeUrl(newConfig.panel.url) || config.panel.url;
-  }
-  
-  if (newConfig.registration !== undefined) {
-    config.registration = {
-      enabled: Boolean(newConfig.registration.enabled)
-    };
-  }
-  
-  if (newConfig.defaults) {
-    config.defaults = {
-      servers: parseInt(newConfig.defaults.servers) || 2,
-      memory: parseInt(newConfig.defaults.memory) || 2048,
-      disk: parseInt(newConfig.defaults.disk) || 10240,
-      cpu: parseInt(newConfig.defaults.cpu) || 200
-    };
-  }
-  
-  saveConfig(config);
-  res.json({ success: true, config });
 });
 
 server.listen(PORT, () => {
