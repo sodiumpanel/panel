@@ -33,6 +33,8 @@ export function renderConsoleTab() {
 }
 
 export function initConsoleTab(serverId) {
+  cleanupConsoleTab();
+  
   initTerminal();
   connectWebSocket(serverId);
   
@@ -99,7 +101,7 @@ function initTerminal() {
   
   window.addEventListener('resize', handleResize);
   
-  terminal.writeln('\x1b[90mconnecting to server...\x1b[0m');
+
 }
 
 function handleResize() {
@@ -117,7 +119,6 @@ async function connectWebSocket(serverId) {
   consoleSocket = new WebSocket(wsUrl);
   
   consoleSocket.onopen = () => {
-    writeInfo('connected to console');
   };
   
   consoleSocket.onmessage = (event) => {
