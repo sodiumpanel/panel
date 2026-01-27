@@ -1,3 +1,5 @@
+import * as toast from '../../utils/toast.js';
+
 let currentServerId = null;
 let allocations = [];
 
@@ -66,16 +68,24 @@ function renderAllocations() {
       </div>
       <div class="allocation-actions">
         ${!alloc.primary ? `
-          <button class="btn btn-ghost btn-sm" onclick="window.setAllocationPrimary('${alloc.id}')" title="Make Primary">
+          <button class="btn btn-ghost btn-sm" data-primary="${alloc.id}" title="Make Primary">
             <span class="material-icons-outlined">star</span>
           </button>
-          <button class="btn btn-ghost btn-sm btn-danger-hover" onclick="window.deleteAllocation('${alloc.id}')" title="Delete">
+          <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${alloc.id}" title="Delete">
             <span class="material-icons-outlined">delete</span>
           </button>
         ` : ''}
       </div>
     </div>
   `).join('');
+  
+  list.querySelectorAll('[data-primary]').forEach(btn => {
+    btn.onclick = () => setAllocationPrimary(btn.dataset.primary);
+  });
+  
+  list.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.onclick = () => deleteAllocation(btn.dataset.delete);
+  });
 }
 
 async function addAllocation() {
@@ -95,19 +105,20 @@ async function addAllocation() {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      toast.error(data.error);
     } else {
+      toast.success('Allocation added');
       await loadAllocations();
     }
   } catch (e) {
-    alert('Failed to add allocation');
+    toast.error('Failed to add allocation');
   }
   
   btn.disabled = false;
   btn.innerHTML = '<span class="material-icons-outlined">add</span> Add Allocation';
 }
 
-window.setAllocationPrimary = async (allocId) => {
+async function setAllocationPrimary(allocId) {
   const username = localStorage.getItem('username');
   
   try {
@@ -118,17 +129,18 @@ window.setAllocationPrimary = async (allocId) => {
     });
     
     if (res.ok) {
+      toast.success('Primary allocation updated');
       await loadAllocations();
     } else {
       const data = await res.json();
-      alert(data.error);
+      toast.error(data.error);
     }
   } catch (e) {
-    alert('Failed to set primary');
+    toast.error('Failed to set primary');
   }
-};
+}
 
-window.deleteAllocation = async (allocId) => {
+async function deleteAllocation(allocId) {
   if (!confirm('Delete this allocation?')) return;
   
   const username = localStorage.getItem('username');
@@ -141,15 +153,16 @@ window.deleteAllocation = async (allocId) => {
     });
     
     if (res.ok) {
+      toast.success('Allocation deleted');
       await loadAllocations();
     } else {
       const data = await res.json();
-      alert(data.error);
+      toast.error(data.error);
     }
   } catch (e) {
-    alert('Failed to delete allocation');
+    toast.error('Failed to delete allocation');
   }
-};
+}
 
 export function cleanupNetworkTab() {
   currentServerId = null;

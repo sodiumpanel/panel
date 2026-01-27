@@ -1,4 +1,3 @@
-import { navigate } from '../router.js';
 import { getTheme, setTheme, getAvailableThemes } from '../utils/theme.js';
 
 export function renderSettings() {
@@ -165,7 +164,7 @@ export function renderSettings() {
     localStorage.removeItem('password');
     localStorage.removeItem('displayName');
     localStorage.removeItem('userId');
-    navigate('/auth');
+    window.router.navigateTo('/auth');
   });
   
   const themeGrid = app.querySelector('#theme-grid');

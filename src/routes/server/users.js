@@ -1,4 +1,5 @@
 import { PERMISSIONS, PERMISSION_GROUPS } from '../../utils/permissions.js';
+import * as toast from '../../utils/toast.js';
 
 let currentServerId = null;
 let subusers = [];
@@ -239,9 +240,10 @@ async function saveSubuser(editId) {
     }
     
     closeModal();
+    toast.success(editId ? 'Subuser updated' : 'Subuser added');
     await loadSubusers();
   } catch (e) {
-    alert(e.message);
+    toast.error(e.message);
   }
   
   saveBtn.disabled = false;
@@ -261,13 +263,14 @@ async function deleteSubuser(id) {
     });
     
     if (res.ok) {
+      toast.success('Subuser removed');
       await loadSubusers();
     } else {
       const data = await res.json();
-      alert(data.error);
+      toast.error(data.error);
     }
   } catch (e) {
-    alert('Failed to remove subuser');
+    toast.error('Failed to remove subuser');
   }
 }
 

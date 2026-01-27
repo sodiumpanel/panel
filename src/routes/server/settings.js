@@ -1,3 +1,5 @@
+import * as toast from '../../utils/toast.js';
+
 let currentServerId = null;
 let serverData = null;
 
@@ -135,7 +137,7 @@ async function saveDetails() {
   const description = document.getElementById('server-description').value.trim();
   
   if (!name) {
-    alert('Server name is required');
+    toast.warning('Server name is required');
     return;
   }
   
@@ -165,13 +167,13 @@ async function saveDetails() {
         saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
       }, 1500);
     } else {
-      alert(data.error || 'Failed to save');
+      toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save details:', e);
-    alert('Failed to save server details');
+    toast.error('Failed to save server details');
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
   }
@@ -242,14 +244,14 @@ async function reinstallServer() {
     const data = await res.json();
     
     if (res.ok) {
-      alert('Server reinstall initiated. The server will be reinstalled shortly.');
+      toast.success('Server reinstall initiated');
       window.router.navigateTo('/servers');
     } else {
-      alert(data.error || 'Failed to reinstall server');
+      toast.error(data.error || 'Failed to reinstall');
     }
   } catch (e) {
     console.error('Failed to reinstall server:', e);
-    alert('Failed to reinstall server');
+    toast.error('Failed to reinstall server');
   }
 }
 
@@ -318,14 +320,14 @@ async function deleteServer() {
     const data = await res.json();
     
     if (res.ok) {
-      alert('Server deleted successfully');
+      toast.success('Server deleted');
       window.router.navigateTo('/servers');
     } else {
-      alert(data.error || 'Failed to delete server');
+      toast.error(data.error || 'Failed to delete');
     }
   } catch (e) {
     console.error('Failed to delete server:', e);
-    alert('Failed to delete server');
+    toast.error('Failed to delete server');
   }
 }
 

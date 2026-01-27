@@ -1,5 +1,3 @@
-import { navigate } from '../router.js';
-
 export function renderAuth() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
@@ -133,7 +131,7 @@ export function renderAuth() {
       localStorage.setItem('username', data.user.username);
       localStorage.setItem('password', password);
       
-      navigate('/dashboard');
+      window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
@@ -180,7 +178,7 @@ export function renderAuth() {
       localStorage.setItem('username', data.user.username);
       localStorage.setItem('password', password);
       
-      navigate('/dashboard');
+      window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';

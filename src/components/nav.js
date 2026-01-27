@@ -1,4 +1,4 @@
-import { navigate } from '../router.js';
+
 
 export function renderNav() {
   const nav = document.createElement('nav');
@@ -84,7 +84,7 @@ export function renderNav() {
         localStorage.removeItem('password');
         localStorage.removeItem('displayName');
         localStorage.removeItem('userId');
-        navigate('/auth');
+        window.router.navigateTo('/auth');
       });
     }
   }, 0);

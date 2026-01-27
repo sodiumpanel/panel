@@ -135,7 +135,7 @@ function renderAuth() {
       localStorage.setItem('username', data.user.username);
       localStorage.setItem('password', password);
       
-      navigate('/dashboard');
+      window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
@@ -182,7 +182,7 @@ function renderAuth() {
       localStorage.setItem('username', data.user.username);
       localStorage.setItem('password', password);
       
-      navigate('/dashboard');
+      window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
@@ -301,7 +301,7 @@ function renderDashboard() {
   }, 1000);
 }
 
-function escapeHtml$4(str) {
+function escapeHtml$5(str) {
   if (typeof str !== 'string') return '';
   return str
     .replace(/&/g, '&amp;')
@@ -325,7 +325,7 @@ function escapeUrl(url) {
 
 function sanitizeText(text, maxLength = 1000) {
   if (typeof text !== 'string') return '';
-  return escapeHtml$4(text.slice(0, maxLength).trim());
+  return escapeHtml$5(text.slice(0, maxLength).trim());
 }
 
 function isValidUrl(url) {
@@ -348,9 +348,9 @@ function createSafeElement(tag, attributes = {}, textContent = '') {
     } else if (key === 'class') {
       el.className = value;
     } else if (key.startsWith('data-')) {
-      el.setAttribute(key, escapeHtml$4(value));
+      el.setAttribute(key, escapeHtml$5(value));
     } else {
-      el.setAttribute(key, escapeHtml$4(value));
+      el.setAttribute(key, escapeHtml$5(value));
     }
   }
   
@@ -405,8 +405,8 @@ function renderProfile() {
               <span class="material-icons-outlined">person</span>
             </div>
             <div class="avatar-info">
-              <h3 id="profile-display-name">${escapeHtml$4(displayName)}</h3>
-              <span class="username">@${escapeHtml$4(username)}</span>
+              <h3 id="profile-display-name">${escapeHtml$5(displayName)}</h3>
+              <span class="username">@${escapeHtml$5(username)}</span>
             </div>
           </div>
         </div>
@@ -428,7 +428,7 @@ function renderProfile() {
               <label for="display-name">Display Name</label>
               <div class="input-wrapper">
                 <span class="material-icons-outlined">badge</span>
-                <input type="text" id="display-name" name="displayName" value="${escapeHtml$4(displayName)}" maxlength="50" placeholder="Your display name">
+                <input type="text" id="display-name" name="displayName" value="${escapeHtml$5(displayName)}" maxlength="50" placeholder="Your display name">
               </div>
               <small class="form-hint">This is how others will see you</small>
             </div>
@@ -560,7 +560,7 @@ function renderProfile() {
       const data = await res.json();
       
       if (data.error) {
-        messageEl.textContent = escapeHtml$4(data.error);
+        messageEl.textContent = escapeHtml$5(data.error);
         messageEl.className = 'message error';
       } else {
         messageEl.textContent = 'Profile updated successfully!';
@@ -568,10 +568,10 @@ function renderProfile() {
         localStorage.setItem('displayName', displayName);
         
         const profileDisplayName = document.getElementById('profile-display-name');
-        if (profileDisplayName) profileDisplayName.textContent = escapeHtml$4(displayName);
+        if (profileDisplayName) profileDisplayName.textContent = escapeHtml$5(displayName);
         
         const navDisplayName = document.querySelector('.user-display-name');
-        if (navDisplayName) navDisplayName.textContent = escapeHtml$4(displayName);
+        if (navDisplayName) navDisplayName.textContent = escapeHtml$5(displayName);
       }
     } catch (err) {
       messageEl.textContent = 'Connection error. Please try again.';
@@ -857,7 +857,7 @@ function renderSettings() {
     localStorage.removeItem('password');
     localStorage.removeItem('displayName');
     localStorage.removeItem('userId');
-    navigate('/auth');
+    window.router.navigateTo('/auth');
   });
   
   const themeGrid = app.querySelector('#theme-grid');
@@ -1087,7 +1087,7 @@ async function loadUserProfile(targetUsername) {
                 return `
                   <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="link-item">
                     <span class="material-icons-outlined">${linkIcons[key] || 'link'}</span>
-                    <span>${escapeHtml$4(linkLabels[key] || key)}</span>
+                    <span>${escapeHtml$5(linkLabels[key] || key)}</span>
                     <span class="material-icons-outlined external">open_in_new</span>
                   </a>
                 `;
@@ -1109,8 +1109,8 @@ async function loadUserProfile(targetUsername) {
             ${avatarHtml}
           </div>
           <div class="user-info">
-            <h1>${escapeHtml$4(user.displayName || user.username)}</h1>
-            <span class="user-username">@${escapeHtml$4(user.username)}</span>
+            <h1>${escapeHtml$5(user.displayName || user.username)}</h1>
+            <span class="user-username">@${escapeHtml$5(user.username)}</span>
             ${isPrivate ? '<span class="private-badge"><span class="material-icons-outlined">lock</span> Private Profile</span>' : ''}
           </div>
         </div>
@@ -1118,7 +1118,7 @@ async function loadUserProfile(targetUsername) {
         ${!isPrivate && user.bio ? `
           <div class="user-bio">
             <h3>About</h3>
-            <p>${escapeHtml$4(user.bio)}</p>
+            <p>${escapeHtml$5(user.bio)}</p>
           </div>
         ` : ''}
         
@@ -1149,6 +1149,78 @@ async function loadUserProfile(targetUsername) {
       </div>
     `;
   }
+}
+
+let container = null;
+
+function ensureContainer() {
+  if (!container || !document.body.contains(container)) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+  return container;
+}
+
+function toast(message, type = 'info', duration = 3000) {
+  const cont = ensureContainer();
+  
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  
+  const icons = {
+    success: 'check_circle',
+    error: 'error',
+    warning: 'warning',
+    info: 'info'
+  };
+  
+  el.innerHTML = `
+    <span class="material-icons-outlined">${icons[type] || 'info'}</span>
+    <span class="toast-message">${escapeHtml$4(message)}</span>
+    <button class="toast-close">
+      <span class="material-icons-outlined">close</span>
+    </button>
+  `;
+  
+  cont.appendChild(el);
+  
+  requestAnimationFrame(() => el.classList.add('show'));
+  
+  const close = () => {
+    el.classList.remove('show');
+    el.addEventListener('transitionend', () => el.remove());
+  };
+  
+  el.querySelector('.toast-close').onclick = close;
+  
+  if (duration > 0) {
+    setTimeout(close, duration);
+  }
+  
+  return close;
+}
+
+function success(message, duration) {
+  return toast(message, 'success', duration);
+}
+
+function error(message, duration) {
+  return toast(message, 'error', duration);
+}
+
+function warning(message, duration) {
+  return toast(message, 'warning', duration);
+}
+
+function info(message, duration) {
+  return toast(message, 'info', duration);
+}
+
+function escapeHtml$4(text) {
+  const div = document.createElement('div');
+  div.textContent = text || '';
+  return div.innerHTML;
 }
 
 let pollInterval$1 = null;
@@ -1263,7 +1335,7 @@ async function loadServers() {
       <div class="settings-section server-card" data-id="${server.id}">
         <div class="section-header">
           <span class="material-icons-outlined">dns</span>
-          <h3>${escapeHtml$4(server.name)}</h3>
+          <h3>${escapeHtml$5(server.name)}</h3>
           <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
         </div>
         <div class="server-card-content">
@@ -1317,7 +1389,7 @@ window.serverPower = async function(serverId, action) {
     });
     loadServers();
   } catch (e) {
-    alert('Failed to execute power action');
+    error('Failed to execute power action');
   }
 };
 
@@ -1335,7 +1407,7 @@ async function showCreateServerModal() {
     
     const allEggs = nestsData.nests.flatMap(n => n.eggs || []);
     if (allEggs.length === 0) {
-      alert('No eggs available');
+      error('No eggs available');
       return;
     }
     
@@ -1347,7 +1419,7 @@ async function showCreateServerModal() {
     };
     
     if (remaining.servers <= 0) {
-      alert('You have reached your server limit');
+      warning('You have reached your server limit');
       return;
     }
     
@@ -1377,7 +1449,7 @@ async function showCreateServerModal() {
           <div class="form-group">
             <label>Egg</label>
             <select name="egg_id" required>
-              ${allEggs.map(e => `<option value="${e.id}">${escapeHtml$4(e.name)}</option>`).join('')}
+              ${allEggs.map(e => `<option value="${e.id}">${escapeHtml$5(e.name)}</option>`).join('')}
             </select>
           </div>
           
@@ -1455,7 +1527,7 @@ async function showCreateServerModal() {
     
   } catch (e) {
     console.error('Failed to load create server data:', e);
-    alert('Failed to load data');
+    error('Failed to load data');
   }
 }
 
@@ -2096,10 +2168,10 @@ async function createNewFolder(serverId) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to create folder');
+      error(data.error || 'Failed to create folder');
     }
   } catch (e) {
-    alert('Failed to create folder');
+    error('Failed to create folder');
   }
 }
 
@@ -2121,10 +2193,10 @@ async function createNewFile(serverId) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to create file');
+      error(data.error || 'Failed to create file');
     }
   } catch (e) {
-    alert('Failed to create file');
+    error('Failed to create file');
   }
 }
 
@@ -2144,10 +2216,10 @@ async function deleteFile(serverId, path) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to delete');
+      error(data.error || 'Failed to delete');
     }
   } catch (e) {
-    alert('Failed to delete');
+    error('Failed to delete');
   }
 }
 
@@ -2170,10 +2242,10 @@ async function renameFile(serverId, oldName) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to rename');
+      error(data.error || 'Failed to rename');
     }
   } catch (e) {
-    alert('Failed to rename');
+    error('Failed to rename');
   }
 }
 
@@ -2189,7 +2261,7 @@ async function editFile(serverId, path) {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      error(data.error);
       loadFiles(serverId, currentPath);
       return;
     }
@@ -2249,7 +2321,7 @@ async function editFile(serverId, path) {
     
   } catch (e) {
     console.error('Failed to load file:', e);
-    alert('Failed to load file');
+    error('Failed to load file');
     loadFiles(serverId, currentPath);
   }
 }
@@ -2283,12 +2355,12 @@ async function saveFile(serverId, path) {
       }, 1500);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to save file');
+      error(data.error || 'Failed to save');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
     }
   } catch (e) {
-    alert('Failed to save file');
+    error('Failed to save file');
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
   }
@@ -2322,10 +2394,10 @@ async function uploadFile(serverId) {
         loadFiles(serverId, currentPath);
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to upload');
+        error(data.error || 'Failed to upload');
       }
     } catch (e) {
-      alert('Failed to upload');
+      error('Failed to upload');
     }
   };
   input.click();
@@ -2725,7 +2797,7 @@ async function saveStartup() {
   
   // Validate before saving
   if (!validateAllVariables()) {
-    alert('Please fix the validation errors before saving');
+    warning('Please fix validation errors');
     return;
   }
   
@@ -2757,13 +2829,13 @@ async function saveStartup() {
         saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
       }, 1500);
     } else {
-      alert(data.error || 'Failed to save');
+      error(data.error || 'Failed to save');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save startup:', e);
-    alert('Failed to save startup configuration');
+    error('Failed to save startup');
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
   }
@@ -2872,16 +2944,24 @@ function renderAllocations() {
       </div>
       <div class="allocation-actions">
         ${!alloc.primary ? `
-          <button class="btn btn-ghost btn-sm" onclick="window.setAllocationPrimary('${alloc.id}')" title="Make Primary">
+          <button class="btn btn-ghost btn-sm" data-primary="${alloc.id}" title="Make Primary">
             <span class="material-icons-outlined">star</span>
           </button>
-          <button class="btn btn-ghost btn-sm btn-danger-hover" onclick="window.deleteAllocation('${alloc.id}')" title="Delete">
+          <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${alloc.id}" title="Delete">
             <span class="material-icons-outlined">delete</span>
           </button>
         ` : ''}
       </div>
     </div>
   `).join('');
+  
+  list.querySelectorAll('[data-primary]').forEach(btn => {
+    btn.onclick = () => setAllocationPrimary(btn.dataset.primary);
+  });
+  
+  list.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.onclick = () => deleteAllocation(btn.dataset.delete);
+  });
 }
 
 async function addAllocation() {
@@ -2901,19 +2981,20 @@ async function addAllocation() {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      error(data.error);
     } else {
+      success('Allocation added');
       await loadAllocations();
     }
   } catch (e) {
-    alert('Failed to add allocation');
+    error('Failed to add allocation');
   }
   
   btn.disabled = false;
   btn.innerHTML = '<span class="material-icons-outlined">add</span> Add Allocation';
 }
 
-window.setAllocationPrimary = async (allocId) => {
+async function setAllocationPrimary(allocId) {
   const username = localStorage.getItem('username');
   
   try {
@@ -2924,17 +3005,18 @@ window.setAllocationPrimary = async (allocId) => {
     });
     
     if (res.ok) {
+      success('Primary allocation updated');
       await loadAllocations();
     } else {
       const data = await res.json();
-      alert(data.error);
+      error(data.error);
     }
   } catch (e) {
-    alert('Failed to set primary');
+    error('Failed to set primary');
   }
-};
+}
 
-window.deleteAllocation = async (allocId) => {
+async function deleteAllocation(allocId) {
   if (!confirm('Delete this allocation?')) return;
   
   const username = localStorage.getItem('username');
@@ -2947,15 +3029,16 @@ window.deleteAllocation = async (allocId) => {
     });
     
     if (res.ok) {
+      success('Allocation deleted');
       await loadAllocations();
     } else {
       const data = await res.json();
-      alert(data.error);
+      error(data.error);
     }
   } catch (e) {
-    alert('Failed to delete allocation');
+    error('Failed to delete allocation');
   }
-};
+}
 
 function cleanupNetworkTab() {
   currentServerId$3 = null;
@@ -3252,9 +3335,10 @@ async function saveSubuser(editId) {
     }
     
     closeModal();
+    success(editId ? 'Subuser updated' : 'Subuser added');
     await loadSubusers();
   } catch (e) {
-    alert(e.message);
+    error(e.message);
   }
   
   saveBtn.disabled = false;
@@ -3274,13 +3358,14 @@ async function deleteSubuser(id) {
     });
     
     if (res.ok) {
+      success('Subuser removed');
       await loadSubusers();
     } else {
       const data = await res.json();
-      alert(data.error);
+      error(data.error);
     }
   } catch (e) {
-    alert('Failed to remove subuser');
+    error('Failed to remove subuser');
   }
 }
 
@@ -3432,7 +3517,7 @@ async function saveDetails() {
   const description = document.getElementById('server-description').value.trim();
   
   if (!name) {
-    alert('Server name is required');
+    warning('Server name is required');
     return;
   }
   
@@ -3462,13 +3547,13 @@ async function saveDetails() {
         saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
       }, 1500);
     } else {
-      alert(data.error || 'Failed to save');
+      error(data.error || 'Failed to save');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save details:', e);
-    alert('Failed to save server details');
+    error('Failed to save server details');
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
   }
@@ -3539,14 +3624,14 @@ async function reinstallServer() {
     const data = await res.json();
     
     if (res.ok) {
-      alert('Server reinstall initiated. The server will be reinstalled shortly.');
+      success('Server reinstall initiated');
       window.router.navigateTo('/servers');
     } else {
-      alert(data.error || 'Failed to reinstall server');
+      error(data.error || 'Failed to reinstall');
     }
   } catch (e) {
     console.error('Failed to reinstall server:', e);
-    alert('Failed to reinstall server');
+    error('Failed to reinstall server');
   }
 }
 
@@ -3615,14 +3700,14 @@ async function deleteServer() {
     const data = await res.json();
     
     if (res.ok) {
-      alert('Server deleted successfully');
+      success('Server deleted');
       window.router.navigateTo('/servers');
     } else {
-      alert(data.error || 'Failed to delete server');
+      error(data.error || 'Failed to delete');
     }
   } catch (e) {
     console.error('Failed to delete server:', e);
-    alert('Failed to delete server');
+    error('Failed to delete server');
   }
 }
 
@@ -4147,7 +4232,7 @@ async function loadStatus() {
           <div class="node-header">
             <div class="node-info">
               <span class="node-indicator ${node.status}"></span>
-              <h3>${escapeHtml$4(node.name)}</h3>
+              <h3>${escapeHtml$5(node.name)}</h3>
             </div>
             <span class="status-badge status-${node.status}">${node.status}</span>
           </div>
@@ -4159,7 +4244,7 @@ async function loadStatus() {
             </span>
             <span class="meta-item">
               <span class="material-icons-outlined">location_on</span>
-              ${escapeHtml$4(node.location || 'Unknown')}
+              ${escapeHtml$5(node.location || 'Unknown')}
             </span>
           </div>
           
@@ -4492,8 +4577,8 @@ async function loadNodes(container, username) {
               ${data.nodes.length === 0 ? '<tr><td colspan="6" class="empty">No nodes</td></tr>' : ''}
               ${data.nodes.map(node => `
                 <tr>
-                  <td>${escapeHtml$4(node.name)}</td>
-                  <td>${escapeHtml$4(node.fqdn)}</td>
+                  <td>${escapeHtml$5(node.name)}</td>
+                  <td>${escapeHtml$5(node.fqdn)}</td>
                   <td>${node.memory} MB</td>
                   <td>${node.disk} MB</td>
                   <td>${node.allocation_start || 25565}-${node.allocation_end || 25665}</td>
@@ -4514,12 +4599,12 @@ async function loadNodes(container, username) {
           ${data.nodes.map(node => `
             <div class="admin-card">
               <div class="card-header">
-                <h4>${escapeHtml$4(node.name)}</h4>
+                <h4>${escapeHtml$5(node.name)}</h4>
               </div>
               <div class="card-info">
                 <div class="info-row">
                   <span class="label">FQDN</span>
-                  <span class="value">${escapeHtml$4(node.fqdn)}</span>
+                  <span class="value">${escapeHtml$5(node.fqdn)}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Memory</span>
@@ -4557,7 +4642,7 @@ async function loadNodes(container, username) {
     const locRes = await fetch('/api/admin/locations');
     const locData = await locRes.json();
     document.getElementById('node-location').innerHTML = locData.locations.map(l => 
-      `<option value="${l.id}">${escapeHtml$4(l.long)} (${escapeHtml$4(l.short)})</option>`
+      `<option value="${l.id}">${escapeHtml$5(l.long)} (${escapeHtml$5(l.short)})</option>`
     ).join('');
     
     document.getElementById('add-node-btn').onclick = () => {
@@ -4592,7 +4677,7 @@ window.editNode = async function(nodeId) {
     const res = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}`);
     const data = await res.json();
     const node = data.nodes.find(n => n.id === nodeId);
-    if (!node) return alert('Node not found');
+    if (!node) { error('Node not found'); return; }
     
     const locRes = await fetch('/api/admin/locations');
     const locData = await locRes.json();
@@ -4606,16 +4691,16 @@ window.editNode = async function(nodeId) {
         <form id="edit-node-form">
           <div class="form-group">
             <label>Name</label>
-            <input type="text" name="name" value="${escapeHtml$4(node.name)}" required />
+            <input type="text" name="name" value="${escapeHtml$5(node.name)}" required />
           </div>
           <div class="form-group">
             <label>Description</label>
-            <input type="text" name="description" value="${escapeHtml$4(node.description || '')}" />
+            <input type="text" name="description" value="${escapeHtml$5(node.description || '')}" />
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>FQDN</label>
-              <input type="text" name="fqdn" value="${escapeHtml$4(node.fqdn)}" required />
+              <input type="text" name="fqdn" value="${escapeHtml$5(node.fqdn)}" required />
             </div>
             <div class="form-group">
               <label>Scheme</label>
@@ -4653,7 +4738,7 @@ window.editNode = async function(nodeId) {
             <div class="form-group">
               <label>Location</label>
               <select name="location_id">
-                ${locData.locations.map(l => `<option value="${l.id}" ${l.id === node.location_id ? 'selected' : ''}>${escapeHtml$4(l.long)}</option>`).join('')}
+                ${locData.locations.map(l => `<option value="${l.id}" ${l.id === node.location_id ? 'selected' : ''}>${escapeHtml$5(l.long)}</option>`).join('')}
               </select>
             </div>
           </div>
@@ -4701,7 +4786,7 @@ window.editNode = async function(nodeId) {
       loadTab('nodes');
     };
   } catch (e) {
-    alert('Failed to load node: ' + e.message);
+    error('Failed to load node');
   }
 };
 
@@ -4712,7 +4797,7 @@ window.showDeployCommand = async function(nodeId) {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      error(data.error);
       return;
     }
     
@@ -4723,7 +4808,7 @@ window.showDeployCommand = async function(nodeId) {
       <div class="modal-content">
         <h2>Deploy Command</h2>
         <p>Run this command on your node to configure Wings:</p>
-        <pre class="config-output" style="white-space:pre-wrap;word-break:break-all;">${escapeHtml$4(data.command)}</pre>
+        <pre class="config-output" style="white-space:pre-wrap;word-break:break-all;">${escapeHtml$5(data.command)}</pre>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(this.closest('.modal').querySelector('.config-output').textContent);this.textContent='Copied!'">Copy</button>
           <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
@@ -4732,7 +4817,7 @@ window.showDeployCommand = async function(nodeId) {
     `;
     document.body.appendChild(modal);
   } catch (e) {
-    alert('Failed to load deploy command: ' + e.message);
+    error('Failed to load deploy command');
   }
 };
 
@@ -4743,7 +4828,7 @@ window.showNodeConfig = async function(nodeId) {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      error(data.error);
       return;
     }
     
@@ -4756,7 +4841,7 @@ window.showNodeConfig = async function(nodeId) {
       <div class="modal-content">
         <h2>Wings Configuration</h2>
         <p>Copy this configuration to <code>/etc/pterodactyl/config.yml</code> on your node:</p>
-        <pre class="config-output">${escapeHtml$4(yamlConfig)}</pre>
+        <pre class="config-output">${escapeHtml$5(yamlConfig)}</pre>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(this.closest('.modal').querySelector('.config-output').textContent);this.textContent='Copied!'">Copy</button>
           <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
@@ -4765,7 +4850,7 @@ window.showNodeConfig = async function(nodeId) {
     `;
     document.body.appendChild(modal);
   } catch (e) {
-    alert('Failed to load config: ' + e.message);
+    error('Failed to load config');
   }
 };
 
@@ -4808,7 +4893,7 @@ window.deleteNode = async function(nodeId) {
     });
     loadTab('nodes');
   } catch (e) {
-    alert('Failed to delete node');
+    error('Failed to delete node');
   }
 };
 
@@ -4891,7 +4976,7 @@ async function loadServersTab(container, username) {
               ${data.servers.length === 0 ? '<tr><td colspan="5" class="empty">No servers</td></tr>' : ''}
               ${data.servers.map(s => `
                 <tr>
-                  <td>${escapeHtml$4(s.name)}${s.suspended ? ' <span class="status-badge status-suspended">Suspended</span>' : ''}</td>
+                  <td>${escapeHtml$5(s.name)}${s.suspended ? ' <span class="status-badge status-suspended">Suspended</span>' : ''}</td>
                   <td>${s.user_id?.substring(0, 8) || '--'}</td>
                   <td>${s.limits?.memory || 0}MB / ${s.limits?.disk || 0}MB / ${s.limits?.cpu || 0}%</td>
                   <td><span class="status-badge status-${s.status}">${s.status}</span></td>
@@ -4916,19 +5001,19 @@ async function loadServersTab(container, username) {
     const usersRes = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}&per_page=100`);
     const usersData = await usersRes.json();
     document.getElementById('server-user').innerHTML = usersData.users.map(u => 
-      `<option value="${u.id}">${escapeHtml$4(u.username)}</option>`
+      `<option value="${u.id}">${escapeHtml$5(u.username)}</option>`
     ).join('');
     
     const nodesRes = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}&per_page=100`);
     const nodesData = await nodesRes.json();
     document.getElementById('server-node').innerHTML = nodesData.nodes.map(n => 
-      `<option value="${n.id}">${escapeHtml$4(n.name)}</option>`
+      `<option value="${n.id}">${escapeHtml$5(n.name)}</option>`
     ).join('');
     
     const eggsRes = await fetch('/api/admin/eggs');
     const eggsData = await eggsRes.json();
     document.getElementById('server-egg').innerHTML = eggsData.eggs.map(e => 
-      `<option value="${e.id}">${escapeHtml$4(e.name)}</option>`
+      `<option value="${e.id}">${escapeHtml$5(e.name)}</option>`
     ).join('');
     
     document.getElementById('add-server-btn').onclick = () => {
@@ -4969,7 +5054,7 @@ window.deleteServer = async function(serverId) {
     });
     loadTab('servers');
   } catch (e) {
-    alert('Failed to delete server');
+    error('Failed to delete server');
   }
 };
 
@@ -4986,10 +5071,10 @@ window.suspendServer = async function(serverId) {
       loadTab('servers');
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to suspend server');
+      error(data.error || 'Failed to suspend');
     }
   } catch (e) {
-    alert('Failed to suspend server');
+    error('Failed to suspend');
   }
 };
 
@@ -5006,10 +5091,10 @@ window.unsuspendServer = async function(serverId) {
       loadTab('servers');
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to unsuspend server');
+      error(data.error || 'Failed to unsuspend');
     }
   } catch (e) {
-    alert('Failed to unsuspend server');
+    error('Failed to unsuspend');
   }
 };
 
@@ -5038,8 +5123,8 @@ async function loadUsers(container, username) {
             <tbody>
               ${data.users.map(u => `
                 <tr>
-                  <td>${escapeHtml$4(u.username)}</td>
-                  <td>${escapeHtml$4(u.displayName || u.username)}</td>
+                  <td>${escapeHtml$5(u.username)}</td>
+                  <td>${escapeHtml$5(u.displayName || u.username)}</td>
                   <td>${u.isAdmin ? '✓' : '✗'}</td>
                   <td>${u.limits ? `${u.limits.servers} servers, ${u.limits.memory}MB` : 'Default'}</td>
                   <td>
@@ -5057,13 +5142,13 @@ async function loadUsers(container, username) {
           ${data.users.map(u => `
             <div class="admin-card">
               <div class="card-header">
-                <h4>${escapeHtml$4(u.username)}</h4>
+                <h4>${escapeHtml$5(u.username)}</h4>
                 <span class="status ${u.isAdmin ? 'status-online' : ''}">${u.isAdmin ? 'Admin' : 'User'}</span>
               </div>
               <div class="card-info">
                 <div class="info-row">
                   <span class="label">Display Name</span>
-                  <span class="value">${escapeHtml$4(u.displayName || u.username)}</span>
+                  <span class="value">${escapeHtml$5(u.displayName || u.username)}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Limits</span>
@@ -5173,7 +5258,7 @@ async function loadNests(container, username) {
             <div class="form-group">
               <label>Target Nest</label>
               <select name="nest_id" id="import-nest-select" required>
-                ${nests.map(n => `<option value="${n.id}">${escapeHtml$4(n.name)}</option>`).join('')}
+                ${nests.map(n => `<option value="${n.id}">${escapeHtml$5(n.name)}</option>`).join('')}
               </select>
             </div>
             <div class="form-group">
@@ -5199,7 +5284,7 @@ async function loadNests(container, username) {
               <div class="form-group">
                 <label>Nest</label>
                 <select name="nest_id" id="egg-nest-select" required>
-                  ${nests.map(n => `<option value="${n.id}">${escapeHtml$4(n.name)}</option>`).join('')}
+                  ${nests.map(n => `<option value="${n.id}">${escapeHtml$5(n.name)}</option>`).join('')}
                 </select>
               </div>
             </div>
@@ -5242,21 +5327,21 @@ async function loadNests(container, username) {
             ${nests.map(nest => `
               <div class="nest-card card">
                 <div class="nest-header">
-                  <h3>${escapeHtml$4(nest.name)}</h3>
+                  <h3>${escapeHtml$5(nest.name)}</h3>
                   <div class="nest-actions">
                     <button class="btn btn-sm btn-ghost" onclick="editNest('${nest.id}')"><span class="material-icons-outlined">edit</span></button>
                     <button class="btn btn-sm btn-ghost" onclick="addEggToNest('${nest.id}')"><span class="material-icons-outlined">add</span></button>
                     <button class="btn btn-sm btn-danger" onclick="deleteNest('${nest.id}')"><span class="material-icons-outlined">delete</span></button>
                   </div>
                 </div>
-                <p class="nest-description">${escapeHtml$4(nest.description || '')}</p>
+                <p class="nest-description">${escapeHtml$5(nest.description || '')}</p>
                 <div class="eggs-list">
                   <h4>Eggs (${nest.eggs?.length || 0})</h4>
                   ${(nest.eggs || []).length === 0 ? '<div class="empty">No eggs in this nest</div>' : ''}
                   ${(nest.eggs || []).map(egg => `
                     <div class="egg-item">
                       <div class="egg-info">
-                        <span class="egg-name">${escapeHtml$4(egg.name)}</span>
+                        <span class="egg-name">${escapeHtml$5(egg.name)}</span>
                         <span class="egg-images">${formatDockerImages(egg.docker_images, egg.docker_image)}</span>
                       </div>
                       <div class="egg-actions">
@@ -5338,7 +5423,7 @@ async function loadNests(container, username) {
       if (res.ok) {
         loadTab('nests');
       } else {
-        alert(data.error || 'Failed to import egg');
+        error(data.error || 'Failed to import egg');
       }
     };
     
@@ -5402,11 +5487,11 @@ function formatDockerImages(dockerImages, fallbackImage) {
   if (dockerImages && typeof dockerImages === 'object') {
     const keys = Object.keys(dockerImages);
     if (keys.length > 0) {
-      return keys.length === 1 ? escapeHtml$4(keys[0]) : `${keys.length} images`;
+      return keys.length === 1 ? escapeHtml$5(keys[0]) : `${keys.length} images`;
     }
   }
   if (fallbackImage) {
-    return escapeHtml$4(fallbackImage.split('/').pop() || fallbackImage);
+    return escapeHtml$5(fallbackImage.split('/').pop() || fallbackImage);
   }
   return 'No image';
 }
@@ -5521,8 +5606,8 @@ async function loadLocations(container, username) {
               ${data.locations.map(l => `
                 <tr>
                   <td>${l.id}</td>
-                  <td>${escapeHtml$4(l.short)}</td>
-                  <td>${escapeHtml$4(l.long)}</td>
+                  <td>${escapeHtml$5(l.short)}</td>
+                  <td>${escapeHtml$5(l.long)}</td>
                   <td>
                     <button class="btn btn-sm btn-danger" onclick="deleteLocation('${l.id}')">Delete</button>
                   </td>
@@ -5537,12 +5622,12 @@ async function loadLocations(container, username) {
           ${data.locations.map(l => `
             <div class="admin-card">
               <div class="card-header">
-                <h4>${escapeHtml$4(l.short)}</h4>
+                <h4>${escapeHtml$5(l.short)}</h4>
               </div>
               <div class="card-info">
                 <div class="info-row">
                   <span class="label">Full Name</span>
-                  <span class="value">${escapeHtml$4(l.long)}</span>
+                  <span class="value">${escapeHtml$5(l.long)}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">ID</span>
@@ -5607,11 +5692,11 @@ async function loadPanelSettings(container, username) {
             <div class="form-row">
               <div class="form-group">
                 <label>Panel Name</label>
-                <input type="text" name="panel_name" value="${escapeHtml$4(config.panel?.name || 'Sodium Panel')}" />
+                <input type="text" name="panel_name" value="${escapeHtml$5(config.panel?.name || 'Sodium Panel')}" />
               </div>
               <div class="form-group">
                 <label>Panel URL</label>
-                <input type="url" name="panel_url" value="${escapeHtml$4(config.panel?.url || '')}" placeholder="https://panel.example.com" />
+                <input type="url" name="panel_url" value="${escapeHtml$5(config.panel?.url || '')}" placeholder="https://panel.example.com" />
               </div>
             </div>
             
@@ -5881,7 +5966,7 @@ function renderNav() {
         localStorage.removeItem('password');
         localStorage.removeItem('displayName');
         localStorage.removeItem('userId');
-        navigate('/auth');
+        window.router.navigateTo('/auth');
       });
     }
   }, 0);

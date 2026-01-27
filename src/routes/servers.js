@@ -1,4 +1,5 @@
 import { escapeHtml } from '../utils/security.js';
+import * as toast from '../utils/toast.js';
 
 let pollInterval = null;
 
@@ -166,7 +167,7 @@ window.serverPower = async function(serverId, action) {
     });
     loadServers();
   } catch (e) {
-    alert('Failed to execute power action');
+    toast.error('Failed to execute power action');
   }
 };
 
@@ -184,7 +185,7 @@ async function showCreateServerModal() {
     
     const allEggs = nestsData.nests.flatMap(n => n.eggs || []);
     if (allEggs.length === 0) {
-      alert('No eggs available');
+      toast.error('No eggs available');
       return;
     }
     
@@ -196,7 +197,7 @@ async function showCreateServerModal() {
     };
     
     if (remaining.servers <= 0) {
-      alert('You have reached your server limit');
+      toast.warning('You have reached your server limit');
       return;
     }
     
@@ -304,7 +305,7 @@ async function showCreateServerModal() {
     
   } catch (e) {
     console.error('Failed to load create server data:', e);
-    alert('Failed to load data');
+    toast.error('Failed to load data');
   }
 }
 

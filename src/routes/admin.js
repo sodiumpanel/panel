@@ -1,4 +1,5 @@
 import { escapeHtml } from '../utils/security.js';
+import * as toast from '../utils/toast.js';
 
 let currentTab = 'nodes';
 let currentPage = { nodes: 1, servers: 1, users: 1 };
@@ -384,7 +385,7 @@ window.editNode = async function(nodeId) {
     const res = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}`);
     const data = await res.json();
     const node = data.nodes.find(n => n.id === nodeId);
-    if (!node) return alert('Node not found');
+    if (!node) { toast.error('Node not found'); return; }
     
     const locRes = await fetch('/api/admin/locations');
     const locData = await locRes.json();
@@ -493,7 +494,7 @@ window.editNode = async function(nodeId) {
       loadTab('nodes');
     };
   } catch (e) {
-    alert('Failed to load node: ' + e.message);
+    toast.error('Failed to load node');
   }
 };
 
@@ -504,7 +505,7 @@ window.showDeployCommand = async function(nodeId) {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      toast.error(data.error);
       return;
     }
     
@@ -524,7 +525,7 @@ window.showDeployCommand = async function(nodeId) {
     `;
     document.body.appendChild(modal);
   } catch (e) {
-    alert('Failed to load deploy command: ' + e.message);
+    toast.error('Failed to load deploy command');
   }
 };
 
@@ -535,7 +536,7 @@ window.showNodeConfig = async function(nodeId) {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      toast.error(data.error);
       return;
     }
     
@@ -557,7 +558,7 @@ window.showNodeConfig = async function(nodeId) {
     `;
     document.body.appendChild(modal);
   } catch (e) {
-    alert('Failed to load config: ' + e.message);
+    toast.error('Failed to load config');
   }
 };
 
@@ -600,7 +601,7 @@ window.deleteNode = async function(nodeId) {
     });
     loadTab('nodes');
   } catch (e) {
-    alert('Failed to delete node');
+    toast.error('Failed to delete node');
   }
 };
 
@@ -761,7 +762,7 @@ window.deleteServer = async function(serverId) {
     });
     loadTab('servers');
   } catch (e) {
-    alert('Failed to delete server');
+    toast.error('Failed to delete server');
   }
 };
 
@@ -778,10 +779,10 @@ window.suspendServer = async function(serverId) {
       loadTab('servers');
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to suspend server');
+      toast.error(data.error || 'Failed to suspend');
     }
   } catch (e) {
-    alert('Failed to suspend server');
+    toast.error('Failed to suspend');
   }
 };
 
@@ -798,10 +799,10 @@ window.unsuspendServer = async function(serverId) {
       loadTab('servers');
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to unsuspend server');
+      toast.error(data.error || 'Failed to unsuspend');
     }
   } catch (e) {
-    alert('Failed to unsuspend server');
+    toast.error('Failed to unsuspend');
   }
 };
 
@@ -1130,7 +1131,7 @@ async function loadNests(container, username) {
       if (res.ok) {
         loadTab('nests');
       } else {
-        alert(data.error || 'Failed to import egg');
+        toast.error(data.error || 'Failed to import egg');
       }
     };
     

@@ -1,3 +1,5 @@
+import * as toast from '../../utils/toast.js';
+
 let currentServerId = null;
 let serverData = null;
 let eggData = null;
@@ -388,7 +390,7 @@ async function saveStartup() {
   
   // Validate before saving
   if (!validateAllVariables()) {
-    alert('Please fix the validation errors before saving');
+    toast.warning('Please fix validation errors');
     return;
   }
   
@@ -420,13 +422,13 @@ async function saveStartup() {
         saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
       }, 1500);
     } else {
-      alert(data.error || 'Failed to save');
+      toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save startup:', e);
-    alert('Failed to save startup configuration');
+    toast.error('Failed to save startup');
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
   }

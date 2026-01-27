@@ -1,3 +1,5 @@
+import * as toast from '../../utils/toast.js';
+
 let currentPath = '/';
 let currentServerId = null;
 let isEditing = false;
@@ -252,10 +254,10 @@ async function createNewFolder(serverId) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to create folder');
+      toast.error(data.error || 'Failed to create folder');
     }
   } catch (e) {
-    alert('Failed to create folder');
+    toast.error('Failed to create folder');
   }
 }
 
@@ -277,10 +279,10 @@ async function createNewFile(serverId) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to create file');
+      toast.error(data.error || 'Failed to create file');
     }
   } catch (e) {
-    alert('Failed to create file');
+    toast.error('Failed to create file');
   }
 }
 
@@ -300,10 +302,10 @@ async function deleteFile(serverId, path) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to delete');
+      toast.error(data.error || 'Failed to delete');
     }
   } catch (e) {
-    alert('Failed to delete');
+    toast.error('Failed to delete');
   }
 }
 
@@ -326,10 +328,10 @@ async function renameFile(serverId, oldName) {
       loadFiles(serverId, currentPath);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to rename');
+      toast.error(data.error || 'Failed to rename');
     }
   } catch (e) {
-    alert('Failed to rename');
+    toast.error('Failed to rename');
   }
 }
 
@@ -345,7 +347,7 @@ async function editFile(serverId, path) {
     const data = await res.json();
     
     if (data.error) {
-      alert(data.error);
+      toast.error(data.error);
       loadFiles(serverId, currentPath);
       return;
     }
@@ -405,7 +407,7 @@ async function editFile(serverId, path) {
     
   } catch (e) {
     console.error('Failed to load file:', e);
-    alert('Failed to load file');
+    toast.error('Failed to load file');
     loadFiles(serverId, currentPath);
   }
 }
@@ -439,12 +441,12 @@ async function saveFile(serverId, path) {
       }, 1500);
     } else {
       const data = await res.json();
-      alert(data.error || 'Failed to save file');
+      toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
       saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
     }
   } catch (e) {
-    alert('Failed to save file');
+    toast.error('Failed to save file');
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
   }
@@ -478,10 +480,10 @@ async function uploadFile(serverId) {
         loadFiles(serverId, currentPath);
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to upload');
+        toast.error(data.error || 'Failed to upload');
       }
     } catch (e) {
-      alert('Failed to upload');
+      toast.error('Failed to upload');
     }
   };
   input.click();
