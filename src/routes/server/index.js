@@ -34,7 +34,6 @@ export function renderServerPage(serverId) {
           </div>
         </div>
         <div class="server-header-right">
-          <div class="server-address" id="server-address">--</div>
           <div class="power-buttons">
             <button class="btn btn-success btn-sm" id="btn-start" title="Start">
               <span class="material-icons-outlined">play_arrow</span>
@@ -65,6 +64,19 @@ export function renderServerPage(serverId) {
       <div class="server-content">
         <div class="server-main" id="tab-content"></div>
         <div class="server-sidebar">
+          <div class="card server-info-card">
+            <h4>Server Info</h4>
+            <div class="server-info-list">
+              <div class="server-info-item">
+                <span class="info-label">Address</span>
+                <span class="info-value" id="server-address">--</span>
+              </div>
+              <div class="server-info-item">
+                <span class="info-label">Node</span>
+                <span class="info-value" id="server-node">--</span>
+              </div>
+            </div>
+          </div>
           <div class="card resources-card">
             <h4>Resources</h4>
             <div class="resource-bars">
@@ -211,8 +223,12 @@ async function loadServerDetails(serverId) {
     serverLimits = serverData.limits;
     
     document.getElementById('server-name').textContent = serverData.name;
-    document.getElementById('server-address').textContent = 
-      serverData.node_address || `${serverData.allocation?.ip}:${serverData.allocation?.port}`;
+    
+    const address = serverData.node_address || `${serverData.allocation?.ip || '0.0.0.0'}:${serverData.allocation?.port || 25565}`;
+    document.getElementById('server-address').textContent = address;
+    
+    const nodeEl = document.getElementById('server-node');
+    if (nodeEl) nodeEl.textContent = serverData.node_name || 'Unknown';
     
     // Check if server is installing
     if (serverData.status === 'installing') {
