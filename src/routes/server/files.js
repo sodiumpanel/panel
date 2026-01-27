@@ -4,6 +4,7 @@ let currentPath = '/';
 let currentServerId = null;
 let isEditing = false;
 let editingPath = null;
+let selectedFiles = new Set();
 
 const EDITABLE_EXTENSIONS = [
   'txt', 'log', 'md', 'json', 'yml', 'yaml', 'toml', 'xml',
@@ -53,6 +54,25 @@ export function renderFilesTab() {
             </button>
           </div>
         </div>
+        <div class="files-selection-bar" id="files-selection-bar" style="display: none;">
+          <div class="selection-info">
+            <span id="selection-count">0</span> selected
+          </div>
+          <div class="selection-actions">
+            <button class="btn btn-sm btn-ghost" id="btn-move" title="Move">
+              <span class="material-icons-outlined">drive_file_move</span>
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-compress" title="Compress">
+              <span class="material-icons-outlined">archive</span>
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-delete-selected" title="Delete">
+              <span class="material-icons-outlined">delete</span>
+            </button>
+            <button class="btn btn-sm btn-ghost" id="btn-clear-selection" title="Clear">
+              <span class="material-icons-outlined">close</span>
+            </button>
+          </div>
+        </div>
         <div class="files-list" id="files-list">
           <div class="files-loading">Loading files...</div>
         </div>
@@ -66,12 +86,35 @@ export function initFilesTab(serverId) {
   currentServerId = serverId;
   isEditing = false;
   editingPath = null;
+  selectedFiles.clear();
   loadFiles(serverId, currentPath);
   
   document.getElementById('btn-refresh').onclick = () => loadFiles(serverId, currentPath);
   document.getElementById('btn-new-folder').onclick = () => createNewFolder(serverId);
   document.getElementById('btn-new-file').onclick = () => createNewFile(serverId);
   document.getElementById('btn-upload').onclick = () => uploadFile(serverId);
+  
+  document.getElementById('btn-move').onclick = () => moveSelectedFiles(serverId);
+  document.getElementById('btn-compress').onclick = () => compressSelectedFiles(serverId);
+  document.getElementById('btn-delete-selected').onclick = () => deleteSelectedFiles(serverId);
+  document.getElementById('btn-clear-selection').onclick = () => clearSelection();
+}
+
+function updateSelectionBar() {
+  const bar = document.getElementById('files-selection-bar');
+  const count = document.getElementById('selection-count');
+  if (selectedFiles.size > 0) {
+    bar.style.display = 'flex';
+    count.textContent = selectedFiles.size;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearSelection() {
+  selectedFiles.clear();
+  document.querySelectorAll('.file-item.selected').forEach(el => el.classList.remove('selected'));
+  updateSelectionBar();
 }
 
 async function loadFiles(serverId, path) {
@@ -79,6 +122,8 @@ async function loadFiles(serverId, path) {
   const filesList = document.getElementById('files-list');
   
   filesList.innerHTML = '<div class="files-loading">Loading files...</div>';
+  selectedFiles.clear();
+  updateSelectionBar();
   
   try {
     const res = await fetch(`/api/servers/${serverId}/files/list?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
@@ -145,6 +190,9 @@ function renderFilesList(files, serverId) {
     const isDir = isDirectory(file);
     return `
     <div class="file-item ${isDir ? 'directory' : 'file'}" data-name="${file.name}" data-is-dir="${isDir}">
+      <div class="file-select">
+        <input type="checkbox" class="file-checkbox" data-name="${file.name}">
+      </div>
       <div class="file-icon">
         <span class="material-icons-outlined">${isDir ? 'folder' : getFileIcon(file.name)}</span>
       </div>
@@ -178,8 +226,25 @@ function renderFilesList(files, serverId) {
     </div>
   `}).join('');
   
-  filesList.querySelectorAll('.file-item.directory').forEach(item => {
-    item.onclick = () => {
+  filesList.querySelectorAll('.file-checkbox').forEach(checkbox => {
+    checkbox.onclick = (e) => {
+      e.stopPropagation();
+      const name = checkbox.dataset.name;
+      const item = checkbox.closest('.file-item');
+      if (checkbox.checked) {
+        selectedFiles.add(name);
+        item.classList.add('selected');
+      } else {
+        selectedFiles.delete(name);
+        item.classList.remove('selected');
+      }
+      updateSelectionBar();
+    };
+  });
+  
+  filesList.querySelectorAll('.file-item.directory .file-info').forEach(info => {
+    info.onclick = () => {
+      const item = info.closest('.file-item');
       const name = item.dataset.name;
       const newPath = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
       loadFiles(serverId, newPath);
@@ -222,7 +287,7 @@ function renderFilesList(files, serverId) {
     btn.onclick = (e) => {
       e.stopPropagation();
       const name = btn.closest('.file-item').dataset.name;
-      decompressFile(serverId, name);
+      showDecompressDialog(serverId, name);
     };
   });
 }
@@ -329,6 +394,32 @@ async function deleteFile(serverId, path) {
   }
 }
 
+async function deleteSelectedFiles(serverId) {
+  if (selectedFiles.size === 0) return;
+  if (!confirm(`Delete ${selectedFiles.size} file(s)?`)) return;
+  
+  const username = localStorage.getItem('username');
+  const files = Array.from(selectedFiles);
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, root: currentPath, files })
+    });
+    
+    if (res.ok) {
+      clearSelection();
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      toast.error(data.error || 'Failed to delete');
+    }
+  } catch (e) {
+    toast.error('Failed to delete');
+  }
+}
+
 async function renameFile(serverId, oldName) {
   const newName = prompt('New name:', oldName);
   if (!newName || newName === oldName) return;
@@ -352,6 +443,153 @@ async function renameFile(serverId, oldName) {
     }
   } catch (e) {
     toast.error('Failed to rename');
+  }
+}
+
+async function moveSelectedFiles(serverId) {
+  if (selectedFiles.size === 0) return;
+  
+  const destination = prompt('Move to (path):', currentPath);
+  if (!destination || destination === currentPath) return;
+  
+  const username = localStorage.getItem('username');
+  const files = Array.from(selectedFiles).map(name => ({
+    from: name,
+    to: `${destination.replace(/\/$/, '')}/${name}`.replace(/^\/+/, '')
+  }));
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, root: currentPath, files })
+    });
+    
+    if (res.ok) {
+      toast.success('Files moved');
+      clearSelection();
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      toast.error(data.error || 'Failed to move');
+    }
+  } catch (e) {
+    toast.error('Failed to move');
+  }
+}
+
+async function compressSelectedFiles(serverId) {
+  if (selectedFiles.size === 0) return;
+  
+  const username = localStorage.getItem('username');
+  const files = Array.from(selectedFiles);
+  
+  toast.info('Compressing...');
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/compress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, root: currentPath, files })
+    });
+    
+    if (res.ok) {
+      toast.success('Compressed successfully');
+      clearSelection();
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      toast.error(data.error || 'Failed to compress');
+    }
+  } catch (e) {
+    toast.error('Failed to compress');
+  }
+}
+
+function showDecompressDialog(serverId, filename) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Extract ${filename}</h3>
+        <button class="btn btn-ghost btn-sm modal-close">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Extract to:</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="extract-location" value="here" checked>
+              Current folder
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="extract-location" value="folder">
+              New folder (${filename.replace(/\.(zip|tar|tar\.gz|tgz|gz|rar|7z)$/i, '')})
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-extract">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-extract">Extract</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  const close = () => modal.remove();
+  modal.querySelector('.modal-close').onclick = close;
+  modal.querySelector('#btn-cancel-extract').onclick = close;
+  modal.onclick = (e) => { if (e.target === modal) close(); };
+  
+  modal.querySelector('#btn-confirm-extract').onclick = async () => {
+    const extractHere = modal.querySelector('input[name="extract-location"]:checked').value === 'here';
+    close();
+    
+    if (!extractHere) {
+      const folderName = filename.replace(/\.(zip|tar|tar\.gz|tgz|gz|rar|7z)$/i, '');
+      const folderPath = currentPath === '/' ? `/${folderName}` : `${currentPath}/${folderName}`;
+      
+      const username = localStorage.getItem('username');
+      await fetch(`/api/servers/${serverId}/files/folder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, path: folderPath })
+      });
+      
+      await decompressFile(serverId, filename, folderPath);
+    } else {
+      await decompressFile(serverId, filename, currentPath);
+    }
+  };
+}
+
+async function decompressFile(serverId, filename, targetPath) {
+  const username = localStorage.getItem('username');
+  const filePath = currentPath === '/' ? `/${filename}` : `${currentPath}/${filename}`;
+  
+  toast.info('Extracting...');
+  
+  try {
+    const res = await fetch(`/api/servers/${serverId}/files/decompress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, path: targetPath || currentPath, file: filePath })
+    });
+    
+    if (res.ok) {
+      toast.success('Extracted successfully');
+      loadFiles(serverId, currentPath);
+    } else {
+      const data = await res.json();
+      toast.error(data.error || 'Failed to extract');
+    }
+  } catch (e) {
+    toast.error('Failed to extract');
   }
 }
 
@@ -398,7 +636,6 @@ async function editFile(serverId, path) {
       </div>
     `;
     
-    // Set content via JS to avoid HTML escaping issues
     document.getElementById('file-content').value = data.content || '';
     
     document.getElementById('btn-back').onclick = () => {
@@ -430,12 +667,6 @@ async function editFile(serverId, path) {
     toast.error('Failed to load file');
     loadFiles(serverId, currentPath);
   }
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }
 
 async function saveFile(serverId, path) {
@@ -548,6 +779,7 @@ function showUploadIndicator(filename) {
   const el = document.createElement('div');
   el.className = 'file-item upload-indicator';
   el.innerHTML = `
+    <div class="file-select"></div>
     <div class="file-icon">
       <span class="material-icons-outlined rotating">sync</span>
     </div>
@@ -573,31 +805,7 @@ function showUploadIndicator(filename) {
   };
 }
 
-async function decompressFile(serverId, filename) {
-  const username = localStorage.getItem('username');
-  const filePath = currentPath === '/' ? `/${filename}` : `${currentPath}/${filename}`;
-  
-  toast.info('Extracting...');
-  
-  try {
-    const res = await fetch(`/api/servers/${serverId}/files/decompress`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, path: currentPath, file: filePath })
-    });
-    
-    if (res.ok) {
-      toast.success('Extracted successfully');
-      loadFiles(serverId, currentPath);
-    } else {
-      const data = await res.json();
-      toast.error(data.error || 'Failed to extract');
-    }
-  } catch (e) {
-    toast.error('Failed to extract');
-  }
-}
-
 export function cleanupFilesTab() {
   currentPath = '/';
+  selectedFiles.clear();
 }

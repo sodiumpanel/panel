@@ -602,12 +602,23 @@ router.post('/:id/files/write', async (req, res) => {
 });
 
 router.post('/:id/files/delete', async (req, res) => {
-  const { username, path } = req.body;
+  const { username, path, root, files } = req.body;
   const result = await getServerAndNode(req.params.id, username);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/delete`, { root: '/', files: [path.replace(/^\//, '')] });
+    let filesToDelete;
+    if (files && Array.isArray(files)) {
+      filesToDelete = files;
+    } else if (path) {
+      filesToDelete = [path.replace(/^\//, '')];
+    } else {
+      return res.status(400).json({ error: 'No files specified' });
+    }
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/delete`, { 
+      root: root || '/', 
+      files: filesToDelete 
+    });
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -615,16 +626,40 @@ router.post('/:id/files/delete', async (req, res) => {
 });
 
 router.post('/:id/files/rename', async (req, res) => {
-  const { username, from, to } = req.body;
+  const { username, from, to, root, files } = req.body;
   const result = await getServerAndNode(req.params.id, username);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
+    let filesToRename;
+    if (files && Array.isArray(files)) {
+      filesToRename = files;
+    } else if (from && to) {
+      filesToRename = [{ from: from.replace(/^\//, ''), to: to.replace(/^\//, '') }];
+    } else {
+      return res.status(400).json({ error: 'No files specified' });
+    }
     await wingsRequest(node, 'PUT', `/api/servers/${server.uuid}/files/rename`, { 
-      root: '/', 
-      files: [{ from: from.replace(/^\//, ''), to: to.replace(/^\//, '') }] 
+      root: root || '/', 
+      files: filesToRename 
     });
     res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/:id/files/compress', async (req, res) => {
+  const { username, root, files } = req.body;
+  const result = await getServerAndNode(req.params.id, username);
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  const { server, node } = result;
+  try {
+    const response = await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/compress`, {
+      root: root || '/',
+      files: files || []
+    });
+    res.json({ success: true, file: response });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

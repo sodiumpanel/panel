@@ -2639,6 +2639,36 @@ input, textarea, select {
   color: var(--danger);
 }
 
+.files-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: rgba(var(--primary-rgb), 0.1);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+.files-selection-bar .selection-info {
+  font-size: 0.875rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+.files-selection-bar .selection-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.file-select {
+  width: 20px;
+  flex-shrink: 0;
+}
+.file-select .file-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
 .file-item {
   display: flex;
   align-items: center;
@@ -2652,6 +2682,9 @@ input, textarea, select {
 }
 .file-item:hover .file-actions {
   opacity: 1;
+}
+.file-item.selected {
+  background: rgba(var(--primary-rgb), 0.1);
 }
 .file-item.directory .file-info {
   cursor: pointer;
