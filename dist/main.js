@@ -41220,25 +41220,48 @@ function renderServerPage(serverId) {
       <div class="server-content">
         <div class="server-main" id="tab-content"></div>
         <div class="server-sidebar">
-          <div class="card server-info-card">
-            <h4>Server Info</h4>
-            <div class="server-info-list">
-              <div class="server-info-item">
-                <span class="info-label">Address</span>
-                <span class="info-value" id="server-address">--</span>
+          <div class="sidebar-section">
+            <div class="section-header">
+              <span class="material-icons-outlined">info</span>
+              <h3>Server Info</h3>
+            </div>
+            <div class="sidebar-card">
+              <div class="info-row">
+                <span class="material-icons-outlined">language</span>
+                <div class="info-content">
+                  <span class="info-label">Address</span>
+                  <span class="info-value" id="server-address">--</span>
+                </div>
               </div>
-              <div class="server-info-item">
-                <span class="info-label">Node</span>
-                <span class="info-value" id="server-node">--</span>
+              <div class="info-row">
+                <span class="material-icons-outlined">dns</span>
+                <div class="info-content">
+                  <span class="info-label">Node</span>
+                  <span class="info-value" id="server-node">--</span>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined">schedule</span>
+                <div class="info-content">
+                  <span class="info-label">Uptime</span>
+                  <span class="info-value" id="server-uptime">--</span>
+                </div>
               </div>
             </div>
           </div>
-          <div class="card resources-card">
-            <h4>Resources</h4>
-            <div class="resource-sparklines">
+          
+          <div class="sidebar-section">
+            <div class="section-header">
+              <span class="material-icons-outlined">monitoring</span>
+              <h3>Resources</h3>
+            </div>
+            <div class="sidebar-card">
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
-                  <span class="resource-spark-label">CPU</span>
+                  <div class="resource-spark-label">
+                    <span class="material-icons-outlined">memory</span>
+                    <span>CPU</span>
+                  </div>
                   <span class="resource-spark-value" id="res-cpu-text">0%</span>
                 </div>
                 <div class="resource-spark-chart">
@@ -41249,7 +41272,10 @@ function renderServerPage(serverId) {
               </div>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
-                  <span class="resource-spark-label">Memory</span>
+                  <div class="resource-spark-label">
+                    <span class="material-icons-outlined">storage</span>
+                    <span>Memory</span>
+                  </div>
                   <span class="resource-spark-value" id="res-mem-text">0 MB</span>
                 </div>
                 <div class="resource-spark-chart">
@@ -41260,7 +41286,10 @@ function renderServerPage(serverId) {
               </div>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
-                  <span class="resource-spark-label">Disk</span>
+                  <div class="resource-spark-label">
+                    <span class="material-icons-outlined">hard_drive</span>
+                    <span>Disk</span>
+                  </div>
                   <span class="resource-spark-value" id="res-disk-text">0 MB</span>
                 </div>
                 <div class="resource-spark-chart">
@@ -41270,14 +41299,27 @@ function renderServerPage(serverId) {
                 </div>
               </div>
             </div>
-            <div class="resource-stats">
-              <div class="resource-stat">
-                <span class="material-icons-outlined">arrow_upward</span>
-                <span id="res-net-tx">0 B</span>
+          </div>
+          
+          <div class="sidebar-section">
+            <div class="section-header">
+              <span class="material-icons-outlined">swap_vert</span>
+              <h3>Network</h3>
+            </div>
+            <div class="sidebar-card network-stats">
+              <div class="network-stat">
+                <span class="material-icons-outlined tx">arrow_upward</span>
+                <div class="stat-content">
+                  <span class="stat-label">Outbound</span>
+                  <span class="stat-value" id="res-net-tx">0 B</span>
+                </div>
               </div>
-              <div class="resource-stat">
-                <span class="material-icons-outlined">arrow_downward</span>
-                <span id="res-net-rx">0 B</span>
+              <div class="network-stat">
+                <span class="material-icons-outlined rx">arrow_downward</span>
+                <div class="stat-content">
+                  <span class="stat-label">Inbound</span>
+                  <span class="stat-value" id="res-net-rx">0 B</span>
+                </div>
               </div>
             </div>
           </div>
@@ -41511,11 +41553,28 @@ function updateServerResources(stats) {
   const netTx = document.getElementById('res-net-tx');
   const netRx = document.getElementById('res-net-rx');
   
+  const uptimeEl = document.getElementById('server-uptime');
+  
   if (cpuText) cpuText.textContent = `${cpuPercent.toFixed(1)}%`;
   if (memText) memText.textContent = formatBytes(stats.memory_bytes || 0);
   if (diskText) diskText.textContent = formatBytes(stats.disk_bytes || 0);
   if (netTx) netTx.textContent = formatBytes(stats.network?.tx_bytes || 0);
   if (netRx) netRx.textContent = formatBytes(stats.network?.rx_bytes || 0);
+  if (uptimeEl) uptimeEl.textContent = formatUptime(stats.uptime || 0);
+}
+
+function formatUptime(ms) {
+  if (!ms || ms <= 0) return '--';
+  
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) return `${days}d ${hours % 24}h`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+  return `${seconds}s`;
 }
 
 function updateSparkline(svgId, data) {
