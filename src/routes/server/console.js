@@ -171,9 +171,9 @@ function handleSocketMessage(message) {
       break;
       
     case 'stats':
-      writeInfo(`stats keys: ${JSON.stringify(Object.keys(args || {}))}`);
-      if (args && resourcesCallback) {
-        resourcesCallback(args);
+      writeInfo(`stats[0] keys: ${JSON.stringify(Object.keys(args[0] || {}))}`);
+      if (args && args[0] && resourcesCallback) {
+        resourcesCallback(args[0]);
       }
       break;
       
