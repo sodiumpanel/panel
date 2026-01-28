@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -253,10 +254,10 @@ async function sendCommand(serverId) {
   } else {
     const username = localStorage.getItem('username');
     try {
-      const res = await fetch(`/api/servers/${serverId}/command`, {
+      const res = await api(`/api/servers/${serverId}/command`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, command })
+        
+        body: JSON.stringify({ command })
       });
       
       if (!res.ok) {

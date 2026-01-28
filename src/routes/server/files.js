@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import * as toast from '../../utils/toast.js';
 import { createEditor } from '../../utils/editor.js';
 import * as modal from '../../utils/modal.js';
@@ -129,7 +130,7 @@ async function loadFiles(serverId, path) {
   updateSelectionBar();
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/list?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
+    const res = await api(`/api/servers/${serverId}/files/list?path=${encodeURIComponent(path)}`);
     const data = await res.json();
     
     if (data.error) {
@@ -339,10 +340,10 @@ async function createNewFolder(serverId) {
   const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/folder`, {
+    const res = await api(`/api/servers/${serverId}/files/folder`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, path })
+      
+      body: JSON.stringify({ path })
     });
     
     if (res.ok) {
@@ -364,10 +365,10 @@ async function createNewFile(serverId) {
   const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/write`, {
+    const res = await api(`/api/servers/${serverId}/files/write`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, path, content: '' })
+      
+      body: JSON.stringify({ path, content: '' })
     });
     
     if (res.ok) {
@@ -392,10 +393,10 @@ async function deleteFile(serverId, path) {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/delete`, {
+    const res = await api(`/api/servers/${serverId}/files/delete`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, path })
+      
+      body: JSON.stringify({ path })
     });
     
     if (res.ok) {
@@ -423,10 +424,10 @@ async function deleteSelectedFiles(serverId) {
   const files = Array.from(selectedFiles);
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/delete`, {
+    const res = await api(`/api/servers/${serverId}/files/delete`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, root: currentPath, files })
+      
+      body: JSON.stringify({ root: currentPath, files })
     });
     
     if (res.ok) {
@@ -454,10 +455,10 @@ async function renameFile(serverId, oldName) {
   const to = currentPath === '/' ? `/${newName}` : `${currentPath}/${newName}`;
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/rename`, {
+    const res = await api(`/api/servers/${serverId}/files/rename`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, from, to })
+      
+      body: JSON.stringify({ from, to })
     });
     
     if (res.ok) {
@@ -489,10 +490,10 @@ async function moveSelectedFiles(serverId) {
   }));
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/rename`, {
+    const res = await api(`/api/servers/${serverId}/files/rename`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, root: currentPath, files })
+      
+      body: JSON.stringify({ root: currentPath, files })
     });
     
     if (res.ok) {
@@ -517,10 +518,10 @@ async function compressSelectedFiles(serverId) {
   toast.info('Compressing...');
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/compress`, {
+    const res = await api(`/api/servers/${serverId}/files/compress`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, root: currentPath, files })
+      
+      body: JSON.stringify({ root: currentPath, files })
     });
     
     if (res.ok) {
@@ -550,10 +551,10 @@ function showDecompressDialog(serverId, filename) {
       const folderPath = currentPath === '/' ? `/${folderName}` : `${currentPath}/${folderName}`;
       const username = localStorage.getItem('username');
       
-      await fetch(`/api/servers/${serverId}/files/folder`, {
+      await api(`/api/servers/${serverId}/files/folder`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, path: folderPath })
+        
+        body: JSON.stringify({ path: folderPath })
       });
       
       await decompressFile(serverId, filename, currentPath, folderPath);
@@ -592,9 +593,9 @@ async function decompressFile(serverId, filename, archiveDir, extractTo) {
   const indicator = showExtractIndicator(filename);
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/decompress`, {
+    const res = await api(`/api/servers/${serverId}/files/decompress`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      
       body: JSON.stringify({ 
         username, 
         root: archiveDir,
@@ -626,7 +627,7 @@ async function editFile(serverId, path) {
   filesList.innerHTML = '<div class="files-loading">Loading file...</div>';
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/contents?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
+    const res = await api(`/api/servers/${serverId}/files/contents?path=${encodeURIComponent(path)}`);
     const data = await res.json();
     
     if (data.error) {
@@ -699,10 +700,10 @@ async function saveFile(serverId, path) {
   saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/files/write`, {
+    const res = await api(`/api/servers/${serverId}/files/write`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, path, content })
+      
+      body: JSON.stringify({ path, content })
     });
     
     if (res.ok) {
@@ -726,7 +727,7 @@ async function saveFile(serverId, path) {
 
 async function downloadFile(serverId, path) {
   const username = localStorage.getItem('username');
-  window.open(`/api/servers/${serverId}/files/download?username=${encodeURIComponent(username)}&path=${encodeURIComponent(path)}`);
+  window.open(`/api/servers/${serverId}/files/download?path=${encodeURIComponent(path)}`);
 }
 
 async function uploadFile(serverId) {
@@ -741,10 +742,10 @@ async function uploadFile(serverId) {
     const indicator = showUploadIndicator(file.name);
     
     try {
-      const res = await fetch(`/api/servers/${serverId}/files/upload`, {
+      const res = await api(`/api/servers/${serverId}/files/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, path: currentPath })
+        
+        body: JSON.stringify({ path: currentPath })
       });
       
       const data = await res.json();

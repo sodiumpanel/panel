@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import { PERMISSIONS, PERMISSION_GROUPS } from '../../utils/permissions.js';
 import * as toast from '../../utils/toast.js';
 
@@ -67,7 +68,7 @@ async function loadSubusers() {
   const list = document.getElementById('subusers-list');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/subusers?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/servers/${currentServerId}/subusers`);
     const data = await res.json();
     
     if (data.error) {
@@ -219,10 +220,10 @@ async function saveSubuser(editId) {
   
   try {
     if (editId) {
-      const res = await fetch(`/api/servers/${currentServerId}/subusers/${editId}`, {
+      const res = await api(`/api/servers/${currentServerId}/subusers/${editId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, permissions })
+        
+        body: JSON.stringify({ permissions })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -230,10 +231,10 @@ async function saveSubuser(editId) {
       const targetUsername = document.getElementById('subuser-username').value.trim();
       if (!targetUsername) throw new Error('Username required');
       
-      const res = await fetch(`/api/servers/${currentServerId}/subusers`, {
+      const res = await api(`/api/servers/${currentServerId}/subusers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, target_username: targetUsername, permissions })
+        
+        body: JSON.stringify({ target_username: targetUsername, permissions })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -256,10 +257,10 @@ async function deleteSubuser(id) {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/subusers/${id}`, {
+    const res = await api(`/api/servers/${currentServerId}/subusers/${id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      
+      body: JSON.stringify({})
     });
     
     if (res.ok) {

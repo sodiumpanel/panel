@@ -3,6 +3,7 @@ import { loadUsers, loadServers, saveServers, loadNodes, loadEggs, loadNests, lo
 import { wingsRequest, sanitizeText, generateUUID, validateVariableValue } from '../utils/helpers.js';
 import { getNodeAvailableResources } from '../utils/node-resources.js';
 import { hasPermission } from '../utils/permissions.js';
+import { authenticateUser } from '../utils/auth.js';
 
 const router = express.Router();
 
@@ -16,8 +17,8 @@ router.get('/nests', (req, res) => {
   res.json(nests);
 });
 
-// Helper privado para este router
-async function getServerAndNode(serverId, username, requiredPermission = null) {
+// Helper privado para este router - ahora recibe el user del middleware
+async function getServerAndNode(serverId, user, requiredPermission = null) {
   const data = loadServers();
   const server = data.servers.find(s => s.id === serverId);
   if (!server) return { error: 'Server not found', status: 404 };
@@ -26,8 +27,6 @@ async function getServerAndNode(serverId, username, requiredPermission = null) {
     return { error: 'Server is suspended', status: 403 };
   }
   
-  const users = loadUsers();
-  const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
   if (!user) return { error: 'User not found', status: 404 };
   
   const nodes = loadNodes();
@@ -53,20 +52,18 @@ async function getServerAndNode(serverId, username, requiredPermission = null) {
 }
 
 // Lista de servidores del usuario
-router.get('/', (req, res) => {
-  const { username } = req.query;
-  if (!username) return res.status(400).json({ error: 'Username required' });
-  
+router.get('/', authenticateUser, (req, res) => {
+  const user = req.user;
   const users = loadUsers();
-  const user = users.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-  if (!user) return res.status(404).json({ error: 'User not found' });
+  const fullUser = users.users.find(u => u.id === user.id);
+  if (!fullUser) return res.status(404).json({ error: 'User not found' });
   
   const data = loadServers();
   const nodes = loadNodes();
   
   // Servers owned by user
   const ownedServers = data.servers
-    .filter(s => s.user_id === user.id)
+    .filter(s => s.user_id === fullUser.id)
     .map(server => {
       const node = nodes.nodes.find(n => n.id === server.node_id);
       const primary = (server.allocations || []).find(a => a.primary) || server.allocation;
@@ -80,11 +77,11 @@ router.get('/', (req, res) => {
   
   // Servers where user is subuser
   const subuserServers = data.servers
-    .filter(s => (s.subusers || []).some(sub => sub.user_id === user.id))
+    .filter(s => (s.subusers || []).some(sub => sub.user_id === fullUser.id))
     .map(server => {
       const node = nodes.nodes.find(n => n.id === server.node_id);
       const primary = (server.allocations || []).find(a => a.primary) || server.allocation;
-      const subuser = server.subusers.find(s => s.user_id === user.id);
+      const subuser = server.subusers.find(s => s.user_id === fullUser.id);
       return {
         ...server,
         node_address: node && primary ? `${node.fqdn}:${primary.port}` : null,
@@ -98,14 +95,13 @@ router.get('/', (req, res) => {
 });
 
 // Crear Servidor (Usuario)
-router.post('/', async (req, res) => {
-  const { username, name, egg_id, memory, disk, cpu } = req.body;
+router.post('/', authenticateUser, async (req, res) => {
+  const { name, egg_id, memory, disk, cpu } = req.body;
   
-  if (!username) return res.status(400).json({ error: 'Username required' });
   if (!name) return res.status(400).json({ error: 'Server name required' });
   
   const users = loadUsers();
-  const user = users.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  const user = users.users.find(u => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
   const userLimits = user.limits || { servers: 2, memory: 2048, disk: 10240, cpu: 200 };
@@ -317,16 +313,13 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  const { username } = req.query;
+router.get('/:id', authenticateUser, async (req, res) => {
+  const user = req.user;
   const data = loadServers();
   const server = data.servers.find(s => s.id === req.params.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  const users = loadUsers();
-  const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
-  
-  if (!user || (server.user_id !== user.id && !user.isAdmin)) {
+  if (server.user_id !== user.id && !user.isAdmin) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   
@@ -342,12 +335,12 @@ router.get('/:id', async (req, res) => {
   res.json({ server: serverWithNode });
 });
 
-router.post('/:id/power', async (req, res) => {
-  const { username, action } = req.body;
+router.post('/:id/power', authenticateUser, async (req, res) => {
+  const { action } = req.body; const user = req.user;
   if (!['start', 'stop', 'restart', 'kill'].includes(action)) {
     return res.status(400).json({ error: 'Invalid action' });
   }
-  const result = await getServerAndNode(req.params.id, username);
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -358,9 +351,9 @@ router.post('/:id/power', async (req, res) => {
   }
 });
 
-router.post('/:id/command', async (req, res) => {
-  const { username, command } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/command', authenticateUser, async (req, res) => {
+  const { command } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -371,9 +364,9 @@ router.post('/:id/command', async (req, res) => {
   }
 });
 
-router.get('/:id/websocket', async (req, res) => {
-  const { username } = req.query;
-  const result = await getServerAndNode(req.params.id, username);
+router.get('/:id/websocket', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
@@ -389,9 +382,9 @@ router.get('/:id/websocket', async (req, res) => {
 });
 
 // Detalles y Settings del Server
-router.put('/:id/details', async (req, res) => {
-  const { username, name, description } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.put('/:id/details', authenticateUser, async (req, res) => {
+  const { name, description } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
@@ -435,9 +428,9 @@ router.put('/:id/details', async (req, res) => {
   res.json({ success: true, server: data.servers[serverIndex] });
 });
 
-router.post('/:id/reinstall', async (req, res) => {
-  const { username } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/reinstall', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
@@ -457,9 +450,9 @@ router.post('/:id/reinstall', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
-  const { username } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.delete('/:id', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -474,9 +467,9 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Startup
-router.get('/:id/startup', async (req, res) => {
-  const { username } = req.query;
-  const result = await getServerAndNode(req.params.id, username);
+router.get('/:id/startup', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server } = result;
   const eggs = loadEggs();
@@ -496,9 +489,9 @@ router.get('/:id/startup', async (req, res) => {
   });
 });
 
-router.put('/:id/startup', async (req, res) => {
-  const { username, startup, docker_image, environment } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.put('/:id/startup', authenticateUser, async (req, res) => {
+  const { startup, docker_image, environment } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
@@ -562,9 +555,9 @@ router.put('/:id/startup', async (req, res) => {
 });
 
 // Files
-router.get('/:id/files/list', async (req, res) => {
-  const { username, path } = req.query;
-  const result = await getServerAndNode(req.params.id, username);
+router.get('/:id/files/list', authenticateUser, async (req, res) => {
+  const { path } = req.query; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -575,9 +568,9 @@ router.get('/:id/files/list', async (req, res) => {
   }
 });
 
-router.post('/:id/files/folder', async (req, res) => {
-  const { username, path } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/folder', authenticateUser, async (req, res) => {
+  const { path } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -588,9 +581,9 @@ router.post('/:id/files/folder', async (req, res) => {
   }
 });
 
-router.post('/:id/files/write', async (req, res) => {
-  const { username, path, content } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/write', authenticateUser, async (req, res) => {
+  const { path, content } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -601,9 +594,9 @@ router.post('/:id/files/write', async (req, res) => {
   }
 });
 
-router.post('/:id/files/delete', async (req, res) => {
-  const { username, path, root, files } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/delete', authenticateUser, async (req, res) => {
+  const { path, root, files } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -625,9 +618,9 @@ router.post('/:id/files/delete', async (req, res) => {
   }
 });
 
-router.post('/:id/files/rename', async (req, res) => {
-  const { username, from, to, root, files } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/rename', authenticateUser, async (req, res) => {
+  const { from, to, root, files } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -649,9 +642,9 @@ router.post('/:id/files/rename', async (req, res) => {
   }
 });
 
-router.post('/:id/files/compress', async (req, res) => {
-  const { username, root, files } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/compress', authenticateUser, async (req, res) => {
+  const { root, files } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -665,9 +658,9 @@ router.post('/:id/files/compress', async (req, res) => {
   }
 });
 
-router.get('/:id/files/contents', async (req, res) => {
-  const { username, path } = req.query;
-  const result = await getServerAndNode(req.params.id, username);
+router.get('/:id/files/contents', authenticateUser, async (req, res) => {
+  const { path } = req.query; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -686,9 +679,9 @@ router.get('/:id/files/contents', async (req, res) => {
   }
 });
 
-router.get('/:id/files/download', async (req, res) => {
-  const { username, path } = req.query;
-  const result = await getServerAndNode(req.params.id, username);
+router.get('/:id/files/download', authenticateUser, async (req, res) => {
+  const { path } = req.query; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -709,9 +702,9 @@ router.get('/:id/files/download', async (req, res) => {
   }
 });
 
-router.post('/:id/files/upload', async (req, res) => {
-  const { username, path } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/upload', authenticateUser, async (req, res) => {
+  const { path } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node, user } = result;
   
@@ -733,9 +726,9 @@ router.post('/:id/files/upload', async (req, res) => {
   }
 });
 
-router.post('/:id/files/decompress', async (req, res) => {
-  const { username, root, file, extractTo } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/files/decompress', authenticateUser, async (req, res) => {
+  const { root, file, extractTo } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   try {
@@ -785,17 +778,17 @@ async function syncAllocationsWithWings(node, server) {
   });
 }
 
-router.get('/:id/allocations', async (req, res) => {
-  const { username } = req.query;
-  const result = await getServerAndNode(req.params.id, username);
+router.get('/:id/allocations', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server } = result;
   res.json({ allocations: server.allocations || [] });
 });
 
-router.post('/:id/allocations', async (req, res) => {
-  const { username } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.post('/:id/allocations', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node, user } = result;
   
@@ -852,9 +845,9 @@ router.post('/:id/allocations', async (req, res) => {
   res.json({ success: true, allocation: newAllocation });
 });
 
-router.put('/:id/allocations/:allocId/primary', async (req, res) => {
-  const { username } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.put('/:id/allocations/:allocId/primary', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
@@ -884,9 +877,9 @@ router.put('/:id/allocations/:allocId/primary', async (req, res) => {
   res.json({ success: true });
 });
 
-router.delete('/:id/allocations/:allocId', async (req, res) => {
-  const { username } = req.body;
-  const result = await getServerAndNode(req.params.id, username);
+router.delete('/:id/allocations/:allocId', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
@@ -917,9 +910,9 @@ router.delete('/:id/allocations/:allocId', async (req, res) => {
 // ==================== SUBUSERS ====================
 
 // GET /:id/subusers - List subusers
-router.get('/:id/subusers', async (req, res) => {
-  const { username } = req.query;
-  const result = await getServerAndNode(req.params.id, username, 'user.read');
+router.get('/:id/subusers', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user, 'user.read');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
   const { server, isOwner } = result;
@@ -944,9 +937,9 @@ router.get('/:id/subusers', async (req, res) => {
 });
 
 // POST /:id/subusers - Create subuser
-router.post('/:id/subusers', async (req, res) => {
-  const { username, target_username, permissions } = req.body;
-  const result = await getServerAndNode(req.params.id, username, 'user.create');
+router.post('/:id/subusers', authenticateUser, async (req, res) => {
+  const { target_username, permissions } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user, 'user.create');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
   const { server } = result;
@@ -1004,9 +997,9 @@ router.post('/:id/subusers', async (req, res) => {
 });
 
 // PUT /:id/subusers/:subId - Update permissions
-router.put('/:id/subusers/:subId', async (req, res) => {
-  const { username, permissions } = req.body;
-  const result = await getServerAndNode(req.params.id, username, 'user.update');
+router.put('/:id/subusers/:subId', authenticateUser, async (req, res) => {
+  const { permissions } = req.body; const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user, 'user.update');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
   const data = loadServers();
@@ -1023,9 +1016,9 @@ router.put('/:id/subusers/:subId', async (req, res) => {
 });
 
 // DELETE /:id/subusers/:subId - Delete subuser
-router.delete('/:id/subusers/:subId', async (req, res) => {
-  const { username } = req.body;
-  const result = await getServerAndNode(req.params.id, username, 'user.delete');
+router.delete('/:id/subusers/:subId', authenticateUser, async (req, res) => {
+  const user = req.user;
+  const result = await getServerAndNode(req.params.id, req.user, 'user.delete');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
   const data = loadServers();
@@ -1041,12 +1034,10 @@ router.delete('/:id/subusers/:subId', async (req, res) => {
 // ==================== SUSPEND ====================
 
 // POST /:id/suspend - Suspend server
-router.post('/:id/suspend', async (req, res) => {
-  const { username } = req.body;
-  const users = loadUsers();
-  const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
+router.post('/:id/suspend', authenticateUser, async (req, res) => {
+  const user = req.user;
   
-  if (!user?.isAdmin) {
+  if (!user.isAdmin) {
     return res.status(403).json({ error: 'Admin only' });
   }
   
@@ -1072,12 +1063,10 @@ router.post('/:id/suspend', async (req, res) => {
 });
 
 // POST /:id/unsuspend - Unsuspend server
-router.post('/:id/unsuspend', async (req, res) => {
-  const { username } = req.body;
-  const users = loadUsers();
-  const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
+router.post('/:id/unsuspend', authenticateUser, async (req, res) => {
+  const user = req.user;
   
-  if (!user?.isAdmin) {
+  if (!user.isAdmin) {
     return res.status(403).json({ error: 'Admin only' });
   }
   

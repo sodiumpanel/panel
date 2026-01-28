@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import * as toast from '../../utils/toast.js';
 
 let currentServerId = null;
@@ -184,8 +185,8 @@ async function loadStartupData(serverId) {
   
   try {
     const [serverRes, startupRes] = await Promise.all([
-      fetch(`/api/servers/${serverId}?username=${encodeURIComponent(username)}`),
-      fetch(`/api/servers/${serverId}/startup?username=${encodeURIComponent(username)}`)
+      api(`/api/servers/${serverId}`),
+      api(`/api/servers/${serverId}/startup`)
     ]);
     
     const serverJson = await serverRes.json();
@@ -402,9 +403,9 @@ async function saveStartup() {
   saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/startup`, {
+    const res = await api(`/api/servers/${currentServerId}/startup`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      
       body: JSON.stringify({
         username,
         startup,

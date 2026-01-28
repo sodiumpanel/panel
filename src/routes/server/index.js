@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import { renderConsoleTab, initConsoleTab, cleanupConsoleTab, setConsoleCallbacks } from './console.js';
 import { renderFilesTab, initFilesTab, cleanupFilesTab } from './files.js';
 import { renderStartupTab, initStartupTab, cleanupStartupTab } from './startup.js';
@@ -266,7 +267,7 @@ async function loadServerDetails(serverId) {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${serverId}?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/servers/${serverId}`);
     const data = await res.json();
     
     if (data.error) {
@@ -329,7 +330,7 @@ async function checkInstallStatus() {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/servers/${currentServerId}`);
     const data = await res.json();
     
     if (data.server && data.server.status !== 'installing') {
@@ -357,10 +358,10 @@ async function powerAction(serverId, action) {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${serverId}/power`, {
+    const res = await api(`/api/servers/${serverId}/power`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, action })
+      
+      body: JSON.stringify({ action })
     });
     
     if (!res.ok) {

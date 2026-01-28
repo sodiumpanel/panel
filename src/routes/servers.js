@@ -1,5 +1,6 @@
 import { escapeHtml } from '../utils/security.js';
 import * as toast from '../utils/toast.js';
+import { api } from '../utils/api.js';
 
 let pollInterval = null;
 
@@ -90,12 +91,11 @@ async function loadLimits() {
 }
 
 async function loadServers() {
-  const username = localStorage.getItem('username');
   const container = document.getElementById('servers-list');
   if (!container) return;
   
   try {
-    const res = await fetch(`/api/servers?username=${encodeURIComponent(username)}`);
+    const res = await api('/api/servers');
     const data = await res.json();
     
     if (data.servers.length === 0) {
@@ -158,12 +158,10 @@ async function loadServers() {
 }
 
 window.serverPower = async function(serverId, action) {
-  const username = localStorage.getItem('username');
   try {
-    await fetch(`/api/servers/${serverId}/power`, {
+    await api(`/api/servers/${serverId}/power`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, action })
+      body: JSON.stringify({ action })
     });
     loadServers();
   } catch (e) {
@@ -270,11 +268,9 @@ async function showCreateServerModal() {
       errorEl.style.display = 'none';
       
       try {
-        const res = await fetch('/api/servers', {
+        const res = await api('/api/servers', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username,
             name: form.get('name'),
             egg_id: form.get('egg_id'),
             memory: parseInt(form.get('memory')),

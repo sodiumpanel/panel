@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import * as toast from '../../utils/toast.js';
 
 let currentServerId = null;
@@ -63,7 +64,7 @@ async function loadServerDetails(serverId) {
   const content = document.getElementById('settings-details');
   
   try {
-    const res = await fetch(`/api/servers/${serverId}?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/servers/${serverId}`);
     const data = await res.json();
     
     if (data.error) {
@@ -145,10 +146,10 @@ async function saveDetails() {
   saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/details`, {
+    const res = await api(`/api/servers/${currentServerId}/details`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, name, description })
+      
+      body: JSON.stringify({ name, description })
     });
     
     const data = await res.json();
@@ -235,10 +236,10 @@ async function reinstallServer() {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/reinstall`, {
+    const res = await api(`/api/servers/${currentServerId}/reinstall`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      
+      body: JSON.stringify({})
     });
     
     const data = await res.json();
@@ -311,10 +312,10 @@ async function deleteServer() {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}`, {
+    const res = await api(`/api/servers/${currentServerId}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      
+      body: JSON.stringify({})
     });
     
     const data = await res.json();

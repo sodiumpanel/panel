@@ -1,3 +1,4 @@
+import { api } from '../../utils/api.js';
 import * as toast from '../../utils/toast.js';
 
 let currentServerId = null;
@@ -32,7 +33,7 @@ async function loadAllocations() {
   const list = document.getElementById('allocations-list');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/allocations?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/servers/${currentServerId}/allocations`);
     const data = await res.json();
     
     if (data.error) {
@@ -96,10 +97,10 @@ async function addAllocation() {
   btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/allocations`, {
+    const res = await api(`/api/servers/${currentServerId}/allocations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      
+      body: JSON.stringify({})
     });
     
     const data = await res.json();
@@ -122,10 +123,10 @@ async function setAllocationPrimary(allocId) {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/allocations/${allocId}/primary`, {
+    const res = await api(`/api/servers/${currentServerId}/allocations/${allocId}/primary`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      
+      body: JSON.stringify({})
     });
     
     if (res.ok) {
@@ -146,10 +147,10 @@ async function deleteAllocation(allocId) {
   const username = localStorage.getItem('username');
   
   try {
-    const res = await fetch(`/api/servers/${currentServerId}/allocations/${allocId}`, {
+    const res = await api(`/api/servers/${currentServerId}/allocations/${allocId}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      
+      body: JSON.stringify({})
     });
     
     if (res.ok) {
