@@ -286,8 +286,6 @@ export function cleanupConsoleTab() {
     resizeTimeout = null;
   }
   
-  lastDimensions = { cols: 0, rows: 0 };
-  
   if (resizeObserver) {
     resizeObserver.disconnect();
     resizeObserver = null;
