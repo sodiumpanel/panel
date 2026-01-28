@@ -1,14 +1,14 @@
 @import 'themes';
 
 :root {
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --sidebar-width: 260px;
-  --navbar-height: 64px;
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --sidebar-width: 240px;
+  --navbar-height: 56px;
+  --transition-fast: 0.12s ease-out;
+  --transition-normal: 0.2s ease-out;
 }
 
 * {
@@ -19,9 +19,9 @@
 
 html, body {
   height: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
+  font-family: 'Geist Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text-primary);
   background: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
@@ -88,12 +88,8 @@ input, textarea, select {
   to { transform: rotate(360deg); }
 }
 
-@keyframes spinning {
-  to { transform: rotate(360deg); }
-}
-
 .spinning {
-  animation: spinning 0.8s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 .loading-spinner {
@@ -404,7 +400,6 @@ input, textarea, select {
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    border-radius: var(--radius-md);
     color: var(--text-secondary);
     transition: all var(--transition-fast);
     
@@ -417,12 +412,10 @@ input, textarea, select {
     }
     
     &:hover {
-      background: var(--bg-tertiary);
       color: var(--text-primary);
     }
     
     &.active {
-      background: var(--accent-muted);
       color: var(--accent);
       
       .material-icons-outlined {

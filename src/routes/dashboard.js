@@ -1,9 +1,13 @@
+import { api } from '../utils/api.js';
+import { escapeHtml } from '../utils/security.js';
+
+let pollInterval = null;
+
 export function renderDashboard() {
   const app = document.getElementById('app');
   app.className = 'dashboard-page';
   
   const displayName = localStorage.getItem('displayName') || localStorage.getItem('username');
-  const username = localStorage.getItem('username');
   
   const hour = new Date().getHours();
   let greeting = 'Good evening';
@@ -14,95 +18,137 @@ export function renderDashboard() {
     <div class="dashboard-container">
       <header class="dashboard-header">
         <div class="greeting">
-          <h1>${greeting}, <span class="highlight">${displayName}</span></h1>
+          <h1>${greeting}, <span class="highlight">${escapeHtml(displayName)}</span></h1>
           <p>Welcome to your dashboard</p>
         </div>
       </header>
       
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <span class="material-icons-outlined">person</span>
+      <div class="dashboard-grid">
+        <div class="dashboard-section resources-section">
+          <div class="section-header">
+            <span class="material-icons-outlined">analytics</span>
+            <h2>Resource Usage</h2>
           </div>
-          <div class="stat-content">
-            <span class="stat-value">@${username}</span>
-            <span class="stat-label">Your Username</span>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">
-            <span class="material-icons-outlined">calendar_today</span>
-          </div>
-          <div class="stat-content">
-            <span class="stat-value">${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            <span class="stat-label">Today's Date</span>
+          <div class="limits-grid" id="limits-display">
+            <div class="loading-spinner"></div>
           </div>
         </div>
         
-        <div class="stat-card">
-          <div class="stat-icon">
-            <span class="material-icons-outlined">schedule</span>
+        <div class="dashboard-section servers-section">
+          <div class="section-header">
+            <span class="material-icons-outlined">dns</span>
+            <h2>Servers</h2>
+            <a href="/servers" class="btn btn-ghost btn-sm">View All</a>
           </div>
-          <div class="stat-content">
-            <span class="stat-value" id="current-time">${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-            <span class="stat-label">Current Time</span>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">
-            <span class="material-icons-outlined">verified</span>
-          </div>
-          <div class="stat-content">
-            <span class="stat-value">Active</span>
-            <span class="stat-label">Account Status</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="quick-actions">
-        <h2>Quick Actions</h2>
-        <div class="actions-grid">
-          <a href="/profile" class="action-card">
-            <span class="material-icons-outlined">edit</span>
-            <span>Edit Profile</span>
-          </a>
-          <a href="/settings" class="action-card">
-            <span class="material-icons-outlined">settings</span>
-            <span>Settings</span>
-          </a>
-        </div>
-      </div>
-      
-      <div class="activity-section">
-        <h2>Recent Activity</h2>
-        <div class="activity-list">
-          <div class="activity-item">
-            <span class="material-icons-outlined">login</span>
-            <div class="activity-content">
-              <span class="activity-title">Signed in successfully</span>
-              <span class="activity-time">Just now</span>
-            </div>
-          </div>
-          <div class="activity-item">
-            <span class="material-icons-outlined">check_circle</span>
-            <div class="activity-content">
-              <span class="activity-title">Account created</span>
-              <span class="activity-time">Recently</span>
-            </div>
+          <div class="servers-list" id="servers-list">
+            <div class="loading-spinner"></div>
           </div>
         </div>
       </div>
     </div>
   `;
   
-  const timeEl = app.querySelector('#current-time');
-  const interval = setInterval(() => {
-    if (!document.getElementById('current-time')) {
-      clearInterval(interval);
+  loadLimits();
+  loadServers();
+  
+  pollInterval = setInterval(() => {
+    loadServers();
+    loadLimits();
+  }, 10000);
+}
+
+async function loadLimits() {
+  const username = localStorage.getItem('username');
+  const container = document.getElementById('limits-display');
+  if (!container) return;
+  
+  try {
+    const res = await fetch(`/api/user/limits?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+    
+    const calcPercent = (used, limit) => limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+    
+    container.innerHTML = `
+      <div class="limit-item">
+        <div class="limit-header">
+          <span class="label">Servers</span>
+          <span class="value">${data.used.servers} / ${data.limits.servers}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress" style="width: ${calcPercent(data.used.servers, data.limits.servers)}%"></div>
+        </div>
+      </div>
+      <div class="limit-item">
+        <div class="limit-header">
+          <span class="label">Memory</span>
+          <span class="value">${data.used.memory} / ${data.limits.memory} MB</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress" style="width: ${calcPercent(data.used.memory, data.limits.memory)}%"></div>
+        </div>
+      </div>
+      <div class="limit-item">
+        <div class="limit-header">
+          <span class="label">Disk</span>
+          <span class="value">${data.used.disk} / ${data.limits.disk} MB</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress" style="width: ${calcPercent(data.used.disk, data.limits.disk)}%"></div>
+        </div>
+      </div>
+      <div class="limit-item">
+        <div class="limit-header">
+          <span class="label">CPU</span>
+          <span class="value">${data.used.cpu} / ${data.limits.cpu}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress" style="width: ${calcPercent(data.used.cpu, data.limits.cpu)}%"></div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="error-state">Failed to load resources</div>`;
+  }
+}
+
+async function loadServers() {
+  const container = document.getElementById('servers-list');
+  if (!container) return;
+  
+  try {
+    const res = await api('/api/servers');
+    const data = await res.json();
+    
+    if (data.servers.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="material-icons-outlined">dns</span>
+          <p>No servers yet</p>
+        </div>
+      `;
       return;
     }
-    timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  }, 1000);
+    
+    container.innerHTML = data.servers.map(server => `
+      <a href="/server/${server.id}" class="server-item">
+        <div class="server-info">
+          <span class="server-name">${escapeHtml(server.name)}</span>
+          <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
+        </div>
+        <div class="server-meta">
+          <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
+          <span class="material-icons-outlined">chevron_right</span>
+        </div>
+      </a>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = `<div class="error-state">Failed to load servers</div>`;
+  }
+}
+
+export function cleanupDashboard() {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
 }

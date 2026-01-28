@@ -1,4 +1,4 @@
-const THEMES = ['dark', 'light', 'amoled', 'midnight', 'nord', 'catppuccin'];
+const THEMES = ['dark', 'light', 'amoled', 'ocean', 'rose'];
 const STORAGE_KEY = 'sodium-theme';
 
 export function getTheme() {
@@ -18,12 +18,11 @@ export function applyTheme(theme) {
 
 export function getAvailableThemes() {
   return [
-    { id: 'dark', name: 'Dark', description: 'Default dark theme' },
-    { id: 'light', name: 'Light', description: 'Clean light theme' },
-    { id: 'amoled', name: 'AMOLED', description: 'Pure black for OLED screens' },
-    { id: 'midnight', name: 'Midnight', description: 'Deep purple dark theme' },
-    { id: 'nord', name: 'Nord', description: 'Arctic bluish theme' },
-    { id: 'catppuccin', name: 'Catppuccin', description: 'Soothing pastel theme' }
+    { id: 'dark', name: 'Dark' },
+    { id: 'light', name: 'Light' },
+    { id: 'amoled', name: 'AMOLED' },
+    { id: 'ocean', name: 'Ocean' },
+    { id: 'rose', name: 'Rose' }
   ];
 }
 
