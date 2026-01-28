@@ -1517,7 +1517,7 @@ async function renderCreateServer() {
   try {
     const [nestsRes, limitsRes] = await Promise.all([
       api('/api/servers/nests'),
-      api('/api/user/limits')
+      api(`/api/user/limits?username=${encodeURIComponent(user.username)}`)
     ]);
     
     nestsData = await nestsRes.json();
