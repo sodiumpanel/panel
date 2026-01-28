@@ -336,7 +336,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/power', authenticateUser, async (req, res) => {
-  const { action } = req.body; const user = req.user;
+  const { action } = req.body;
   if (!['start', 'stop', 'restart', 'kill'].includes(action)) {
     return res.status(400).json({ error: 'Invalid action' });
   }
@@ -352,7 +352,7 @@ router.post('/:id/power', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/command', authenticateUser, async (req, res) => {
-  const { command } = req.body; const user = req.user;
+  const { command } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -383,7 +383,7 @@ router.get('/:id/websocket', authenticateUser, async (req, res) => {
 
 // Detalles y Settings del Server
 router.put('/:id/details', authenticateUser, async (req, res) => {
-  const { name, description } = req.body; const user = req.user;
+  const { name, description } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -490,7 +490,7 @@ router.get('/:id/startup', authenticateUser, async (req, res) => {
 });
 
 router.put('/:id/startup', authenticateUser, async (req, res) => {
-  const { startup, docker_image, environment } = req.body; const user = req.user;
+  const { startup, docker_image, environment } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -556,7 +556,7 @@ router.put('/:id/startup', authenticateUser, async (req, res) => {
 
 // Files
 router.get('/:id/files/list', authenticateUser, async (req, res) => {
-  const { path } = req.query; const user = req.user;
+  const { path } = req.query;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -569,7 +569,7 @@ router.get('/:id/files/list', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/folder', authenticateUser, async (req, res) => {
-  const { path } = req.body; const user = req.user;
+  const { path } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -582,7 +582,7 @@ router.post('/:id/files/folder', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/write', authenticateUser, async (req, res) => {
-  const { path, content } = req.body; const user = req.user;
+  const { path, content } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -595,7 +595,7 @@ router.post('/:id/files/write', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/delete', authenticateUser, async (req, res) => {
-  const { path, root, files } = req.body; const user = req.user;
+  const { path, root, files } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -619,7 +619,7 @@ router.post('/:id/files/delete', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/rename', authenticateUser, async (req, res) => {
-  const { from, to, root, files } = req.body; const user = req.user;
+  const { from, to, root, files } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -643,7 +643,7 @@ router.post('/:id/files/rename', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/compress', authenticateUser, async (req, res) => {
-  const { root, files } = req.body; const user = req.user;
+  const { root, files } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -659,7 +659,7 @@ router.post('/:id/files/compress', authenticateUser, async (req, res) => {
 });
 
 router.get('/:id/files/contents', authenticateUser, async (req, res) => {
-  const { path } = req.query; const user = req.user;
+  const { path } = req.query;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -680,7 +680,7 @@ router.get('/:id/files/contents', authenticateUser, async (req, res) => {
 });
 
 router.get('/:id/files/download', authenticateUser, async (req, res) => {
-  const { path } = req.query; const user = req.user;
+  const { path } = req.query;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -703,7 +703,7 @@ router.get('/:id/files/download', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/upload', authenticateUser, async (req, res) => {
-  const { path } = req.body; const user = req.user;
+  const { path } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node, user } = result;
@@ -727,7 +727,7 @@ router.post('/:id/files/upload', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/files/decompress', authenticateUser, async (req, res) => {
-  const { root, file, extractTo } = req.body; const user = req.user;
+  const { root, file, extractTo } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -938,7 +938,7 @@ router.get('/:id/subusers', authenticateUser, async (req, res) => {
 
 // POST /:id/subusers - Create subuser
 router.post('/:id/subusers', authenticateUser, async (req, res) => {
-  const { target_username, permissions } = req.body; const user = req.user;
+  const { target_username, permissions } = req.body;
   const result = await getServerAndNode(req.params.id, req.user, 'user.create');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
@@ -998,7 +998,7 @@ router.post('/:id/subusers', authenticateUser, async (req, res) => {
 
 // PUT /:id/subusers/:subId - Update permissions
 router.put('/:id/subusers/:subId', authenticateUser, async (req, res) => {
-  const { permissions } = req.body; const user = req.user;
+  const { permissions } = req.body;
   const result = await getServerAndNode(req.params.id, req.user, 'user.update');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
