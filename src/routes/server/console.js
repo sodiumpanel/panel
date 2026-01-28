@@ -105,18 +105,31 @@ function initTerminal() {
 }
 
 function safeFit() {
-  if (!fitAddon || !terminal) return;
+  if (!terminal) return;
   
   const container = document.getElementById('console-terminal');
   if (!container) return;
   
-  container.style.visibility = 'hidden';
-  fitAddon.fit();
-  container.style.visibility = 'visible';
+  const core = terminal._core;
+  if (!core || !core._renderService) return;
+  
+  const dims = core._renderService.dimensions;
+  if (!dims || !dims.css || dims.css.cell.width <= 0 || dims.css.cell.height <= 0) return;
+  
+  const parentStyle = window.getComputedStyle(container);
+  const parentWidth = container.clientWidth - parseFloat(parentStyle.paddingLeft) - parseFloat(parentStyle.paddingRight);
+  const parentHeight = container.clientHeight - parseFloat(parentStyle.paddingTop) - parseFloat(parentStyle.paddingBottom);
+  
+  const cols = Math.max(2, Math.floor(parentWidth / dims.css.cell.width));
+  const rows = Math.max(1, Math.floor(parentHeight / dims.css.cell.height));
+  
+  if (cols !== terminal.cols || rows !== terminal.rows) {
+    terminal.resize(cols, rows);
+  }
 }
 
 function debouncedFit() {
-  requestAnimationFrame(safeFit);
+  safeFit();
 }
 
 async function connectWebSocket(serverId) {
