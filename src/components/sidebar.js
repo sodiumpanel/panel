@@ -1,3 +1,5 @@
+import { getUser } from '../utils/api.js';
+
 export function renderSidebar() {
   const sidebar = document.createElement('aside');
   sidebar.id = 'sidebar';
@@ -59,16 +61,12 @@ export function renderSidebar() {
 }
 
 async function checkAdminStatus(sidebar, currentPath) {
-  const username = localStorage.getItem('username');
-  const password = localStorage.getItem('password');
+  const user = getUser();
   
-  if (!username || !password) return;
+  if (!user) return;
   
   try {
-    const res = await fetch(`/api/auth/me?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
-    const data = await res.json();
-    
-    if (data.user?.isAdmin) {
+    if (user.isAdmin) {
       const navList = sidebar.querySelector('#nav-list');
       const settingsItem = navList.querySelector('a[href="/settings"]')?.closest('.nav-item');
       
