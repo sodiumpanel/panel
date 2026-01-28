@@ -1,11 +1,16 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { loadUsers, saveUsers, loadConfig } from '../db.js';
-import { validateUsername, sanitizeText } from '../utils/helpers.js';
+import { validateUsername, sanitizeText, generateUUID } from '../utils/helpers.js';
+import { JWT_SECRET } from '../utils/auth.js';
+import { rateLimit } from '../utils/rate-limiter.js';
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
+const authLimiter = rateLimit({ windowMs: 60000, max: 5, message: 'Too many attempts, try again later' });
+
+router.post('/register', authLimiter, async (req, res) => {
   const { username, password } = req.body;
   
   const config = loadConfig();
@@ -36,7 +41,7 @@ router.post('/register', async (req, res) => {
   const defaults = config.defaults || {};
   const isFirstUser = data.users.length === 0;
   const newUser = {
-    id: Date.now().toString(),
+    id: generateUUID(),
     username: sanitizeText(username),
     password: hashedPassword,
     displayName: sanitizeText(username),
@@ -62,10 +67,15 @@ router.post('/register', async (req, res) => {
   saveUsers(data);
   
   const { password: _, ...userWithoutPassword } = newUser;
-  res.json({ success: true, user: userWithoutPassword });
+  const token = jwt.sign(
+    { id: newUser.id, username: newUser.username, isAdmin: newUser.isAdmin },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+  res.json({ success: true, user: userWithoutPassword, token });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
@@ -86,7 +96,12 @@ router.post('/login', async (req, res) => {
   }
   
   const { password: _, ...userWithoutPassword } = user;
-  res.json({ success: true, user: userWithoutPassword });
+  const token = jwt.sign(
+    { id: user.id, username: user.username, isAdmin: user.isAdmin },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+  res.json({ success: true, user: userWithoutPassword, token });
 });
 
 router.get('/me', async (req, res) => {

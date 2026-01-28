@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import logger from './utils/logger.js';
 
 // Rutas
 import authRoutes from './routes/auth.js';
@@ -57,10 +58,5 @@ app.get(/.*/, (req, res) => {
 setupWebSocket(server);
 
 server.listen(PORT, () => {
-  console.log(`\x1b[36m┌──────────────────────────────────────────────\x1b[0m`);
-  console.log(`\x1b[36m│ \x1b[37mSodium Server\x1b[0m`);
-  console.log(`\x1b[36m├──────────────────────────────────────────────\x1b[0m`);
-  console.log(`\x1b[36m│ \x1b[37mRunning on port \x1b[1m${PORT}\x1b[0m`);
-  console.log(`\x1b[36m│ \x1b[37mhttp://localhost:${PORT}\x1b[0m`);
-  console.log(`\x1b[36m└──────────────────────────────────────────────\x1b[0m`);
+  logger.startup(PORT);
 });

@@ -1,4 +1,4 @@
-
+import { clearAuth } from '../utils/api.js';
 
 export function renderNav() {
   const nav = document.createElement('nav');
@@ -79,11 +79,7 @@ export function renderNav() {
     const logoutBtn = nav.querySelector('#nav-logout');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('loggedIn');
-        localStorage.removeItem('username');
-        localStorage.removeItem('password');
-        localStorage.removeItem('displayName');
-        localStorage.removeItem('userId');
+        clearAuth();
         window.router.navigateTo('/auth');
       });
     }

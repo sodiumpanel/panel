@@ -1,4 +1,5 @@
 import { getTheme, setTheme, getAvailableThemes } from '../utils/theme.js';
+import { clearAuth } from '../utils/api.js';
 
 export function renderSettings() {
   const app = document.getElementById('app');
@@ -159,11 +160,7 @@ export function renderSettings() {
   
   const logoutBtn = app.querySelector('#logout-btn');
   logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('loggedIn');
-    localStorage.removeItem('username');
-    localStorage.removeItem('password');
-    localStorage.removeItem('displayName');
-    localStorage.removeItem('userId');
+    clearAuth();
     window.router.navigateTo('/auth');
   });
   

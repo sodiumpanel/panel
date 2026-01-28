@@ -1,5 +1,6 @@
 import { escapeHtml } from '../utils/security.js';
 import * as toast from '../utils/toast.js';
+import { api, apiJson, getUser } from '../utils/api.js';
 
 let currentView = { type: 'list', tab: 'nodes', id: null, subTab: null };
 let currentPage = { nodes: 1, servers: 1, users: 1 };
@@ -146,16 +147,12 @@ window.adminNavigate = navigateTo;
 
 export async function renderAdmin() {
   const app = document.getElementById('app');
-  const username = localStorage.getItem('username');
-  const password = localStorage.getItem('password');
+  const user = getUser();
   
   app.innerHTML = '<div class="loading-spinner"></div>';
   
   try {
-    const res = await fetch(`/api/auth/me?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
-    const data = await res.json();
-    
-    if (!data.user?.isAdmin) {
+    if (!user?.isAdmin) {
       app.innerHTML = `
         <div class="error-page">
           <h1>403</h1>
@@ -277,7 +274,7 @@ async function loadView() {
 
 async function renderNodesList(container, username) {
   try {
-    const res = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}&page=${currentPage.nodes}&per_page=${itemsPerPage.nodes}`);
+    const res = await api(`/api/admin/nodes?page=${currentPage.nodes}&per_page=${itemsPerPage.nodes}`);
     const data = await res.json();
     
     container.innerHTML = `
@@ -356,7 +353,7 @@ async function renderNodesList(container, username) {
 
 async function renderNodeDetail(container, username, nodeId) {
   try {
-    const res = await fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/admin/nodes`);
     const data = await res.json();
     const node = data.nodes.find(n => n.id === nodeId);
     
@@ -406,10 +403,10 @@ async function renderNodeDetail(container, username, nodeId) {
     document.getElementById('delete-node-btn').onclick = async () => {
       if (!confirm('Are you sure you want to delete this node? This cannot be undone.')) return;
       try {
-        await fetch(`/api/admin/nodes/${nodeId}`, {
+        await api(`/api/admin/nodes/${nodeId}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
+          body: JSON.stringify({})
         });
         navigateTo('nodes');
       } catch (e) {
@@ -605,10 +602,10 @@ function renderNodeSubTab(node, locations, username) {
         nodeData.maintenance_mode = form.get('maintenance_mode') === 'on';
         
         try {
-          await fetch(`/api/admin/nodes/${node.id}`, {
+          await api(`/api/admin/nodes/${node.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, node: nodeData })
+            body: JSON.stringify({ node: nodeData })
           });
           toast.success('Node updated successfully');
           navigateTo('nodes', node.id, 'settings');
@@ -642,7 +639,7 @@ function renderNodeSubTab(node, locations, username) {
       document.getElementById('show-config-btn').onclick = async () => {
         const output = document.getElementById('config-output');
         try {
-          const res = await fetch(`/api/admin/nodes/${node.id}/config?username=${encodeURIComponent(username)}`);
+          const res = await api(`/api/admin/nodes/${node.id}/config`);
           const data = await res.json();
           if (data.error) {
             output.innerHTML = `<div class="error">${escapeHtml(data.error)}</div>`;
@@ -665,7 +662,7 @@ function renderNodeSubTab(node, locations, username) {
       document.getElementById('show-deploy-btn').onclick = async () => {
         const output = document.getElementById('config-output');
         try {
-          const res = await fetch(`/api/admin/nodes/${node.id}/deploy?username=${encodeURIComponent(username)}`);
+          const res = await api(`/api/admin/nodes/${node.id}/deploy`);
           const data = await res.json();
           if (data.error) {
             output.innerHTML = `<div class="error">${escapeHtml(data.error)}</div>`;
@@ -718,10 +715,10 @@ function renderNodeSubTab(node, locations, username) {
         };
         
         try {
-          await fetch(`/api/admin/nodes/${node.id}`, {
+          await api(`/api/admin/nodes/${node.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, node: nodeData })
+            body: JSON.stringify({ node: nodeData })
           });
           toast.success('Allocations updated');
         } catch (e) {
@@ -813,7 +810,7 @@ async function showCreateNodeModal(username) {
       await fetch('/api/admin/nodes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, node })
+        body: JSON.stringify({ node })
       });
       modal.remove();
       loadView();
@@ -827,7 +824,7 @@ async function showCreateNodeModal(username) {
 
 async function renderServersList(container, username) {
   try {
-    const res = await fetch(`/api/admin/servers?username=${encodeURIComponent(username)}&page=${currentPage.servers}&per_page=${itemsPerPage.servers}`);
+    const res = await api(`/api/admin/servers?page=${currentPage.servers}&per_page=${itemsPerPage.servers}`);
     const data = await res.json();
     
     container.innerHTML = `
@@ -952,7 +949,7 @@ async function renderServersList(container, username) {
 
 async function renderServerDetail(container, username, serverId) {
   try {
-    const res = await fetch(`/api/admin/servers?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/admin/servers`);
     const data = await res.json();
     const server = data.servers.find(s => s.id === serverId);
     
@@ -1003,10 +1000,10 @@ async function renderServerDetail(container, username, serverId) {
     document.getElementById('delete-server-btn').onclick = async () => {
       if (!confirm('Are you sure you want to delete this server? This cannot be undone.')) return;
       try {
-        await fetch(`/api/admin/servers/${serverId}`, {
+        await api(`/api/admin/servers/${serverId}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
+          body: JSON.stringify({})
         });
         navigateTo('servers');
       } catch (e) {
@@ -1136,10 +1133,10 @@ function renderServerSubTab(server, username) {
         };
         
         try {
-          await fetch(`/api/admin/servers/${server.id}`, {
+          await api(`/api/admin/servers/${server.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, updates: { limits } })
+            body: JSON.stringify({ updates: { limits } })
           });
           toast.success('Build configuration updated');
         } catch (e) {
@@ -1210,7 +1207,7 @@ function renderServerSubTab(server, username) {
           await fetch(`/api/servers/${server.id}/reinstall`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({})
           });
           toast.success('Server reinstall initiated');
         } catch (e) {
@@ -1224,7 +1221,7 @@ function renderServerSubTab(server, username) {
           await fetch(`/api/servers/${server.id}/${action}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({})
           });
           toast.success(`Server ${action}ed`);
           navigateTo('servers', server.id, 'manage');
@@ -1236,10 +1233,10 @@ function renderServerSubTab(server, username) {
       document.getElementById('delete-btn').onclick = async () => {
         if (!confirm('Are you sure you want to delete this server? This cannot be undone.')) return;
         try {
-          await fetch(`/api/admin/servers/${server.id}`, {
+          await api(`/api/admin/servers/${server.id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({})
           });
           navigateTo('servers');
         } catch (e) {
@@ -1252,8 +1249,8 @@ function renderServerSubTab(server, username) {
 
 async function showCreateServerModal(username) {
   const [usersRes, nodesRes, eggsRes] = await Promise.all([
-    fetch(`/api/admin/users?username=${encodeURIComponent(username)}&per_page=100`),
-    fetch(`/api/admin/nodes?username=${encodeURIComponent(username)}&per_page=100`),
+    api(`/api/admin/users?per_page=100`),
+    api(`/api/admin/nodes?per_page=100`),
     fetch('/api/admin/eggs')
   ]);
   
@@ -1333,7 +1330,7 @@ async function showCreateServerModal(username) {
       await fetch('/api/admin/servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, server })
+        body: JSON.stringify({ server })
       });
       modal.remove();
       loadView();
@@ -1349,7 +1346,7 @@ window.suspendServerAdmin = async function(serverId) {
     const res = await fetch(`/api/servers/${serverId}/suspend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({})
     });
     if (res.ok) {
       loadView();
@@ -1368,7 +1365,7 @@ window.unsuspendServerAdmin = async function(serverId) {
     const res = await fetch(`/api/servers/${serverId}/unsuspend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({})
     });
     if (res.ok) {
       loadView();
@@ -1385,10 +1382,10 @@ window.deleteServerAdmin = async function(serverId) {
   if (!confirm('Are you sure? This will delete the server from the node.')) return;
   const username = localStorage.getItem('username');
   try {
-    await fetch(`/api/admin/servers/${serverId}`, {
+    await api(`/api/admin/servers/${serverId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({})
     });
     loadView();
   } catch (e) {
@@ -1400,7 +1397,7 @@ window.deleteServerAdmin = async function(serverId) {
 
 async function renderUsersList(container, username) {
   try {
-    const res = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}&page=${currentPage.users}&per_page=${itemsPerPage.users}`);
+    const res = await api(`/api/admin/users?page=${currentPage.users}&per_page=${itemsPerPage.users}`);
     const data = await res.json();
     
     container.innerHTML = `
@@ -1511,7 +1508,7 @@ async function renderUsersList(container, username) {
 
 async function renderUserDetail(container, username, userId) {
   try {
-    const res = await fetch(`/api/admin/users?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/admin/users`);
     const data = await res.json();
     const user = data.users.find(u => u.id === userId);
     
@@ -1646,10 +1643,10 @@ function renderUserSubTab(user, username) {
         };
         
         try {
-          await fetch(`/api/admin/users/${user.id}`, {
+          await api(`/api/admin/users/${user.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, updates })
+            body: JSON.stringify({ updates })
           });
           toast.success('Permissions updated');
           navigateTo('users', user.id, 'permissions');
@@ -1701,10 +1698,10 @@ function renderUserSubTab(user, username) {
         };
         
         try {
-          await fetch(`/api/admin/users/${user.id}`, {
+          await api(`/api/admin/users/${user.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, updates: { limits } })
+            body: JSON.stringify({ updates: { limits } })
           });
           toast.success('Limits updated');
           navigateTo('users', user.id, 'limits');
@@ -1853,16 +1850,16 @@ function showNestModal(username, nest = null) {
     
     try {
       if (nest) {
-        await fetch(`/api/admin/nests/${nest.id}`, {
+        await api(`/api/admin/nests/${nest.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, nest: nestData })
+          body: JSON.stringify({ nest: nestData })
         });
       } else {
         await fetch('/api/admin/nests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, nest: nestData })
+          body: JSON.stringify({ nest: nestData })
         });
       }
       modal.remove();
@@ -1948,10 +1945,10 @@ window.deleteNestAdmin = async function(nestId) {
   const username = localStorage.getItem('username');
   
   try {
-    await fetch(`/api/admin/nests/${nestId}`, {
+    await api(`/api/admin/nests/${nestId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({})
     });
     loadView();
   } catch (e) {
@@ -1983,10 +1980,10 @@ window.deleteEggAdmin = async function(eggId) {
   const username = localStorage.getItem('username');
   
   try {
-    await fetch(`/api/admin/eggs/${eggId}`, {
+    await api(`/api/admin/eggs/${eggId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({})
     });
     loadView();
   } catch (e) {
@@ -2084,16 +2081,16 @@ function showEggModal(username, nests, selectedNestId, egg = null) {
     
     try {
       if (egg) {
-        await fetch(`/api/admin/eggs/${egg.id}`, {
+        await api(`/api/admin/eggs/${egg.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, egg: eggData })
+          body: JSON.stringify({ egg: eggData })
         });
       } else {
         await fetch('/api/admin/eggs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, egg: eggData })
+          body: JSON.stringify({ egg: eggData })
         });
       }
       modal.remove();
@@ -2220,10 +2217,10 @@ window.deleteLocationAdmin = async function(locationId) {
   const username = localStorage.getItem('username');
   
   try {
-    await fetch(`/api/admin/locations/${locationId}`, {
+    await api(`/api/admin/locations/${locationId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({})
     });
     loadView();
   } catch (e) {
@@ -2235,7 +2232,7 @@ window.deleteLocationAdmin = async function(locationId) {
 
 async function renderSettingsPage(container, username) {
   try {
-    const res = await fetch(`/api/admin/settings?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/admin/settings`);
     const data = await res.json();
     const config = data.config || {};
     
@@ -2345,7 +2342,7 @@ async function renderSettingsPage(container, username) {
         const saveRes = await fetch('/api/admin/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, config: newConfig })
+          body: JSON.stringify({ config: newConfig })
         });
         
         if (saveRes.ok) {

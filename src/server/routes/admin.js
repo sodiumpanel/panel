@@ -9,8 +9,11 @@ import {
   isAdmin, sanitizeText, generateUUID, generateToken, 
   wingsRequest, generateNodeConfig, configToYaml, sanitizeUrl
 } from '../utils/helpers.js';
+import { authenticateUser, requireAdmin } from '../utils/auth.js';
 
 const router = express.Router();
+
+router.use(authenticateUser, requireAdmin);
 
 router.get('/nodes', (req, res) => {
   const { page = 1, per_page = 10 } = req.query;

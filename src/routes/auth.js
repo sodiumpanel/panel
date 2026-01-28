@@ -1,3 +1,5 @@
+import { setToken, setUser } from '../utils/api.js';
+
 export function renderAuth() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
@@ -127,9 +129,10 @@ export function renderAuth() {
         return;
       }
       
+      setToken(data.token);
+      setUser(data.user);
       localStorage.setItem('loggedIn', 'true');
       localStorage.setItem('username', data.user.username);
-      localStorage.setItem('password', password);
       
       window.router.navigateTo('/dashboard');
     } catch (err) {
@@ -174,9 +177,10 @@ export function renderAuth() {
         return;
       }
       
+      setToken(data.token);
+      setUser(data.user);
       localStorage.setItem('loggedIn', 'true');
       localStorage.setItem('username', data.user.username);
-      localStorage.setItem('password', password);
       
       window.router.navigateTo('/dashboard');
     } catch (err) {

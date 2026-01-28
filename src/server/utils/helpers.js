@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { loadUsers, loadConfig } from '../db.js';
 
 export function sanitizeText(str) {
@@ -50,19 +51,11 @@ export function isAdmin(username) {
 }
 
 export function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
+  return crypto.randomUUID();
 }
 
-export function generateToken() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
-  for (let i = 0; i < 64; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
+export function generateToken(length = 64) {
+  return crypto.randomBytes(length).toString('base64url').slice(0, length);
 }
 
 export async function wingsRequest(node, method, endpoint, data = null, rawContent = false) {

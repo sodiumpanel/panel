@@ -1,6 +1,7 @@
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
+import { getToken } from '../../utils/api.js';
 
 let consoleSocket = null;
 let terminal = null;
@@ -111,10 +112,10 @@ function handleResize() {
 }
 
 async function connectWebSocket(serverId) {
-  const username = localStorage.getItem('username');
+  const token = getToken();
   
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${serverId}&username=${encodeURIComponent(username)}`;
+  const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${serverId}&token=${encodeURIComponent(token)}`;
   
   consoleSocket = new WebSocket(wsUrl);
   

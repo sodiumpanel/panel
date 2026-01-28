@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { loadUsers, loadServers, loadNodes } from './db.js';
 import { generateUUID } from './utils/helpers.js';
 import { hasPermission } from './utils/permissions.js';
+import { JWT_SECRET } from './utils/auth.js';
 
 export function setupWebSocket(server) {
   const wss = new WebSocketServer({ server, path: '/ws/console' });
@@ -10,17 +11,21 @@ export function setupWebSocket(server) {
   wss.on('connection', (clientWs, req) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const serverId = url.searchParams.get('server');
-    const username = url.searchParams.get('username');
+    const token = url.searchParams.get('token');
     
-    if (!serverId || !username) {
+    if (!serverId || !token) {
       clientWs.close(4001, 'Missing parameters');
       return;
     }
     
-    const users = loadUsers();
-    const user = users.users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    if (!user) {
-      clientWs.close(4002, 'User not found');
+    let user;
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      const users = loadUsers();
+      user = users.users.find(u => u.id === payload.id);
+      if (!user) throw new Error('User not found');
+    } catch (err) {
+      clientWs.close(4002, 'Invalid token');
       return;
     }
     
