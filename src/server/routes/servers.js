@@ -787,7 +787,6 @@ router.get('/:id/allocations', authenticateUser, async (req, res) => {
 });
 
 router.post('/:id/allocations', authenticateUser, async (req, res) => {
-  const user = req.user;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node, user } = result;
