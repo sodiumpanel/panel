@@ -1682,6 +1682,8 @@ let resizeObserver = null;
 let statusCallback = null;
 let resourcesCallback = null;
 let serverIdGetter = null;
+let resizeTimeout = null;
+let lastDimensions = { cols: 0, rows: 0 };
 
 function setConsoleCallbacks(onStatus, onResources, getServerId) {
   statusCallback = onStatus;
@@ -1761,26 +1763,33 @@ function initTerminal() {
   
   terminal.open(container);
   
-  setTimeout(() => {
-    fitAddon.fit();
-  }, 0);
+  requestAnimationFrame(() => {
+    safeFit();
+  });
   
   resizeObserver = new ResizeObserver(() => {
-    if (fitAddon) {
-      fitAddon.fit();
-    }
+    debouncedFit();
   });
   resizeObserver.observe(container);
   
-  window.addEventListener('resize', handleResize);
-  
-
+  window.addEventListener('resize', debouncedFit);
 }
 
-function handleResize() {
-  if (fitAddon) {
-    fitAddon.fit();
-  }
+function safeFit() {
+  if (!fitAddon || !terminal) return;
+  
+  const dims = fitAddon.proposeDimensions();
+  if (!dims || dims.cols <= 0 || dims.rows <= 0) return;
+  
+  if (dims.cols === lastDimensions.cols && dims.rows === lastDimensions.rows) return;
+  
+  lastDimensions = { cols: dims.cols, rows: dims.rows };
+  terminal.resize(dims.cols, dims.rows);
+}
+
+function debouncedFit() {
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(safeFit, 100);
 }
 
 async function connectWebSocket(serverId) {
@@ -1942,7 +1951,14 @@ async function sendCommand(serverId) {
 }
 
 function cleanupConsoleTab() {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('resize', debouncedFit);
+  
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = null;
+  }
+  
+  lastDimensions = { cols: 0, rows: 0 };
   
   if (resizeObserver) {
     resizeObserver.disconnect();
