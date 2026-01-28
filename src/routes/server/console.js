@@ -107,18 +107,17 @@ function initTerminal() {
 function safeFit() {
   if (!fitAddon || !terminal) return;
   
-  const dims = fitAddon.proposeDimensions();
-  if (!dims || dims.cols <= 0 || dims.rows <= 0) return;
+  const container = document.getElementById('console-terminal');
+  if (!container) return;
   
-  if (dims.cols === lastDimensions.cols && dims.rows === lastDimensions.rows) return;
-  
-  lastDimensions = { cols: dims.cols, rows: dims.rows };
-  terminal.resize(dims.cols, dims.rows);
+  container.style.visibility = 'hidden';
+  fitAddon.fit();
+  container.style.visibility = 'visible';
 }
 
 function debouncedFit() {
   if (resizeTimeout) clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(safeFit, 100);
+  resizeTimeout = setTimeout(safeFit, 50);
 }
 
 async function connectWebSocket(serverId) {
