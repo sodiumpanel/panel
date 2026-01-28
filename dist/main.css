@@ -2705,9 +2705,12 @@ input, textarea, select {
   border-radius: var(--radius-sm);
   padding: 0.5rem;
   overflow: hidden;
+  max-width: 100%;
 }
 .console-terminal .xterm {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
   padding: 0.5rem;
 }
 .console-terminal .xterm-viewport::-webkit-scrollbar {

@@ -1683,7 +1683,7 @@ let statusCallback = null;
 let resourcesCallback = null;
 let serverIdGetter = null;
 let resizeTimeout = null;
-let lastDimensions = { cols: 0, rows: 0 };
+let isResizing = false;
 
 function setConsoleCallbacks(onStatus, onResources, getServerId) {
   statusCallback = onStatus;
@@ -1781,11 +1781,11 @@ function safeFit() {
   const container = document.getElementById('console-terminal');
   if (!container) return;
   
-  container.style.opacity = '0';
-  fitAddon.fit();
-  requestAnimationFrame(() => {
-    container.style.opacity = '1';
-  });
+  const dims = fitAddon.proposeDimensions();
+  if (!dims || dims.cols <= 0 || dims.rows <= 0) return;
+  if (dims.cols === terminal.cols && dims.rows === terminal.rows) return;
+  
+  terminal.resize(dims.cols, dims.rows);
 }
 
 function debouncedFit() {
