@@ -42233,7 +42233,7 @@ async function renderNodeDetail(container, username, nodeId) {
       return;
     }
     
-    const locRes = await fetch('/api/admin/locations');
+    const locRes = await api('/api/admin/locations');
     const locData = await locRes.json();
     
     container.innerHTML = `
@@ -42601,7 +42601,7 @@ function renderNodeSubTab(node, locations, username) {
 }
 
 async function showCreateNodeModal(username) {
-  const locRes = await fetch('/api/admin/locations');
+  const locRes = await api('/api/admin/locations');
   const locData = await locRes.json();
   
   const modal = document.createElement('div');
@@ -42678,7 +42678,7 @@ async function showCreateNodeModal(username) {
     const node = Object.fromEntries(form);
     
     try {
-      await fetch('/api/admin/nodes', {
+      await api('/api/admin/nodes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ node })
@@ -43075,7 +43075,7 @@ function renderServerSubTab(server, username) {
       document.getElementById('reinstall-btn').onclick = async () => {
         if (!confirm('Are you sure? All server files will be deleted.')) return;
         try {
-          await fetch(`/api/servers/${server.id}/reinstall`, {
+          await api(`/api/servers/${server.id}/reinstall`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -43089,7 +43089,7 @@ function renderServerSubTab(server, username) {
       document.getElementById('suspend-btn').onclick = async () => {
         const action = server.suspended ? 'unsuspend' : 'suspend';
         try {
-          await fetch(`/api/servers/${server.id}/${action}`, {
+          await api(`/api/servers/${server.id}/${action}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -43122,7 +43122,7 @@ async function showCreateServerModal(username) {
   const [usersRes, nodesRes, eggsRes] = await Promise.all([
     api(`/api/admin/users?per_page=100`),
     api(`/api/admin/nodes?per_page=100`),
-    fetch('/api/admin/eggs')
+    api('/api/admin/eggs')
   ]);
   
   const [usersData, nodesData, eggsData] = await Promise.all([
@@ -43198,7 +43198,7 @@ async function showCreateServerModal(username) {
     const server = Object.fromEntries(form);
     
     try {
-      await fetch('/api/admin/servers', {
+      await api('/api/admin/servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ server })
@@ -43214,7 +43214,7 @@ async function showCreateServerModal(username) {
 window.suspendServerAdmin = async function(serverId) {
   const username = localStorage.getItem('username');
   try {
-    const res = await fetch(`/api/servers/${serverId}/suspend`, {
+    const res = await api(`/api/servers/${serverId}/suspend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
@@ -43233,7 +43233,7 @@ window.suspendServerAdmin = async function(serverId) {
 window.unsuspendServerAdmin = async function(serverId) {
   const username = localStorage.getItem('username');
   try {
-    const res = await fetch(`/api/servers/${serverId}/unsuspend`, {
+    const res = await api(`/api/servers/${serverId}/unsuspend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
@@ -43588,7 +43588,7 @@ function renderUserSubTab(user, username) {
 
 async function renderNestsList(container, username) {
   try {
-    const res = await fetch('/api/admin/nests');
+    const res = await api('/api/admin/nests');
     const data = await res.json();
     const nests = data.nests || [];
     
@@ -43727,7 +43727,7 @@ function showNestModal(username, nest = null) {
           body: JSON.stringify({ nest: nestData })
         });
       } else {
-        await fetch('/api/admin/nests', {
+        await api('/api/admin/nests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nest: nestData })
@@ -43778,7 +43778,7 @@ function showImportEggModal(username, nests) {
     const form = new FormData(e.target);
     
     try {
-      const res = await fetch('/api/admin/eggs/import', {
+      const res = await api('/api/admin/eggs/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -43803,7 +43803,7 @@ function showImportEggModal(username, nests) {
 }
 
 window.editNestAdmin = async function(nestId) {
-  const res = await fetch('/api/admin/nests');
+  const res = await api('/api/admin/nests');
   const data = await res.json();
   const nest = data.nests.find(n => n.id === nestId);
   if (nest) {
@@ -43828,13 +43828,13 @@ window.deleteNestAdmin = async function(nestId) {
 };
 
 window.addEggToNestAdmin = async function(nestId) {
-  const res = await fetch('/api/admin/nests');
+  const res = await api('/api/admin/nests');
   const data = await res.json();
   showEggModal(localStorage.getItem('username'), data.nests, nestId);
 };
 
 window.editEggAdmin = async function(eggId) {
-  const res = await fetch('/api/admin/nests');
+  const res = await api('/api/admin/nests');
   const data = await res.json();
   let egg = null;
   for (const nest of data.nests) {
@@ -43958,7 +43958,7 @@ function showEggModal(username, nests, selectedNestId, egg = null) {
           body: JSON.stringify({ egg: eggData })
         });
       } else {
-        await fetch('/api/admin/eggs', {
+        await api('/api/admin/eggs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ egg: eggData })
@@ -43976,7 +43976,7 @@ function showEggModal(username, nests, selectedNestId, egg = null) {
 
 async function renderLocationsList(container, username) {
   try {
-    const res = await fetch('/api/admin/locations');
+    const res = await api('/api/admin/locations');
     const data = await res.json();
     
     container.innerHTML = `
@@ -44064,7 +44064,7 @@ function showLocationModal(username) {
     const form = new FormData(e.target);
     
     try {
-      await fetch('/api/admin/locations', {
+      await api('/api/admin/locations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -44210,7 +44210,7 @@ async function renderSettingsPage(container, username) {
       };
       
       try {
-        const saveRes = await fetch('/api/admin/settings', {
+        const saveRes = await api('/api/admin/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ config: newConfig })
