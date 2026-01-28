@@ -12,7 +12,6 @@ let statusCallback = null;
 let resourcesCallback = null;
 let serverIdGetter = null;
 let resizeTimeout = null;
-let isResizing = false;
 
 export function setConsoleCallbacks(onStatus, onResources, getServerId) {
   statusCallback = onStatus;
