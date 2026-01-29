@@ -7,7 +7,8 @@
     "start": "node src/server/index.js",
     "build": "node src/bundler/build.js",
     "fast-build": "node src/bundler/build.js fast",
-    "watch": "node src/bundler/build.js dev"
+    "watch": "node src/bundler/build.js dev",
+    "dev": "node src/bundler/dev.js"
   },
   "keywords": [
     "game-server",
@@ -59,7 +60,6 @@
     "short_name": "Sodium",
     "description": "Ultimate Game Server management Panel.",
     "start_url": "/",
-    "url": "https://sodium.app/",
     "display": "standalone",
     "background_color": "#0a0a0a",
     "theme_color": "#6366f1"

@@ -31,15 +31,12 @@
 .admin-sidebar {
   width: 240px;
   background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   
   @media (max-width: 768px) {
     width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
   }
   
   .admin-sidebar-header {
@@ -47,7 +44,6 @@
     align-items: center;
     gap: 12px;
     padding: 20px;
-    border-bottom: 1px solid var(--border);
     
     .material-icons-outlined {
       font-size: 24px;
@@ -213,7 +209,6 @@
   display: flex;
   /*gap: 4px;*/
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--border);
   padding-bottom: 0;
   overflow-x: scroll;
   width: 100%;
@@ -277,14 +272,12 @@
 
 .list-card {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
   cursor: pointer;
   transition: all var(--transition-fast);
   
   &:hover {
-    border-color: var(--accent);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
@@ -391,14 +384,12 @@
     width: 100%;
     border-collapse: collapse;
     background: var(--bg-secondary);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     
     th, td {
       padding: 14px 16px;
       text-align: left;
-      border-bottom: 1px solid var(--border);
     }
     
     th {
@@ -481,7 +472,6 @@
 
 .detail-card {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
   
@@ -685,7 +675,7 @@
   
   input, select, textarea {
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     padding: 10px 14px;
     color: var(--text-primary);
@@ -888,7 +878,6 @@
 
 .nest-card {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
   
@@ -1016,7 +1005,6 @@
   gap: 16px;
   padding: 20px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   
   .location-icon {
@@ -1210,7 +1198,6 @@
   padding: 60px 20px;
   text-align: center;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   
   .material-icons-outlined {
@@ -1260,7 +1247,6 @@
   .modal-content {
     position: relative;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     width: 100%;
     max-width: 500px;
@@ -1282,7 +1268,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     background: var(--bg-elevated);
@@ -1329,7 +1314,6 @@
     gap: 12px;
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid var(--border);
     
     @media (max-width: 480px) {
       flex-direction: column-reverse;
@@ -1353,7 +1337,6 @@
   gap: 16px;
   padding: 16px 20px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   flex-wrap: wrap;
   
@@ -1427,7 +1410,7 @@
   
   .per-page-select {
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     padding: 8px 12px;
     color: var(--text-primary);
@@ -1448,7 +1431,7 @@
   .goto-input {
     width: 60px;
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     padding: 8px 10px;
     color: var(--text-primary);
@@ -1606,7 +1589,6 @@
 
 .variable-card {
   background: var(--bg-tertiary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 16px;
   
@@ -1838,7 +1820,7 @@
     width: 100%;
     padding: 10px 12px;
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 14px;
@@ -1862,7 +1844,6 @@
   right: 0;
   margin-top: 4px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   max-height: 240px;
   overflow-y: auto;

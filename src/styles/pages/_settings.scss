@@ -43,7 +43,6 @@
 
 .settings-section {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   
@@ -52,7 +51,6 @@
   }
   
   &.danger-section {
-    border-color: rgba(239, 68, 68, 0.3);
     
     .section-header {
       .material-icons-outlined {
@@ -66,7 +64,6 @@
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
     background: var(--bg-tertiary);
     
     @media (max-width: 480px) {
@@ -126,13 +123,12 @@
   gap: 10px;
   padding: 12px;
   background: var(--bg-tertiary);
-  border: 2px solid var(--border);
+  border: 2px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
   
   &:hover {
-    border-color: var(--border-light);
     background: var(--bg-elevated);
   }
   
@@ -232,11 +228,6 @@
   justify-content: space-between;
   gap: 20px;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  
-  &:last-child {
-    border-bottom: none;
-  }
   
   &.clickable {
     cursor: pointer;

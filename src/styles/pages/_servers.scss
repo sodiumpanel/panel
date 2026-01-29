@@ -159,7 +159,6 @@
       gap: 12px;
       margin-top: 16px;
       padding-top: 16px;
-      border-top: 1px solid var(--border);
       
       .info-row {
         display: flex;
@@ -242,7 +241,6 @@
       justify-content: space-between;
       align-items: center;
       padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
       margin-bottom: 16px;
       
       h3 {
@@ -285,7 +283,7 @@
       input {
         flex: 1;
         background: var(--bg-tertiary);
-        border: 1px solid var(--border);
+        border: 1px solid transparent;
         border-radius: var(--radius-md);
         padding: 12px 16px;
         color: var(--text-primary);
@@ -317,11 +315,6 @@
       display: flex;
       justify-content: space-between;
       padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      
-      &:last-child {
-        border-bottom: none;
-      }
       
       .label {
         font-size: 13px;
@@ -389,7 +382,7 @@
       width: 100%;
       padding: 10px 12px;
       background: var(--bg-tertiary);
-      border: 1px solid var(--border);
+      border: 1px solid transparent;
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-size: 14px;
@@ -470,7 +463,6 @@
   
   .sidebar-card {
     background: var(--bg-secondary);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 20px;
     
@@ -492,10 +484,8 @@
       justify-content: space-between;
       font-size: 13px;
       padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      
       &:last-child {
-        border-bottom: none;
+        padding-bottom: 0;
       }
       
       span:first-child {
@@ -511,7 +501,6 @@
 
 .step-card {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
   
@@ -561,7 +550,6 @@
   .nest-tab {
     padding: 10px 20px;
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: 500;
@@ -570,13 +558,12 @@
     transition: all var(--transition-fast);
     
     &:hover {
-      border-color: var(--accent);
       color: var(--text-primary);
+      background: var(--bg-elevated);
     }
     
     &.active {
       background: var(--accent);
-      border-color: var(--accent);
       color: white;
     }
   }
@@ -598,7 +585,7 @@
   gap: 14px;
   padding: 16px;
   background: var(--bg-tertiary);
-  border: 2px solid var(--border);
+  border: 2px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -709,7 +696,7 @@
     width: 100%;
     padding: 12px 14px;
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 14px;
@@ -729,7 +716,6 @@
 .form-section {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid var(--border);
   
   h4 {
     font-size: 14px;

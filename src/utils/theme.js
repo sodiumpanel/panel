@@ -20,9 +20,7 @@ export function getAvailableThemes() {
   return [
     { id: 'dark', name: 'Dark' },
     { id: 'light', name: 'Light' },
-    { id: 'amoled', name: 'AMOLED' },
-    { id: 'ocean', name: 'Ocean' },
-    { id: 'rose', name: 'Rose' }
+    { id: 'amoled', name: 'AMOLED' }
   ];
 }
 

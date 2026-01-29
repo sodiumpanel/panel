@@ -176,7 +176,6 @@ input, textarea, select {
 .navbar {
   height: var(--navbar-height);
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -290,7 +289,6 @@ input, textarea, select {
     right: 0;
     min-width: 200px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     opacity: 0;
@@ -334,7 +332,6 @@ input, textarea, select {
     
     .dropdown-divider {
       border: none;
-      border-top: 1px solid var(--border);
       margin: 4px 0;
     }
   }
@@ -347,7 +344,6 @@ input, textarea, select {
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   z-index: 200;
@@ -366,7 +362,6 @@ input, textarea, select {
     padding: 0 20px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid var(--border);
   }
   
   .sidebar-brand {
@@ -426,7 +421,6 @@ input, textarea, select {
   
   .sidebar-footer {
     padding: 16px 20px;
-    border-top: 1px solid var(--border);
     
     .version {
       font-size: 12px;
@@ -467,11 +461,9 @@ input, textarea, select {
 .btn-secondary {
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  border: 1px solid var(--border);
   
   &:hover:not(:disabled) {
     background: var(--bg-elevated);
-    border-color: var(--border-light);
   }
 }
 
@@ -539,14 +531,13 @@ input, textarea, select {
   align-items: center;
   gap: 12px;
   background: var(--bg-tertiary);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   padding: 0 14px;
   transition: all var(--transition-fast);
   
   &:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-muted);
   }
   
   .material-icons-outlined {
@@ -572,7 +563,7 @@ input, textarea, select {
   textarea {
     width: 100%;
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     padding: 14px;
     color: var(--text-primary);
@@ -582,7 +573,6 @@ input, textarea, select {
     
     &:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-muted);
     }
     
     &::placeholder {
@@ -595,7 +585,7 @@ input, textarea, select {
   width: 100%;
   padding: 12px 14px;
   background: var(--bg-tertiary);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 14px;
@@ -604,7 +594,6 @@ input, textarea, select {
   
   &:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-muted);
   }
   
   &::placeholder {
@@ -614,7 +603,7 @@ input, textarea, select {
 
 .select-input {
   background: var(--bg-tertiary);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   padding: 10px 14px;
   color: var(--text-primary);
@@ -649,7 +638,6 @@ input, textarea, select {
     cursor: pointer;
     inset: 0;
     background: var(--bg-tertiary);
-    border: 1px solid var(--border);
     border-radius: 26px;
     transition: all var(--transition-fast);
     
@@ -742,7 +730,6 @@ input, textarea, select {
     width: 90%;
     max-width: 440px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 24px;
     box-shadow: var(--shadow-lg);
@@ -795,7 +782,7 @@ input, textarea, select {
       width: 100%;
       padding: 10px 12px;
       background: var(--bg-secondary);
-      border: 1px solid var(--border);
+      border: 1px solid transparent;
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       font-size: 14px;
@@ -832,7 +819,6 @@ input, textarea, select {
   gap: 12px;
   padding: 12px 16px;
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   transform: translateX(120%);
@@ -869,32 +855,24 @@ input, textarea, select {
   }
   
   &.toast-success {
-    border-color: var(--success);
-    
     > .material-icons-outlined {
       color: var(--success);
     }
   }
   
   &.toast-error {
-    border-color: var(--danger);
-    
     > .material-icons-outlined {
       color: var(--danger);
     }
   }
   
   &.toast-warning {
-    border-color: var(--warning);
-    
     > .material-icons-outlined {
       color: var(--warning);
     }
   }
   
   &.toast-info {
-    border-color: var(--accent);
-    
     > .material-icons-outlined {
       color: var(--accent);
     }

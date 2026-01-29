@@ -52,7 +52,6 @@
   align-items: center;
   gap: 16px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
   transition: all var(--transition-fast);
@@ -63,7 +62,6 @@
   }
   
   &:hover {
-    border-color: var(--border-light);
     transform: translateY(-2px);
   }
   
@@ -139,7 +137,6 @@
   gap: 12px;
   padding: 24px 20px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   transition: all var(--transition-fast);
   
@@ -169,7 +166,6 @@
   }
   
   &:hover {
-    border-color: var(--accent);
     background: var(--accent-muted);
     transform: translateY(-2px);
   }
@@ -195,7 +191,6 @@
   gap: 16px;
   padding: 16px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   
   @media (max-width: 480px) {
@@ -250,7 +245,6 @@
 
 .dashboard-section {
   background: var(--bg-secondary);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
   

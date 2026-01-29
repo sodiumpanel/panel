@@ -103,7 +103,6 @@
     
     .summary-card {
       background: var(--bg-secondary);
-      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 20px;
       display: flex;
@@ -385,7 +384,6 @@
     text-align: center;
     padding: 60px 20px;
     background: var(--bg-secondary);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     
     @media (max-width: 480px) {

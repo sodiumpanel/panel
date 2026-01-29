@@ -31,7 +31,7 @@ export function renderServers() {
         </div>
         <div class="limits-grid" id="limits-display">
           <div class="limit-item">
-            <span class="label">Loading...</span>
+            <span class="label">Loading servers...</span>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ async function loadServers() {
         <div class="empty-state">
           <span class="material-icons-outlined icon">dns</span>
           <h3>No Servers</h3>
-          <p>You don't have any servers yet. Contact an administrator to get started.</p>
+          <p>You don't have any servers yet.</p>
         </div>
       `;
       return;
