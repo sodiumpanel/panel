@@ -2,7 +2,7 @@ import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { authMiddleware, adminMiddleware } from '../utils/auth.js';
+import { authenticateUser, requireAdmin } from '../utils/auth.js';
 import pluginManager from '../plugins/manager.js';
 import { installPlugin, uninstallPlugin, createPluginPackage } from '../plugins/installer.js';
 
@@ -10,12 +10,12 @@ const router = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGINS_DIR = path.join(__dirname, '../../../plugins');
 
-router.get('/', authMiddleware, adminMiddleware, (req, res) => {
+router.get('/', authenticateUser, requireAdmin, (req, res) => {
   const plugins = pluginManager.getLoadedPlugins();
   res.json({ plugins });
 });
 
-router.get('/available', authMiddleware, adminMiddleware, (req, res) => {
+router.get('/available', authenticateUser, requireAdmin, (req, res) => {
   if (!fs.existsSync(PLUGINS_DIR)) {
     return res.json({ plugins: [] });
   }
@@ -52,7 +52,7 @@ router.get('/available', authMiddleware, adminMiddleware, (req, res) => {
   res.json({ plugins: available });
 });
 
-router.post('/reload/:name', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/reload/:name', authenticateUser, requireAdmin, async (req, res) => {
   const { name } = req.params;
   
   try {
@@ -67,7 +67,7 @@ router.post('/reload/:name', authMiddleware, adminMiddleware, async (req, res) =
   }
 });
 
-router.post('/unload/:name', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/unload/:name', authenticateUser, requireAdmin, async (req, res) => {
   const { name } = req.params;
   
   try {
@@ -82,7 +82,7 @@ router.post('/unload/:name', authMiddleware, adminMiddleware, async (req, res) =
   }
 });
 
-router.post('/load/:name', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/load/:name', authenticateUser, requireAdmin, async (req, res) => {
   const { name } = req.params;
   
   const pluginPath = path.join(PLUGINS_DIR, name);
@@ -103,12 +103,12 @@ router.post('/load/:name', authMiddleware, adminMiddleware, async (req, res) => 
   }
 });
 
-router.get('/hooks', authMiddleware, adminMiddleware, (req, res) => {
+router.get('/hooks', authenticateUser, requireAdmin, (req, res) => {
   const hooks = Array.from(pluginManager.hooks.keys());
   res.json({ hooks });
 });
 
-router.get('/injection-points', authMiddleware, (req, res) => {
+router.get('/injection-points', authenticateUser, (req, res) => {
   const points = {
     'global': [
       { id: 'inject-global-head', description: 'Inside <head> tag' },
@@ -192,7 +192,7 @@ router.get('/injection-points', authMiddleware, (req, res) => {
   res.json({ points });
 });
 
-router.get('/assets', authMiddleware, (req, res) => {
+router.get('/assets', authenticateUser, (req, res) => {
   const user = req.user;
   const assets = pluginManager.getClientAssets();
   
@@ -201,13 +201,13 @@ router.get('/assets', authMiddleware, (req, res) => {
   res.json(assets);
 });
 
-router.get('/slots/:name', authMiddleware, (req, res) => {
+router.get('/slots/:name', authenticateUser, (req, res) => {
   const { name } = req.params;
   const content = pluginManager.getSlotContent(name);
   res.json({ slot: name, content });
 });
 
-router.post('/install', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/install', authenticateUser, requireAdmin, async (req, res) => {
   const { source } = req.body;
   
   if (!source) {
@@ -223,7 +223,7 @@ router.post('/install', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:name', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/:name', authenticateUser, requireAdmin, async (req, res) => {
   const { name } = req.params;
   
   try {
@@ -235,7 +235,7 @@ router.delete('/:name', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-router.post('/:name/package', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/:name/package', authenticateUser, requireAdmin, async (req, res) => {
   const { name } = req.params;
   
   try {
@@ -246,7 +246,7 @@ router.post('/:name/package', authMiddleware, adminMiddleware, async (req, res) 
   }
 });
 
-router.get('/:name/settings', authMiddleware, adminMiddleware, (req, res) => {
+router.get('/:name/settings', authenticateUser, requireAdmin, (req, res) => {
   const { name } = req.params;
   const plugin = pluginManager.plugins.get(name);
   
@@ -260,7 +260,7 @@ router.get('/:name/settings', authMiddleware, adminMiddleware, (req, res) => {
   res.json({ settings, schema });
 });
 
-router.put('/:name/settings', authMiddleware, adminMiddleware, (req, res) => {
+router.put('/:name/settings', authenticateUser, requireAdmin, (req, res) => {
   const { name } = req.params;
   const { settings } = req.body;
   
@@ -276,7 +276,7 @@ router.put('/:name/settings', authMiddleware, adminMiddleware, (req, res) => {
   res.json({ message: 'Settings updated' });
 });
 
-router.get('/:name', authMiddleware, adminMiddleware, (req, res) => {
+router.get('/:name', authenticateUser, requireAdmin, (req, res) => {
   const { name } = req.params;
   const plugin = pluginManager.plugins.get(name);
   
