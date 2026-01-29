@@ -338,7 +338,11 @@ router.get('/:id', authenticateUser, async (req, res) => {
   const server = data.servers.find(s => s.id === req.params.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  if (server.user_id !== user.id && !user.isAdmin) {
+  // Admin, owner, or subuser can access
+  const isOwner = server.user_id === user.id;
+  const isSubuser = (server.subusers || []).some(s => s.user_id === user.id);
+  
+  if (!user.isAdmin && !isOwner && !isSubuser) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   
@@ -348,7 +352,9 @@ router.get('/:id', authenticateUser, async (req, res) => {
   const serverWithNode = {
     ...server,
     node_address: node ? `${node.fqdn}:${server.allocation?.port || 25565}` : null,
-    node_name: node?.name || null
+    node_name: node?.name || null,
+    is_owner: isOwner,
+    is_admin_access: user.isAdmin && !isOwner && !isSubuser
   };
   
   res.json({ server: serverWithNode });
