@@ -1,22 +1,22 @@
 # Sodium Plugin System
 
-Sistema de plugins completo para Sodium, inspirado en Blueprint para Pterodactyl.
+Complete plugin system for Sodium, inspired by Blueprint for Pterodactyl.
 
-## Estructura de Plugin
+## Plugin Structure
 
 ```
 plugins/
 ├── my-plugin/
-│   ├── plugin.json          # Manifest (requerido)
-│   ├── index.js              # Código JS (opcional)
-│   ├── assets/               # Assets estáticos
+│   ├── plugin.json          # Manifest (required)
+│   ├── index.js              # JS code (optional)
+│   ├── assets/               # Static assets
 │   │   ├── style.css
 │   │   └── client.js
-│   ├── injections/           # Templates HTML para inyección
+│   ├── injections/           # HTML templates for injection
 │   │   └── my-component.html
-│   └── pages/                # Páginas personalizadas
+│   └── pages/                # Custom pages
 │       └── example.html
-└── simple-plugin.js          # Plugin single-file
+└── simple-plugin.js          # Single-file plugin
 ```
 
 ## plugin.json
@@ -80,114 +80,114 @@ plugins/
 }
 ```
 
-## Puntos de Inyección
+## Injection Points
 
-Los puntos de inyección permiten añadir contenido HTML en ubicaciones específicas del UI.
+Injection points allow you to add HTML content at specific UI locations.
 
-### Nomenclatura de IDs
+### ID Naming Convention
 
-Todos los IDs siguen el patrón: `inject-{area}-{location}-{position}`
+All IDs follow the pattern: `inject-{area}-{location}-{position}`
 
 ### Auth Page
 
-| ID | Descripción |
+| ID | Description |
 |----|-------------|
-| `inject-auth-container-before` | Antes del contenedor auth |
-| `inject-auth-header-before` | Antes del header |
-| `inject-auth-header-after` | Después del header |
-| `inject-auth-tabs-before` | Antes de los tabs |
-| `inject-auth-tabs-after` | Después de los tabs |
-| `inject-auth-login-before` | Antes del form login |
-| `inject-auth-login-fields-before` | Antes de campos login |
-| `inject-auth-login-fields-after` | Después de campos login |
-| `inject-auth-login-button-before` | Antes del botón login |
-| `inject-auth-login-button-after` | Después del botón login |
+| `inject-auth-container-before` | Before the auth container |
+| `inject-auth-header-before` | Before the header |
+| `inject-auth-header-after` | After the header |
+| `inject-auth-tabs-before` | Before the tabs |
+| `inject-auth-tabs-after` | After the tabs |
+| `inject-auth-login-before` | Before the login form |
+| `inject-auth-login-fields-before` | Before login fields |
+| `inject-auth-login-fields-after` | After login fields |
+| `inject-auth-login-button-before` | Before the login button |
+| `inject-auth-login-button-after` | After the login button |
 | `inject-auth-login-providers` | **OAuth buttons (Google, Discord, GitHub)** |
-| `inject-auth-login-after` | Después del form login |
-| `inject-auth-register-before` | Antes del form registro |
-| `inject-auth-register-fields-before` | Antes de campos registro |
-| `inject-auth-register-fields-after` | Después de campos registro |
-| `inject-auth-register-button-before` | Antes del botón registro |
-| `inject-auth-register-button-after` | Después del botón registro |
-| `inject-auth-register-providers` | OAuth buttons para registro |
-| `inject-auth-register-after` | Después del form registro |
-| `inject-auth-container-after` | Después del contenedor auth |
+| `inject-auth-login-after` | After the login form |
+| `inject-auth-register-before` | Before the register form |
+| `inject-auth-register-fields-before` | Before register fields |
+| `inject-auth-register-fields-after` | After register fields |
+| `inject-auth-register-button-before` | Before the register button |
+| `inject-auth-register-button-after` | After the register button |
+| `inject-auth-register-providers` | OAuth buttons for registration |
+| `inject-auth-register-after` | After the register form |
+| `inject-auth-container-after` | After the auth container |
 
 ### Dashboard
 
-| ID | Descripción |
+| ID | Description |
 |----|-------------|
-| `inject-dashboard-before` | Antes del dashboard |
-| `inject-dashboard-header-before` | Antes del header |
-| `inject-dashboard-header-after` | Después del header (banners) |
-| `inject-dashboard-stats-before` | Antes de stats |
-| `inject-dashboard-stats-after` | Después de stats |
-| `inject-dashboard-servers-before` | Antes de lista servers |
-| `inject-dashboard-servers-after` | Después de lista servers |
-| `inject-dashboard-after` | Después del dashboard |
+| `inject-dashboard-before` | Before the dashboard |
+| `inject-dashboard-header-before` | Before the header |
+| `inject-dashboard-header-after` | After the header (banners) |
+| `inject-dashboard-stats-before` | Before stats |
+| `inject-dashboard-stats-after` | After stats |
+| `inject-dashboard-servers-before` | Before server list |
+| `inject-dashboard-servers-after` | After server list |
+| `inject-dashboard-after` | After the dashboard |
 
 ### Server View
 
-| ID | Descripción |
+| ID | Description |
 |----|-------------|
-| `inject-server-header-before` | Antes del header servidor |
-| `inject-server-header-info` | Info adicional en header |
-| `inject-server-header-actions` | Botones de acción |
-| `inject-server-header-after` | Después del header |
-| `inject-server-tabs-start` | Inicio de tabs (izquierda) |
-| `inject-server-tabs-end` | Final de tabs (derecha) |
-| `inject-server-console-before` | Antes de consola |
-| `inject-server-console-actions` | Botones en consola |
-| `inject-server-console-after` | Después de consola |
-| `inject-server-files-toolbar-actions` | Acciones en file manager |
-| `inject-server-backups-actions` | Acciones en backups |
+| `inject-server-header-before` | Before the server header |
+| `inject-server-header-info` | Additional info in header |
+| `inject-server-header-actions` | Action buttons |
+| `inject-server-header-after` | After the header |
+| `inject-server-tabs-start` | Start of tabs (left) |
+| `inject-server-tabs-end` | End of tabs (right) |
+| `inject-server-console-before` | Before the console |
+| `inject-server-console-actions` | Console action buttons |
+| `inject-server-console-after` | After the console |
+| `inject-server-files-toolbar-actions` | File manager actions |
+| `inject-server-backups-actions` | Backup actions |
 
 ### Sidebar
 
-| ID | Descripción |
+| ID | Description |
 |----|-------------|
-| `inject-sidebar-header-before` | Antes del header sidebar |
-| `inject-sidebar-header-after` | Después del header |
-| `inject-sidebar-nav-start` | Inicio de navegación |
-| `inject-sidebar-nav-end` | Final de navegación |
-| `inject-sidebar-footer-before` | Antes del footer |
-| `inject-sidebar-footer-after` | Después del footer |
+| `inject-sidebar-header-before` | Before the sidebar header |
+| `inject-sidebar-header-after` | After the header |
+| `inject-sidebar-nav-start` | Start of navigation |
+| `inject-sidebar-nav-end` | End of navigation |
+| `inject-sidebar-footer-before` | Before the footer |
+| `inject-sidebar-footer-after` | After the footer |
 
 ### Admin
 
-| ID | Descripción |
+| ID | Description |
 |----|-------------|
-| `inject-admin-sidebar-items` | Items en sidebar admin |
-| `inject-admin-content-before` | Antes del contenido |
-| `inject-admin-content-after` | Después del contenido |
-| `inject-admin-users-actions` | Acciones en usuarios |
-| `inject-admin-servers-actions` | Acciones en servidores |
-| `inject-admin-nodes-actions` | Acciones en nodos |
+| `inject-admin-sidebar-items` | Admin sidebar items |
+| `inject-admin-content-before` | Before the content |
+| `inject-admin-content-after` | After the content |
+| `inject-admin-users-actions` | User actions |
+| `inject-admin-servers-actions` | Server actions |
+| `inject-admin-nodes-actions` | Node actions |
 
 ### Global
 
-| ID | Descripción |
+| ID | Description |
 |----|-------------|
-| `inject-global-head` | Dentro de `<head>` |
-| `inject-global-body-start` | Inicio de `<body>` |
-| `inject-global-body-end` | Final de `<body>` |
+| `inject-global-head` | Inside `<head>` |
+| `inject-global-body-start` | Start of `<body>` |
+| `inject-global-body-end` | End of `<body>` |
 
-## API de Plugin (index.js)
+## Plugin API (index.js)
 
 ```javascript
 export default {
   async init(api) {
     // === INFO ===
-    api.name              // Nombre del plugin
-    api.version           // Versión
-    api.manifest          // Manifest completo
-    api.path              // Path del plugin
+    api.name              // Plugin name
+    api.version           // Version
+    api.manifest          // Full manifest
+    api.path              // Plugin path
     
     // === HOOKS ===
     api.hook('server:ready', async (data) => {});
-    // Eventos: server:init, server:routes, server:ready, ws:message
+    // Events: server:init, server:routes, server:ready, ws:message
     
-    // === RUTAS ===
+    // === ROUTES ===
     api.route.get('/api/my-route', (req, res) => {});
     api.route.post('/api/my-route', handler);
     api.route.put('/api/my-route', handler);
@@ -205,7 +205,7 @@ export default {
     // === SIDEBAR ===
     api.sidebar({ path: '/my-page', icon: 'extension', label: 'My Page' });
     
-    // === UI / INYECCIÓN ===
+    // === UI / INJECTION ===
     api.ui.style('css string');
     api.ui.styleUrl('/plugins/my-plugin/style.css');
     api.ui.script('js code');
@@ -214,7 +214,7 @@ export default {
     api.ui.page('/my-page', { title: 'Page', html: '<div>Content</div>' });
     api.ui.component('my-button', { html: '<button>{{label}}</button>' });
     
-    // Inyección directa por ID
+    // Direct injection by ID
     api.ui.inject('inject-auth-login-providers', '<button>OAuth</button>', 'append', 10);
     
     // === STORAGE ===
@@ -246,26 +246,26 @@ export default {
 };
 ```
 
-## API REST
+## REST API
 
-| Método | Endpoint | Descripción |
+| Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/plugins` | Lista plugins cargados |
-| GET | `/api/plugins/available` | Lista plugins disponibles |
-| GET | `/api/plugins/assets` | Assets del cliente (styles, scripts, injections) |
-| GET | `/api/plugins/hooks` | Hooks registrados |
-| GET | `/api/plugins/injection-points` | Puntos de inyección disponibles |
-| GET | `/api/plugins/:name` | Info de plugin |
-| GET | `/api/plugins/:name/settings` | Settings de plugin |
-| PUT | `/api/plugins/:name/settings` | Actualizar settings |
-| POST | `/api/plugins/install` | Instalar plugin |
-| POST | `/api/plugins/load/:name` | Cargar plugin |
-| POST | `/api/plugins/unload/:name` | Descargar plugin |
-| POST | `/api/plugins/reload/:name` | Recargar plugin |
-| DELETE | `/api/plugins/:name` | Desinstalar plugin |
-| POST | `/api/plugins/:name/package` | Empaquetar como .sodium |
+| GET | `/api/plugins` | List loaded plugins |
+| GET | `/api/plugins/available` | List available plugins |
+| GET | `/api/plugins/assets` | Client assets (styles, scripts, injections) |
+| GET | `/api/plugins/hooks` | Registered hooks |
+| GET | `/api/plugins/injection-points` | Available injection points |
+| GET | `/api/plugins/:name` | Plugin info |
+| GET | `/api/plugins/:name/settings` | Plugin settings |
+| PUT | `/api/plugins/:name/settings` | Update settings |
+| POST | `/api/plugins/install` | Install plugin |
+| POST | `/api/plugins/load/:name` | Load plugin |
+| POST | `/api/plugins/unload/:name` | Unload plugin |
+| POST | `/api/plugins/reload/:name` | Reload plugin |
+| DELETE | `/api/plugins/:name` | Uninstall plugin |
+| POST | `/api/plugins/:name/package` | Package as .sodium |
 
-## Ejemplo: Plugin OAuth
+## Example: OAuth Plugin
 
 ```json
 {
@@ -294,15 +294,15 @@ export default {
 }
 ```
 
-## Paquetes .sodium
+## .sodium Packages
 
-Distribuir plugins como archivos `.sodium` (tar.gz):
+Distribute plugins as `.sodium` files (tar.gz):
 
 ```bash
-# Crear paquete
+# Create package
 POST /api/plugins/my-plugin/package
 
-# Instalar desde archivo/URL
+# Install from file/URL
 POST /api/plugins/install
 { "source": "/path/to/plugin.sodium" }
 { "source": "https://example.com/plugin.sodium" }
