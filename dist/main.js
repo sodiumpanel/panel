@@ -571,6 +571,8 @@ function renderDashboard() {
   
   app.innerHTML = `
     <div class="dashboard-container">
+      <div id="announcements-container"></div>
+      
       <header class="dashboard-header">
         <div class="greeting">
           <h1>${greeting}, <span class="highlight">${escapeHtml$4(displayName)}</span></h1>
@@ -605,6 +607,7 @@ function renderDashboard() {
   
   loadLimits$1();
   loadServers$1();
+  loadAnnouncements();
   
   pollInterval$2 = setInterval(() => {
     loadServers$1();
@@ -698,6 +701,54 @@ async function loadServers$1() {
     `).join('');
   } catch (e) {
     container.innerHTML = `<div class="error-state">Failed to load servers</div>`;
+  }
+}
+
+async function loadAnnouncements() {
+  const container = document.getElementById('announcements-container');
+  if (!container) return;
+  
+  try {
+    const res = await api('/api/announcements/active');
+    const data = await res.json();
+    
+    if (data.announcements.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    const dismissed = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
+    const activeAnnouncements = data.announcements.filter(a => !dismissed.includes(a.id));
+    
+    if (activeAnnouncements.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    container.innerHTML = activeAnnouncements.map(a => `
+      <div class="announcement-banner type-${a.type}" data-id="${a.id}">
+        <div class="announcement-icon">
+          <span class="material-icons-outlined">campaign</span>
+        </div>
+        <div class="announcement-content">
+          <div class="announcement-title">${escapeHtml$4(a.title)}</div>
+          <div class="announcement-text">${escapeHtml$4(a.content)}</div>
+        </div>
+        <button class="announcement-close" onclick="dismissAnnouncement('${a.id}')">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+    `).join('');
+    
+    window.dismissAnnouncement = (id) => {
+      const dismissed = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
+      dismissed.push(id);
+      localStorage.setItem('dismissedAnnouncements', JSON.stringify(dismissed));
+      const banner = document.querySelector(`.announcement-banner[data-id="${id}"]`);
+      if (banner) banner.remove();
+    };
+  } catch (e) {
+    container.innerHTML = '';
   }
 }
 
@@ -40134,7 +40185,7 @@ function renderFilesList(files, serverId) {
       </div>
       <div class="file-info">
         <span class="file-name">${file.name}</span>
-        <span class="file-meta">${isDir ? '--' : formatBytes$2(file.size)} • ${formatDate$1(file.modified_at)}</span>
+        <span class="file-meta">${isDir ? '--' : formatBytes$2(file.size)} • ${formatDate$2(file.modified_at)}</span>
       </div>
       <div class="file-actions">
         ${!isDir && isEditable(file.name) ? `
@@ -40251,7 +40302,7 @@ function formatBytes$2(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function formatDate$1(dateStr) {
+function formatDate$2(dateStr) {
   if (!dateStr) return '--';
   const date = new Date(dateStr);
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -41899,7 +41950,7 @@ function renderDetailsForm(server) {
         </div>
         <div class="info-row">
           <span class="info-label">Created</span>
-          <span class="info-value">${formatDate(server.created_at)}</span>
+          <span class="info-value">${formatDate$1(server.created_at)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Address</span>
@@ -42124,7 +42175,7 @@ async function deleteServer() {
   }
 }
 
-function formatDate(dateStr) {
+function formatDate$1(dateStr) {
   if (!dateStr) return 'Unknown';
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', {
@@ -43014,6 +43065,18 @@ async function renderAdmin() {
               <span class="material-icons-outlined">location_on</span>
               <span>Locations</span>
             </a>
+            <a href="#" class="admin-nav-item" data-tab="announcements">
+              <span class="material-icons-outlined">campaign</span>
+              <span>Announcements</span>
+            </a>
+            <a href="#" class="admin-nav-item" data-tab="audit">
+              <span class="material-icons-outlined">history</span>
+              <span>Audit Log</span>
+            </a>
+            <a href="#" class="admin-nav-item" data-tab="activity">
+              <span class="material-icons-outlined">timeline</span>
+              <span>Activity</span>
+            </a>
             <a href="#" class="admin-nav-item" data-tab="settings">
               <span class="material-icons-outlined">settings</span>
               <span>Settings</span>
@@ -43086,6 +43149,15 @@ async function loadView() {
         break;
       case 'settings':
         await renderSettingsPage(container, username);
+        break;
+      case 'announcements':
+        await renderAnnouncementsList(container, username);
+        break;
+      case 'audit':
+        await renderAuditLogPage(container, username);
+        break;
+      case 'activity':
+        await renderActivityLogPage(container, username);
         break;
     }
   }
@@ -46415,7 +46487,524 @@ function jsonToYaml(obj, indent = 0) {
   return yaml;
 }
 
+// ============== ANNOUNCEMENTS ==============
+
+async function renderAnnouncementsList(container, username) {
+  try {
+    const res = await api('/api/announcements');
+    const data = await res.json();
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([{ label: 'Announcements' }])}
+        <div class="admin-header-actions">
+          <button class="btn btn-primary" id="create-announcement-btn">
+            <span class="material-icons-outlined">add</span>
+            Create Announcement
+          </button>
+        </div>
+      </div>
+      
+      <div class="admin-list">
+        ${data.announcements.length === 0 ? `
+          <div class="empty-state">
+            <span class="material-icons-outlined">campaign</span>
+            <h3>No Announcements</h3>
+            <p>Create announcements to notify users</p>
+          </div>
+        ` : `
+          <div class="list-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.announcements.map(a => `
+                  <tr>
+                    <td>
+                      <div class="cell-main">${escapeHtml$4(a.title)}</div>
+                      <div class="cell-sub">${escapeHtml$4(a.content.substring(0, 50))}${a.content.length > 50 ? '...' : ''}</div>
+                    </td>
+                    <td><span class="type-badge type-${a.type}">${a.type}</span></td>
+                    <td><span class="status-badge ${a.active ? 'active' : 'inactive'}">${a.active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${new Date(a.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <div class="action-buttons">
+                        <button class="btn btn-xs btn-ghost" onclick="editAnnouncement('${a.id}')">Edit</button>
+                        <button class="btn btn-xs btn-danger-ghost" onclick="deleteAnnouncement('${a.id}')">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+      
+      <div class="modal" id="announcement-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="announcement-modal-title">Create Announcement</h3>
+            <button class="modal-close" onclick="closeAnnouncementModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="announcement-title" class="form-control" placeholder="Announcement title">
+            </div>
+            <div class="form-group">
+              <label>Content</label>
+              <textarea id="announcement-content" class="form-control" rows="4" placeholder="Announcement content"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Type</label>
+                <select id="announcement-type" class="form-control">
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="success">Success</option>
+                  <option value="danger">Danger</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <select id="announcement-active" class="form-control">
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Expires At (optional)</label>
+              <input type="datetime-local" id="announcement-expires" class="form-control">
+            </div>
+            <div class="message" id="announcement-message"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeAnnouncementModal()">Cancel</button>
+            <button class="btn btn-primary" id="save-announcement-btn">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    setupBreadcrumbListeners();
+    
+    let editingId = null;
+    
+    document.getElementById('create-announcement-btn').onclick = () => {
+      editingId = null;
+      document.getElementById('announcement-modal-title').textContent = 'Create Announcement';
+      document.getElementById('announcement-title').value = '';
+      document.getElementById('announcement-content').value = '';
+      document.getElementById('announcement-type').value = 'info';
+      document.getElementById('announcement-active').value = 'true';
+      document.getElementById('announcement-expires').value = '';
+      document.getElementById('announcement-modal').classList.add('active');
+    };
+    
+    window.closeAnnouncementModal = () => {
+      document.getElementById('announcement-modal').classList.remove('active');
+    };
+    
+    window.editAnnouncement = (id) => {
+      const announcement = data.announcements.find(a => a.id === id);
+      if (!announcement) return;
+      
+      editingId = id;
+      document.getElementById('announcement-modal-title').textContent = 'Edit Announcement';
+      document.getElementById('announcement-title').value = announcement.title;
+      document.getElementById('announcement-content').value = announcement.content;
+      document.getElementById('announcement-type').value = announcement.type;
+      document.getElementById('announcement-active').value = String(announcement.active);
+      document.getElementById('announcement-expires').value = announcement.expiresAt ? announcement.expiresAt.slice(0, 16) : '';
+      document.getElementById('announcement-modal').classList.add('active');
+    };
+    
+    window.deleteAnnouncement = async (id) => {
+      if (!confirm('Are you sure you want to delete this announcement?')) return;
+      
+      try {
+        await api(`/api/announcements/${id}`, { method: 'DELETE' });
+        loadView();
+        success('Announcement deleted');
+      } catch (e) {
+        error('Failed to delete announcement');
+      }
+    };
+    
+    document.getElementById('save-announcement-btn').onclick = async () => {
+      const title = document.getElementById('announcement-title').value.trim();
+      const content = document.getElementById('announcement-content').value.trim();
+      const type = document.getElementById('announcement-type').value;
+      const active = document.getElementById('announcement-active').value === 'true';
+      const expiresAt = document.getElementById('announcement-expires').value || null;
+      const messageEl = document.getElementById('announcement-message');
+      
+      if (!title || !content) {
+        messageEl.textContent = 'Title and content are required';
+        messageEl.className = 'message error';
+        return;
+      }
+      
+      try {
+        const method = editingId ? 'PUT' : 'POST';
+        const url = editingId ? `/api/announcements/${editingId}` : '/api/announcements';
+        
+        const res = await api(url, {
+          method,
+          body: JSON.stringify({ title, content, type, active, expiresAt })
+        });
+        
+        const result = await res.json();
+        
+        if (result.error) {
+          messageEl.textContent = result.error;
+          messageEl.className = 'message error';
+        } else {
+          closeAnnouncementModal();
+          loadView();
+          success(editingId ? 'Announcement updated' : 'Announcement created');
+        }
+      } catch (e) {
+        messageEl.textContent = 'Failed to save announcement';
+        messageEl.className = 'message error';
+      }
+    };
+    
+  } catch (e) {
+    container.innerHTML = '<div class="error">Failed to load announcements</div>';
+  }
+}
+
+// ============== AUDIT LOG ==============
+
+async function renderAuditLogPage(container, username) {
+  try {
+    const res = await api('/api/admin/audit-logs?per_page=50');
+    const data = await res.json();
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([{ label: 'Audit Log' }])}
+      </div>
+      
+      <div class="admin-list">
+        ${data.logs.length === 0 ? `
+          <div class="empty-state">
+            <span class="material-icons-outlined">history</span>
+            <h3>No Audit Logs</h3>
+            <p>Admin actions will be logged here</p>
+          </div>
+        ` : `
+          <div class="audit-log-list">
+            ${data.logs.map(log => `
+              <div class="audit-log-item">
+                <div class="audit-log-icon">
+                  <span class="material-icons-outlined">${getAuditIcon(log.action)}</span>
+                </div>
+                <div class="audit-log-content">
+                  <div class="audit-log-action">
+                    <strong>${escapeHtml$4(log.adminUsername)}</strong>
+                    <span>${formatAuditAction(log.action)}</span>
+                    <span class="audit-target">${escapeHtml$4(log.targetType)}${log.details?.title ? `: ${escapeHtml$4(log.details.title)}` : ''}</span>
+                  </div>
+                  <div class="audit-log-meta">
+                    ${log.ip ? `<span class="ip">${escapeHtml$4(log.ip)}</span>` : ''}
+                    <span class="time">${formatTimeAgo(log.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${data.meta.total_pages > 1 ? `
+            <div class="pagination-info">
+              Showing ${data.logs.length} of ${data.meta.total} entries
+            </div>
+          ` : ''}
+        `}
+      </div>
+    `;
+    
+    setupBreadcrumbListeners();
+    
+  } catch (e) {
+    container.innerHTML = '<div class="error">Failed to load audit log</div>';
+  }
+}
+
+function getAuditIcon(action) {
+  const icons = {
+    'user:create': 'person_add',
+    'user:update': 'edit',
+    'user:delete': 'person_remove',
+    'server:create': 'add_circle',
+    'server:update': 'edit',
+    'server:delete': 'delete',
+    'server:suspend': 'block',
+    'server:unsuspend': 'check_circle',
+    'node:create': 'dns',
+    'node:update': 'edit',
+    'node:delete': 'delete',
+    'egg:create': 'egg',
+    'egg:update': 'edit',
+    'egg:delete': 'delete',
+    'settings:update': 'settings',
+    'announcement:create': 'campaign',
+    'announcement:update': 'edit',
+    'announcement:delete': 'delete'
+  };
+  return icons[action] || 'info';
+}
+
+function formatAuditAction(action) {
+  const labels = {
+    'user:create': 'created user',
+    'user:update': 'updated user',
+    'user:delete': 'deleted user',
+    'server:create': 'created server',
+    'server:update': 'updated server',
+    'server:delete': 'deleted server',
+    'server:suspend': 'suspended server',
+    'server:unsuspend': 'unsuspended server',
+    'node:create': 'created node',
+    'node:update': 'updated node',
+    'node:delete': 'deleted node',
+    'egg:create': 'created egg',
+    'egg:update': 'updated egg',
+    'egg:delete': 'deleted egg',
+    'settings:update': 'updated settings',
+    'announcement:create': 'created announcement',
+    'announcement:update': 'updated announcement',
+    'announcement:delete': 'deleted announcement'
+  };
+  return labels[action] || action;
+}
+
+function formatTimeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now - date;
+  
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+  
+  return date.toLocaleDateString();
+}
+
+// ============== ACTIVITY LOG (ADMIN VIEW) ==============
+
+async function renderActivityLogPage(container, username) {
+  try {
+    const res = await api('/api/activity?per_page=50');
+    const data = await res.json();
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([{ label: 'Activity Log' }])}
+      </div>
+      
+      <div class="admin-list">
+        ${data.logs.length === 0 ? `
+          <div class="empty-state">
+            <span class="material-icons-outlined">timeline</span>
+            <h3>No Activity</h3>
+            <p>User activity will be logged here</p>
+          </div>
+        ` : `
+          <div class="activity-log-list">
+            ${data.logs.map(log => `
+              <div class="activity-log-item">
+                <div class="activity-log-icon">
+                  <span class="material-icons-outlined">${getActivityIcon(log.action)}</span>
+                </div>
+                <div class="activity-log-content">
+                  <div class="activity-log-action">
+                    <strong>${escapeHtml$4(log.username || 'Unknown')}</strong>
+                    <span>${formatActivityAction(log.action)}</span>
+                  </div>
+                  <div class="activity-log-meta">
+                    ${log.ip ? `<span class="ip">${escapeHtml$4(log.ip)}</span>` : ''}
+                    <span class="time">${formatTimeAgo(log.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${data.meta.total_pages > 1 ? `
+            <div class="pagination-info">
+              Showing ${data.logs.length} of ${data.meta.total} entries
+            </div>
+          ` : ''}
+        `}
+      </div>
+    `;
+    
+    setupBreadcrumbListeners();
+    
+  } catch (e) {
+    container.innerHTML = '<div class="error">Failed to load activity log</div>';
+  }
+}
+
+function getActivityIcon(action) {
+  const icons = {
+    'auth:login': 'login',
+    'auth:logout': 'logout',
+    'auth:password_change': 'lock',
+    'user:profile_update': 'person',
+    'api_key:create': 'key',
+    'api_key:delete': 'key_off',
+    'server:create': 'add_circle',
+    'server:delete': 'delete',
+    'server:start': 'play_arrow',
+    'server:stop': 'stop',
+    'server:restart': 'restart_alt',
+    'server:console_command': 'terminal',
+    'file:edit': 'edit',
+    'file:delete': 'delete',
+    'file:upload': 'upload',
+    'subuser:add': 'person_add',
+    'subuser:remove': 'person_remove'
+  };
+  return icons[action] || 'info';
+}
+
+function formatActivityAction(action) {
+  const labels = {
+    'auth:login': 'logged in',
+    'auth:logout': 'logged out',
+    'auth:password_change': 'changed password',
+    'user:profile_update': 'updated profile',
+    'api_key:create': 'created API key',
+    'api_key:delete': 'deleted API key',
+    'server:create': 'created server',
+    'server:delete': 'deleted server',
+    'server:start': 'started server',
+    'server:stop': 'stopped server',
+    'server:restart': 'restarted server',
+    'server:console_command': 'sent console command',
+    'file:edit': 'edited file',
+    'file:delete': 'deleted file',
+    'file:upload': 'uploaded file',
+    'subuser:add': 'added subuser',
+    'subuser:remove': 'removed subuser'
+  };
+  return labels[action] || action;
+}
+
 function cleanupAdmin() {}
+
+const activityLabels = {
+  'auth:login': { label: 'Logged in', icon: 'login' },
+  'auth:logout': { label: 'Logged out', icon: 'logout' },
+  'auth:password_change': { label: 'Changed password', icon: 'lock' },
+  'user:profile_update': { label: 'Updated profile', icon: 'person' },
+  'api_key:create': { label: 'Created API key', icon: 'key' },
+  'api_key:delete': { label: 'Deleted API key', icon: 'key_off' },
+  'server:create': { label: 'Created server', icon: 'add_circle' },
+  'server:delete': { label: 'Deleted server', icon: 'delete' },
+  'server:start': { label: 'Started server', icon: 'play_arrow' },
+  'server:stop': { label: 'Stopped server', icon: 'stop' },
+  'server:restart': { label: 'Restarted server', icon: 'restart_alt' },
+  'server:console_command': { label: 'Sent console command', icon: 'terminal' },
+  'file:edit': { label: 'Edited file', icon: 'edit' },
+  'file:delete': { label: 'Deleted file', icon: 'delete' },
+  'file:upload': { label: 'Uploaded file', icon: 'upload' },
+  'subuser:add': { label: 'Added subuser', icon: 'person_add' },
+  'subuser:remove': { label: 'Removed subuser', icon: 'person_remove' }
+};
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now - date;
+  
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+  
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  });
+}
+
+function getActivityInfo(action) {
+  return activityLabels[action] || { label: action, icon: 'info' };
+}
+
+async function renderActivityLog() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading-spinner"></div>';
+  
+  try {
+    const res = await api('/api/activity/me?per_page=50');
+    const data = await res.json();
+    
+    app.innerHTML = `
+      <div class="activity-page">
+        <div class="page-header">
+          <h1>Activity Log</h1>
+          <p class="page-description">Your recent account activity</p>
+        </div>
+        
+        <div class="activity-list">
+          ${data.logs.length === 0 ? `
+            <div class="empty-state">
+              <span class="material-icons-outlined">history</span>
+              <h3>No Activity</h3>
+              <p>Your activity will appear here</p>
+            </div>
+          ` : data.logs.map(log => {
+            const info = getActivityInfo(log.action);
+            return `
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <span class="material-icons-outlined">${info.icon}</span>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-label">${escapeHtml$4(info.label)}</div>
+                  ${log.details?.serverName ? `<div class="activity-detail">Server: ${escapeHtml$4(log.details.serverName)}</div>` : ''}
+                  ${log.details?.method ? `<div class="activity-detail">Method: ${escapeHtml$4(log.details.method)}</div>` : ''}
+                  ${log.ip ? `<div class="activity-detail ip">IP: ${escapeHtml$4(log.ip)}</div>` : ''}
+                </div>
+                <div class="activity-time">${formatDate(log.createdAt)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        
+        ${data.meta.total_pages > 1 ? `
+          <div class="activity-pagination">
+            <span>Showing ${data.logs.length} of ${data.meta.total} activities</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  } catch (e) {
+    app.innerHTML = `
+      <div class="error-page">
+        <h1>Error</h1>
+        <p>Failed to load activity log</p>
+      </div>
+    `;
+  }
+}
 
 const routes = {
   '/': {
@@ -46483,6 +47072,14 @@ const routes = {
     render: renderSettings,
     options: {
       title: 'Settings',
+      auth: true,
+      sidebar: true
+    }
+  },
+  '/activity': {
+    render: renderActivityLog,
+    options: {
+      title: 'Activity Log',
       auth: true,
       sidebar: true
     }
