@@ -1909,3 +1909,49 @@
   color: var(--text-secondary);
   font-size: 13px;
 }
+
+.search-result-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+// Egg Search
+.egg-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.current-egg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.egg-search {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+}
+
+.egg-icon.small {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  
+  .material-icons-outlined {
+    font-size: 18px;
+    color: var(--accent);
+  }
+}

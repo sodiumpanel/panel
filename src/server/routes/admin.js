@@ -225,7 +225,20 @@ router.post('/nests', (req, res) => {
 });
 
 router.get('/eggs', (req, res) => {
-  res.json(loadEggs());
+  const { search = '' } = req.query;
+  const data = loadEggs();
+  let eggs = data.eggs;
+  
+  if (search.trim()) {
+    const searchLower = search.toLowerCase().trim();
+    eggs = eggs.filter(e => 
+      e.name?.toLowerCase().includes(searchLower) ||
+      e.description?.toLowerCase().includes(searchLower) ||
+      e.author?.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  res.json({ eggs });
 });
 
 router.get('/eggs/:id', (req, res) => {
@@ -573,6 +586,15 @@ router.put('/servers/:id', (req, res) => {
     const user = users.users.find(u => u.id === updates.user_id);
     if (!user) return res.status(400).json({ error: 'User not found' });
     server.user_id = updates.user_id;
+  }
+  
+  if (updates.egg_id) {
+    const eggs = loadEggs();
+    const egg = eggs.eggs.find(e => e.id === updates.egg_id);
+    if (!egg) return res.status(400).json({ error: 'Egg not found' });
+    server.egg_id = updates.egg_id;
+    server.docker_image = egg.docker_image;
+    server.startup = egg.startup;
   }
   
   if (updates.name) server.name = sanitizeText(updates.name);
