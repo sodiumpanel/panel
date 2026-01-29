@@ -3624,7 +3624,15 @@ function jsonToYaml(obj, indent = 0) {
 async function renderAnnouncementsList(container, username) {
   try {
     const res = await api('/api/announcements');
+    
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      container.innerHTML = `<div class="error">${escapeHtml(errData.error || 'Failed to load announcements')}</div>`;
+      return;
+    }
+    
     const data = await res.json();
+    const announcements = data.announcements || [];
     
     container.innerHTML = `
       <div class="admin-header">
@@ -3638,7 +3646,7 @@ async function renderAnnouncementsList(container, username) {
       </div>
       
       <div class="admin-list">
-        ${data.announcements.length === 0 ? `
+        ${announcements.length === 0 ? `
           <div class="empty-state">
             <span class="material-icons-outlined">campaign</span>
             <h3>No Announcements</h3>
@@ -3657,7 +3665,7 @@ async function renderAnnouncementsList(container, username) {
                 </tr>
               </thead>
               <tbody>
-                ${data.announcements.map(a => `
+                ${announcements.map(a => `
                   <tr>
                     <td>
                       <div class="cell-main">${escapeHtml(a.title)}</div>
@@ -3748,7 +3756,7 @@ async function renderAnnouncementsList(container, username) {
     };
     
     window.editAnnouncement = (id) => {
-      const announcement = data.announcements.find(a => a.id === id);
+      const announcement = announcements.find(a => a.id === id);
       if (!announcement) return;
       
       editingId = id;
