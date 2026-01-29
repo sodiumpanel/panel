@@ -104,17 +104,17 @@ function renderDetailsForm(server) {
   content.innerHTML = `
     <form id="details-form" class="settings-form">
       <div class="form-group">
-        <label for="server-name">Server Name</label>
+        <label for="server-name-input">Server Name</label>
         <div class="input-wrapper">
           <span class="material-icons-outlined">badge</span>
-          <input type="text" id="server-name" name="name" value="${escapeHtml(server.name)}" maxlength="50" required />
+          <input type="text" id="server-name-input" name="name" value="${escapeHtml(server.name)}" maxlength="50" required />
         </div>
       </div>
       
       <div class="form-group">
-        <label for="server-description">Description</label>
+        <label for="server-description-input">Description</label>
         <div class="textarea-wrapper">
-          <textarea id="server-description" name="description" rows="3" maxlength="200" placeholder="Optional server description...">${escapeHtml(server.description || '')}</textarea>
+          <textarea id="server-description-input" name="description" rows="3" maxlength="200" placeholder="Optional server description...">${escapeHtml(server.description || '')}</textarea>
         </div>
       </div>
       
@@ -149,11 +149,18 @@ function renderDetailsForm(server) {
 }
 
 async function saveDetails() {
-  const username = localStorage.getItem('username');
   const saveBtn = document.getElementById('save-details');
   
-  const name = document.getElementById('server-name').value.trim();
-  const description = document.getElementById('server-description').value.trim();
+  const nameInput = document.getElementById('server-name-input');
+  const descInput = document.getElementById('server-description-input');
+  
+  if (!nameInput || !descInput) {
+    toast.error('Form elements not found');
+    return;
+  }
+  
+  const name = nameInput.value.trim();
+  const description = descInput.value.trim();
   
   if (!name) {
     toast.warning('Server name is required');
