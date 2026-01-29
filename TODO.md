@@ -14,20 +14,13 @@
 
 ## Pending
 
-- [ ] Backups (create, restore, download, delete)
 - [ ] Scheduled tasks (cron jobs, commands, power actions)
 - [ ] Activity log
-- [ ] Two-factor authentication (TOTP)
 - [ ] API keys for users
 - [ ] Session management
 - [ ] Announcements
-- [ ] Server templates
 - [ ] Audit log
-- [ ] Database management
-- [ ] Mounts
 - [ ] Server transfers between nodes
-- [ ] Resource graphs
-- [ ] Node health dashboard
 - [ ] Panel statistics
 - [ ] In-app notifications
 - [ ] Global search
