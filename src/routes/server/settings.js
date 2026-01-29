@@ -53,10 +53,16 @@ export function renderSettingsTab() {
 
 export async function initSettingsTab(serverId) {
   currentServerId = serverId;
-  await loadServerDetails(serverId);
   
-  document.getElementById('btn-reinstall').onclick = () => confirmReinstall();
-  document.getElementById('btn-delete').onclick = () => confirmDelete();
+  // Attach event listeners immediately (buttons exist from renderSettingsTab)
+  const reinstallBtn = document.getElementById('btn-reinstall');
+  const deleteBtn = document.getElementById('btn-delete');
+  
+  if (reinstallBtn) reinstallBtn.onclick = () => confirmReinstall();
+  if (deleteBtn) deleteBtn.onclick = () => confirmDelete();
+  
+  // Load details async (will render the form when ready)
+  await loadServerDetails(serverId);
 }
 
 async function loadServerDetails(serverId) {
@@ -155,13 +161,24 @@ async function saveDetails() {
     const data = await res.json();
     
     if (res.ok) {
+      toast.success('Server details saved');
       saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      
+      // Update server data cache
+      if (serverData) {
+        serverData.name = name;
+        serverData.description = description;
+      }
       
       const serverNameEl = document.getElementById('server-name-header');
       if (serverNameEl) serverNameEl.textContent = name;
       
       const headerNameEl = document.querySelector('.server-title h1');
       if (headerNameEl) headerNameEl.textContent = name;
+      
+      // Also update the main page server name
+      const mainServerName = document.getElementById('server-name');
+      if (mainServerName) mainServerName.textContent = name;
       
       setTimeout(() => {
         saveBtn.disabled = false;

@@ -115,7 +115,7 @@ router.get('/', authenticateUser, (req, res) => {
 
 // Crear Servidor (Usuario)
 router.post('/', authenticateUser, async (req, res) => {
-  const { name, egg_id, memory, disk, cpu } = req.body;
+  const { name, description, egg_id, memory, disk, cpu } = req.body;
   
   if (!name) return res.status(400).json({ error: 'Server name required' });
   
@@ -205,7 +205,7 @@ router.post('/', authenticateUser, async (req, res) => {
     id: uuid,
     uuid,
     name: sanitizeText(name),
-    description: '',
+    description: sanitizeText((description || '').slice(0, 200)),
     user_id: user.id,
     node_id: bestNode.id,
     egg_id: egg_id,
