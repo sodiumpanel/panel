@@ -4931,6 +4931,7 @@ input, textarea, select {
   margin-bottom: 24px;
   gap: 16px;
   flex-wrap: wrap;
+  width: 100%;
 }
 @media (max-width: 480px) {
   .admin-header {
