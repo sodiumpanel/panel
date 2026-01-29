@@ -43512,6 +43512,17 @@ function renderServerSubTab(server, username) {
           <div class="manage-actions">
             <div class="manage-action">
               <div class="manage-action-info">
+                <h4>Open Server</h4>
+                <p>Access the server console, files, and settings as an administrator.</p>
+              </div>
+              <a href="/server/${server.id}" class="btn btn-primary">
+                <span class="material-icons-outlined">open_in_new</span>
+                Open Server
+              </a>
+            </div>
+            
+            <div class="manage-action">
+              <div class="manage-action-info">
                 <h4>Reinstall Server</h4>
                 <p>This will reinstall the server with the selected egg. All files will be deleted.</p>
               </div>
