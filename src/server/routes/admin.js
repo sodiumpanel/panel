@@ -155,9 +155,20 @@ router.delete('/locations/:id', (req, res) => {
 
 // ==================== USERS ====================
 router.get('/users', (req, res) => {
-  const { page = 1, per_page = 10 } = req.query;
+  const { page = 1, per_page = 10, search = '' } = req.query;
   const data = loadUsers();
-  const allUsers = data.users.map(({ password, ...u }) => u);
+  let allUsers = data.users.map(({ password, ...u }) => u);
+  
+  // Filter by search term if provided
+  if (search.trim()) {
+    const searchLower = search.toLowerCase().trim();
+    allUsers = allUsers.filter(u => 
+      u.username?.toLowerCase().includes(searchLower) ||
+      u.displayName?.toLowerCase().includes(searchLower) ||
+      u.email?.toLowerCase().includes(searchLower)
+    );
+  }
+  
   const total = allUsers.length;
   const totalPages = Math.ceil(total / per_page);
   const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
@@ -381,11 +392,21 @@ router.delete('/eggs/:id', (req, res) => {
 router.get('/servers', (req, res) => {
   const { page = 1, per_page = 10 } = req.query;
   const data = loadServers();
+  const users = loadUsers();
+  const nodes = loadNodes();
   const total = data.servers.length;
   const totalPages = Math.ceil(total / per_page);
   const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
   const start = (currentPage - 1) * per_page;
-  const servers = data.servers.slice(start, start + parseInt(per_page));
+  const servers = data.servers.slice(start, start + parseInt(per_page)).map(s => {
+    const owner = users.users.find(u => u.id === s.user_id);
+    const node = nodes.nodes.find(n => n.id === s.node_id);
+    return {
+      ...s,
+      owner_username: owner?.username || null,
+      node_name: node?.name || null
+    };
+  });
   
   res.json({
     servers,
@@ -470,6 +491,32 @@ router.post('/servers', async (req, res) => {
   data.servers.push(newServer);
   saveServers(data);
   res.json({ success: true, server: newServer });
+});
+
+router.put('/servers/:id', (req, res) => {
+  const { updates } = req.body;
+  const data = loadServers();
+  const idx = data.servers.findIndex(s => s.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Server not found' });
+  
+  const server = data.servers[idx];
+  
+  if (updates.user_id) {
+    const users = loadUsers();
+    const user = users.users.find(u => u.id === updates.user_id);
+    if (!user) return res.status(400).json({ error: 'User not found' });
+    server.user_id = updates.user_id;
+  }
+  
+  if (updates.name) server.name = sanitizeText(updates.name);
+  if (updates.description !== undefined) server.description = sanitizeText(updates.description);
+  
+  if (updates.limits) {
+    server.limits = { ...server.limits, ...updates.limits };
+  }
+  
+  saveServers(data);
+  res.json({ success: true, server });
 });
 
 router.delete('/servers/:id', async (req, res) => {

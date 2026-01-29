@@ -43324,12 +43324,8 @@ function renderServerSubTab(server, username) {
                 <span class="info-value code">${server.uuid || server.id}</span>
               </div>
               <div class="info-item">
-                <span class="info-label">Owner</span>
-                <span class="info-value">${server.user_id || 'Unknown'}</span>
-              </div>
-              <div class="info-item">
                 <span class="info-label">Node</span>
-                <span class="info-value">${server.node_id || 'Unknown'}</span>
+                <span class="info-value">${server.node_name || server.node_id || 'Unknown'}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Status</span>
@@ -43337,6 +43333,23 @@ function renderServerSubTab(server, username) {
                   <span class="status-badge status-${server.status}">${server.status}</span>
                   ${server.suspended ? '<span class="status-badge status-suspended">Suspended</span>' : ''}
                 </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Owner</h3>
+            <div class="owner-section">
+              <div class="current-owner">
+                <span class="info-label">Current Owner</span>
+                <span class="info-value" id="current-owner-display">${server.owner_username || server.user_id || 'Unknown'}</span>
+              </div>
+              <div class="owner-search">
+                <label>Transfer to User</label>
+                <div class="search-input-wrapper">
+                  <input type="text" id="owner-search-input" placeholder="Search by username..." autocomplete="off" />
+                  <div class="search-results" id="owner-search-results"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -43368,6 +43381,8 @@ function renderServerSubTab(server, username) {
           </div>
         </div>
       `;
+      
+      setupOwnerSearch(server);
       break;
       
     case 'build':
@@ -43539,6 +43554,83 @@ function renderServerSubTab(server, username) {
       };
       break;
   }
+}
+
+let ownerSearchTimeout = null;
+
+function setupOwnerSearch(server) {
+  const input = document.getElementById('owner-search-input');
+  const resultsContainer = document.getElementById('owner-search-results');
+  
+  if (!input || !resultsContainer) return;
+  
+  input.oninput = () => {
+    clearTimeout(ownerSearchTimeout);
+    const query = input.value.trim();
+    
+    if (query.length < 2) {
+      resultsContainer.innerHTML = '';
+      resultsContainer.style.display = 'none';
+      return;
+    }
+    
+    ownerSearchTimeout = setTimeout(async () => {
+      try {
+        const res = await api(`/api/admin/users?search=${encodeURIComponent(query)}&per_page=10`);
+        const data = await res.json();
+        
+        if (data.users?.length > 0) {
+          resultsContainer.innerHTML = data.users.map(u => `
+            <div class="search-result-item" data-user-id="${u.id}" data-username="${escapeHtml$4(u.username)}">
+              <div class="user-avatar small">${(u.username || 'U')[0].toUpperCase()}</div>
+              <div class="search-result-info">
+                <span class="search-result-name">${escapeHtml$4(u.displayName || u.username)}</span>
+                <span class="search-result-username">@${escapeHtml$4(u.username)}</span>
+              </div>
+            </div>
+          `).join('');
+          resultsContainer.style.display = 'block';
+          
+          resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+            item.onclick = async () => {
+              const userId = item.dataset.userId;
+              const username = item.dataset.username;
+              
+              if (!confirm(`Transfer server to @${username}?`)) return;
+              
+              try {
+                await api(`/api/admin/servers/${server.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ updates: { user_id: userId } })
+                });
+                
+                success(`Server transferred to @${username}`);
+                document.getElementById('current-owner-display').textContent = `@${username}`;
+                input.value = '';
+                resultsContainer.style.display = 'none';
+              } catch (e) {
+                error('Failed to transfer server');
+              }
+            };
+          });
+        } else {
+          resultsContainer.innerHTML = '<div class="search-no-results">No users found</div>';
+          resultsContainer.style.display = 'block';
+        }
+      } catch (e) {
+        resultsContainer.innerHTML = '<div class="search-no-results">Search failed</div>';
+        resultsContainer.style.display = 'block';
+      }
+    }, 300);
+  };
+  
+  // Close results when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
+      resultsContainer.style.display = 'none';
+    }
+  });
 }
 
 async function createNewServer() {
