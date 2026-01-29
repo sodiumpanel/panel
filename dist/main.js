@@ -1974,6 +1974,8 @@ let statusCallback = null;
 let resourcesCallback = null;
 let serverIdGetter = null;
 let resizeTimeout = null;
+let receivedLogs = new Set();
+let currentServerId$6 = null;
 
 function setConsoleCallbacks(onStatus, onResources, getServerId) {
   statusCallback = onStatus;
@@ -1998,7 +2000,13 @@ function renderConsoleTab() {
 }
 
 function initConsoleTab(serverId) {
+  if (currentServerId$6 === serverId && consoleSocket && consoleSocket.readyState === WebSocket.OPEN) {
+    return;
+  }
+  
   cleanupConsoleTab();
+  currentServerId$6 = serverId;
+  receivedLogs.clear();
   
   initTerminal();
   connectWebSocket(serverId);
@@ -2131,7 +2139,16 @@ function handleSocketMessage(message) {
       
     case 'console output':
       if (args && args[0] && terminal) {
-        terminal.writeln(args[0]);
+        const logLine = args[0];
+        const logHash = hashLog(logLine);
+        if (!receivedLogs.has(logHash)) {
+          receivedLogs.add(logHash);
+          if (receivedLogs.size > 1000) {
+            const iterator = receivedLogs.values();
+            receivedLogs.delete(iterator.next().value);
+          }
+          terminal.writeln(logLine);
+        }
       }
       break;
       
@@ -2206,6 +2223,17 @@ function writeError(text) {
   }
 }
 
+function hashLog(text) {
+  let hash = 0;
+  const str = text.slice(0, 200);
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36) + '_' + text.length;
+}
+
 async function sendCommand(serverId) {
   const input = document.getElementById('command-input');
   const command = input.value.trim();
@@ -2266,6 +2294,9 @@ function cleanupConsoleTab() {
     consoleSocket.close();
     consoleSocket = null;
   }
+  
+  currentServerId$6 = null;
+  receivedLogs.clear();
 }
 
 // These are filled with ranges (rangeFrom[i] up to but not including
