@@ -41909,15 +41909,25 @@ async function initSettingsTab(serverId) {
 }
 
 async function loadServerDetails$1(serverId) {
-  const username = localStorage.getItem('username');
   const content = document.getElementById('settings-details');
+  if (!content) {
+    console.error('Settings details container not found');
+    return;
+  }
   
   try {
     const res = await api(`/api/servers/${serverId}`);
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      content.innerHTML = `<div class="error">${escapeHtml(errorData.error || 'Failed to load server')}</div>`;
+      return;
+    }
+    
     const data = await res.json();
     
-    if (data.error) {
-      content.innerHTML = `<div class="error">${escapeHtml(data.error)}</div>`;
+    if (!data.server) {
+      content.innerHTML = '<div class="error">Invalid server response</div>';
       return;
     }
     
@@ -41925,7 +41935,9 @@ async function loadServerDetails$1(serverId) {
     renderDetailsForm(serverData$1);
   } catch (e) {
     console.error('Failed to load server details:', e);
-    content.innerHTML = '<div class="error">Failed to load server details</div>';
+    if (content) {
+      content.innerHTML = '<div class="error">Failed to load server details</div>';
+    }
   }
 }
 

@@ -409,9 +409,21 @@ router.get('/:id/websocket', authenticateUser, async (req, res) => {
 // Detalles y Settings del Server
 router.put('/:id/details', authenticateUser, async (req, res) => {
   const { name, description } = req.body;
-  const result = await getServerAndNode(req.params.id, req.user);
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  const { server, node } = result;
+  const user = req.user;
+  
+  const data = loadServers();
+  const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
+  if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
+  
+  const server = data.servers[serverIndex];
+  
+  // Check permissions: admin, owner, or subuser with settings permission
+  const isOwner = server.user_id === user.id;
+  const isSubuser = (server.subusers || []).some(s => s.user_id === user.id);
+  
+  if (!user.isAdmin && !isOwner && !isSubuser) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return res.status(400).json({ error: 'Server name is required' });
@@ -420,33 +432,35 @@ router.put('/:id/details', authenticateUser, async (req, res) => {
     return res.status(400).json({ error: 'Server name must be 50 characters or less' });
   }
   
-  const data = loadServers();
-  const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
-  
   data.servers[serverIndex].name = sanitizeText(name.trim());
   data.servers[serverIndex].description = sanitizeText((description || '').slice(0, 200));
   saveServers(data);
   
+  // Try to sync with Wings if node is available (non-blocking)
   try {
-    const eggs = loadEggs();
-    const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/sync`, {
-      uuid: server.uuid,
-      suspended: server.suspended || false,
-      environment: server.environment || {},
-      invocation: server.startup || egg.startup || '',
-      skip_egg_scripts: false,
-      build: {
-        memory_limit: server.limits?.memory || 1024,
-        swap: server.limits?.swap || 0,
-        io_weight: server.limits?.io || 500,
-        cpu_limit: server.limits?.cpu || 100,
-        disk_space: server.limits?.disk || 5120
-      },
-      container: {
-        image: server.docker_image || egg.docker_image || ''
-      }
-    });
+    const nodes = loadNodes();
+    const node = nodes.nodes.find(n => n.id === server.node_id);
+    if (node) {
+      const eggs = loadEggs();
+      const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+      await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/sync`, {
+        uuid: server.uuid,
+        suspended: server.suspended || false,
+        environment: server.environment || {},
+        invocation: server.startup || egg.startup || '',
+        skip_egg_scripts: false,
+        build: {
+          memory_limit: server.limits?.memory || 1024,
+          swap: server.limits?.swap || 0,
+          io_weight: server.limits?.io || 500,
+          cpu_limit: server.limits?.cpu || 100,
+          disk_space: server.limits?.disk || 5120
+        },
+        container: {
+          image: server.docker_image || egg.docker_image || ''
+        }
+      });
+    }
   } catch (e) {
     logger.warn(`Settings sync failed: ${e.message}`);
   }
