@@ -43445,24 +43445,47 @@ function renderServerSubTab(server, username) {
       
     case 'startup':
       content.innerHTML = `
-        <div class="detail-card detail-card-wide">
-          <h3>Startup Configuration</h3>
-          <div class="info-grid">
-            <div class="info-item full-width">
-              <span class="info-label">Startup Command</span>
-              <code class="info-value code">${escapeHtml$4(server.startup || 'Not configured')}</code>
+        <div class="detail-grid">
+          <div class="detail-card">
+            <h3>Current Configuration</h3>
+            <div class="info-grid">
+              <div class="info-item full-width">
+                <span class="info-label">Startup Command</span>
+                <code class="info-value code" id="current-startup-display">${escapeHtml$4(server.startup || 'Not configured')}</code>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Docker Image</span>
+                <span class="info-value code" id="current-docker-display">${escapeHtml$4(server.docker_image || 'Not set')}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Egg ID</span>
+                <span class="info-value code">${server.egg_id || 'Unknown'}</span>
+              </div>
             </div>
-            <div class="info-item">
-              <span class="info-label">Docker Image</span>
-              <span class="info-value code">${escapeHtml$4(server.docker_image || 'Not set')}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Egg</span>
-              <span class="info-value">${server.egg_id || 'Unknown'}</span>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Change Egg</h3>
+            <p class="card-description">Changing the egg will update the startup command and Docker image.</p>
+            <div class="egg-section">
+              <div class="current-egg">
+                <span class="info-label">Current Egg</span>
+                <span class="info-value" id="current-egg-display">Loading...</span>
+              </div>
+              <div class="egg-search">
+                <label>Select New Egg</label>
+                <div class="search-input-wrapper">
+                  <input type="text" id="egg-search-input" placeholder="Search eggs..." autocomplete="off" />
+                  <div class="search-results" id="egg-search-results"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       `;
+      
+      loadCurrentEgg(server);
+      setupEggSearch(server);
       break;
       
     case 'manage':
@@ -43677,6 +43700,113 @@ function setupOwnerSearch(server) {
   };
   
   // Close results when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
+      resultsContainer.style.display = 'none';
+    }
+  });
+}
+
+async function loadCurrentEgg(server) {
+  const display = document.getElementById('current-egg-display');
+  if (!display || !server.egg_id) {
+    if (display) display.textContent = 'No egg assigned';
+    return;
+  }
+  
+  try {
+    const res = await api(`/api/admin/eggs/${server.egg_id}`);
+    const data = await res.json();
+    if (data.egg) {
+      display.textContent = data.egg.name;
+    } else {
+      display.textContent = 'Unknown egg';
+    }
+  } catch (e) {
+    display.textContent = 'Failed to load';
+  }
+}
+
+let eggSearchTimeout = null;
+
+function setupEggSearch(server) {
+  const input = document.getElementById('egg-search-input');
+  const resultsContainer = document.getElementById('egg-search-results');
+  
+  if (!input || !resultsContainer) return;
+  
+  input.oninput = () => {
+    clearTimeout(eggSearchTimeout);
+    const query = input.value.trim();
+    
+    if (query.length < 1) {
+      resultsContainer.innerHTML = '';
+      resultsContainer.style.display = 'none';
+      return;
+    }
+    
+    eggSearchTimeout = setTimeout(async () => {
+      try {
+        const res = await api(`/api/admin/eggs?search=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        
+        if (data.eggs?.length > 0) {
+          resultsContainer.innerHTML = data.eggs.map(e => `
+            <div class="search-result-item" data-egg-id="${e.id}" data-egg-name="${escapeHtml$4(e.name)}">
+              <div class="egg-icon small">
+                <span class="material-icons-outlined">${e.icon || 'egg'}</span>
+              </div>
+              <div class="search-result-info">
+                <span class="search-result-name">${escapeHtml$4(e.name)}</span>
+                <span class="search-result-sub">${escapeHtml$4(e.docker_image || 'No image')}</span>
+              </div>
+            </div>
+          `).join('');
+          resultsContainer.style.display = 'block';
+          
+          resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+            item.onclick = async () => {
+              const eggId = item.dataset.eggId;
+              const eggName = item.dataset.eggName;
+              
+              if (!confirm(`Change egg to "${eggName}"? This will update the startup command and Docker image.`)) return;
+              
+              try {
+                const res = await api(`/api/admin/servers/${server.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ updates: { egg_id: eggId } })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                  success(`Egg changed to "${eggName}"`);
+                  document.getElementById('current-egg-display').textContent = eggName;
+                  if (data.server) {
+                    document.getElementById('current-startup-display').textContent = data.server.startup || 'Not configured';
+                    document.getElementById('current-docker-display').textContent = data.server.docker_image || 'Not set';
+                  }
+                  input.value = '';
+                  resultsContainer.style.display = 'none';
+                } else {
+                  error('Failed to change egg');
+                }
+              } catch (e) {
+                error('Failed to change egg');
+              }
+            };
+          });
+        } else {
+          resultsContainer.innerHTML = '<div class="search-no-results">No eggs found</div>';
+          resultsContainer.style.display = 'block';
+        }
+      } catch (e) {
+        resultsContainer.innerHTML = '<div class="search-no-results">Search failed</div>';
+        resultsContainer.style.display = 'block';
+      }
+    }, 300);
+  };
+  
   document.addEventListener('click', (e) => {
     if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
       resultsContainer.style.display = 'none';
