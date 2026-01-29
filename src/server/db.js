@@ -11,7 +11,8 @@ const COLLECTIONS = {
   servers: 3,
   nests: 4,
   eggs: 5,
-  locations: 6
+  locations: 6,
+  apiKeys: 7
 };
 
 let cache = {
@@ -20,7 +21,8 @@ let cache = {
   servers: [],
   nests: [],
   eggs: [],
-  locations: []
+  locations: [],
+  apiKeys: []
 };
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -137,6 +139,9 @@ export function saveEggs(data) { cache.eggs = data.eggs || []; saveDatabase(); }
 
 export function loadLocations() { return { locations: cache.locations }; }
 export function saveLocations(data) { cache.locations = data.locations || []; saveDatabase(); }
+
+export function loadApiKeys() { return { apiKeys: cache.apiKeys }; }
+export function saveApiKeys(data) { cache.apiKeys = data.apiKeys || []; saveDatabase(); }
 
 export function loadConfig() {
   try {

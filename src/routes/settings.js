@@ -95,6 +95,28 @@ export function renderSettings() {
           </div>
         </div>
         
+        <div class="settings-section">
+          <div class="section-header">
+            <span class="material-icons-outlined">vpn_key</span>
+            <h3>API Keys</h3>
+          </div>
+          
+          <div class="api-keys-container">
+            <div class="api-keys-header">
+              <p class="setting-description">Manage API keys to access the Sodium API programmatically</p>
+              <button class="btn btn-primary btn-sm" id="create-api-key-btn">
+                <span class="material-icons-outlined">add</span>
+                <span>Create Key</span>
+              </button>
+            </div>
+            <div class="api-keys-list" id="api-keys-list">
+              <div class="loading-spinner">
+                <span class="material-icons-outlined spinning">sync</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="settings-section danger-section">
           <div class="section-header">
             <span class="material-icons-outlined">warning</span>
@@ -111,6 +133,63 @@ export function renderSettings() {
               <span>Sign Out</span>
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal" id="api-key-modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Create API Key</h3>
+          <button class="modal-close" id="close-api-key-modal">
+            <span class="material-icons-outlined">close</span>
+          </button>
+        </div>
+        <form id="api-key-form">
+          <div class="form-group">
+            <label for="api-key-name">Key Name</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">label</span>
+              <input type="text" id="api-key-name" required maxlength="50" placeholder="My API Key">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Permissions</label>
+            <div class="permissions-grid" id="permissions-grid"></div>
+          </div>
+          <div class="message" id="api-key-message"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancel-api-key-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Key</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div class="modal" id="api-key-created-modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>API Key Created</h3>
+          <button class="modal-close" id="close-api-key-created-modal">
+            <span class="material-icons-outlined">close</span>
+          </button>
+        </div>
+        <div class="api-key-created-content">
+          <div class="warning-box">
+            <span class="material-icons-outlined">warning</span>
+            <p>Make sure to copy your API key now. You won't be able to see it again!</p>
+          </div>
+          <div class="api-key-display">
+            <code id="created-api-key-token"></code>
+            <button type="button" class="btn btn-icon" id="copy-api-key-btn">
+              <span class="material-icons-outlined">content_copy</span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="done-api-key-btn">Done</button>
         </div>
       </div>
     </div>
@@ -157,6 +236,8 @@ export function renderSettings() {
   `;
   
   loadSettings();
+  loadApiKeys();
+  setupApiKeysHandlers();
   
   const logoutBtn = app.querySelector('#logout-btn');
   logoutBtn.addEventListener('click', () => {
@@ -293,4 +374,164 @@ async function saveSettings(settings) {
   } catch (err) {
     console.error('Failed to save settings:', err);
   }
+}
+
+let availablePermissions = [];
+
+async function loadApiKeys() {
+  const list = document.getElementById('api-keys-list');
+  
+  try {
+    const [keysRes, permsRes] = await Promise.all([
+      api('/api/api-keys'),
+      api('/api/api-keys/permissions')
+    ]);
+    
+    const keysData = await keysRes.json();
+    const permsData = await permsRes.json();
+    
+    availablePermissions = permsData.user || [];
+    
+    if (!keysData.keys || keysData.keys.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="material-icons-outlined">vpn_key</span>
+          <p>No API keys yet</p>
+        </div>
+      `;
+      return;
+    }
+    
+    list.innerHTML = keysData.keys.map(key => `
+      <div class="api-key-item" data-id="${key.id}">
+        <div class="api-key-info">
+          <span class="api-key-name">${key.name}</span>
+          <span class="api-key-meta">
+            Created ${new Date(key.createdAt).toLocaleDateString()}
+            ${key.lastUsedAt ? `• Last used ${new Date(key.lastUsedAt).toLocaleDateString()}` : '• Never used'}
+          </span>
+        </div>
+        <div class="api-key-permissions">
+          ${key.permissions.slice(0, 3).map(p => `<span class="permission-tag">${p}</span>`).join('')}
+          ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
+        </div>
+        <button class="btn btn-icon btn-danger delete-api-key-btn" data-id="${key.id}">
+          <span class="material-icons-outlined">delete</span>
+        </button>
+      </div>
+    `).join('');
+    
+    list.querySelectorAll('.delete-api-key-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (!confirm('Are you sure you want to delete this API key?')) return;
+        
+        try {
+          await api(`/api/api-keys/${id}`, { method: 'DELETE' });
+          loadApiKeys();
+        } catch (err) {
+          console.error('Failed to delete API key:', err);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Failed to load API keys:', err);
+    list.innerHTML = `
+      <div class="empty-state error">
+        <span class="material-icons-outlined">error</span>
+        <p>Failed to load API keys</p>
+      </div>
+    `;
+  }
+}
+
+function setupApiKeysHandlers() {
+  const createBtn = document.getElementById('create-api-key-btn');
+  const modal = document.getElementById('api-key-modal');
+  const createdModal = document.getElementById('api-key-created-modal');
+  const form = document.getElementById('api-key-form');
+  const permissionsGrid = document.getElementById('permissions-grid');
+  
+  const closeModal = () => {
+    modal.classList.remove('active');
+    form.reset();
+    document.getElementById('api-key-message').textContent = '';
+  };
+  
+  const closeCreatedModal = () => {
+    createdModal.classList.remove('active');
+    loadApiKeys();
+  };
+  
+  createBtn.addEventListener('click', () => {
+    permissionsGrid.innerHTML = availablePermissions.map(p => `
+      <label class="permission-checkbox">
+        <input type="checkbox" name="permissions" value="${p}">
+        <span>${p}</span>
+      </label>
+    `).join('');
+    modal.classList.add('active');
+  });
+  
+  modal.querySelector('#close-api-key-modal').addEventListener('click', closeModal);
+  modal.querySelector('#cancel-api-key-modal').addEventListener('click', closeModal);
+  modal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+  
+  createdModal.querySelector('#close-api-key-created-modal').addEventListener('click', closeCreatedModal);
+  createdModal.querySelector('#done-api-key-btn').addEventListener('click', closeCreatedModal);
+  createdModal.querySelector('.modal-backdrop').addEventListener('click', closeCreatedModal);
+  
+  createdModal.querySelector('#copy-api-key-btn').addEventListener('click', () => {
+    const token = document.getElementById('created-api-key-token').textContent;
+    navigator.clipboard.writeText(token);
+    const btn = createdModal.querySelector('#copy-api-key-btn');
+    btn.innerHTML = '<span class="material-icons-outlined">check</span>';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-icons-outlined">content_copy</span>';
+    }, 2000);
+  });
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('api-key-name').value.trim();
+    const checkboxes = form.querySelectorAll('input[name="permissions"]:checked');
+    const permissions = Array.from(checkboxes).map(cb => cb.value);
+    const messageEl = document.getElementById('api-key-message');
+    const btn = form.querySelector('button[type="submit"]');
+    
+    if (permissions.length === 0) {
+      messageEl.textContent = 'Select at least one permission';
+      messageEl.className = 'message error';
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    
+    try {
+      const res = await api('/api/api-keys', {
+        method: 'POST',
+        body: JSON.stringify({ name, permissions })
+      });
+      
+      const data = await res.json();
+      
+      if (data.error) {
+        messageEl.textContent = data.error;
+        messageEl.className = 'message error';
+      } else {
+        closeModal();
+        document.getElementById('created-api-key-token').textContent = data.token;
+        createdModal.classList.add('active');
+      }
+    } catch (err) {
+      messageEl.textContent = 'Failed to create API key';
+      messageEl.className = 'message error';
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = 'Create Key';
+  });
 }

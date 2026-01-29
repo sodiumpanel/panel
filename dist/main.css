@@ -1721,6 +1721,207 @@ input, textarea, select {
   }
 }
 
+.api-keys-container {
+  padding: 16px 20px;
+}
+@media (max-width: 480px) {
+  .api-keys-container {
+    padding: 14px 16px;
+  }
+}
+
+.api-keys-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.api-keys-header .setting-description {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+@media (max-width: 480px) {
+  .api-keys-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+}
+
+.api-keys-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.api-keys-list .loading-spinner {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+.api-keys-list .loading-spinner .spinning {
+  animation: spin 1s linear infinite;
+}
+.api-keys-list .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-tertiary);
+}
+.api-keys-list .empty-state .material-icons-outlined {
+  font-size: 32px;
+  opacity: 0.5;
+}
+.api-keys-list .empty-state.small {
+  padding: 16px;
+}
+.api-keys-list .empty-state.small .material-icons-outlined {
+  font-size: 24px;
+}
+.api-keys-list .empty-state.error {
+  color: var(--danger);
+}
+
+.api-key-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+.api-key-item .api-key-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.api-key-item .api-key-info .api-key-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.api-key-item .api-key-info .api-key-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.api-key-item .api-key-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+@media (max-width: 640px) {
+  .api-key-item {
+    flex-wrap: wrap;
+  }
+  .api-key-item .api-key-permissions {
+    width: 100%;
+    order: 3;
+  }
+}
+
+.permission-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background var(--transition-fast);
+}
+.permission-checkbox:hover {
+  background: var(--bg-secondary);
+}
+.permission-checkbox input[type=checkbox] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+}
+.permission-checkbox span {
+  color: var(--text-primary);
+}
+
+.api-key-created-content {
+  padding: 16px 0;
+}
+
+.warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+.warning-box .material-icons-outlined {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+.warning-box p {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.api-key-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+.api-key-display code {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  word-break: break-all;
+}
+.api-key-display .btn-icon {
+  flex-shrink: 0;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.card-header-row h3 {
+  margin: 0;
+}
+
 .notfound-page {
   display: flex;
   align-items: center;

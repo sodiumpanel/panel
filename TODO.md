@@ -16,7 +16,7 @@
 
 - [ ] Scheduled tasks (cron jobs, commands, power actions)
 - [ ] Activity log
-- [ ] API keys for users
+- [x] API keys for users
 - [ ] Session management
 - [ ] Announcements
 - [ ] Audit log

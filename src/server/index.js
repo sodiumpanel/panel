@@ -12,6 +12,7 @@ import adminRoutes from './routes/admin.js';
 import serverRoutes from './routes/servers.js';
 import remoteRoutes from './routes/remote.js';
 import pluginRoutes from './routes/plugins.js';
+import apiKeysRoutes from './routes/api-keys.js';
 import { setupWebSocket } from './socket.js';
 import pluginManager from './plugins/manager.js';
 
@@ -51,6 +52,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/servers', serverRoutes);
 app.use('/api/remote', remoteRoutes);
 app.use('/api/plugins', pluginRoutes);
+app.use('/api/api-keys', apiKeysRoutes);
 
 // Inicializar plugins
 pluginManager.setApp(app);
