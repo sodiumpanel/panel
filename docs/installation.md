@@ -11,7 +11,7 @@
 Clone the repository:
 
 ```bash
-git clone https://github.com/zt3xdv/sodium.git
+git clone https://github.com/sodiumpanel/panel.git
 cd sodium
 ```
 

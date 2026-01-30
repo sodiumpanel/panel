@@ -21,5 +21,5 @@ See [Configuration](configuration.md#database) for setup instructions.
 
 ## Related Projects
 
-- [Sodium Panel](https://github.com/zt3xdv/sodium) - Web management panel (this repository)
-- [Sodium Reaction](https://github.com/zt3xdv/sodium-reaction) - Node daemon for managing game servers
+- [Sodium Panel](https://github.com/sodiumpanel/panel) - Web management panel (this repository)
+- [Sodium Reaction](https://github.com/sodiumpanel/panel-reaction) - Node daemon for managing game servers

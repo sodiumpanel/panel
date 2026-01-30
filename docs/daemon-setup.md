@@ -1,6 +1,6 @@
 # Daemon Setup
 
-Sodium uses [Sodium Reaction](https://github.com/zt3xdv/sodium-reaction) as the daemon for managing game servers on nodes. Sodium Reaction is a fork of Pterodactyl Wings with Sodium-specific paths and configuration.
+Sodium uses [Sodium Reaction](https://github.com/sodiumpanel/panel-reaction) as the daemon for managing game servers on nodes. Sodium Reaction is a fork of Pterodactyl Wings with Sodium-specific paths and configuration.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ Download the latest release:
 
 ```bash
 sudo mkdir -p /etc/sodium
-curl -L -o /usr/local/bin/wings "https://github.com/zt3xdv/sodium-reaction/releases/latest/download/wings_linux_$([ "$(uname -m)" == "x86_64" ] && echo "amd64" || echo "arm64")"
+curl -L -o /usr/local/bin/wings "https://github.com/sodiumpanel/panel-reaction/releases/latest/download/wings_linux_$([ "$(uname -m)" == "x86_64" ] && echo "amd64" || echo "arm64")"
 sudo chmod +x /usr/local/bin/wings
 ```
 
