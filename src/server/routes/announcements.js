@@ -12,8 +12,6 @@ router.get('/', authenticateUser, (req, res) => {
   
   let announcements = data.announcements || [];
   
-  console.log('[Announcements] User:', req.user.username, 'isAdmin:', req.user.isAdmin, 'count:', announcements.length);
-  
   if (!req.user.isAdmin) {
     announcements = announcements.filter(a => {
       if (!a.active) return false;
