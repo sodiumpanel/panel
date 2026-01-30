@@ -273,9 +273,92 @@
             gap: 20px;
         }
 
+        /* Compare */
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .compare-table th, .compare-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .compare-table th {
+            color: #71717a;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .compare-table td:first-child {
+            color: #a1a1aa;
+        }
+
+        .compare-table .yes { color: #22c55e; }
+        .compare-table .no { color: #ef4444; }
+        .compare-table .meh { color: #f59e0b; }
+
+        /* FAQ */
+        .faq-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .faq-item {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 20px 24px;
+        }
+
+        .faq-item h3 {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .faq-item p {
+            color: #a1a1aa;
+            font-size: 14px;
+        }
+
+        /* Contributors */
+        .contributors {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .contributor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 50px;
+            padding: 8px 16px 8px 8px;
+            transition: border-color 0.15s;
+        }
+
+        .contributor:hover {
+            border-color: #e07a3a;
+            text-decoration: none;
+        }
+
+        .contributor img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .contributor span {
+            font-size: 14px;
+        }
+
         @media (max-width: 600px) {
             .hero h1 { font-size: 32px; }
             .nav-links { display: none; }
+            .compare-table { font-size: 14px; }
         }
     </style>
 </head>
@@ -347,6 +430,50 @@
         </div>
     </section>
 
+    <section id="compare">
+        <div class="container">
+            <h2>Sodium vs Pterodactyl</h2>
+            <p>Different tools for different needs.</p>
+            <table class="compare-table">
+                <tr>
+                    <th></th>
+                    <th>Sodium</th>
+                    <th>Pterodactyl</th>
+                </tr>
+                <tr>
+                    <td>Docker required</td>
+                    <td class="no">No</td>
+                    <td class="yes">Yes</td>
+                </tr>
+                <tr>
+                    <td>Database</td>
+                    <td class="yes">File-based</td>
+                    <td class="meh">MySQL + Redis</td>
+                </tr>
+                <tr>
+                    <td>Install time</td>
+                    <td class="yes">~2 min</td>
+                    <td class="meh">~30 min</td>
+                </tr>
+                <tr>
+                    <td>Dependencies</td>
+                    <td class="yes">Just Node.js</td>
+                    <td class="meh">PHP, Composer, MySQL, Redis, Nginx</td>
+                </tr>
+                <tr>
+                    <td>Resource isolation</td>
+                    <td class="meh">Basic</td>
+                    <td class="yes">Full (Docker)</td>
+                </tr>
+                <tr>
+                    <td>Best for</td>
+                    <td>Small setups, VPS, personal use</td>
+                    <td>Large hosting, multi-tenant</td>
+                </tr>
+            </table>
+        </div>
+    </section>
+
     <section id="install">
         <div class="container">
             <h2>Installation</h2>
@@ -388,6 +515,48 @@
                 <a href="viewer.html?file=api.md" class="doc-link">API</a>
                 <a href="viewer.html?file=architecture.md" class="doc-link">Architecture</a>
                 <a href="https://github.com/zt3xdv/sodium-reaction" class="doc-link">Sodium Reaction ↗</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq">
+        <div class="container">
+            <h2>FAQ</h2>
+            <p>Before you ask.</p>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <h3>Does it support Minecraft?</h3>
+                    <p>Yes. Java and Bedrock. Check the eggs folder for configs.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Is it compatible with Wings?</h3>
+                    <p>No. Sodium uses its own daemon called Sodium Reaction. Different architecture.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Can I migrate from Pterodactyl?</h3>
+                    <p>Not directly. Different database format. You'd need to recreate servers manually.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Is it production ready?</h3>
+                    <p>For small setups, yes. For 100+ servers, probably stick with Pterodactyl.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Does it run on Windows?</h3>
+                    <p>The panel does. The daemon is Linux-only for now.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contributors">
+        <div class="container">
+            <h2>Contributors</h2>
+            <p>People who made this happen.</p>
+            <div class="contributors" id="contributors-list">
+                <a href="https://github.com/zt3xdv" class="contributor">
+                    <img src="https://avatars.githubusercontent.com/u/185859840?v=4" alt="zt3xdv">
+                    <span>zt3xdv</span>
+                </a>
             </div>
         </div>
     </section>
