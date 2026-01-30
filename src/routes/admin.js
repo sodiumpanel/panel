@@ -3634,7 +3634,29 @@ async function renderAnnouncementsList(container, username) {
     const data = await res.json();
     const announcements = data.announcements || [];
     
-    toast.info(`Loaded ${announcements.length} announcements`);
+    const tableRows = announcements.map(a => {
+      const content = a.content || '';
+      const title = a.title || 'Untitled';
+      const type = a.type || 'info';
+      const createdAt = a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '--';
+      return `
+        <tr>
+          <td>
+            <div class="cell-main">${escapeHtml(title)}</div>
+            <div class="cell-sub">${escapeHtml(content.substring(0, 50))}${content.length > 50 ? '...' : ''}</div>
+          </td>
+          <td><span class="type-badge type-${type}">${type}</span></td>
+          <td><span class="status-badge ${a.active ? 'active' : 'inactive'}">${a.active ? 'Active' : 'Inactive'}</span></td>
+          <td>${createdAt}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn btn-xs btn-ghost" onclick="editAnnouncement('${a.id}')">Edit</button>
+              <button class="btn btn-xs btn-danger-ghost" onclick="deleteAnnouncement('${a.id}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
     
     container.innerHTML = `
       <div class="admin-header">
@@ -3667,28 +3689,7 @@ async function renderAnnouncementsList(container, username) {
                 </tr>
               </thead>
               <tbody>
-                ${announcements.map(a => {
-                  const content = a.content || '';
-                  const title = a.title || 'Untitled';
-                  const type = a.type || 'info';
-                  const createdAt = a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '--';
-                  return `
-                  <tr>
-                    <td>
-                      <div class="cell-main">${escapeHtml(title)}</div>
-                      <div class="cell-sub">${escapeHtml(content.substring(0, 50))}${content.length > 50 ? '...' : ''}</div>
-                    </td>
-                    <td><span class="type-badge type-${type}">${type}</span></td>
-                    <td><span class="status-badge ${a.active ? 'active' : 'inactive'}">${a.active ? 'Active' : 'Inactive'}</span></td>
-                    <td>${createdAt}</td>
-                    <td>
-                      <div class="action-buttons">
-                        <button class="btn btn-xs btn-ghost" onclick="editAnnouncement('${a.id}')">Edit</button>
-                        <button class="btn btn-xs btn-danger-ghost" onclick="deleteAnnouncement('${a.id}')">Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                `}).join('')}
+                ${tableRows}
               </tbody>
             </table>
           </div>
