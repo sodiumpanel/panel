@@ -3634,6 +3634,8 @@ async function renderAnnouncementsList(container, username) {
     const data = await res.json();
     const announcements = data.announcements || [];
     
+    toast.info(`Loaded ${announcements.length} announcements`);
+    
     container.innerHTML = `
       <div class="admin-header">
         ${renderBreadcrumb([{ label: 'Announcements' }])}
