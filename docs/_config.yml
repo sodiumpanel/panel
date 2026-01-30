@@ -1,0 +1,6 @@
+title: Sodium Panel
+description: A modern, lightweight control panel for game server management
+theme: null
+include:
+  - "*.html"
+  - "*.md"
