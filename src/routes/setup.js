@@ -2,6 +2,10 @@ export async function renderSetup() {
   const app = document.getElementById('app');
   app.className = 'setup-page';
   
+  // Theme handling
+  const savedTheme = localStorage.getItem('sodium-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  
   let currentStep = 1;
   const totalSteps = 5;
   
@@ -19,9 +23,14 @@ export async function renderSetup() {
       <div class="setup-container">
         <div class="setup-card">
           <div class="setup-header">
-            <div class="setup-logo">
-              <span class="material-icons-outlined">bolt</span>
-              <span>Sodium Setup</span>
+            <div class="setup-header-top">
+              <div class="setup-logo">
+                <span class="material-icons-outlined">bolt</span>
+                <span>Sodium Setup</span>
+              </div>
+              <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+                <span class="material-icons-outlined">${document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+              </button>
             </div>
             <div class="setup-progress">
               <div class="progress-bar">
@@ -302,6 +311,15 @@ export async function renderSetup() {
   }
   
   function attachListeners() {
+    // Theme toggle
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('sodium-theme', next);
+      render();
+    });
+    
     document.getElementById('prev-btn')?.addEventListener('click', () => {
       saveCurrentStep();
       currentStep--;

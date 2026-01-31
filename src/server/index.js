@@ -17,6 +17,8 @@ import announcementsRoutes from './routes/announcements.js';
 import auditLogsRoutes from './routes/audit-logs.js';
 import activityLogsRoutes from './routes/activity-logs.js';
 import setupRoutes from './routes/setup.js';
+import healthRoutes from './routes/health.js';
+import metricsRoutes, { recordRequest } from './routes/metrics.js';
 import { setupWebSocket } from './socket.js';
 import { isInstalled, loadFullConfig } from './config.js';
 
@@ -52,9 +54,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Metrics middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    recordRequest(Date.now() - start);
+  });
+  next();
+});
+
 // Assets estáticos
 app.use(express.static(path.join(__dirname, '../../dist')));
 app.use(express.static(path.join(__dirname, '../../assets')));
+
+// Health & Metrics (always available, no auth)
+app.use('/api', healthRoutes);
+app.use(metricsRoutes);
 
 // Setup routes (always available)
 app.use('/api/setup', setupRoutes);
