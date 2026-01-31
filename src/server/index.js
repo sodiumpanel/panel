@@ -16,7 +16,9 @@ import apiKeysRoutes from './routes/api-keys.js';
 import announcementsRoutes from './routes/announcements.js';
 import auditLogsRoutes from './routes/audit-logs.js';
 import activityLogsRoutes from './routes/activity-logs.js';
+import setupRoutes from './routes/setup.js';
 import { setupWebSocket } from './socket.js';
+import { isInstalled, loadFullConfig } from './config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -53,6 +55,17 @@ app.use((req, res, next) => {
 // Assets estáticos
 app.use(express.static(path.join(__dirname, '../../dist')));
 app.use(express.static(path.join(__dirname, '../../assets')));
+
+// Setup routes (always available)
+app.use('/api/setup', setupRoutes);
+
+// Middleware to check if installed
+app.use('/api', (req, res, next) => {
+  if (!isInstalled() && !req.path.startsWith('/setup')) {
+    return res.status(503).json({ error: 'Panel not configured', needsSetup: true });
+  }
+  next();
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);

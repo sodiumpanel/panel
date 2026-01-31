@@ -90,7 +90,7 @@ Sodium supports multiple database backends:
 | PostgreSQL | `pg` | Production, complex queries |
 | SQLite | `better-sqlite3` | Single-server production |
 
-The database is configured via environment variables (`DB_TYPE`, `DB_HOST`, etc.). See [Configuration](configuration.md) for details.
+The database is configured via the setup wizard and stored in `data/config.json`. See [Configuration](configuration.md) for details.
 
 ## Database Schema
 

@@ -1,17 +1,22 @@
 import fs from 'fs';
 import path from 'path';
-import { DATA_DIR, CONFIG_FILE, DEFAULT_CONFIG } from './config.js';
+import { DATA_DIR, loadFullConfig, saveFullConfig, CONFIG_FILE } from './config.js';
 import logger from './utils/logger.js';
 
 const DB_FILE = path.join(DATA_DIR, 'sodium.db');
 const MAGIC = Buffer.from('SODIUM01');
 
-const DB_TYPE = process.env.DB_TYPE || 'file';
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_PORT = process.env.DB_PORT || '3306';
-const DB_NAME = process.env.DB_NAME || 'sodium';
-const DB_USER = process.env.DB_USER || 'sodium';
-const DB_PASS = process.env.DB_PASS || '';
+function getDbConfig() {
+  const config = loadFullConfig();
+  return {
+    type: config.database?.type || 'file',
+    host: config.database?.host || 'localhost',
+    port: config.database?.port || 3306,
+    name: config.database?.name || 'sodium',
+    user: config.database?.user || 'sodium',
+    password: config.database?.password || ''
+  };
+}
 
 const COLLECTIONS = {
   users: 1,
@@ -47,49 +52,51 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 async function initExternalDb() {
-  if (DB_TYPE === 'file') return false;
+  const dbConfig = getDbConfig();
+  
+  if (dbConfig.type === 'file') return false;
   
   try {
-    if (DB_TYPE === 'mysql' || DB_TYPE === 'mariadb') {
+    if (dbConfig.type === 'mysql' || dbConfig.type === 'mariadb') {
       const mysql = await import('mysql2/promise');
       dbDriver = 'mysql';
       dbConnection = await mysql.default.createPool({
-        host: DB_HOST,
-        port: parseInt(DB_PORT),
-        database: DB_NAME,
-        user: DB_USER,
-        password: DB_PASS,
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.name,
+        user: dbConfig.user,
+        password: dbConfig.password,
         waitForConnections: true,
         connectionLimit: 10
       });
       await createMysqlTables();
-      console.log(`Connected to ${DB_TYPE.toUpperCase()} database`);
+      console.log(`Connected to ${dbConfig.type.toUpperCase()} database`);
       return true;
-    } else if (DB_TYPE === 'postgresql' || DB_TYPE === 'postgres') {
+    } else if (dbConfig.type === 'postgresql' || dbConfig.type === 'postgres') {
       const pg = await import('pg');
       dbDriver = 'postgres';
       dbConnection = new pg.default.Pool({
-        host: DB_HOST,
-        port: parseInt(DB_PORT),
-        database: DB_NAME,
-        user: DB_USER,
-        password: DB_PASS,
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.name,
+        user: dbConfig.user,
+        password: dbConfig.password,
         max: 10
       });
       await createPostgresTables();
       console.log('Connected to PostgreSQL database');
       return true;
-    } else if (DB_TYPE === 'sqlite') {
+    } else if (dbConfig.type === 'sqlite') {
       const sqlite = await import('better-sqlite3');
       dbDriver = 'sqlite';
-      const sqliteFile = process.env.DB_FILE || path.join(DATA_DIR, 'sodium.sqlite');
+      const sqliteFile = path.join(DATA_DIR, 'sodium.sqlite');
       dbConnection = new sqlite.default(sqliteFile);
       await createSqliteTables();
       console.log('Connected to SQLite database');
       return true;
     }
   } catch (err) {
-    console.warn(`External DB (${DB_TYPE}) unavailable, falling back to file DB:`, err.message);
+    console.warn(`External DB (${dbConfig.type}) unavailable, falling back to file DB:`, err.message);
     return false;
   }
   return false;
@@ -369,23 +376,11 @@ export const loadActivityLogs = activityLogsAccessors.load;
 export const saveActivityLogs = activityLogsAccessors.save;
 
 export function loadConfig() {
-  try {
-    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    return {
-      panel: { ...DEFAULT_CONFIG.panel, ...config.panel },
-      registration: { ...DEFAULT_CONFIG.registration, ...config.registration },
-      defaults: { ...DEFAULT_CONFIG.defaults, ...config.defaults },
-      features: { ...DEFAULT_CONFIG.features, ...config.features }
-    };
-  } catch {
-    // Config file missing or corrupted, recreate with defaults
-    saveConfig(DEFAULT_CONFIG);
-    return DEFAULT_CONFIG;
-  }
+  return loadFullConfig();
 }
 
 export function saveConfig(data) {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(data, null, 2));
+  saveFullConfig(data);
 }
 
 export function findById(collection, id) {

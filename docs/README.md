@@ -8,6 +8,22 @@
 4. [API Reference](api.md) - REST API documentation
 5. [Architecture](architecture.md) - System architecture overview
 
+## Quick Start
+
+```bash
+git clone https://github.com/sodiumpanel/panel.git
+cd sodium && npm install && npm run build && npm start
+```
+
+On first launch, a **setup wizard** guides you through:
+- Panel name, URL, and port
+- Database selection (File, SQLite, MySQL, PostgreSQL)
+- Optional Redis configuration
+- Default user resource limits
+- Admin account creation
+
+All configuration is stored in `data/config.json`.
+
 ## Database Support
 
 Sodium supports multiple database backends:

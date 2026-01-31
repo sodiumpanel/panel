@@ -1,30 +1,39 @@
 # Configuration
 
-## Environment Variables
+## Overview
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | 3000 | Server port |
-| `JWT_SECRET` | (default) | Secret key for JWT tokens |
-| `DB_TYPE` | file | Database type: `file`, `mysql`, `mariadb`, `postgresql`, `sqlite` |
-| `DB_HOST` | localhost | Database host (mysql/postgres) |
-| `DB_PORT` | 3306 | Database port |
-| `DB_NAME` | sodium | Database name |
-| `DB_USER` | sodium | Database username |
-| `DB_PASS` | - | Database password |
-| `DB_FILE` | - | SQLite file path |
+Sodium stores all configuration in `data/config.json`. This file is created automatically by the setup wizard on first launch.
 
-## Panel Configuration
+**Note:** Environment variables are no longer used for configuration. All settings are managed through the setup wizard or Admin > Settings.
 
-Configuration is stored in `data/config.json` and can be edited through Admin > Settings.
+## Configuration File
 
-### Default Configuration
+### Full Structure
 
 ```json
 {
+  "installed": true,
   "panel": {
-    "name": "Sodium Panel",
-    "url": "http://localhost:3000"
+    "name": "Sodium",
+    "url": "http://localhost:3000",
+    "port": 3000
+  },
+  "jwt": {
+    "secret": "auto-generated-secret"
+  },
+  "database": {
+    "type": "file",
+    "host": "localhost",
+    "port": 3306,
+    "name": "sodium",
+    "user": "sodium",
+    "password": ""
+  },
+  "redis": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 6379,
+    "password": ""
   },
   "registration": {
     "enabled": true
@@ -33,7 +42,8 @@ Configuration is stored in `data/config.json` and can be edited through Admin > 
     "servers": 2,
     "memory": 2048,
     "disk": 10240,
-    "cpu": 200
+    "cpu": 200,
+    "allocations": 5
   },
   "features": {
     "subusers": true
@@ -41,11 +51,29 @@ Configuration is stored in `data/config.json` and can be edited through Admin > 
 }
 ```
 
-### Options
+### Configuration Options
 
 **panel**
-- `name` - Panel display name
-- `url` - Public URL (used for daemon communication)
+- `name` - Panel display name (shown in browser title and header)
+- `url` - Public URL (used for daemon communication and webhooks)
+- `port` - Server listening port
+
+**jwt**
+- `secret` - JWT signing secret (auto-generated during setup, do not edit)
+
+**database**
+- `type` - Database backend: `file`, `sqlite`, `mysql`, `mariadb`, `postgresql`
+- `host` - Database host (for mysql/postgresql)
+- `port` - Database port (3306 for MySQL, 5432 for PostgreSQL)
+- `name` - Database name
+- `user` - Database username
+- `password` - Database password
+
+**redis**
+- `enabled` - Enable Redis caching
+- `host` - Redis server host
+- `port` - Redis server port
+- `password` - Redis password (optional)
 
 **registration**
 - `enabled` - Allow new user registrations
@@ -55,42 +83,21 @@ Configuration is stored in `data/config.json` and can be edited through Admin > 
 - `memory` - Maximum RAM (MB)
 - `disk` - Maximum disk (MB)
 - `cpu` - Maximum CPU (100 = 1 core)
+- `allocations` - Maximum port allocations
 
 **features**
 - `subusers` - Enable server sharing
 
 ## Database
 
-Sodium supports multiple database backends. By default, it uses a binary file database (`data/sodium.db`), but you can configure external databases for production environments.
+Sodium supports multiple database backends:
 
-### Supported Databases
-
-| Type | Driver Required | Notes |
-|------|-----------------|-------|
-| `file` | None (built-in) | Default, no setup required |
-| `mysql` | `mysql2` | MySQL 5.7+ |
-| `mariadb` | `mysql2` | MariaDB 10.3+ |
-| `postgresql` / `postgres` | `pg` | PostgreSQL 12+ |
-| `sqlite` | `better-sqlite3` | SQLite 3 |
-
-### Configuration
-
-Set database options via environment variables:
-
-```bash
-# Database type (default: file)
-DB_TYPE=mysql
-
-# Connection settings (for mysql/mariadb/postgresql)
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=sodium
-DB_USER=sodium
-DB_PASS=your-password
-
-# SQLite file path (for sqlite only)
-DB_FILE=./data/sodium.sqlite
-```
+| Type | Driver | Use Case |
+|------|--------|----------|
+| `file` | Built-in | Default, no setup required |
+| `sqlite` | `better-sqlite3` | Single-server production |
+| `mysql` / `mariadb` | `mysql2` | MySQL 5.7+ / MariaDB 10.3+ |
+| `postgresql` | `pg` | PostgreSQL 12+ |
 
 ### Installing Database Drivers
 
@@ -111,9 +118,25 @@ npm install better-sqlite3
 
 If the configured external database is unavailable, Sodium will automatically fall back to the file-based database and log a warning.
 
-### Migration
+## Changing Configuration
 
-When switching from file to external database, existing data is preserved in the file database. To migrate data, you can:
-1. Export data via the API
-2. Switch database configuration
-3. Import data to the new database
+### Via Admin Panel
+
+Most settings can be changed through **Admin > Settings** in the web interface.
+
+### Manual Edit
+
+You can directly edit `data/config.json`. Restart the server for changes to take effect.
+
+**Important:** Do not modify `jwt.secret` after setup, as this will invalidate all existing user sessions.
+
+### Re-running Setup
+
+To re-run the setup wizard:
+
+1. Stop the server
+2. Delete or edit `data/config.json` and set `"installed": false`
+3. Start the server
+4. Navigate to `/setup`
+
+**Warning:** This will not delete existing data, but creating a new admin account will add another user.

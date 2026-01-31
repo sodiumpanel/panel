@@ -10,10 +10,18 @@ import { renderServerPage, cleanupServerPage } from './server/index.js';
 import { renderStatus, cleanupStatus } from './status.js';
 import { renderAdmin, cleanupAdmin } from './admin/index.js';
 import { renderActivityLog } from './activity-log.js';
+import { renderSetup } from './setup.js';
 
 export const routes = {
   '/': {
     redirect: '/auth'
+  },
+  '/setup': {
+    render: renderSetup,
+    options: {
+      title: 'Setup',
+      sidebar: false
+    }
   },
   '/auth': {
     render: renderAuth,

@@ -5,6 +5,7 @@
 - Node.js 23 or higher
 - npm
 - (Optional) MySQL/MariaDB, PostgreSQL, or SQLite for external database
+- (Optional) Redis for large-scale deployments
 
 ## Panel Installation
 
@@ -27,21 +28,6 @@ Build the frontend:
 npm run build
 ```
 
-Set environment variables (recommended for production):
-
-```bash
-export JWT_SECRET="your-secure-secret-key"
-export PORT=3000
-
-# Optional: Use external database (MySQL, PostgreSQL, or SQLite)
-# export DB_TYPE=mysql
-# export DB_HOST=localhost
-# export DB_PORT=3306
-# export DB_NAME=sodium
-# export DB_USER=sodium
-# export DB_PASS=your-password
-```
-
 Start the server:
 
 ```bash
@@ -50,9 +36,21 @@ npm start
 
 The panel will be available at `http://localhost:3000`.
 
-## First User
+## Setup Wizard
 
-The first user to register automatically becomes an administrator.
+On first launch, Sodium displays a setup wizard that guides you through configuration:
+
+1. **Panel Configuration** - Set panel name, public URL, and port
+2. **Database** - Choose storage backend (file, SQLite, MySQL, PostgreSQL)
+3. **Redis** - Optional caching for better performance at scale
+4. **Default Limits** - Resource limits for new users (servers, memory, disk, CPU)
+5. **Admin Account** - Create the first administrator account
+
+The wizard automatically:
+- Generates a secure JWT secret
+- Tests database and Redis connections
+- Creates the admin user
+- Saves all configuration to `data/config.json`
 
 ## Production Deployment
 
@@ -70,14 +68,6 @@ Type=simple
 User=sodium
 WorkingDirectory=/opt/sodium
 Environment=NODE_ENV=production
-Environment=JWT_SECRET=your-secure-secret-key
-Environment=PORT=3000
-# Optional: External database
-# Environment=DB_TYPE=mysql
-# Environment=DB_HOST=localhost
-# Environment=DB_NAME=sodium
-# Environment=DB_USER=sodium
-# Environment=DB_PASS=your-password
 ExecStart=/usr/bin/node src/server/index.js
 Restart=on-failure
 RestartSec=10
@@ -130,7 +120,7 @@ sodium/
 
 ## External Database Setup
 
-If you prefer using an external database instead of the default file-based storage:
+If you prefer using an external database, install the required driver before running setup:
 
 ### MySQL / MariaDB
 
@@ -139,14 +129,9 @@ npm install mysql2
 
 # Create database
 mysql -u root -p -e "CREATE DATABASE sodium; CREATE USER 'sodium'@'localhost' IDENTIFIED BY 'password'; GRANT ALL ON sodium.* TO 'sodium'@'localhost';"
-
-# Configure
-export DB_TYPE=mysql
-export DB_HOST=localhost
-export DB_NAME=sodium
-export DB_USER=sodium
-export DB_PASS=password
 ```
+
+Then select MySQL in the setup wizard and enter connection details.
 
 ### PostgreSQL
 
@@ -155,20 +140,29 @@ npm install pg
 
 # Create database
 sudo -u postgres psql -c "CREATE DATABASE sodium; CREATE USER sodium WITH PASSWORD 'password'; GRANT ALL PRIVILEGES ON DATABASE sodium TO sodium;"
-
-# Configure
-export DB_TYPE=postgresql
-export DB_HOST=localhost
-export DB_NAME=sodium
-export DB_USER=sodium
-export DB_PASS=password
 ```
+
+Then select PostgreSQL in the setup wizard and enter connection details.
 
 ### SQLite
 
 ```bash
 npm install better-sqlite3
-
-export DB_TYPE=sqlite
-export DB_FILE=./data/sodium.sqlite
 ```
+
+Then select SQLite in the setup wizard.
+
+## Redis Setup (Optional)
+
+For large installations with many concurrent users:
+
+```bash
+# Install Redis
+sudo apt install redis-server
+
+# Start Redis
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+```
+
+Enable Redis in the setup wizard (step 3) and enter connection details.

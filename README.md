@@ -12,21 +12,15 @@ npm run build
 npm start
 ```
 
-### Optional: External Database
+On first launch, a setup wizard will guide you through:
 
-```bash
-# MySQL
-npm install mysql2
-export DB_TYPE=mysql DB_HOST=localhost DB_NAME=sodium DB_USER=sodium DB_PASS=password
+1. **Panel Configuration** - Name, URL, and port
+2. **Database** - File (default), SQLite, MySQL, or PostgreSQL
+3. **Redis** - Optional, for large-scale deployments
+4. **Default Limits** - Resource limits for new users
+5. **Admin Account** - Create the first administrator
 
-# PostgreSQL
-npm install pg
-export DB_TYPE=postgresql DB_HOST=localhost DB_NAME=sodium DB_USER=sodium DB_PASS=password
-
-# SQLite
-npm install better-sqlite3
-export DB_TYPE=sqlite
-```
+All configuration is stored in `data/config.json`. No manual environment variables required.
 
 ## Scripts
 
