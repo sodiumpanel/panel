@@ -1,7 +1,6 @@
 import { getUser } from '../../utils/api.js';
 import { state } from './state.js';
 
-// Views
 import { renderNodesList, renderNodeDetail } from './views/nodes.js';
 import { renderServersList, renderServerDetail } from './views/servers.js';
 import { renderUsersList, renderUserDetail } from './views/users.js';
@@ -33,7 +32,7 @@ function getDefaultSubTab(tab) {
 
 window.adminNavigate = navigateTo;
 
-export async function renderAdmin() {
+export async function renderAdmin(tab = 'nodes', params = {}) {
   const app = document.getElementById('app');
   const user = getUser();
   
@@ -55,71 +54,20 @@ export async function renderAdmin() {
     return;
   }
   
+  state.currentView = {
+    type: params.id ? 'detail' : 'list',
+    tab,
+    id: params.id || null,
+    subTab: params.subTab || getDefaultSubTab(tab)
+  };
+  
   app.innerHTML = `
     <div class="admin-page">
-      <div class="admin-layout">
-        <aside class="admin-sidebar">
-          <div class="admin-sidebar-header">
-            <span class="material-icons-outlined">admin_panel_settings</span>
-            <span>Admin</span>
-          </div>
-          <nav class="admin-nav">
-            <a href="#" class="admin-nav-item active" data-tab="nodes">
-              <span class="material-icons-outlined">dns</span>
-              <span>Nodes</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="servers">
-              <span class="material-icons-outlined">storage</span>
-              <span>Servers</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="users">
-              <span class="material-icons-outlined">people</span>
-              <span>Users</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="nests">
-              <span class="material-icons-outlined">egg</span>
-              <span>Nests</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="locations">
-              <span class="material-icons-outlined">location_on</span>
-              <span>Locations</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="announcements">
-              <span class="material-icons-outlined">campaign</span>
-              <span>Announcements</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="audit">
-              <span class="material-icons-outlined">history</span>
-              <span>Audit Log</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="activity">
-              <span class="material-icons-outlined">timeline</span>
-              <span>Activity</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="settings">
-              <span class="material-icons-outlined">settings</span>
-              <span>Settings</span>
-            </a>
-          </nav>
-        </aside>
-        
-        <main class="admin-main">
-          <div class="admin-content" id="admin-content">
-            <div class="loading-spinner"></div>
-          </div>
-        </main>
+      <div class="admin-content" id="admin-content">
+        <div class="loading-spinner"></div>
       </div>
     </div>
   `;
-  
-  document.querySelectorAll('.admin-nav-item').forEach(item => {
-    item.onclick = (e) => {
-      e.preventDefault();
-      document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      navigateTo(item.dataset.tab);
-    };
-  });
   
   loadView();
 }
@@ -129,10 +77,6 @@ export async function loadView() {
   const username = localStorage.getItem('username');
   
   container.innerHTML = '<div class="loading-spinner"></div>';
-  
-  document.querySelectorAll('.admin-nav-item').forEach(i => {
-    i.classList.toggle('active', i.dataset.tab === state.currentView.tab);
-  });
   
   if (state.currentView.type === 'detail' && state.currentView.id) {
     switch (state.currentView.tab) {
@@ -183,5 +127,4 @@ export async function loadView() {
 }
 
 export function cleanupAdmin() {
-  // Reset admin view state when leaving
 }

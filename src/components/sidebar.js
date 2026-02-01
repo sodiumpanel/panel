@@ -6,14 +6,71 @@ export function renderSidebar() {
   sidebar.className = 'sidebar';
   
   const currentPath = window.location.pathname;
+  const user = getUser();
   
-  const baseItems = [
-    { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-    { path: '/servers', icon: 'dns', label: 'Servers' },
-    { path: '/status', icon: 'monitor_heart', label: 'Status' },
-    { path: '/profile', icon: 'person', label: 'Profile' },
-    { path: '/settings', icon: 'settings', label: 'Settings' }
+  const sections = [
+    {
+      label: null,
+      items: [
+        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
+        { path: '/servers', icon: 'dns', label: 'Servers' }
+      ]
+    },
+    {
+      label: 'Monitoring',
+      items: [
+        { path: '/status', icon: 'monitor_heart', label: 'Status' },
+        { path: '/activity', icon: 'timeline', label: 'Activity' }
+      ]
+    },
+    {
+      label: 'Account',
+      items: [
+        { path: '/profile', icon: 'person', label: 'Profile' },
+        { path: '/settings', icon: 'settings', label: 'Settings' }
+      ]
+    }
   ];
+  
+  const adminSection = {
+    label: 'Administration',
+    items: [
+      { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
+      { path: '/admin/servers', icon: 'storage', label: 'Servers' },
+      { path: '/admin/users', icon: 'people', label: 'Users' },
+      { path: '/admin/nests', icon: 'egg', label: 'Nests' },
+      { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
+      { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
+      { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
+      { path: '/admin/settings', icon: 'tune', label: 'Panel Settings' }
+    ]
+  };
+  
+  if (user?.isAdmin) {
+    sections.push(adminSection);
+  }
+  
+  const renderSection = (section) => {
+    const header = section.label 
+      ? `<div class="nav-section-label">${section.label}</div>` 
+      : '';
+    
+    const items = section.items.map(item => `
+      <li class="nav-item">
+        <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
+          <span class="material-icons-outlined">${item.icon}</span>
+          <span class="nav-text">${item.label}</span>
+        </a>
+      </li>
+    `).join('');
+    
+    return `
+      <div class="nav-section">
+        ${header}
+        <ul class="nav-list">${items}</ul>
+      </div>
+    `;
+  };
   
   sidebar.innerHTML = `
     <div class="sidebar-header">
@@ -24,16 +81,7 @@ export function renderSidebar() {
     </div>
     
     <nav class="sidebar-nav">
-      <ul class="nav-list" id="nav-list">
-        ${baseItems.map(item => `
-          <li class="nav-item">
-            <a href="${item.path}" class="nav-link ${currentPath === item.path ? 'active' : ''}">
-              <span class="material-icons-outlined">${item.icon}</span>
-              <span class="nav-text">${item.label}</span>
-            </a>
-          </li>
-        `).join('')}
-      </ul>
+      ${sections.map(renderSection).join('')}
     </nav>
     
     <div class="sidebar-footer">
@@ -42,8 +90,6 @@ export function renderSidebar() {
       </div>
     </div>
   `;
-  
-  checkAdminStatus(sidebar, currentPath);
   
   setTimeout(() => {
     const closeOnMobile = () => {
@@ -58,29 +104,4 @@ export function renderSidebar() {
   }, 0);
   
   return sidebar;
-}
-
-async function checkAdminStatus(sidebar, currentPath) {
-  const user = getUser();
-  
-  if (!user) return;
-  
-  const navList = sidebar.querySelector('#nav-list');
-  const settingsItem = navList.querySelector('a[href="/settings"]')?.closest('.nav-item');
-  
-  try {
-    if (user.isAdmin && settingsItem && !navList.querySelector('a[href="/admin"]')) {
-      const adminItem = document.createElement('li');
-      adminItem.className = 'nav-item';
-      adminItem.innerHTML = `
-        <a href="/admin" class="nav-link ${currentPath === '/admin' ? 'active' : ''}">
-          <span class="material-icons-outlined">admin_panel_settings</span>
-          <span class="nav-text">Admin</span>
-        </a>
-      `;
-      navList.insertBefore(adminItem, settingsItem);
-    }
-  } catch (e) {
-    console.error('Failed to check admin status:', e);
-  }
 }

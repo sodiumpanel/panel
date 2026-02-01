@@ -12,17 +12,85 @@
   @media (max-width: 480px) { gap: 18px; }
 }
 
-.dashboard-header .greeting {
-  h1 {
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 4px;
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  
+  .greeting {
+    display: flex;
+    align-items: center;
+    gap: 14px;
     
-    .highlight { color: var(--accent); }
-    @media (max-width: 640px) { font-size: 18px; }
+    .greeting-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-muted) 0%, transparent 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      .material-icons-outlined { font-size: 24px; color: var(--accent); }
+      
+      @media (max-width: 480px) {
+        width: 40px;
+        height: 40px;
+        .material-icons-outlined { font-size: 20px; }
+      }
+    }
+    
+    .greeting-text {
+      h1 {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        
+        .highlight { color: var(--accent); }
+        @media (max-width: 640px) { font-size: 18px; }
+      }
+      
+      p { color: var(--text-secondary); font-size: 13px; }
+    }
   }
   
-  p { color: var(--text-secondary); font-size: 13px; }
+  .quick-stats {
+    display: flex;
+    gap: 8px;
+    
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      
+      .material-icons-outlined { font-size: 14px; }
+      
+      &.online {
+        .material-icons-outlined { color: var(--success); }
+      }
+      
+      &.offline {
+        .material-icons-outlined { color: var(--text-tertiary); }
+        color: var(--text-secondary);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .stat-chip {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+    }
+  }
 }
 
 .stats-grid {

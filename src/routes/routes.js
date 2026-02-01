@@ -66,13 +66,47 @@ export const routes = {
     }
   },
   '/admin': {
-    render: renderAdmin,
+    redirect: '/admin/nodes'
+  },
+  '/admin/nodes': {
+    render: (params) => renderAdmin('nodes', params),
     cleanup: cleanupAdmin,
-    options: {
-      title: 'Admin',
-      auth: true,
-      sidebar: true
-    }
+    options: { title: 'Nodes', auth: true, sidebar: true }
+  },
+  '/admin/servers': {
+    render: (params) => renderAdmin('servers', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Admin Servers', auth: true, sidebar: true }
+  },
+  '/admin/users': {
+    render: (params) => renderAdmin('users', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Users', auth: true, sidebar: true }
+  },
+  '/admin/nests': {
+    render: (params) => renderAdmin('nests', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Nests', auth: true, sidebar: true }
+  },
+  '/admin/locations': {
+    render: (params) => renderAdmin('locations', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Locations', auth: true, sidebar: true }
+  },
+  '/admin/announcements': {
+    render: (params) => renderAdmin('announcements', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Announcements', auth: true, sidebar: true }
+  },
+  '/admin/audit': {
+    render: (params) => renderAdmin('audit', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Audit Log', auth: true, sidebar: true }
+  },
+  '/admin/settings': {
+    render: (params) => renderAdmin('settings', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Panel Settings', auth: true, sidebar: true }
   },
   '/profile': {
     render: renderProfile,

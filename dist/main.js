@@ -354,9 +354,29 @@ function renderDashboard() {
   const displayName = localStorage.getItem('displayName') || localStorage.getItem('username');
   
   const hour = new Date().getHours();
-  let greeting = 'Good evening';
-  if (hour < 12) greeting = 'Good morning';
-  else if (hour < 18) greeting = 'Good afternoon';
+  let greeting, icon, subtitle;
+  
+  if (hour < 6) {
+    greeting = 'Late night';
+    icon = 'dark_mode';
+    subtitle = "Burning the midnight oil?";
+  } else if (hour < 12) {
+    greeting = 'Good morning';
+    icon = 'wb_twilight';
+    subtitle = "Ready to conquer the day";
+  } else if (hour < 18) {
+    greeting = 'Good afternoon';
+    icon = 'wb_sunny';
+    subtitle = "Hope your day is going well";
+  } else if (hour < 22) {
+    greeting = 'Good evening';
+    icon = 'nights_stay';
+    subtitle = "Winding down for the night?";
+  } else {
+    greeting = 'Good night';
+    icon = 'bedtime';
+    subtitle = "Don't stay up too late";
+  }
   
   app.innerHTML = `
     <div class="dashboard-container">
@@ -364,9 +384,15 @@ function renderDashboard() {
       
       <header class="dashboard-header">
         <div class="greeting">
-          <h1>${greeting}, <span class="highlight">${escapeHtml(displayName)}</span></h1>
-          <p>Welcome to your dashboard</p>
+          <div class="greeting-icon">
+            <span class="material-icons-outlined">${icon}</span>
+          </div>
+          <div class="greeting-text">
+            <h1>${greeting}, <span class="highlight">${escapeHtml(displayName)}</span></h1>
+            <p>${subtitle}</p>
+          </div>
         </div>
+        <div class="quick-stats" id="quick-stats"></div>
       </header>
       
       <div class="dashboard-grid">
@@ -397,11 +423,40 @@ function renderDashboard() {
   loadLimits$1();
   loadServers$1();
   loadAnnouncements();
+  loadQuickStats();
   
   pollInterval$2 = setInterval(() => {
     loadServers$1();
     loadLimits$1();
+    loadQuickStats();
   }, 10000);
+}
+
+async function loadQuickStats() {
+  const container = document.getElementById('quick-stats');
+  if (!container) return;
+  
+  try {
+    const res = await api('/api/servers');
+    const data = await res.json();
+    
+    const total = data.servers.length;
+    const online = data.servers.filter(s => s.status === 'running').length;
+    const offline = total - online;
+    
+    container.innerHTML = `
+      <div class="stat-chip online">
+        <span class="material-icons-outlined">check_circle</span>
+        <span>${online} online</span>
+      </div>
+      <div class="stat-chip offline">
+        <span class="material-icons-outlined">cancel</span>
+        <span>${offline} offline</span>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = '';
+  }
 }
 
 async function loadLimits$1() {
@@ -46669,7 +46724,7 @@ function getDefaultSubTab(tab) {
 
 window.adminNavigate = navigateTo;
 
-async function renderAdmin() {
+async function renderAdmin(tab = 'nodes', params = {}) {
   const app = document.getElementById('app');
   const user = getUser();
   
@@ -46691,71 +46746,20 @@ async function renderAdmin() {
     return;
   }
   
+  state.currentView = {
+    type: params.id ? 'detail' : 'list',
+    tab,
+    id: params.id || null,
+    subTab: params.subTab || getDefaultSubTab(tab)
+  };
+  
   app.innerHTML = `
     <div class="admin-page">
-      <div class="admin-layout">
-        <aside class="admin-sidebar">
-          <div class="admin-sidebar-header">
-            <span class="material-icons-outlined">admin_panel_settings</span>
-            <span>Admin</span>
-          </div>
-          <nav class="admin-nav">
-            <a href="#" class="admin-nav-item active" data-tab="nodes">
-              <span class="material-icons-outlined">dns</span>
-              <span>Nodes</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="servers">
-              <span class="material-icons-outlined">storage</span>
-              <span>Servers</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="users">
-              <span class="material-icons-outlined">people</span>
-              <span>Users</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="nests">
-              <span class="material-icons-outlined">egg</span>
-              <span>Nests</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="locations">
-              <span class="material-icons-outlined">location_on</span>
-              <span>Locations</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="announcements">
-              <span class="material-icons-outlined">campaign</span>
-              <span>Announcements</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="audit">
-              <span class="material-icons-outlined">history</span>
-              <span>Audit Log</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="activity">
-              <span class="material-icons-outlined">timeline</span>
-              <span>Activity</span>
-            </a>
-            <a href="#" class="admin-nav-item" data-tab="settings">
-              <span class="material-icons-outlined">settings</span>
-              <span>Settings</span>
-            </a>
-          </nav>
-        </aside>
-        
-        <main class="admin-main">
-          <div class="admin-content" id="admin-content">
-            <div class="loading-spinner"></div>
-          </div>
-        </main>
+      <div class="admin-content" id="admin-content">
+        <div class="loading-spinner"></div>
       </div>
     </div>
   `;
-  
-  document.querySelectorAll('.admin-nav-item').forEach(item => {
-    item.onclick = (e) => {
-      e.preventDefault();
-      document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      navigateTo(item.dataset.tab);
-    };
-  });
   
   loadView();
 }
@@ -46765,10 +46769,6 @@ async function loadView() {
   const username = localStorage.getItem('username');
   
   container.innerHTML = '<div class="loading-spinner"></div>';
-  
-  document.querySelectorAll('.admin-nav-item').forEach(i => {
-    i.classList.toggle('active', i.dataset.tab === state.currentView.tab);
-  });
   
   if (state.currentView.type === 'detail' && state.currentView.id) {
     switch (state.currentView.tab) {
@@ -46819,7 +46819,6 @@ async function loadView() {
 }
 
 function cleanupAdmin() {
-  // Reset admin view state when leaving
 }
 
 const activityLabels = {
@@ -47447,13 +47446,47 @@ const routes = {
     }
   },
   '/admin': {
-    render: renderAdmin,
+    redirect: '/admin/nodes'
+  },
+  '/admin/nodes': {
+    render: (params) => renderAdmin('nodes', params),
     cleanup: cleanupAdmin,
-    options: {
-      title: 'Admin',
-      auth: true,
-      sidebar: true
-    }
+    options: { title: 'Nodes', auth: true, sidebar: true }
+  },
+  '/admin/servers': {
+    render: (params) => renderAdmin('servers', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Admin Servers', auth: true, sidebar: true }
+  },
+  '/admin/users': {
+    render: (params) => renderAdmin('users', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Users', auth: true, sidebar: true }
+  },
+  '/admin/nests': {
+    render: (params) => renderAdmin('nests', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Nests', auth: true, sidebar: true }
+  },
+  '/admin/locations': {
+    render: (params) => renderAdmin('locations', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Locations', auth: true, sidebar: true }
+  },
+  '/admin/announcements': {
+    render: (params) => renderAdmin('announcements', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Announcements', auth: true, sidebar: true }
+  },
+  '/admin/audit': {
+    render: (params) => renderAdmin('audit', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Audit Log', auth: true, sidebar: true }
+  },
+  '/admin/settings': {
+    render: (params) => renderAdmin('settings', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Panel Settings', auth: true, sidebar: true }
   },
   '/profile': {
     render: renderProfile,
@@ -47604,14 +47637,71 @@ function renderSidebar() {
   sidebar.className = 'sidebar';
   
   const currentPath = window.location.pathname;
+  const user = getUser();
   
-  const baseItems = [
-    { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-    { path: '/servers', icon: 'dns', label: 'Servers' },
-    { path: '/status', icon: 'monitor_heart', label: 'Status' },
-    { path: '/profile', icon: 'person', label: 'Profile' },
-    { path: '/settings', icon: 'settings', label: 'Settings' }
+  const sections = [
+    {
+      label: null,
+      items: [
+        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
+        { path: '/servers', icon: 'dns', label: 'Servers' }
+      ]
+    },
+    {
+      label: 'Monitoring',
+      items: [
+        { path: '/status', icon: 'monitor_heart', label: 'Status' },
+        { path: '/activity', icon: 'timeline', label: 'Activity' }
+      ]
+    },
+    {
+      label: 'Account',
+      items: [
+        { path: '/profile', icon: 'person', label: 'Profile' },
+        { path: '/settings', icon: 'settings', label: 'Settings' }
+      ]
+    }
   ];
+  
+  const adminSection = {
+    label: 'Administration',
+    items: [
+      { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
+      { path: '/admin/servers', icon: 'storage', label: 'Servers' },
+      { path: '/admin/users', icon: 'people', label: 'Users' },
+      { path: '/admin/nests', icon: 'egg', label: 'Nests' },
+      { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
+      { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
+      { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
+      { path: '/admin/settings', icon: 'tune', label: 'Panel Settings' }
+    ]
+  };
+  
+  if (user?.isAdmin) {
+    sections.push(adminSection);
+  }
+  
+  const renderSection = (section) => {
+    const header = section.label 
+      ? `<div class="nav-section-label">${section.label}</div>` 
+      : '';
+    
+    const items = section.items.map(item => `
+      <li class="nav-item">
+        <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
+          <span class="material-icons-outlined">${item.icon}</span>
+          <span class="nav-text">${item.label}</span>
+        </a>
+      </li>
+    `).join('');
+    
+    return `
+      <div class="nav-section">
+        ${header}
+        <ul class="nav-list">${items}</ul>
+      </div>
+    `;
+  };
   
   sidebar.innerHTML = `
     <div class="sidebar-header">
@@ -47622,16 +47712,7 @@ function renderSidebar() {
     </div>
     
     <nav class="sidebar-nav">
-      <ul class="nav-list" id="nav-list">
-        ${baseItems.map(item => `
-          <li class="nav-item">
-            <a href="${item.path}" class="nav-link ${currentPath === item.path ? 'active' : ''}">
-              <span class="material-icons-outlined">${item.icon}</span>
-              <span class="nav-text">${item.label}</span>
-            </a>
-          </li>
-        `).join('')}
-      </ul>
+      ${sections.map(renderSection).join('')}
     </nav>
     
     <div class="sidebar-footer">
@@ -47640,8 +47721,6 @@ function renderSidebar() {
       </div>
     </div>
   `;
-  
-  checkAdminStatus(sidebar, currentPath);
   
   setTimeout(() => {
     const closeOnMobile = () => {
@@ -47656,31 +47735,6 @@ function renderSidebar() {
   }, 0);
   
   return sidebar;
-}
-
-async function checkAdminStatus(sidebar, currentPath) {
-  const user = getUser();
-  
-  if (!user) return;
-  
-  const navList = sidebar.querySelector('#nav-list');
-  const settingsItem = navList.querySelector('a[href="/settings"]')?.closest('.nav-item');
-  
-  try {
-    if (user.isAdmin && settingsItem && !navList.querySelector('a[href="/admin"]')) {
-      const adminItem = document.createElement('li');
-      adminItem.className = 'nav-item';
-      adminItem.innerHTML = `
-        <a href="/admin" class="nav-link ${currentPath === '/admin' ? 'active' : ''}">
-          <span class="material-icons-outlined">admin_panel_settings</span>
-          <span class="nav-text">Admin</span>
-        </a>
-      `;
-      navList.insertBefore(adminItem, settingsItem);
-    }
-  } catch (e) {
-    console.error('Failed to check admin status:', e);
-  }
 }
 
 let mounted = false;

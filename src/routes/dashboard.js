@@ -10,9 +10,29 @@ export function renderDashboard() {
   const displayName = localStorage.getItem('displayName') || localStorage.getItem('username');
   
   const hour = new Date().getHours();
-  let greeting = 'Good evening';
-  if (hour < 12) greeting = 'Good morning';
-  else if (hour < 18) greeting = 'Good afternoon';
+  let greeting, icon, subtitle;
+  
+  if (hour < 6) {
+    greeting = 'Late night';
+    icon = 'dark_mode';
+    subtitle = "Burning the midnight oil?";
+  } else if (hour < 12) {
+    greeting = 'Good morning';
+    icon = 'wb_twilight';
+    subtitle = "Ready to conquer the day";
+  } else if (hour < 18) {
+    greeting = 'Good afternoon';
+    icon = 'wb_sunny';
+    subtitle = "Hope your day is going well";
+  } else if (hour < 22) {
+    greeting = 'Good evening';
+    icon = 'nights_stay';
+    subtitle = "Winding down for the night?";
+  } else {
+    greeting = 'Good night';
+    icon = 'bedtime';
+    subtitle = "Don't stay up too late";
+  }
   
   app.innerHTML = `
     <div class="dashboard-container">
@@ -20,9 +40,15 @@ export function renderDashboard() {
       
       <header class="dashboard-header">
         <div class="greeting">
-          <h1>${greeting}, <span class="highlight">${escapeHtml(displayName)}</span></h1>
-          <p>Welcome to your dashboard</p>
+          <div class="greeting-icon">
+            <span class="material-icons-outlined">${icon}</span>
+          </div>
+          <div class="greeting-text">
+            <h1>${greeting}, <span class="highlight">${escapeHtml(displayName)}</span></h1>
+            <p>${subtitle}</p>
+          </div>
         </div>
+        <div class="quick-stats" id="quick-stats"></div>
       </header>
       
       <div class="dashboard-grid">
@@ -53,11 +79,40 @@ export function renderDashboard() {
   loadLimits();
   loadServers();
   loadAnnouncements();
+  loadQuickStats();
   
   pollInterval = setInterval(() => {
     loadServers();
     loadLimits();
+    loadQuickStats();
   }, 10000);
+}
+
+async function loadQuickStats() {
+  const container = document.getElementById('quick-stats');
+  if (!container) return;
+  
+  try {
+    const res = await api('/api/servers');
+    const data = await res.json();
+    
+    const total = data.servers.length;
+    const online = data.servers.filter(s => s.status === 'running').length;
+    const offline = total - online;
+    
+    container.innerHTML = `
+      <div class="stat-chip online">
+        <span class="material-icons-outlined">check_circle</span>
+        <span>${online} online</span>
+      </div>
+      <div class="stat-chip offline">
+        <span class="material-icons-outlined">cancel</span>
+        <span>${offline} offline</span>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = '';
+  }
 }
 
 async function loadLimits() {
