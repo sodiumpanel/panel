@@ -1,0 +1,116 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "icon": "linux",
+    "exported_at": "2026-01-31T12:00:00+00:00",
+    "name": "LightVM",
+    "author": "sodium@sodiumpanel.com",
+    "description": "A lightweight virtual machine egg with a complete Linux OS environment. Features root access, OpenRC init system, package management, user management, cron, logging, and full system utilities. Based on Alpine Linux for minimal footprint while providing a full OS experience.",
+    "features": null,
+    "docker_images": {
+        "Alpine 3.20": "ghcr.io/parkervcp/yolks:alpine",
+        "Alpine Edge": "alpine:edge",
+        "Alpine 3.19": "alpine:3.19",
+        "Alpine 3.18": "alpine:3.18"
+    },
+    "file_denylist": [],
+    "startup": "cd \/home\/container && chmod +x .\/start.sh && .\/start.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": [\r\n        \"LightVM started\",\r\n        \"System ready\",\r\n        \"Welcome to LightVM\"\r\n    ]\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/sh\n# LightVM Full OS Installation Script\n# Server Files: \/mnt\/server\n\necho \"===========================================\"\necho \"   LightVM - Full OS Installation\"\necho \"===========================================\"\n\napk update\napk upgrade\n\n# Core system utilities\napk add --no-cache \\\n    bash \\\n    bash-completion \\\n    shadow \\\n    sudo \\\n    doas \\\n    coreutils \\\n    util-linux \\\n    procps \\\n    findutils \\\n    grep \\\n    sed \\\n    gawk \\\n    less \\\n    which\n\n# Init system and services\napk add --no-cache \\\n    openrc \\\n    busybox-openrc \\\n    cronie \\\n    cronie-openrc \\\n    syslog-ng \\\n    logrotate\n\n# Network utilities\napk add --no-cache \\\n    curl \\\n    wget \\\n    net-tools \\\n    iproute2 \\\n    iputils \\\n    bind-tools \\\n    openssh-client \\\n    openssh-server \\\n    openssh-server-common-openrc \\\n    ca-certificates \\\n    openssl\n\n# Package and file management\napk add --no-cache \\\n    git \\\n    tar \\\n    gzip \\\n    bzip2 \\\n    xz \\\n    unzip \\\n    zip \\\n    p7zip \\\n    rsync\n\n# Editors and tools\napk add --no-cache \\\n    nano \\\n    vim \\\n    htop \\\n    btop \\\n    tmux \\\n    screen \\\n    tree \\\n    file \\\n    jq \\\n    bc\n\n# Development basics\napk add --no-cache \\\n    build-base \\\n    make \\\n    gcc \\\n    g++ \\\n    musl-dev \\\n    linux-headers\n\n# System management\napk add --no-cache \\\n    tzdata \\\n    ncurses \\\n    readline \\\n    man-pages \\\n    mandoc \\\n    docs\n\nmkdir -p \/mnt\/server\ncd \/mnt\/server\n\n# Create directory structure\nmkdir -p etc\/init.d\nmkdir -p var\/log\nmkdir -p var\/run\nmkdir -p var\/spool\/cron\/crontabs\nmkdir -p tmp\nmkdir -p root\nmkdir -p home\/user\n\n# Create passwd and group files\ncat > \/mnt\/server\/etc\/passwd << 'EOF'\nroot:x:0:0:root:\/root:\/bin\/bash\nnobody:x:65534:65534:nobody:\/nonexistent:\/sbin\/nologin\nuser:x:1000:1000:user:\/home\/user:\/bin\/bash\nEOF\n\ncat > \/mnt\/server\/etc\/group << 'EOF'\nroot:x:0:root\nwheel:x:10:root,user\nusers:x:100:user\nnobody:x:65534:\nEOF\n\ncat > \/mnt\/server\/etc\/shadow << 'EOF'\nroot:$6$rounds=4096$randomsalt$hashedpassword:19000:0:99999:7:::\nuser:$6$rounds=4096$randomsalt$hashedpassword:19000:0:99999:7:::\nEOF\nchmod 640 \/mnt\/server\/etc\/shadow\n\n# Create sudoers\ncat > \/mnt\/server\/etc\/sudoers << 'EOF'\nroot ALL=(ALL:ALL) ALL\n%wheel ALL=(ALL:ALL) ALL\nuser ALL=(ALL) NOPASSWD: ALL\nEOF\nchmod 440 \/mnt\/server\/etc\/sudoers\n\n# Create hostname\necho \"lightvm\" > \/mnt\/server\/etc\/hostname\n\n# Create hosts file\ncat > \/mnt\/server\/etc\/hosts << 'EOF'\n127.0.0.1   localhost lightvm\n::1         localhost lightvm\nEOF\n\n# Create resolv.conf\ncat > \/mnt\/server\/etc\/resolv.conf << 'EOF'\nnameserver 1.1.1.1\nnameserver 8.8.8.8\nEOF\n\n# Create motd\ncat > \/mnt\/server\/etc\/motd << 'EOF'\n\n  _     _       _     ___      ____  __ \n | |   (_) __ _| |__ | \\ \\    \/ \/  \\\/  |\n | |   | |\/ _` | '_ \\| |\\ \\  \/ \/| |\\/| |\n | |___| | (_| | | | | |_\\ \\/ \/ | |  | |\n |_____|_|\\__, |_| |_|_|  \\__\/  |_|  |_|\n          |___\/                         \n\n  Lightweight Virtual Machine - Full OS\n  Type 'help' for available commands\n\nEOF\n\n# Create profile\ncat > \/mnt\/server\/etc\/profile << 'EOF'\nexport PATH=\"\/usr\/local\/sbin:\/usr\/local\/bin:\/usr\/sbin:\/usr\/bin:\/sbin:\/bin\"\nexport PS1='\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '\nexport EDITOR=nano\nexport PAGER=less\nexport LANG=en_US.UTF-8\n\nalias ll='ls -la'\nalias la='ls -A'\nalias l='ls -CF'\nalias ..='cd ..'\nalias ...='cd ..\/..'\nalias cls='clear'\nalias ports='netstat -tulanp'\nalias mem='free -h'\nalias disk='df -h'\nalias cpu='htop'\n\nhelp() {\n    echo \"\"\n    echo \"LightVM Commands:\"\n    echo \"  sysinfo    - Show system information\"\n    echo \"  services   - List running services\"\n    echo \"  ports      - Show open ports\"\n    echo \"  mem        - Show memory usage\"\n    echo \"  disk       - Show disk usage\"\n    echo \"  cpu        - Open htop\"\n    echo \"  pkg-add    - Install package (apk add)\"\n    echo \"  pkg-del    - Remove package (apk del)\"\n    echo \"  pkg-search - Search packages (apk search)\"\n    echo \"\"\n}\n\nsysinfo() {\n    echo \"===========================================\"\n    echo \"         SYSTEM INFORMATION\"\n    echo \"===========================================\"\n    echo \"Hostname:     $(hostname)\"\n    echo \"Kernel:       $(uname -r)\"\n    echo \"Architecture: $(uname -m)\"\n    echo \"Uptime:       $(uptime -p 2>\/dev\/null || uptime)\"\n    echo \"Memory:       $(free -h | grep Mem | awk '{print $3 \"\/\" $2}')\"\n    echo \"Disk:         $(df -h \/ | tail -1 | awk '{print $3 \"\/\" $2 \" (\" $5 \")\"}')\"\n    echo \"Load:         $(cat \/proc\/loadavg | awk '{print $1, $2, $3}')\"\n    echo \"Processes:    $(ps aux | wc -l)\"\n    echo \"===========================================\"\n}\n\nservices() {\n    echo \"Running processes:\"\n    ps aux --sort=-%mem | head -15\n}\n\npkg-add() { apk add \"$@\"; }\npkg-del() { apk del \"$@\"; }\npkg-search() { apk search \"$@\"; }\n\nEOF\n\n# Create bashrc\ncat > \/mnt\/server\/root\/.bashrc << 'EOF'\nsource \/etc\/profile\ncd ~\nEOF\n\ncp \/mnt\/server\/root\/.bashrc \/mnt\/server\/home\/user\/.bashrc\n\n# Create start script\ncat > \/mnt\/server\/start.sh << 'EOF'\n#!\/bin\/bash\n\n# Set timezone\nif [ -n \"$TZ\" ]; then\n    ln -snf \/usr\/share\/zoneinfo\/$TZ \/etc\/localtime\n    echo $TZ > \/etc\/timezone\nfi\n\n# Set hostname\nif [ -n \"$VM_HOSTNAME\" ]; then\n    echo $VM_HOSTNAME > \/etc\/hostname\n    hostname $VM_HOSTNAME\nfi\n\n# Set root password if provided\nif [ -n \"$ROOT_PASSWORD\" ]; then\n    echo \"root:$ROOT_PASSWORD\" | chpasswd\nfi\n\n# Set user password if provided  \nif [ -n \"$USER_PASSWORD\" ]; then\n    echo \"user:$USER_PASSWORD\" | chpasswd\nfi\n\n# Install extra packages\nif [ -n \"$EXTRA_PACKAGES\" ]; then\n    echo \"Installing extra packages: $EXTRA_PACKAGES\"\n    apk add --no-cache $EXTRA_PACKAGES\nfi\n\n# Start cron if enabled\nif [ \"$ENABLE_CRON\" = \"1\" ]; then\n    crond -b\n    echo \"Cron daemon started\"\nfi\n\n# Start syslog if enabled\nif [ \"$ENABLE_SYSLOG\" = \"1\" ]; then\n    syslog-ng &\n    echo \"Syslog started\"\nfi\n\necho \"\"\ncat \/home\/container\/etc\/motd 2>\/dev\/null || cat \/etc\/motd 2>\/dev\/null\necho \"\"\necho \"===========================================\"\necho \"  LightVM started\"\necho \"  System ready\"\necho \"===========================================\"\necho \"\"\necho \"Logged in as: $(whoami)\"\necho \"Working dir:  $(pwd)\"\necho \"\"\n\n# Source profile for aliases and functions\nsource \/home\/container\/etc\/profile 2>\/dev\/null || source \/etc\/profile 2>\/dev\/null\n\n# Execute startup command or drop to shell\nif [ -n \"$STARTUP_CMD\" ]; then\n    echo \"Executing: $STARTUP_CMD\"\n    exec bash -c \"$STARTUP_CMD\"\nelse\n    # Keep container running with interactive shell simulation\n    exec bash --rcfile \/home\/container\/etc\/profile\nfi\nEOF\nchmod +x \/mnt\/server\/start.sh\n\n# Set permissions\nchown -R 1000:1000 \/mnt\/server\/home\/user 2>\/dev\/null || true\nchmod 755 \/mnt\/server\/root\nchmod 755 \/mnt\/server\/home\/user\nchmod 1777 \/mnt\/server\/tmp\n\necho \"\"\necho \"===========================================\"\necho \"   LightVM installation complete!\"\necho \"===========================================\"\nexit 0",
+            "container": "alpine:3.20",
+            "entrypoint": "sh"
+        }
+    },
+    "variables": [
+        {
+            "name": "Startup Command",
+            "description": "Command to run when the VM starts.\r\n\r\nLeave empty for interactive shell.",
+            "env_variable": "STARTUP_CMD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Root Password",
+            "description": "Password for root user.\r\n\r\nLeave empty to keep default.",
+            "env_variable": "ROOT_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "User Password",
+            "description": "Password for 'user' account.\r\n\r\nLeave empty to keep default.",
+            "env_variable": "USER_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Hostname",
+            "description": "Hostname for the VM.",
+            "env_variable": "VM_HOSTNAME",
+            "default_value": "lightvm",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Extra Packages",
+            "description": "Additional Alpine packages to install.\r\n\r\nExamples: python3 nodejs npm docker php",
+            "env_variable": "EXTRA_PACKAGES",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Timezone",
+            "description": "System timezone.\r\n\r\nExamples: UTC, America\/New_York, Europe\/London",
+            "env_variable": "TZ",
+            "default_value": "UTC",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Cron",
+            "description": "Start cron daemon for scheduled tasks.\r\n\r\n0 = Disabled\r\n1 = Enabled",
+            "env_variable": "ENABLE_CRON",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Syslog",
+            "description": "Start syslog daemon for system logging.\r\n\r\n0 = Disabled\r\n1 = Enabled",
+            "env_variable": "ENABLE_SYSLOG",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        }
+    ]
+}
