@@ -112,7 +112,7 @@ async function loadServers() {
         <div class="section-header">
           <span class="material-icons-outlined">dns</span>
           <h3>${escapeHtml(server.name)}</h3>
-          <span class="status status-${server.status || 'offline'}" data-status-id="${server.id}">${server.status || 'offline'}</span>
+          <span class="status status-loading" data-status-id="${server.id}">loading...</span>
         </div>
         <div class="server-card-content">
           <div class="server-actions">

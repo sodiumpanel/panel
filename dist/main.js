@@ -441,15 +441,21 @@ async function loadQuickStats() {
     const res = await api('/api/servers');
     const data = await res.json();
     
-    const total = data.servers.length;
     const online = data.servers.filter(s => s.status === 'running').length;
-    const offline = total - online;
+    const starting = data.servers.filter(s => s.status === 'starting').length;
+    const offline = data.servers.filter(s => s.status === 'offline' || !s.status).length;
     
     container.innerHTML = `
       <div class="stat-chip online">
         <span class="material-icons-outlined">check_circle</span>
         <span>${online} online</span>
       </div>
+      ${starting > 0 ? `
+      <div class="stat-chip starting">
+        <span class="material-icons-outlined">hourglass_top</span>
+        <span>${starting} starting</span>
+      </div>
+      ` : ''}
       <div class="stat-chip offline">
         <span class="material-icons-outlined">cancel</span>
         <span>${offline} offline</span>
@@ -540,7 +546,7 @@ async function loadServers$1() {
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
-          <span class="status status-${server.status || 'offline'}" data-status-id="${server.id}">${server.status || 'offline'}</span>
+          <span class="status status-loading" data-status-id="${server.id}">loading...</span>
           <span class="material-icons-outlined">chevron_right</span>
         </div>
       </a>
@@ -1809,7 +1815,7 @@ async function loadServers() {
         <div class="section-header">
           <span class="material-icons-outlined">dns</span>
           <h3>${escapeHtml(server.name)}</h3>
-          <span class="status status-${server.status || 'offline'}" data-status-id="${server.id}">${server.status || 'offline'}</span>
+          <span class="status status-loading" data-status-id="${server.id}">loading...</span>
         </div>
         <div class="server-card-content">
           <div class="server-actions">
