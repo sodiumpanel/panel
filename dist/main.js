@@ -566,7 +566,9 @@ function connectStatusSockets$1(servers) {
     socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        if (message.event === 'status' && message.args?.[0]) {
+        if (message.event === 'auth success') {
+          socket.send(JSON.stringify({ event: 'send stats', args: [null] }));
+        } else if (message.event === 'status' && message.args?.[0]) {
           updateServerStatus$2(server.id, message.args[0]);
         }
       } catch (e) {}
@@ -1865,7 +1867,9 @@ function connectStatusSockets(servers) {
     socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        if (message.event === 'status' && message.args?.[0]) {
+        if (message.event === 'auth success') {
+          socket.send(JSON.stringify({ event: 'send stats', args: [null] }));
+        } else if (message.event === 'status' && message.args?.[0]) {
           updateServerStatus$1(server.id, message.args[0]);
         }
       } catch (e) {}
