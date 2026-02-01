@@ -1,7 +1,8 @@
-import { api } from '../utils/api.js';
+import { api, getToken } from '../utils/api.js';
 import { escapeHtml } from '../utils/security.js';
 
 let pollInterval = null;
+let statusSockets = new Map();
 
 export function renderDashboard() {
   const app = document.getElementById('app');
@@ -195,15 +196,48 @@ async function loadServers() {
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
-          <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
+          <span class="status status-${server.status || 'offline'}" data-status-id="${server.id}">${server.status || 'offline'}</span>
           <span class="material-icons-outlined">chevron_right</span>
         </div>
       </a>
     `).join('');
+    
+    connectStatusSockets(data.servers);
   } catch (e) {
     console.error('Failed to load servers:', e);
     container.innerHTML = `<div class="error-state">Failed to load servers</div>`;
   }
+}
+
+function connectStatusSockets(servers) {
+  const token = getToken();
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  
+  servers.forEach(server => {
+    if (statusSockets.has(server.id)) return;
+    
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${server.id}&token=${encodeURIComponent(token)}`;
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.event === 'status' && message.args?.[0]) {
+          updateServerStatus(server.id, message.args[0]);
+        }
+      } catch (e) {}
+    };
+    
+    socket.onclose = () => statusSockets.delete(server.id);
+    statusSockets.set(server.id, socket);
+  });
+}
+
+function updateServerStatus(serverId, status) {
+  const el = document.querySelector(`[data-status-id="${serverId}"]`);
+  if (!el) return;
+  el.className = `status status-${status}`;
+  el.textContent = status;
 }
 
 async function loadAnnouncements() {
@@ -260,4 +294,6 @@ export function cleanupDashboard() {
     clearInterval(pollInterval);
     pollInterval = null;
   }
+  statusSockets.forEach(socket => socket.close());
+  statusSockets.clear();
 }

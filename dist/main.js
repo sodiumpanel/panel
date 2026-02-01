@@ -346,6 +346,7 @@ function safeInnerHTML(element, html) {
 }
 
 let pollInterval$2 = null;
+let statusSockets$1 = new Map();
 
 function renderDashboard() {
   const app = document.getElementById('app');
@@ -539,15 +540,48 @@ async function loadServers$1() {
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
-          <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
+          <span class="status status-${server.status || 'offline'}" data-status-id="${server.id}">${server.status || 'offline'}</span>
           <span class="material-icons-outlined">chevron_right</span>
         </div>
       </a>
     `).join('');
+    
+    connectStatusSockets$1(data.servers);
   } catch (e) {
     console.error('Failed to load servers:', e);
     container.innerHTML = `<div class="error-state">Failed to load servers</div>`;
   }
+}
+
+function connectStatusSockets$1(servers) {
+  const token = getToken();
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  
+  servers.forEach(server => {
+    if (statusSockets$1.has(server.id)) return;
+    
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${server.id}&token=${encodeURIComponent(token)}`;
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.event === 'status' && message.args?.[0]) {
+          updateServerStatus$2(server.id, message.args[0]);
+        }
+      } catch (e) {}
+    };
+    
+    socket.onclose = () => statusSockets$1.delete(server.id);
+    statusSockets$1.set(server.id, socket);
+  });
+}
+
+function updateServerStatus$2(serverId, status) {
+  const el = document.querySelector(`[data-status-id="${serverId}"]`);
+  if (!el) return;
+  el.className = `status status-${status}`;
+  el.textContent = status;
 }
 
 async function loadAnnouncements() {
@@ -604,6 +638,8 @@ function cleanupDashboard() {
     clearInterval(pollInterval$2);
     pollInterval$2 = null;
   }
+  statusSockets$1.forEach(socket => socket.close());
+  statusSockets$1.clear();
 }
 
 function renderProfile() {
@@ -1662,6 +1698,7 @@ function info(message, duration) {
 }
 
 let pollInterval$1 = null;
+let statusSockets = new Map();
 
 function renderServers() {
   const app = document.getElementById('app');
@@ -1770,7 +1807,7 @@ async function loadServers() {
         <div class="section-header">
           <span class="material-icons-outlined">dns</span>
           <h3>${escapeHtml(server.name)}</h3>
-          <span class="status status-${server.status || 'offline'}">${server.status || 'offline'}</span>
+          <span class="status status-${server.status || 'offline'}" data-status-id="${server.id}">${server.status || 'offline'}</span>
         </div>
         <div class="server-card-content">
           <div class="server-actions">
@@ -1808,9 +1845,42 @@ async function loadServers() {
         </div>
       </div>
     `).join('');
+    
+    connectStatusSockets(data.servers);
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load servers</div>`;
   }
+}
+
+function connectStatusSockets(servers) {
+  const token = getToken();
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  
+  servers.forEach(server => {
+    if (statusSockets.has(server.id)) return;
+    
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${server.id}&token=${encodeURIComponent(token)}`;
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.event === 'status' && message.args?.[0]) {
+          updateServerStatus$1(server.id, message.args[0]);
+        }
+      } catch (e) {}
+    };
+    
+    socket.onclose = () => statusSockets.delete(server.id);
+    statusSockets.set(server.id, socket);
+  });
+}
+
+function updateServerStatus$1(serverId, status) {
+  const el = document.querySelector(`[data-status-id="${serverId}"]`);
+  if (!el) return;
+  el.className = `status status-${status}`;
+  el.textContent = status;
 }
 
 window.serverPower = async function(serverId, action) {
@@ -1830,6 +1900,8 @@ function cleanupServers() {
     clearInterval(pollInterval$1);
     pollInterval$1 = null;
   }
+  statusSockets.forEach(socket => socket.close());
+  statusSockets.clear();
 }
 
 let selectedNest = null;
