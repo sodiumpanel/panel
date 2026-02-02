@@ -17,13 +17,13 @@
 - [ ] Scheduled tasks (cron jobs, commands, power actions)
 - [x] Activity log
 - [x] API keys for users
-- [ ] Session management
+- [x] Session management
 - [x] Announcements
 - [x] Audit log
 - [ ] Server transfers between nodes
-- [ ] Panel statistics
+- [x] Panel statistics (using api)
 - [ ] In-app notifications
-- [ ] Global search
+- [x] Global search
 
 ## Ideas
 
