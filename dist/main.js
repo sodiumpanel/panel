@@ -44994,7 +44994,13 @@ async function renderUsersList(container, username, loadView) {
     container.innerHTML = `
       <div class="admin-header">
         ${renderBreadcrumb([{ label: 'Users' }])}
-        ${renderSearchBox('users', 'Search by username, ID, or display name...')}
+        <div class="admin-header-actions">
+          ${renderSearchBox('users', 'Search by username, ID, or display name...')}
+          <button class="btn btn-primary" id="create-user-btn">
+            <span class="material-icons-outlined">person_add</span>
+            Create User
+          </button>
+        </div>
       </div>
       
       <div class="admin-list">
@@ -45093,9 +45099,108 @@ async function renderUsersList(container, username, loadView) {
       el.onclick = () => navigateTo$6('users', el.dataset.id);
     });
     
+    document.getElementById('create-user-btn')?.addEventListener('click', () => {
+      showCreateUserModal(loadView);
+    });
+    
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load users</div>`;
   }
+}
+
+function showCreateUserModal(loadView) {
+  const existing = document.getElementById('create-user-modal');
+  if (existing) existing.remove();
+  
+  const modal = document.createElement('div');
+  modal.id = 'create-user-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Create User</h3>
+        <button class="modal-close" id="close-user-modal">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <form id="create-user-form" class="modal-body">
+        <div class="form-group">
+          <label>Username *</label>
+          <input type="text" name="username" required minlength="3" maxlength="20" placeholder="username" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="user@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Password *</label>
+          <input type="password" name="password" required minlength="6" placeholder="Min 6 characters" />
+        </div>
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" name="displayName" placeholder="Display Name" />
+        </div>
+        <div class="form-toggles">
+          <label class="toggle-item">
+            <input type="checkbox" name="isAdmin" />
+            <span class="toggle-content">
+              <span class="toggle-title">Administrator</span>
+              <span class="toggle-desc">Grant full admin access</span>
+            </span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cancel-user-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create User</button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  document.getElementById('close-user-modal').onclick = () => modal.remove();
+  document.getElementById('cancel-user-modal').onclick = () => modal.remove();
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  document.getElementById('create-user-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    
+    const user = {
+      username: form.username.value,
+      email: form.email.value || undefined,
+      password: form.password.value,
+      displayName: form.displayName.value || undefined,
+      isAdmin: form.isAdmin.checked
+    };
+    
+    try {
+      const res = await api('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        success('User created successfully');
+        modal.remove();
+        loadView();
+      } else {
+        error(data.error || 'Failed to create user');
+        btn.disabled = false;
+        btn.textContent = 'Create User';
+      }
+    } catch (err) {
+      error('Failed to create user');
+      btn.disabled = false;
+      btn.textContent = 'Create User';
+    }
+  };
 }
 
 async function renderUserDetail(container, username, userId) {

@@ -1,4 +1,5 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import { 
   loadNodes, saveNodes, loadLocations, saveLocations, 
   loadUsers, saveUsers, loadNests, saveNests, 
@@ -7,7 +8,8 @@ import {
 } from '../db.js';
 import { 
   isAdmin, sanitizeText, generateUUID, generateToken, 
-  wingsRequest, generateNodeConfig, configToYaml, sanitizeUrl
+  wingsRequest, generateNodeConfig, configToYaml, sanitizeUrl,
+  validateUsername
 } from '../utils/helpers.js';
 import { authenticateUser, requireAdmin } from '../utils/auth.js';
 import logger from '../utils/logger.js';
@@ -188,6 +190,72 @@ router.get('/users', (req, res) => {
       total_pages: totalPages
     }
   });
+});
+
+router.post('/users', async (req, res) => {
+  const { user } = req.body;
+  
+  if (!user?.username || !user?.password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+  
+  if (!validateUsername(user.username)) {
+    return res.status(400).json({ error: 'Username must be 3-20 characters (letters, numbers, underscore only)' });
+  }
+  
+  if (user.password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  
+  const data = loadUsers();
+  const existingUser = data.users.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+  if (existingUser) {
+    return res.status(400).json({ error: 'Username already exists' });
+  }
+  
+  if (user.email) {
+    const existingEmail = data.users.find(u => u.email?.toLowerCase() === user.email.toLowerCase());
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already in use' });
+    }
+  }
+  
+  const config = loadConfig();
+  const defaults = config.defaults || {};
+  const hashedPassword = await bcrypt.hash(user.password, 10);
+  
+  const newUser = {
+    id: generateUUID(),
+    username: sanitizeText(user.username),
+    email: user.email || null,
+    password: hashedPassword,
+    displayName: sanitizeText(user.displayName || user.username),
+    bio: '',
+    avatar: '',
+    links: {},
+    isAdmin: user.isAdmin || false,
+    emailVerified: true, // Admin-created users are pre-verified
+    limits: {
+      servers: user.limits?.servers ?? defaults.servers ?? 2,
+      memory: user.limits?.memory ?? defaults.memory ?? 2048,
+      disk: user.limits?.disk ?? defaults.disk ?? 10240,
+      cpu: user.limits?.cpu ?? defaults.cpu ?? 200
+    },
+    createdAt: new Date().toISOString(),
+    settings: {
+      theme: 'dark',
+      notifications: true,
+      privacy: 'public'
+    }
+  };
+  
+  data.users.push(newUser);
+  saveUsers(data);
+  
+  logger.info(`User ${newUser.username} created by admin ${req.user.username}`);
+  
+  const { password, ...userWithoutPassword } = newUser;
+  res.json({ success: true, user: userWithoutPassword });
 });
 
 router.put('/users/:id', (req, res) => {
