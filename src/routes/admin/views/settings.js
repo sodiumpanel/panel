@@ -285,24 +285,6 @@ function renderDefaultsSettings(content, config) {
           </div>
         </div>
         
-        <div class="detail-card">
-          <h3>Additional Limits</h3>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Max Backups per Server</label>
-              <input type="number" name="default_backups" value="${config.defaults?.backups || 3}" min="0" />
-            </div>
-            <div class="form-group">
-              <label>Max Databases per Server</label>
-              <input type="number" name="default_databases" value="${config.defaults?.databases || 1}" min="0" />
-            </div>
-            <div class="form-group">
-              <label>Max Allocations per Server</label>
-              <input type="number" name="default_allocations" value="${config.defaults?.allocations || 1}" min="1" />
-            </div>
-          </div>
-        </div>
-        
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
             <span class="material-icons-outlined">save</span>
@@ -322,10 +304,7 @@ function renderDefaultsSettings(content, config) {
         servers: parseInt(form.default_servers.value) || 2,
         memory: parseInt(form.default_memory.value) || 2048,
         disk: parseInt(form.default_disk.value) || 10240,
-        cpu: parseInt(form.default_cpu.value) || 200,
-        backups: parseInt(form.default_backups.value) || 3,
-        databases: parseInt(form.default_databases.value) || 1,
-        allocations: parseInt(form.default_allocations.value) || 1
+        cpu: parseInt(form.default_cpu.value) || 200
       }
     };
     

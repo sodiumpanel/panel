@@ -72,61 +72,98 @@ export async function sendMail(options) {
   }
 }
 
-export async function sendTestEmail(toEmail) {
-  const config = loadConfig();
-  const panelName = config.panel?.name || 'Sodium Panel';
-  
-  return sendMail({
-    to: toEmail,
-    subject: `${panelName} - Test Email`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+// Email template helper with Sodium branding
+function emailTemplate(panelName, title, content, footer) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #09090b;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #09090b; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px;">
+          <!-- Logo Header -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #141414; border-radius: 12px; overflow: hidden;">
+            <td style="padding: 0 0 24px; text-align: center;">
+              <div style="display: inline-flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#e07a3a">
+                  <path d="M11,21h-1l1-7H7.5c-0.88,0-0.33-0.75-0.31-0.78C8.48,10.94,10.42,7.54,13.01,3h1l-1,7h3.51c0.4,0,0.62,0.19,0.4,0.66C12.97,17.55,11,21,11,21z"/>
+                </svg>
+                <span style="font-size: 18px; font-weight: 600; color: #fafafa;">${panelName}</span>
+              </div>
+            </td>
+          </tr>
+          <!-- Main Card -->
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #18181b; border: 1px solid #27272a; border-radius: 10px; overflow: hidden;">
+                <!-- Title Bar -->
                 <tr>
-                  <td style="padding: 32px; text-align: center; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">${panelName}</h1>
+                  <td style="padding: 20px 24px; border-bottom: 1px solid #27272a;">
+                    <h1 style="margin: 0; color: #fafafa; font-size: 18px; font-weight: 600;">${title}</h1>
                   </td>
                 </tr>
+                <!-- Content -->
                 <tr>
-                  <td style="padding: 32px;">
-                    <h2 style="margin: 0 0 16px; color: #ffffff; font-size: 20px;">Test Email Successful!</h2>
-                    <p style="margin: 0 0 24px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
-                      If you're reading this, your email configuration is working correctly. 
-                      You can now use email features like password resets and notifications.
-                    </p>
-                    <div style="background-color: #1a1a1a; border-radius: 8px; padding: 16px; border-left: 4px solid #6366f1;">
-                      <p style="margin: 0; color: #71717a; font-size: 12px;">
-                        <strong style="color: #ffffff;">Configuration:</strong><br>
-                        Host: ${config.mail?.host || 'Not set'}<br>
-                        Port: ${config.mail?.port || '587'}<br>
-                        Secure: ${config.mail?.secure ? 'Yes' : 'No'}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 24px 32px; background-color: #0f0f0f; text-align: center;">
-                    <p style="margin: 0; color: #52525b; font-size: 12px;">
-                      This is an automated test email from ${panelName}
-                    </p>
+                  <td style="padding: 24px;">
+                    ${content}
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 0 0; text-align: center;">
+              <p style="margin: 0; color: #52525b; font-size: 12px;">
+                ${footer}
+              </p>
+            </td>
+          </tr>
         </table>
-      </body>
-      </html>
-    `,
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function emailButton(text, url) {
+  return `<a href="${url}" style="display: inline-block; padding: 12px 20px; background-color: #e07a3a; color: #000; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 14px;">${text}</a>`;
+}
+
+function emailNote(text) {
+  return `<div style="background-color: #0a0a0a; border: 1px solid #27272a; border-radius: 6px; padding: 12px 14px; margin-top: 20px;">
+    <p style="margin: 0; color: #71717a; font-size: 12px;">${text}</p>
+  </div>`;
+}
+
+export async function sendTestEmail(toEmail) {
+  const config = loadConfig();
+  const panelName = config.panel?.name || 'Sodium Panel';
+  
+  const content = `
+    <p style="margin: 0 0 16px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+      If you're reading this, your email configuration is working correctly. 
+      You can now use email features like password resets and notifications.
+    </p>
+    <div style="background-color: #0a0a0a; border: 1px solid #27272a; border-radius: 6px; padding: 12px 14px;">
+      <p style="margin: 0; color: #e07a3a; font-family: monospace; font-size: 13px;">
+        Host: ${config.mail?.host || 'Not set'}<br>
+        Port: ${config.mail?.port || '587'}<br>
+        Secure: ${config.mail?.secure ? 'Yes' : 'No'}
+      </p>
+    </div>
+  `;
+  
+  return sendMail({
+    to: toEmail,
+    subject: `${panelName} - Test Email`,
+    html: emailTemplate(panelName, 'Test Email Successful!', content, `This is an automated test email from ${panelName}`),
     text: `${panelName} - Test Email\n\nIf you're reading this, your email configuration is working correctly.`
   });
 }
@@ -138,55 +175,19 @@ export async function sendPasswordReset(toEmail, username, resetToken, resetUrl)
   
   const fullResetUrl = `${panelUrl}/auth/reset-password?token=${resetToken}`;
   
+  const content = `
+    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+      Hi <strong style="color: #fafafa;">${username}</strong>,<br><br>
+      We received a request to reset your password. Click the button below to create a new password.
+    </p>
+    ${emailButton('Reset Password', fullResetUrl)}
+    ${emailNote("This link will expire in 1 hour. If you didn't request this, you can safely ignore this email.")}
+  `;
+  
   return sendMail({
     to: toEmail,
     subject: `${panelName} - Password Reset`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-          <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #141414; border-radius: 12px; overflow: hidden;">
-                <tr>
-                  <td style="padding: 32px; text-align: center; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">${panelName}</h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 32px;">
-                    <h2 style="margin: 0 0 16px; color: #ffffff; font-size: 20px;">Password Reset Request</h2>
-                    <p style="margin: 0 0 24px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
-                      Hi <strong style="color: #ffffff;">${username}</strong>,<br><br>
-                      We received a request to reset your password. Click the button below to create a new password.
-                    </p>
-                    <a href="${fullResetUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      Reset Password
-                    </a>
-                    <p style="margin: 24px 0 0; color: #71717a; font-size: 12px;">
-                      This link will expire in 1 hour. If you didn't request this, you can safely ignore this email.
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 24px 32px; background-color: #0f0f0f; text-align: center;">
-                    <p style="margin: 0; color: #52525b; font-size: 12px;">
-                      ${panelName} • This is an automated message
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `,
+    html: emailTemplate(panelName, 'Password Reset Request', content, `${panelName} • This is an automated message`),
     text: `${panelName} - Password Reset\n\nHi ${username},\n\nWe received a request to reset your password. Visit this link to create a new password:\n\n${fullResetUrl}\n\nThis link will expire in 1 hour. If you didn't request this, you can safely ignore this email.`
   });
 }
@@ -196,54 +197,43 @@ export async function sendWelcomeEmail(toEmail, username) {
   const panelName = config.panel?.name || 'Sodium Panel';
   const panelUrl = config.panel?.url || '';
   
+  const content = `
+    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+      Hi <strong style="color: #fafafa;">${username}</strong>,<br><br>
+      Your account has been created successfully. You can now log in and start managing your game servers.
+    </p>
+    ${panelUrl ? emailButton('Go to Panel', panelUrl) : ''}
+  `;
+  
   return sendMail({
     to: toEmail,
     subject: `Welcome to ${panelName}!`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0a0a0a;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
-          <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #141414; border-radius: 12px; overflow: hidden;">
-                <tr>
-                  <td style="padding: 32px; text-align: center; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">${panelName}</h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 32px;">
-                    <h2 style="margin: 0 0 16px; color: #ffffff; font-size: 20px;">Welcome, ${username}!</h2>
-                    <p style="margin: 0 0 24px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
-                      Your account has been created successfully. You can now log in and start managing your game servers.
-                    </p>
-                    ${panelUrl ? `
-                    <a href="${panelUrl}" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      Go to Panel
-                    </a>
-                    ` : ''}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 24px 32px; background-color: #0f0f0f; text-align: center;">
-                    <p style="margin: 0; color: #52525b; font-size: 12px;">
-                      ${panelName} • Thank you for joining us
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `,
+    html: emailTemplate(panelName, `Welcome, ${username}!`, content, `${panelName} • Thank you for joining us`),
     text: `Welcome to ${panelName}!\n\nHi ${username},\n\nYour account has been created successfully. You can now log in and start managing your game servers.${panelUrl ? `\n\nVisit: ${panelUrl}` : ''}`
+  });
+}
+
+export async function sendVerificationEmail(toEmail, username, verificationToken) {
+  const config = loadConfig();
+  const panelName = config.panel?.name || 'Sodium Panel';
+  const panelUrl = config.panel?.url || '';
+  
+  const verifyUrl = `${panelUrl}/auth/verify-email?token=${verificationToken}`;
+  
+  const content = `
+    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+      Hi <strong style="color: #fafafa;">${username}</strong>,<br><br>
+      Thank you for registering! Please click the button below to verify your email address.
+    </p>
+    ${emailButton('Verify Email', verifyUrl)}
+    ${emailNote("This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.")}
+  `;
+  
+  return sendMail({
+    to: toEmail,
+    subject: `${panelName} - Verify Your Email`,
+    html: emailTemplate(panelName, 'Verify Your Email', content, `${panelName} • This is an automated message`),
+    text: `${panelName} - Verify Your Email\n\nHi ${username},\n\nThank you for registering! Please visit this link to verify your email address:\n\n${verifyUrl}\n\nThis link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.`
   });
 }
 

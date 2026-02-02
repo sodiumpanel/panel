@@ -147,6 +147,15 @@ function renderAuth() {
             <small class="form-hint">3-20 characters</small>
           </div>
           
+          <div class="form-group" id="email-field-group" style="display: none;">
+            <label for="register-email">Email</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">email</span>
+              <input type="email" id="register-email" name="email" placeholder="Enter your email">
+            </div>
+            <small class="form-hint">Required for email verification</small>
+          </div>
+          
           <div class="form-group">
             <label for="register-password">Password</label>
             <div class="input-wrapper">
@@ -238,6 +247,7 @@ function renderAuth() {
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = registerForm.querySelector('#register-username').value;
+    const email = registerForm.querySelector('#register-email').value;
     const password = registerForm.querySelector('#register-password').value;
     const confirm = registerForm.querySelector('#register-confirm').value;
     const errorEl = registerForm.querySelector('#register-error');
@@ -256,7 +266,7 @@ function renderAuth() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, email, password })
       });
       
       const data = await res.json();
@@ -274,6 +284,10 @@ function renderAuth() {
       localStorage.setItem('loggedIn', 'true');
       localStorage.setItem('username', data.user.username);
       
+      if (data.emailVerificationRequired) {
+        localStorage.setItem('emailVerificationPending', 'true');
+      }
+      
       window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
@@ -284,6 +298,24 @@ function renderAuth() {
   });
   
   loadOAuthProviders$1();
+  checkEmailVerificationRequired();
+}
+
+async function checkEmailVerificationRequired() {
+  try {
+    const res = await fetch('/api/auth/config');
+    const data = await res.json();
+    if (data.registration?.emailVerification) {
+      const emailGroup = document.getElementById('email-field-group');
+      const emailInput = document.getElementById('register-email');
+      if (emailGroup) {
+        emailGroup.style.display = 'block';
+        emailInput.required = true;
+      }
+    }
+  } catch (e) {
+    // Ignore - email field will be optional
+  }
 }
 
 async function loadOAuthProviders$1() {
@@ -375,6 +407,96 @@ function getErrorMessage(error) {
     userinfo_failed: 'Failed to get user information.'
   };
   return messages[error] || 'An unknown error occurred.';
+}
+
+async function renderVerifyEmail() {
+  const app = document.getElementById('app');
+  app.className = 'auth-page';
+  
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  
+  if (!token) {
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <h2>Invalid Link</h2>
+            <p class="auth-subtitle">No verification token provided.</p>
+          </div>
+          <a href="/auth" class="btn btn-primary btn-full">
+            <span>Go to Login</span>
+          </a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  app.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <h2>Verifying email...</h2>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  try {
+    const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    
+    if (data.success) {
+      localStorage.removeItem('emailVerificationPending');
+      app.innerHTML = `
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+              <h2>Email Verified!</h2>
+              <p class="auth-subtitle">${data.message || 'Your email has been verified successfully.'}</p>
+            </div>
+            <a href="/dashboard" class="btn btn-primary btn-full">
+              <span>Go to Dashboard</span>
+            </a>
+          </div>
+        </div>
+      `;
+    } else {
+      app.innerHTML = `
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <h2>Verification Failed</h2>
+              <p class="auth-subtitle">${data.error || 'Unable to verify your email.'}</p>
+            </div>
+            <a href="/dashboard" class="btn btn-primary btn-full">
+              <span>Go to Dashboard</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <h2>Connection Error</h2>
+            <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
+          </div>
+          <a href="${window.location.href}" class="btn btn-primary btn-full">
+            <span>Try Again</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }
 }
 
 function escapeHtml(str) {
@@ -498,6 +620,7 @@ function renderDashboard() {
   
   app.innerHTML = `
     <div class="dashboard-container">
+      <div id="email-verification-banner"></div>
       <div id="announcements-container"></div>
       
       <header class="dashboard-header">
@@ -542,12 +665,61 @@ function renderDashboard() {
   loadServers$1();
   loadAnnouncements();
   loadQuickStats();
+  checkEmailVerification();
   
   pollInterval$2 = setInterval(() => {
     loadServers$1();
     loadLimits();
     loadQuickStats();
   }, 10000);
+}
+
+async function checkEmailVerification() {
+  const banner = document.getElementById('email-verification-banner');
+  if (!banner) return;
+  
+  try {
+    const res = await api('/api/auth/verification-status');
+    const data = await res.json();
+    
+    if (data.emailVerificationRequired && !data.emailVerified) {
+      banner.innerHTML = `
+        <div class="verification-banner">
+          <div class="verification-content">
+            <span class="material-icons-outlined">mail</span>
+            <div class="verification-text">
+              <strong>Email Verification Required</strong>
+              <p>Please verify your email address (${data.email || 'not set'}) to unlock all features.</p>
+            </div>
+          </div>
+          <button class="btn btn-sm" id="resend-verification-btn">Resend Email</button>
+        </div>
+      `;
+      
+      document.getElementById('resend-verification-btn')?.addEventListener('click', async (e) => {
+        const btn = e.target;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        
+        try {
+          const resendRes = await api('/api/auth/resend-verification', { method: 'POST' });
+          const resendData = await resendRes.json();
+          if (resendData.success) {
+            btn.textContent = 'Email Sent!';
+            btn.classList.add('btn-success');
+          } else {
+            btn.textContent = resendData.error || 'Failed';
+            btn.disabled = false;
+          }
+        } catch (err) {
+          btn.textContent = 'Failed';
+          btn.disabled = false;
+        }
+      });
+    }
+  } catch (e) {
+    // Ignore verification check errors
+  }
 }
 
 async function loadQuickStats() {
@@ -46631,24 +46803,6 @@ function renderDefaultsSettings(content, config) {
           </div>
         </div>
         
-        <div class="detail-card">
-          <h3>Additional Limits</h3>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Max Backups per Server</label>
-              <input type="number" name="default_backups" value="${config.defaults?.backups || 3}" min="0" />
-            </div>
-            <div class="form-group">
-              <label>Max Databases per Server</label>
-              <input type="number" name="default_databases" value="${config.defaults?.databases || 1}" min="0" />
-            </div>
-            <div class="form-group">
-              <label>Max Allocations per Server</label>
-              <input type="number" name="default_allocations" value="${config.defaults?.allocations || 1}" min="1" />
-            </div>
-          </div>
-        </div>
-        
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
             <span class="material-icons-outlined">save</span>
@@ -46668,10 +46822,7 @@ function renderDefaultsSettings(content, config) {
         servers: parseInt(form.default_servers.value) || 2,
         memory: parseInt(form.default_memory.value) || 2048,
         disk: parseInt(form.default_disk.value) || 10240,
-        cpu: parseInt(form.default_cpu.value) || 200,
-        backups: parseInt(form.default_backups.value) || 3,
-        databases: parseInt(form.default_databases.value) || 1,
-        allocations: parseInt(form.default_allocations.value) || 1
+        cpu: parseInt(form.default_cpu.value) || 200
       }
     };
     
@@ -48648,6 +48799,13 @@ const routes = {
     render: renderAuthCallback,
     options: {
       title: 'Signing In',
+      sidebar: false
+    }
+  },
+  '/auth/verify-email': {
+    render: renderVerifyEmail,
+    options: {
+      title: 'Verify Email',
       sidebar: false
     }
   },

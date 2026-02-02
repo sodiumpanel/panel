@@ -79,6 +79,15 @@ export function renderAuth() {
             <small class="form-hint">3-20 characters</small>
           </div>
           
+          <div class="form-group" id="email-field-group" style="display: none;">
+            <label for="register-email">Email</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">email</span>
+              <input type="email" id="register-email" name="email" placeholder="Enter your email">
+            </div>
+            <small class="form-hint">Required for email verification</small>
+          </div>
+          
           <div class="form-group">
             <label for="register-password">Password</label>
             <div class="input-wrapper">
@@ -170,6 +179,7 @@ export function renderAuth() {
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = registerForm.querySelector('#register-username').value;
+    const email = registerForm.querySelector('#register-email').value;
     const password = registerForm.querySelector('#register-password').value;
     const confirm = registerForm.querySelector('#register-confirm').value;
     const errorEl = registerForm.querySelector('#register-error');
@@ -188,7 +198,7 @@ export function renderAuth() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, email, password })
       });
       
       const data = await res.json();
@@ -206,6 +216,10 @@ export function renderAuth() {
       localStorage.setItem('loggedIn', 'true');
       localStorage.setItem('username', data.user.username);
       
+      if (data.emailVerificationRequired) {
+        localStorage.setItem('emailVerificationPending', 'true');
+      }
+      
       window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
@@ -216,6 +230,24 @@ export function renderAuth() {
   });
   
   loadOAuthProviders();
+  checkEmailVerificationRequired();
+}
+
+async function checkEmailVerificationRequired() {
+  try {
+    const res = await fetch('/api/auth/config');
+    const data = await res.json();
+    if (data.registration?.emailVerification) {
+      const emailGroup = document.getElementById('email-field-group');
+      const emailInput = document.getElementById('register-email');
+      if (emailGroup) {
+        emailGroup.style.display = 'block';
+        emailInput.required = true;
+      }
+    }
+  } catch (e) {
+    // Ignore - email field will be optional
+  }
 }
 
 async function loadOAuthProviders() {
@@ -307,4 +339,94 @@ function getErrorMessage(error) {
     userinfo_failed: 'Failed to get user information.'
   };
   return messages[error] || 'An unknown error occurred.';
+}
+
+export async function renderVerifyEmail() {
+  const app = document.getElementById('app');
+  app.className = 'auth-page';
+  
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  
+  if (!token) {
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <h2>Invalid Link</h2>
+            <p class="auth-subtitle">No verification token provided.</p>
+          </div>
+          <a href="/auth" class="btn btn-primary btn-full">
+            <span>Go to Login</span>
+          </a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  app.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <h2>Verifying email...</h2>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  try {
+    const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    
+    if (data.success) {
+      localStorage.removeItem('emailVerificationPending');
+      app.innerHTML = `
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+              <h2>Email Verified!</h2>
+              <p class="auth-subtitle">${data.message || 'Your email has been verified successfully.'}</p>
+            </div>
+            <a href="/dashboard" class="btn btn-primary btn-full">
+              <span>Go to Dashboard</span>
+            </a>
+          </div>
+        </div>
+      `;
+    } else {
+      app.innerHTML = `
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <h2>Verification Failed</h2>
+              <p class="auth-subtitle">${data.error || 'Unable to verify your email.'}</p>
+            </div>
+            <a href="/dashboard" class="btn btn-primary btn-full">
+              <span>Go to Dashboard</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <h2>Connection Error</h2>
+            <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
+          </div>
+          <a href="${window.location.href}" class="btn btn-primary btn-full">
+            <span>Try Again</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }
 }

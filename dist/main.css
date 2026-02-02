@@ -1443,6 +1443,60 @@ input, textarea, select {
   font-size: 13px;
 }
 
+.verification-banner {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.verification-banner .verification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.verification-banner .verification-content .material-icons-outlined {
+  font-size: 24px;
+  color: #fbbf24;
+}
+.verification-banner .verification-content .verification-text strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+.verification-banner .verification-content .verification-text p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0;
+}
+.verification-banner .btn {
+  white-space: nowrap;
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+}
+.verification-banner .btn:hover {
+  background: rgba(251, 191, 36, 0.3);
+}
+.verification-banner .btn.btn-success {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+}
+@media (max-width: 600px) {
+  .verification-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .verification-banner .btn {
+    width: 100%;
+  }
+}
+
 .profile-page {
   max-width: 900px;
   margin: 0 auto;

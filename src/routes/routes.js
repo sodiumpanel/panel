@@ -1,4 +1,4 @@
-import { renderAuth, renderAuthCallback } from './auth.js';
+import { renderAuth, renderAuthCallback, renderVerifyEmail } from './auth.js';
 import { renderDashboard, cleanupDashboard } from './dashboard.js';
 import { renderProfile } from './profile.js';
 import { renderSettings } from './settings.js';
@@ -34,6 +34,13 @@ export const routes = {
     render: renderAuthCallback,
     options: {
       title: 'Signing In',
+      sidebar: false
+    }
+  },
+  '/auth/verify-email': {
+    render: renderVerifyEmail,
+    options: {
+      title: 'Verify Email',
       sidebar: false
     }
   },

@@ -2,10 +2,11 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { loadUsers, saveUsers, loadConfig } from '../db.js';
-import { validateUsername, sanitizeText, generateUUID } from '../utils/helpers.js';
-import { JWT_SECRET } from '../utils/auth.js';
+import { validateUsername, sanitizeText, generateUUID, generateToken } from '../utils/helpers.js';
+import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
 import { rateLimit } from '../utils/rate-limiter.js';
 import { logActivity, ACTIVITY_TYPES } from '../utils/activity.js';
+import { sendVerificationEmail, getTransporter } from '../utils/mail.js';
 
 const router = express.Router();
 
@@ -100,7 +101,7 @@ const OAUTH_CONFIGS = {
 const authLimiter = rateLimit({ windowMs: 60000, max: 5, message: 'Too many attempts, try again later' });
 
 router.post('/register', authLimiter, async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
   
   const config = loadConfig();
   if (!config.registration?.enabled) {
@@ -109,6 +110,15 @@ router.post('/register', authLimiter, async (req, res) => {
   
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
+  }
+  
+  const requireEmail = config.registration?.emailVerification;
+  if (requireEmail && !email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
   }
   
   if (!validateUsername(username)) {
@@ -126,18 +136,31 @@ router.post('/register', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Username already exists' });
   }
   
+  if (email) {
+    const existingEmail = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already in use' });
+    }
+  }
+  
   const hashedPassword = await bcrypt.hash(password, 10);
   const defaults = config.defaults || {};
   const isFirstUser = data.users.length === 0;
+  
+  const verificationToken = requireEmail ? generateToken() : null;
   const newUser = {
     id: generateUUID(),
     username: sanitizeText(username),
+    email: email || null,
     password: hashedPassword,
     displayName: sanitizeText(username),
     bio: '',
     avatar: '',
     links: {},
     isAdmin: isFirstUser,
+    emailVerified: !requireEmail || isFirstUser,
+    verificationToken: verificationToken,
+    verificationTokenExpires: verificationToken ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null,
     limits: {
       servers: defaults.servers || 2,
       memory: defaults.memory || 2048,
@@ -155,7 +178,16 @@ router.post('/register', authLimiter, async (req, res) => {
   data.users.push(newUser);
   saveUsers(data);
   
-  const { password: _, ...userWithoutPassword } = newUser;
+  // Send verification email if required and mail is configured
+  if (requireEmail && email && verificationToken && getTransporter()) {
+    try {
+      await sendVerificationEmail(email, newUser.username, verificationToken);
+    } catch (e) {
+      console.error('Failed to send verification email:', e.message);
+    }
+  }
+  
+  const { password: _, verificationToken: __, ...userWithoutPassword } = newUser;
   const token = jwt.sign(
     { id: newUser.id, username: newUser.username, isAdmin: newUser.isAdmin },
     JWT_SECRET,
@@ -164,7 +196,26 @@ router.post('/register', authLimiter, async (req, res) => {
   
   logActivity(newUser.id, ACTIVITY_TYPES.LOGIN, { method: 'register' }, req.ip);
   
-  res.json({ success: true, user: userWithoutPassword, token });
+  res.json({ 
+    success: true, 
+    user: userWithoutPassword, 
+    token,
+    emailVerificationRequired: requireEmail && !newUser.emailVerified
+  });
+});
+
+// Public registration config endpoint (no auth required)
+router.get('/config', (req, res) => {
+  const config = loadConfig();
+  res.json({
+    registration: {
+      enabled: config.registration?.enabled || false,
+      emailVerification: config.registration?.emailVerification || false
+    },
+    panel: {
+      name: config.panel?.name || 'Sodium Panel'
+    }
+  });
 });
 
 router.post('/login', authLimiter, async (req, res) => {
@@ -471,6 +522,7 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
         bio: '',
         links: {},
         isAdmin: data.users.length === 0,
+        emailVerified: true, // OAuth emails are pre-verified by provider
         limits: {
           servers: defaults.servers || 2,
           memory: defaults.memory || 2048,
@@ -514,6 +566,91 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
     console.error('OAuth error:', e);
     res.redirect('/auth?error=oauth_failed');
   }
+});
+
+// ==================== EMAIL VERIFICATION ====================
+
+router.get('/verify-email', async (req, res) => {
+  const { token } = req.query;
+  
+  if (!token) {
+    return res.status(400).json({ error: 'Verification token required' });
+  }
+  
+  const data = loadUsers();
+  const user = data.users.find(u => u.verificationToken === token);
+  
+  if (!user) {
+    return res.status(400).json({ error: 'Invalid verification token' });
+  }
+  
+  if (user.emailVerified) {
+    return res.json({ success: true, message: 'Email already verified' });
+  }
+  
+  if (user.verificationTokenExpires && new Date(user.verificationTokenExpires) < new Date()) {
+    return res.status(400).json({ error: 'Verification token expired' });
+  }
+  
+  user.emailVerified = true;
+  user.verificationToken = null;
+  user.verificationTokenExpires = null;
+  saveUsers(data);
+  
+  logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'email_verified' }, req.ip);
+  
+  res.json({ success: true, message: 'Email verified successfully' });
+});
+
+router.post('/resend-verification', authenticateUser, async (req, res) => {
+  const data = loadUsers();
+  const user = data.users.find(u => u.id === req.user.id);
+  
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  if (user.emailVerified) {
+    return res.status(400).json({ error: 'Email already verified' });
+  }
+  
+  if (!user.email) {
+    return res.status(400).json({ error: 'No email address on file' });
+  }
+  
+  if (!getTransporter()) {
+    return res.status(500).json({ error: 'Mail service not configured' });
+  }
+  
+  // Generate new token
+  const verificationToken = generateToken();
+  user.verificationToken = verificationToken;
+  user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  saveUsers(data);
+  
+  try {
+    await sendVerificationEmail(user.email, user.username, verificationToken);
+    res.json({ success: true, message: 'Verification email sent' });
+  } catch (e) {
+    console.error('Failed to send verification email:', e.message);
+    res.status(500).json({ error: 'Failed to send verification email' });
+  }
+});
+
+router.get('/verification-status', authenticateUser, (req, res) => {
+  const config = loadConfig();
+  const data = loadUsers();
+  const user = data.users.find(u => u.id === req.user.id);
+  
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  res.json({
+    emailVerificationRequired: config.registration?.emailVerification || false,
+    emailVerified: user.emailVerified || false,
+    email: user.email || null
+  });
 });
 
 export default router;

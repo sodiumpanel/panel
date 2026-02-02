@@ -37,6 +37,7 @@ export function renderDashboard() {
   
   app.innerHTML = `
     <div class="dashboard-container">
+      <div id="email-verification-banner"></div>
       <div id="announcements-container"></div>
       
       <header class="dashboard-header">
@@ -81,12 +82,61 @@ export function renderDashboard() {
   loadServers();
   loadAnnouncements();
   loadQuickStats();
+  checkEmailVerification();
   
   pollInterval = setInterval(() => {
     loadServers();
     loadLimits();
     loadQuickStats();
   }, 10000);
+}
+
+async function checkEmailVerification() {
+  const banner = document.getElementById('email-verification-banner');
+  if (!banner) return;
+  
+  try {
+    const res = await api('/api/auth/verification-status');
+    const data = await res.json();
+    
+    if (data.emailVerificationRequired && !data.emailVerified) {
+      banner.innerHTML = `
+        <div class="verification-banner">
+          <div class="verification-content">
+            <span class="material-icons-outlined">mail</span>
+            <div class="verification-text">
+              <strong>Email Verification Required</strong>
+              <p>Please verify your email address (${data.email || 'not set'}) to unlock all features.</p>
+            </div>
+          </div>
+          <button class="btn btn-sm" id="resend-verification-btn">Resend Email</button>
+        </div>
+      `;
+      
+      document.getElementById('resend-verification-btn')?.addEventListener('click', async (e) => {
+        const btn = e.target;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        
+        try {
+          const resendRes = await api('/api/auth/resend-verification', { method: 'POST' });
+          const resendData = await resendRes.json();
+          if (resendData.success) {
+            btn.textContent = 'Email Sent!';
+            btn.classList.add('btn-success');
+          } else {
+            btn.textContent = resendData.error || 'Failed';
+            btn.disabled = false;
+          }
+        } catch (err) {
+          btn.textContent = 'Failed';
+          btn.disabled = false;
+        }
+      });
+    }
+  } catch (e) {
+    // Ignore verification check errors
+  }
 }
 
 async function loadQuickStats() {

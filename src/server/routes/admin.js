@@ -888,10 +888,7 @@ router.put('/settings', async (req, res) => {
       servers: newConfig.defaults.servers !== undefined ? parseInt(newConfig.defaults.servers) : config.defaults?.servers || 2,
       memory: newConfig.defaults.memory !== undefined ? parseInt(newConfig.defaults.memory) : config.defaults?.memory || 2048,
       disk: newConfig.defaults.disk !== undefined ? parseInt(newConfig.defaults.disk) : config.defaults?.disk || 10240,
-      cpu: newConfig.defaults.cpu !== undefined ? parseInt(newConfig.defaults.cpu) : config.defaults?.cpu || 200,
-      backups: newConfig.defaults.backups !== undefined ? parseInt(newConfig.defaults.backups) : config.defaults?.backups || 3,
-      databases: newConfig.defaults.databases !== undefined ? parseInt(newConfig.defaults.databases) : config.defaults?.databases || 1,
-      allocations: newConfig.defaults.allocations !== undefined ? parseInt(newConfig.defaults.allocations) : config.defaults?.allocations || 1
+      cpu: newConfig.defaults.cpu !== undefined ? parseInt(newConfig.defaults.cpu) : config.defaults?.cpu || 200
     };
   }
   
