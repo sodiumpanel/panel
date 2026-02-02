@@ -267,11 +267,17 @@ async function loadOAuthProviders() {
       if (section && container) {
         section.style.display = 'block';
         container.innerHTML = data.providers.map(p => `
-          <a href="/api/auth/oauth/${p.id}" class="oauth-btn oauth-${p.type}">
+          <button type="button" class="oauth-btn oauth-${p.type}" data-provider="${p.id}">
             ${OAUTH_ICONS[p.type] || '<span class="material-icons-outlined">login</span>'}
             <span>${p.name}</span>
-          </a>
+          </button>
         `).join('');
+        
+        container.querySelectorAll('.oauth-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            window.location.href = `/api/auth/oauth/${btn.dataset.provider}`;
+          });
+        });
       }
     }
   } catch (e) {
