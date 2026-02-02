@@ -27,8 +27,8 @@
 
 ## Ideas
 
-- OAuth (Discord, Google, GitHub)
-- Email verification and password reset
+- ~~OAuth (Discord, Google, GitHub)~~ ✅
+- ~~Email verification and password reset~~ ✅
 - Billing integration
 - Multi-language support
 - Batch server operations

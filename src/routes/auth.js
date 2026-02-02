@@ -61,6 +61,10 @@ export function renderAuth() {
             <span class="material-icons-outlined">arrow_forward</span>
           </button>
           
+          <div class="auth-links">
+            <button type="button" class="link-btn" id="forgot-password-btn">Forgot password?</button>
+          </div>
+          
           <div class="oauth-section" id="oauth-section" style="display: none;">
             <div class="oauth-divider">
               <span>or continue with</span>
@@ -236,6 +240,10 @@ export function renderAuth() {
   
   loadOAuthProviders();
   checkEmailVerificationRequired();
+  
+  document.getElementById('forgot-password-btn').addEventListener('click', () => {
+    renderForgotPassword();
+  });
 }
 
 async function checkEmailVerificationRequired() {
@@ -569,6 +577,269 @@ export async function renderVerifyEmail() {
         </div>
       `;
     }
+  } catch (e) {
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <h2>Connection Error</h2>
+            <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
+          </div>
+          <a href="${window.location.href}" class="btn btn-primary btn-full">
+            <span>Try Again</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function renderForgotPassword() {
+  const app = document.getElementById('app');
+  app.className = 'auth-page';
+  
+  app.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="logo">
+            <span class="material-icons-outlined">bolt</span>
+            <span class="logo-text">Sodium</span>
+          </div>
+          <p class="auth-subtitle">Reset your password</p>
+        </div>
+        
+        <form id="forgot-form" class="auth-form active">
+          <p class="form-info">
+            <span class="material-icons-outlined">info</span>
+            Enter your email address and we'll send you a link to reset your password.
+          </p>
+          
+          <div class="form-group">
+            <label for="forgot-email">Email</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">email</span>
+              <input type="email" id="forgot-email" name="email" placeholder="Enter your email" required>
+            </div>
+          </div>
+          
+          <div class="error-message" id="forgot-error"></div>
+          <div class="success-message" id="forgot-success" style="display: none;"></div>
+          
+          <button type="submit" class="btn btn-primary btn-full" id="forgot-submit-btn">
+            <span>Send Reset Link</span>
+            <span class="material-icons-outlined">send</span>
+          </button>
+          
+          <div class="auth-links">
+            <button type="button" class="link-btn" id="back-to-login-btn">Back to Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const form = document.getElementById('forgot-form');
+  const errorEl = document.getElementById('forgot-error');
+  const successEl = document.getElementById('forgot-success');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgot-email').value.trim();
+    const btn = document.getElementById('forgot-submit-btn');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await res.json();
+      
+      if (data.error) {
+        errorEl.textContent = data.error;
+        errorEl.style.display = 'block';
+      } else {
+        successEl.textContent = data.message;
+        successEl.style.display = 'block';
+        form.querySelector('input').disabled = true;
+      }
+    } catch (err) {
+      errorEl.textContent = 'Connection error. Please try again.';
+      errorEl.style.display = 'block';
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<span>Send Reset Link</span><span class="material-icons-outlined">send</span>';
+  });
+  
+  document.getElementById('back-to-login-btn').addEventListener('click', () => {
+    renderAuth();
+  });
+}
+
+export async function renderResetPassword() {
+  const app = document.getElementById('app');
+  app.className = 'auth-page';
+  
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  
+  if (!token) {
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <h2>Invalid Link</h2>
+            <p class="auth-subtitle">No reset token provided.</p>
+          </div>
+          <a href="/auth" class="btn btn-primary btn-full">
+            <span>Go to Login</span>
+          </a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  app.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <h2>Validating...</h2>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  try {
+    const res = await fetch(`/api/auth/reset-password/validate?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    
+    if (!data.valid) {
+      app.innerHTML = `
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <h2>Invalid Link</h2>
+              <p class="auth-subtitle">${data.error || 'This reset link is invalid or has expired.'}</p>
+            </div>
+            <a href="/auth" class="btn btn-primary btn-full">
+              <span>Go to Login</span>
+            </a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    app.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="logo">
+              <span class="material-icons-outlined">bolt</span>
+              <span class="logo-text">Sodium</span>
+            </div>
+            <p class="auth-subtitle">Reset password for <strong>${data.username}</strong></p>
+          </div>
+          
+          <form id="reset-form" class="auth-form active">
+            <div class="form-group">
+              <label for="new-password">New Password</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined">lock</span>
+                <input type="password" id="new-password" name="password" placeholder="Enter new password" required minlength="6">
+              </div>
+              <small class="form-hint">Minimum 6 characters</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="confirm-password">Confirm Password</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined">lock</span>
+                <input type="password" id="confirm-password" name="confirm" placeholder="Confirm new password" required>
+              </div>
+            </div>
+            
+            <div class="error-message" id="reset-error"></div>
+            
+            <button type="submit" class="btn btn-primary btn-full" id="reset-submit-btn">
+              <span>Reset Password</span>
+              <span class="material-icons-outlined">check</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+    
+    const form = document.getElementById('reset-form');
+    const errorEl = document.getElementById('reset-error');
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('new-password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      const btn = document.getElementById('reset-submit-btn');
+      
+      if (password !== confirm) {
+        errorEl.textContent = 'Passwords do not match';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      errorEl.style.display = 'none';
+      
+      try {
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password })
+        });
+        
+        const data = await res.json();
+        
+        if (data.error) {
+          errorEl.textContent = data.error;
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.innerHTML = '<span>Reset Password</span><span class="material-icons-outlined">check</span>';
+        } else {
+          app.innerHTML = `
+            <div class="auth-container">
+              <div class="auth-card">
+                <div class="auth-header">
+                  <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+                  <h2>Password Reset!</h2>
+                  <p class="auth-subtitle">Your password has been reset successfully.</p>
+                </div>
+                <a href="/auth" class="btn btn-primary btn-full">
+                  <span>Sign In</span>
+                </a>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        errorEl.textContent = 'Connection error. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<span>Reset Password</span><span class="material-icons-outlined">check</span>';
+      }
+    });
+    
   } catch (e) {
     app.innerHTML = `
       <div class="auth-container">

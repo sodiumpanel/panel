@@ -6,7 +6,7 @@ import { validateUsername, sanitizeText, generateUUID, generateToken } from '../
 import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
 import { rateLimit } from '../utils/rate-limiter.js';
 import { logActivity, ACTIVITY_TYPES } from '../utils/activity.js';
-import { sendVerificationEmail, send2FACode, getTransporter } from '../utils/mail.js';
+import { sendVerificationEmail, send2FACode, sendPasswordReset, getTransporter } from '../utils/mail.js';
 
 const router = express.Router();
 
@@ -745,6 +745,112 @@ router.get('/verification-status', authenticateUser, (req, res) => {
     emailVerified: user.emailVerified || false,
     email: user.email || null
   });
+});
+
+// ==================== PASSWORD RESET ====================
+
+const resetLimiter = rateLimit({ windowMs: 60000, max: 3, message: 'Too many reset attempts, try again later' });
+
+router.post('/forgot-password', resetLimiter, async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+  
+  const data = loadUsers();
+  const user = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+  
+  // Always return success to prevent email enumeration
+  if (!user) {
+    return res.json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
+  }
+  
+  // OAuth users don't have passwords - return same message to prevent enumeration
+  if (!user.password) {
+    return res.json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
+  }
+  
+  if (!getTransporter()) {
+    return res.status(500).json({ error: 'Mail service not configured' });
+  }
+  
+  // Generate reset token
+  const resetToken = generateToken();
+  user.resetToken = resetToken;
+  user.resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+  saveUsers(data);
+  
+  try {
+    const config = loadConfig();
+    const panelUrl = config.panel?.url || `${req.protocol}://${req.get('host')}`;
+    await sendPasswordReset(user.email, user.username, resetToken, panelUrl);
+    
+    logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'password_reset_requested' }, req.ip);
+    
+    res.json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
+  } catch (e) {
+    console.error('Failed to send password reset email:', e.message);
+    res.status(500).json({ error: 'Failed to send reset email' });
+  }
+});
+
+router.get('/reset-password/validate', (req, res) => {
+  const { token } = req.query;
+  
+  if (!token) {
+    return res.status(400).json({ error: 'Reset token required' });
+  }
+  
+  const data = loadUsers();
+  const user = data.users.find(u => u.resetToken === token);
+  
+  if (!user) {
+    return res.status(400).json({ error: 'Invalid reset token' });
+  }
+  
+  if (user.resetTokenExpires && new Date(user.resetTokenExpires) < new Date()) {
+    return res.status(400).json({ error: 'Reset token expired' });
+  }
+  
+  res.json({ valid: true, username: user.username });
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  
+  if (!token || !password) {
+    return res.status(400).json({ error: 'Token and password are required' });
+  }
+  
+  if (typeof password !== 'string' || password.length < 6 || password.length > 128) {
+    return res.status(400).json({ error: 'Password must be between 6 and 128 characters' });
+  }
+  
+  const data = loadUsers();
+  const user = data.users.find(u => u.resetToken === token);
+  
+  if (!user) {
+    return res.status(400).json({ error: 'Invalid reset token' });
+  }
+  
+  if (user.resetTokenExpires && new Date(user.resetTokenExpires) < new Date()) {
+    return res.status(400).json({ error: 'Reset token expired' });
+  }
+  
+  // Update password
+  user.password = await bcrypt.hash(password, 10);
+  user.resetToken = null;
+  user.resetTokenExpires = null;
+  saveUsers(data);
+  
+  logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'password_reset_completed' }, req.ip);
+  
+  res.json({ success: true, message: 'Password reset successfully' });
 });
 
 export default router;

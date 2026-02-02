@@ -1,4 +1,4 @@
-import { renderAuth, renderAuthCallback, renderVerifyEmail } from './auth.js';
+import { renderAuth, renderAuthCallback, renderVerifyEmail, renderResetPassword } from './auth.js';
 import { renderDashboard, cleanupDashboard } from './dashboard.js';
 import { renderProfile } from './profile.js';
 import { renderSettings } from './settings.js';
@@ -41,6 +41,13 @@ export const routes = {
     render: renderVerifyEmail,
     options: {
       title: 'Verify Email',
+      sidebar: false
+    }
+  },
+  '/auth/reset-password': {
+    render: renderResetPassword,
+    options: {
+      title: 'Reset Password',
       sidebar: false
     }
   },

@@ -514,6 +514,17 @@ input, textarea, select { font: inherit; }
   font-size: 13px;
 }
 
+.success-message {
+  display: none;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: rgba(35, 165, 90, .12);
+  color: var(--success);
+  border: 1px solid rgba(35, 165, 90, .25);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
 .modal {
   position: fixed;
   inset: 0;
