@@ -69,6 +69,44 @@
   &.active { display: block; }
 }
 
+.form-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  
+  .material-icons-outlined { font-size: 20px; color: var(--accent); }
+  
+  &.success {
+    background: rgba(16, 185, 129, 0.1);
+    .material-icons-outlined { color: var(--success); }
+  }
+}
+
+.auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  
+  .link-btn {
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+    
+    &:hover { color: var(--accent); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+  
+  .divider { color: var(--border-color); }
+}
+
 .oauth-section {
   margin-top: 20px;
 }

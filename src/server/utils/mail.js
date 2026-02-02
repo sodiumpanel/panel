@@ -237,6 +237,31 @@ export async function sendVerificationEmail(toEmail, username, verificationToken
   });
 }
 
+export async function send2FACode(toEmail, username, code) {
+  const config = loadConfig();
+  const panelName = config.panel?.name || 'Sodium Panel';
+  
+  const content = `
+    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+      Hi <strong style="color: #fafafa;">${username}</strong>,<br><br>
+      Your verification code is:
+    </p>
+    <div style="background-color: #0a0a0a; border: 1px solid #27272a; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px;">
+      <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #e07a3a; letter-spacing: 8px;">${code}</span>
+    </div>
+    <p style="margin: 0; color: #71717a; font-size: 13px;">
+      This code expires in 5 minutes. If you didn't try to log in, someone may be attempting to access your account.
+    </p>
+  `;
+  
+  return sendMail({
+    to: toEmail,
+    subject: `${panelName} - Verification Code: ${code}`,
+    html: emailTemplate(panelName, 'Two-Factor Authentication', content, `${panelName} • Security verification`),
+    text: `${panelName} - Verification Code\n\nHi ${username},\n\nYour verification code is: ${code}\n\nThis code expires in 5 minutes. If you didn't try to log in, someone may be attempting to access your account.`
+  });
+}
+
 export async function verifyConnection() {
   const transport = getTransporter();
   if (!transport) {

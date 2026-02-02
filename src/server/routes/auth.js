@@ -6,7 +6,7 @@ import { validateUsername, sanitizeText, generateUUID, generateToken } from '../
 import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
 import { rateLimit } from '../utils/rate-limiter.js';
 import { logActivity, ACTIVITY_TYPES } from '../utils/activity.js';
-import { sendVerificationEmail, getTransporter } from '../utils/mail.js';
+import { sendVerificationEmail, send2FACode, getTransporter } from '../utils/mail.js';
 
 const router = express.Router();
 
@@ -99,6 +99,10 @@ const OAUTH_CONFIGS = {
 };
 
 const authLimiter = rateLimit({ windowMs: 60000, max: 5, message: 'Too many attempts, try again later' });
+
+function generate2FACode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 router.post('/register', authLimiter, async (req, res) => {
   const { username, password, email } = req.body;
@@ -219,6 +223,86 @@ router.get('/config', (req, res) => {
 });
 
 router.post('/login', authLimiter, async (req, res) => {
+  const { username, password, twoFactorCode } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+  
+  const data = loadUsers();
+  const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  
+  if (!isValidPassword) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  
+  const config = loadConfig();
+  const require2fa = config.security?.require2fa;
+  const require2faAdmin = config.security?.require2faAdmin;
+  
+  // Check if 2FA is required for this user (global setting, admin setting, or user preference)
+  const needs2FA = require2fa || (require2faAdmin && user.isAdmin) || user.twoFactorEnabled;
+  
+  if (needs2FA && user.email && user.emailVerified) {
+    // If 2FA code provided, verify it
+    if (twoFactorCode) {
+      if (!user.twoFactorCode || !user.twoFactorExpires) {
+        return res.status(400).json({ error: 'No verification code pending. Please request a new code.', codeExpired: true });
+      }
+      
+      if (new Date(user.twoFactorExpires) < new Date()) {
+        return res.status(400).json({ error: 'Verification code expired. Please request a new code.', codeExpired: true });
+      }
+      
+      if (user.twoFactorCode !== twoFactorCode) {
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+      
+      // Clear 2FA code after successful verification
+      user.twoFactorCode = null;
+      user.twoFactorExpires = null;
+      saveUsers(data);
+    } else {
+      // No code provided, send one and return pending status
+      const code = generate2FACode();
+      user.twoFactorCode = code;
+      user.twoFactorExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      saveUsers(data);
+      
+      try {
+        await send2FACode(user.email, user.username, code);
+      } catch (e) {
+        console.error('Failed to send 2FA code:', e.message);
+        return res.status(500).json({ error: 'Failed to send verification code' });
+      }
+      
+      return res.json({ 
+        success: false, 
+        requires2FA: true, 
+        message: 'Verification code sent to your email'
+      });
+    }
+  }
+  
+  const { password: _, twoFactorCode: __, twoFactorExpires: ___, ...userWithoutSensitive } = user;
+  const token = jwt.sign(
+    { id: user.id, username: user.username, isAdmin: user.isAdmin },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+  
+  logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'password' }, req.ip);
+  
+  res.json({ success: true, user: userWithoutSensitive, token });
+});
+
+router.post('/2fa/resend', authLimiter, async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
@@ -238,16 +322,26 @@ router.post('/login', authLimiter, async (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   
-  const { password: _, ...userWithoutPassword } = user;
-  const token = jwt.sign(
-    { id: user.id, username: user.username, isAdmin: user.isAdmin },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  if (!user.email || !user.emailVerified) {
+    return res.status(400).json({ error: 'Email not verified' });
+  }
   
-  logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'password' }, req.ip);
+  if (!getTransporter()) {
+    return res.status(500).json({ error: 'Mail service not configured' });
+  }
   
-  res.json({ success: true, user: userWithoutPassword, token });
+  const code = generate2FACode();
+  user.twoFactorCode = code;
+  user.twoFactorExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  saveUsers(data);
+  
+  try {
+    await send2FACode(user.email, user.username, code);
+    res.json({ success: true, message: 'Verification code sent' });
+  } catch (e) {
+    console.error('Failed to send 2FA code:', e.message);
+    res.status(500).json({ error: 'Failed to send verification code' });
+  }
 });
 
 // ==================== OAUTH ====================

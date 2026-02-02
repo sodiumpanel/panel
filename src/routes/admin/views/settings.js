@@ -18,6 +18,8 @@ const SETTINGS_TABS = [
   { id: 'advanced', label: 'Advanced', icon: 'code' }
 ];
 
+let mailConfigured = false;
+
 export async function renderSettingsPage(container, username, loadView) {
   const urlParams = new URLSearchParams(window.location.search);
   currentSettingsTab = urlParams.get('tab') || 'general';
@@ -26,6 +28,7 @@ export async function renderSettingsPage(container, username, loadView) {
     const res = await api(`/api/admin/settings`);
     const data = await res.json();
     const config = data.config || {};
+    mailConfigured = data.mailConfigured || false;
     
     container.innerHTML = `
       <div class="admin-header">
@@ -189,11 +192,11 @@ function renderRegistrationSettings(content, config) {
                 <span class="toggle-desc">Allow new users to create accounts on the panel</span>
               </span>
             </label>
-            <label class="toggle-item">
-              <input type="checkbox" name="email_verification" ${config.registration?.emailVerification ? 'checked' : ''} />
+            <label class="toggle-item ${!mailConfigured ? 'disabled' : ''}">
+              <input type="checkbox" name="email_verification" ${config.registration?.emailVerification ? 'checked' : ''} ${!mailConfigured ? 'disabled' : ''} />
               <span class="toggle-content">
                 <span class="toggle-title">Email Verification</span>
-                <span class="toggle-desc">Require users to verify their email address</span>
+                <span class="toggle-desc">${mailConfigured ? 'Require users to verify their email address' : 'Configure mail settings first'}</span>
               </span>
             </label>
             <label class="toggle-item">
@@ -1002,15 +1005,29 @@ function renderAdvancedSettings(content, config) {
         </div>
         
         <div class="detail-card">
-          <h3>Security</h3>
+          <h3>Two-Factor Authentication</h3>
           <div class="form-toggles">
-            <label class="toggle-item">
-              <input type="checkbox" name="require_2fa_admin" ${config.advanced?.require2faAdmin ? 'checked' : ''} />
+            <label class="toggle-item ${!mailConfigured ? 'disabled' : ''}">
+              <input type="checkbox" name="require_2fa" ${config.security?.require2fa ? 'checked' : ''} ${!mailConfigured ? 'disabled' : ''} />
               <span class="toggle-content">
-                <span class="toggle-title">Require 2FA for Admins</span>
-                <span class="toggle-desc">Force administrators to enable two-factor authentication</span>
+                <span class="toggle-title">Require 2FA for All Users</span>
+                <span class="toggle-desc">${mailConfigured ? 'Force all users to verify with email code on login' : 'Configure mail settings first'}</span>
               </span>
             </label>
+            <label class="toggle-item ${!mailConfigured ? 'disabled' : ''}">
+              <input type="checkbox" name="require_2fa_admin" ${config.security?.require2faAdmin ? 'checked' : ''} ${!mailConfigured ? 'disabled' : ''} />
+              <span class="toggle-content">
+                <span class="toggle-title">Require 2FA for Admins Only</span>
+                <span class="toggle-desc">${mailConfigured ? 'Force only administrators to verify with email code' : 'Configure mail settings first'}</span>
+              </span>
+            </label>
+          </div>
+          ${mailConfigured ? '<small class="form-hint" style="margin-top: 0.75rem; display: block;">Users must have a verified email to use 2FA.</small>' : ''}
+        </div>
+        
+        <div class="detail-card">
+          <h3>Logging</h3>
+          <div class="form-toggles">
             <label class="toggle-item">
               <input type="checkbox" name="audit_logging" ${config.advanced?.auditLogging !== false ? 'checked' : ''} />
               <span class="toggle-content">
@@ -1059,8 +1076,11 @@ function renderAdvancedSettings(content, config) {
       advanced: {
         consoleLines: parseInt(form.console_lines.value) || 1000,
         maxUploadSize: parseInt(form.max_upload_size.value) || 100,
-        require2faAdmin: form.require_2fa_admin.checked,
         auditLogging: form.audit_logging.checked
+      },
+      security: {
+        require2fa: form.require_2fa.checked,
+        require2faAdmin: form.require_2fa_admin.checked
       }
     };
     

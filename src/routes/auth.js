@@ -162,6 +162,11 @@ export function renderAuth() {
         return;
       }
       
+      if (data.requires2FA) {
+        render2FAScreen(username, password);
+        return;
+      }
+      
       setToken(data.token);
       setUser(data.user);
       localStorage.setItem('loggedIn', 'true');
@@ -339,6 +344,151 @@ function getErrorMessage(error) {
     userinfo_failed: 'Failed to get user information.'
   };
   return messages[error] || 'An unknown error occurred.';
+}
+
+function render2FAScreen(username, password) {
+  const app = document.getElementById('app');
+  app.className = 'auth-page';
+  
+  app.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="logo">
+            <span class="material-icons-outlined">bolt</span>
+            <span class="logo-text">Sodium</span>
+          </div>
+          <p class="auth-subtitle">Two-Factor Authentication</p>
+        </div>
+        
+        <form id="2fa-form" class="auth-form active">
+          <p class="form-info">
+            <span class="material-icons-outlined">email</span>
+            A verification code has been sent to your email.
+          </p>
+          
+          <div class="form-group">
+            <label for="2fa-code">Verification Code</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">pin</span>
+              <input type="text" id="2fa-code" name="code" placeholder="Enter 6-digit code" 
+                     required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code">
+            </div>
+          </div>
+          
+          <div class="error-message" id="2fa-error"></div>
+          
+          <button type="submit" class="btn btn-primary btn-full" id="2fa-submit-btn">
+            <span>Verify</span>
+            <span class="material-icons-outlined">check</span>
+          </button>
+          
+          <div class="auth-links">
+            <button type="button" class="link-btn" id="resend-code-btn">Resend Code</button>
+            <span class="divider">•</span>
+            <button type="button" class="link-btn" id="back-to-login-btn">Back to Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const form = document.getElementById('2fa-form');
+  const errorEl = document.getElementById('2fa-error');
+  const codeInput = document.getElementById('2fa-code');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = codeInput.value.trim();
+    const btn = document.getElementById('2fa-submit-btn');
+    
+    if (!/^\d{6}$/.test(code)) {
+      errorEl.textContent = 'Please enter a valid 6-digit code';
+      errorEl.style.display = 'block';
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, twoFactorCode: code })
+      });
+      
+      const data = await res.json();
+      
+      if (data.error) {
+        errorEl.textContent = data.error;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+        
+        if (data.codeExpired) {
+          codeInput.value = '';
+        }
+        return;
+      }
+      
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('loggedIn', 'true');
+      localStorage.setItem('username', data.user.username);
+      
+      window.router.navigateTo('/dashboard');
+    } catch (err) {
+      errorEl.textContent = 'Connection error. Please try again.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+    }
+  });
+  
+  document.getElementById('resend-code-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('resend-code-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    
+    try {
+      const res = await fetch('/api/auth/2fa/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const data = await res.json();
+      
+      if (data.error) {
+        errorEl.textContent = data.error;
+        errorEl.style.display = 'block';
+      } else {
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+        codeInput.value = '';
+        codeInput.focus();
+        
+        const info = document.querySelector('.form-info');
+        if (info) {
+          info.innerHTML = '<span class="material-icons-outlined">check_circle</span> New code sent to your email.';
+          info.classList.add('success');
+        }
+      }
+    } catch (err) {
+      errorEl.textContent = 'Failed to resend code';
+      errorEl.style.display = 'block';
+    }
+    
+    btn.disabled = false;
+    btn.textContent = 'Resend Code';
+  });
+  
+  document.getElementById('back-to-login-btn').addEventListener('click', () => {
+    renderAuth();
+  });
+  
+  codeInput.focus();
 }
 
 export async function renderVerifyEmail() {

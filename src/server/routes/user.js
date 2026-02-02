@@ -1,9 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { loadUsers, saveUsers, loadServers } from '../db.js';
+import { loadUsers, saveUsers, loadServers, loadConfig } from '../db.js';
 import { validateUsername, sanitizeText, sanitizeUrl, sanitizeLinks, generateUUID } from '../utils/helpers.js';
 import { authenticateUser } from '../utils/auth.js';
+import { getTransporter } from '../utils/mail.js';
 
 const router = express.Router();
 
@@ -97,6 +98,53 @@ router.put('/settings', authenticateUser, (req, res) => {
   
   const { password: _, ...userWithoutPassword } = user;
   res.json({ success: true, user: userWithoutPassword });
+});
+
+router.get('/2fa', authenticateUser, (req, res) => {
+  const data = loadUsers();
+  const user = data.users.find(u => u.id === req.user.id);
+  
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  const config = loadConfig();
+  const mailConfigured = !!getTransporter();
+  
+  res.json({
+    enabled: user.twoFactorEnabled || false,
+    emailVerified: user.emailVerified || false,
+    hasEmail: !!user.email,
+    mailConfigured,
+    required: config.security?.require2fa || (config.security?.require2faAdmin && user.isAdmin)
+  });
+});
+
+router.put('/2fa', authenticateUser, (req, res) => {
+  const { enabled } = req.body;
+  
+  const data = loadUsers();
+  const userIndex = data.users.findIndex(u => u.id === req.user.id);
+  
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  
+  const user = data.users[userIndex];
+  
+  if (enabled && !user.emailVerified) {
+    return res.status(400).json({ error: 'Email must be verified to enable 2FA' });
+  }
+  
+  if (enabled && !getTransporter()) {
+    return res.status(400).json({ error: 'Mail service not configured' });
+  }
+  
+  user.twoFactorEnabled = !!enabled;
+  data.users[userIndex] = user;
+  saveUsers(data);
+  
+  res.json({ success: true, enabled: user.twoFactorEnabled });
 });
 
 router.put('/password', authenticateUser, async (req, res) => {

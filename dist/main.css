@@ -945,6 +945,51 @@ input, textarea, select {
   display: block;
 }
 
+.form-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.form-info .material-icons-outlined {
+  font-size: 20px;
+  color: var(--accent);
+}
+.form-info.success {
+  background: rgba(16, 185, 129, 0.1);
+}
+.form-info.success .material-icons-outlined {
+  color: var(--success);
+}
+
+.auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.auth-links .link-btn {
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+.auth-links .link-btn:hover {
+  color: var(--accent);
+}
+.auth-links .link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.auth-links .divider {
+  color: var(--border-color);
+}
+
 .oauth-section {
   margin-top: 20px;
 }
@@ -6240,6 +6285,52 @@ input, textarea, select {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.form-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.toggle-item:hover {
+  background: var(--bg-elevated);
+}
+.toggle-item input[type=checkbox] {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.toggle-item .toggle-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.toggle-item .toggle-title {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.toggle-item .toggle-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.toggle-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.toggle-item.disabled:hover {
+  background: var(--bg-tertiary);
 }
 
 .oauth-providers-grid {

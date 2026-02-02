@@ -19,7 +19,7 @@ export const DEFAULT_CONFIG = {
     secret: ''
   },
   database: {
-    type: 'file', // file, sqlite, mysql, postgresql
+    type: 'file',
     host: 'localhost',
     port: 3306,
     name: 'sodium',

@@ -86,6 +86,19 @@ export function renderSettings() {
             <h3>Security</h3>
           </div>
           
+          <div class="setting-item" id="2fa-setting">
+            <div class="setting-info">
+              <span class="setting-title">Two-Factor Authentication</span>
+              <span class="setting-description" id="2fa-description">Require email verification code on login</span>
+            </div>
+            <div class="setting-control">
+              <label class="toggle">
+                <input type="checkbox" id="2fa-toggle" disabled>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          
           <div class="setting-item clickable" id="change-password-btn">
             <div class="setting-info">
               <span class="setting-title">Change Password</span>
@@ -258,6 +271,7 @@ export function renderSettings() {
   `;
   
   loadSettings();
+  load2FAStatus();
   loadSshKeys();
   setupSshKeysHandlers();
   loadApiKeys();
@@ -397,6 +411,70 @@ async function saveSettings(settings) {
     });
   } catch (err) {
     console.error('Failed to save settings:', err);
+  }
+}
+
+// ==================== 2FA ====================
+
+async function load2FAStatus() {
+  const toggle = document.getElementById('2fa-toggle');
+  const description = document.getElementById('2fa-description');
+  if (!toggle) return;
+  
+  try {
+    const res = await api('/api/user/2fa');
+    const data = await res.json();
+    
+    if (!data.mailConfigured) {
+      toggle.disabled = true;
+      description.textContent = 'Mail not configured by administrator';
+      return;
+    }
+    
+    if (!data.hasEmail) {
+      toggle.disabled = true;
+      description.textContent = 'Add an email address to enable 2FA';
+      return;
+    }
+    
+    if (!data.emailVerified) {
+      toggle.disabled = true;
+      description.textContent = 'Verify your email address to enable 2FA';
+      return;
+    }
+    
+    if (data.required) {
+      toggle.checked = true;
+      toggle.disabled = true;
+      description.textContent = 'Required by administrator';
+      return;
+    }
+    
+    toggle.disabled = false;
+    toggle.checked = data.enabled;
+    description.textContent = 'Require email verification code on login';
+    
+    toggle.addEventListener('change', async () => {
+      toggle.disabled = true;
+      try {
+        const res = await api('/api/user/2fa', {
+          method: 'PUT',
+          body: JSON.stringify({ enabled: toggle.checked })
+        });
+        const result = await res.json();
+        if (result.error) {
+          toggle.checked = !toggle.checked;
+          description.textContent = result.error;
+        }
+      } catch (e) {
+        toggle.checked = !toggle.checked;
+      }
+      toggle.disabled = false;
+    });
+  } catch (err) {
+    console.error('Failed to load 2FA status:', err);
+    toggle.disabled = true;
+    description.textContent = 'Failed to load 2FA status';
   }
 }
 

@@ -230,6 +230,11 @@ function renderAuth() {
         return;
       }
       
+      if (data.requires2FA) {
+        render2FAScreen(username, password);
+        return;
+      }
+      
       setToken(data.token);
       setUser(data.user);
       localStorage.setItem('loggedIn', 'true');
@@ -407,6 +412,151 @@ function getErrorMessage(error) {
     userinfo_failed: 'Failed to get user information.'
   };
   return messages[error] || 'An unknown error occurred.';
+}
+
+function render2FAScreen(username, password) {
+  const app = document.getElementById('app');
+  app.className = 'auth-page';
+  
+  app.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="logo">
+            <span class="material-icons-outlined">bolt</span>
+            <span class="logo-text">Sodium</span>
+          </div>
+          <p class="auth-subtitle">Two-Factor Authentication</p>
+        </div>
+        
+        <form id="2fa-form" class="auth-form active">
+          <p class="form-info">
+            <span class="material-icons-outlined">email</span>
+            A verification code has been sent to your email.
+          </p>
+          
+          <div class="form-group">
+            <label for="2fa-code">Verification Code</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">pin</span>
+              <input type="text" id="2fa-code" name="code" placeholder="Enter 6-digit code" 
+                     required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code">
+            </div>
+          </div>
+          
+          <div class="error-message" id="2fa-error"></div>
+          
+          <button type="submit" class="btn btn-primary btn-full" id="2fa-submit-btn">
+            <span>Verify</span>
+            <span class="material-icons-outlined">check</span>
+          </button>
+          
+          <div class="auth-links">
+            <button type="button" class="link-btn" id="resend-code-btn">Resend Code</button>
+            <span class="divider">•</span>
+            <button type="button" class="link-btn" id="back-to-login-btn">Back to Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  const form = document.getElementById('2fa-form');
+  const errorEl = document.getElementById('2fa-error');
+  const codeInput = document.getElementById('2fa-code');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = codeInput.value.trim();
+    const btn = document.getElementById('2fa-submit-btn');
+    
+    if (!/^\d{6}$/.test(code)) {
+      errorEl.textContent = 'Please enter a valid 6-digit code';
+      errorEl.style.display = 'block';
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, twoFactorCode: code })
+      });
+      
+      const data = await res.json();
+      
+      if (data.error) {
+        errorEl.textContent = data.error;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+        
+        if (data.codeExpired) {
+          codeInput.value = '';
+        }
+        return;
+      }
+      
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('loggedIn', 'true');
+      localStorage.setItem('username', data.user.username);
+      
+      window.router.navigateTo('/dashboard');
+    } catch (err) {
+      errorEl.textContent = 'Connection error. Please try again.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+    }
+  });
+  
+  document.getElementById('resend-code-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('resend-code-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    
+    try {
+      const res = await fetch('/api/auth/2fa/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const data = await res.json();
+      
+      if (data.error) {
+        errorEl.textContent = data.error;
+        errorEl.style.display = 'block';
+      } else {
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+        codeInput.value = '';
+        codeInput.focus();
+        
+        const info = document.querySelector('.form-info');
+        if (info) {
+          info.innerHTML = '<span class="material-icons-outlined">check_circle</span> New code sent to your email.';
+          info.classList.add('success');
+        }
+      }
+    } catch (err) {
+      errorEl.textContent = 'Failed to resend code';
+      errorEl.style.display = 'block';
+    }
+    
+    btn.disabled = false;
+    btn.textContent = 'Resend Code';
+  });
+  
+  document.getElementById('back-to-login-btn').addEventListener('click', () => {
+    renderAuth();
+  });
+  
+  codeInput.focus();
 }
 
 async function renderVerifyEmail() {
@@ -1328,6 +1478,19 @@ function renderSettings() {
             <h3>Security</h3>
           </div>
           
+          <div class="setting-item" id="2fa-setting">
+            <div class="setting-info">
+              <span class="setting-title">Two-Factor Authentication</span>
+              <span class="setting-description" id="2fa-description">Require email verification code on login</span>
+            </div>
+            <div class="setting-control">
+              <label class="toggle">
+                <input type="checkbox" id="2fa-toggle" disabled>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          
           <div class="setting-item clickable" id="change-password-btn">
             <div class="setting-info">
               <span class="setting-title">Change Password</span>
@@ -1500,6 +1663,7 @@ function renderSettings() {
   `;
   
   loadSettings();
+  load2FAStatus();
   loadSshKeys();
   setupSshKeysHandlers();
   loadApiKeys();
@@ -1639,6 +1803,70 @@ async function saveSettings$1(settings) {
     });
   } catch (err) {
     console.error('Failed to save settings:', err);
+  }
+}
+
+// ==================== 2FA ====================
+
+async function load2FAStatus() {
+  const toggle = document.getElementById('2fa-toggle');
+  const description = document.getElementById('2fa-description');
+  if (!toggle) return;
+  
+  try {
+    const res = await api('/api/user/2fa');
+    const data = await res.json();
+    
+    if (!data.mailConfigured) {
+      toggle.disabled = true;
+      description.textContent = 'Mail not configured by administrator';
+      return;
+    }
+    
+    if (!data.hasEmail) {
+      toggle.disabled = true;
+      description.textContent = 'Add an email address to enable 2FA';
+      return;
+    }
+    
+    if (!data.emailVerified) {
+      toggle.disabled = true;
+      description.textContent = 'Verify your email address to enable 2FA';
+      return;
+    }
+    
+    if (data.required) {
+      toggle.checked = true;
+      toggle.disabled = true;
+      description.textContent = 'Required by administrator';
+      return;
+    }
+    
+    toggle.disabled = false;
+    toggle.checked = data.enabled;
+    description.textContent = 'Require email verification code on login';
+    
+    toggle.addEventListener('change', async () => {
+      toggle.disabled = true;
+      try {
+        const res = await api('/api/user/2fa', {
+          method: 'PUT',
+          body: JSON.stringify({ enabled: toggle.checked })
+        });
+        const result = await res.json();
+        if (result.error) {
+          toggle.checked = !toggle.checked;
+          description.textContent = result.error;
+        }
+      } catch (e) {
+        toggle.checked = !toggle.checked;
+      }
+      toggle.disabled = false;
+    });
+  } catch (err) {
+    console.error('Failed to load 2FA status:', err);
+    toggle.disabled = true;
+    description.textContent = 'Failed to load 2FA status';
   }
 }
 
@@ -46692,6 +46920,8 @@ const SETTINGS_TABS = [
   { id: 'advanced', label: 'Advanced', icon: 'code' }
 ];
 
+let mailConfigured = false;
+
 async function renderSettingsPage(container, username, loadView) {
   const urlParams = new URLSearchParams(window.location.search);
   currentSettingsTab = urlParams.get('tab') || 'general';
@@ -46700,6 +46930,7 @@ async function renderSettingsPage(container, username, loadView) {
     const res = await api(`/api/admin/settings`);
     const data = await res.json();
     const config = data.config || {};
+    mailConfigured = data.mailConfigured || false;
     
     container.innerHTML = `
       <div class="admin-header">
@@ -46863,11 +47094,11 @@ function renderRegistrationSettings(content, config) {
                 <span class="toggle-desc">Allow new users to create accounts on the panel</span>
               </span>
             </label>
-            <label class="toggle-item">
-              <input type="checkbox" name="email_verification" ${config.registration?.emailVerification ? 'checked' : ''} />
+            <label class="toggle-item ${!mailConfigured ? 'disabled' : ''}">
+              <input type="checkbox" name="email_verification" ${config.registration?.emailVerification ? 'checked' : ''} ${!mailConfigured ? 'disabled' : ''} />
               <span class="toggle-content">
                 <span class="toggle-title">Email Verification</span>
-                <span class="toggle-desc">Require users to verify their email address</span>
+                <span class="toggle-desc">${mailConfigured ? 'Require users to verify their email address' : 'Configure mail settings first'}</span>
               </span>
             </label>
             <label class="toggle-item">
@@ -47676,15 +47907,29 @@ function renderAdvancedSettings(content, config) {
         </div>
         
         <div class="detail-card">
-          <h3>Security</h3>
+          <h3>Two-Factor Authentication</h3>
           <div class="form-toggles">
-            <label class="toggle-item">
-              <input type="checkbox" name="require_2fa_admin" ${config.advanced?.require2faAdmin ? 'checked' : ''} />
+            <label class="toggle-item ${!mailConfigured ? 'disabled' : ''}">
+              <input type="checkbox" name="require_2fa" ${config.security?.require2fa ? 'checked' : ''} ${!mailConfigured ? 'disabled' : ''} />
               <span class="toggle-content">
-                <span class="toggle-title">Require 2FA for Admins</span>
-                <span class="toggle-desc">Force administrators to enable two-factor authentication</span>
+                <span class="toggle-title">Require 2FA for All Users</span>
+                <span class="toggle-desc">${mailConfigured ? 'Force all users to verify with email code on login' : 'Configure mail settings first'}</span>
               </span>
             </label>
+            <label class="toggle-item ${!mailConfigured ? 'disabled' : ''}">
+              <input type="checkbox" name="require_2fa_admin" ${config.security?.require2faAdmin ? 'checked' : ''} ${!mailConfigured ? 'disabled' : ''} />
+              <span class="toggle-content">
+                <span class="toggle-title">Require 2FA for Admins Only</span>
+                <span class="toggle-desc">${mailConfigured ? 'Force only administrators to verify with email code' : 'Configure mail settings first'}</span>
+              </span>
+            </label>
+          </div>
+          ${mailConfigured ? '<small class="form-hint" style="margin-top: 0.75rem; display: block;">Users must have a verified email to use 2FA.</small>' : ''}
+        </div>
+        
+        <div class="detail-card">
+          <h3>Logging</h3>
+          <div class="form-toggles">
             <label class="toggle-item">
               <input type="checkbox" name="audit_logging" ${config.advanced?.auditLogging !== false ? 'checked' : ''} />
               <span class="toggle-content">
@@ -47733,8 +47978,11 @@ function renderAdvancedSettings(content, config) {
       advanced: {
         consoleLines: parseInt(form.console_lines.value) || 1000,
         maxUploadSize: parseInt(form.max_upload_size.value) || 100,
-        require2faAdmin: form.require_2fa_admin.checked,
         auditLogging: form.audit_logging.checked
+      },
+      security: {
+        require2fa: form.require_2fa.checked,
+        require2faAdmin: form.require_2fa_admin.checked
       }
     };
     

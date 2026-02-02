@@ -972,9 +972,16 @@ router.delete('/oauth/providers/:id', (req, res) => {
 });
 
 // ==================== SETTINGS ====================
-router.get('/settings', (req, res) => {
+router.get('/settings', async (req, res) => {
   const config = loadConfig();
-  res.json({ config });
+  
+  let mailConfigured = false;
+  try {
+    const { getTransporter } = await import('../utils/mail.js');
+    mailConfigured = !!getTransporter();
+  } catch (e) {}
+  
+  res.json({ config, mailConfigured });
 });
 
 router.put('/settings', async (req, res) => {
@@ -1037,8 +1044,15 @@ router.put('/settings', async (req, res) => {
       ...config.advanced,
       consoleLines: newConfig.advanced.consoleLines !== undefined ? parseInt(newConfig.advanced.consoleLines) : config.advanced?.consoleLines || 1000,
       maxUploadSize: newConfig.advanced.maxUploadSize !== undefined ? parseInt(newConfig.advanced.maxUploadSize) : config.advanced?.maxUploadSize || 100,
-      require2faAdmin: newConfig.advanced.require2faAdmin !== undefined ? Boolean(newConfig.advanced.require2faAdmin) : config.advanced?.require2faAdmin,
       auditLogging: newConfig.advanced.auditLogging !== undefined ? Boolean(newConfig.advanced.auditLogging) : config.advanced?.auditLogging !== false
+    };
+  }
+  
+  if (newConfig.security !== undefined) {
+    config.security = {
+      ...config.security,
+      require2fa: newConfig.security.require2fa !== undefined ? Boolean(newConfig.security.require2fa) : config.security?.require2fa,
+      require2faAdmin: newConfig.security.require2faAdmin !== undefined ? Boolean(newConfig.security.require2faAdmin) : config.security?.require2faAdmin
     };
   }
   
