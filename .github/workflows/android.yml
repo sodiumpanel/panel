@@ -65,7 +65,7 @@ jobs:
 
       - name: Build APK
         working-directory: android-app
-        run: ./gradlew assembleDebug
+        run: gradle wrapper && ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
