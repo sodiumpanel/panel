@@ -1,11 +1,37 @@
-# Sodium Panel
+<p align="center">
+  <img src="assets/banner.png" alt="Sodium Panel" width="600">
+</p>
 
-A modern control panel which is built to be lightweight and easy to install. File-based database by default, with optional MySQL, PostgreSQL, and SQLite support for production.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/sodiumpanel/panel/releases"><img src="https://img.shields.io/github/v/release/sodiumpanel/panel?include_prereleases" alt="Release"></a>
+  <a href="https://github.com/sodiumpanel/panel/issues"><img src="https://img.shields.io/github/issues/sodiumpanel/panel" alt="Issues"></a>
+  <a href="https://github.com/sodiumpanel/panel/stargazers"><img src="https://img.shields.io/github/stars/sodiumpanel/panel" alt="Stars"></a>
+</p>
 
-## Installation
+<p align="center">
+  A modern, lightweight control panel for game server management.<br>
+  Easy to install. File-based database by default, with optional MySQL, PostgreSQL, and SQLite support.
+</p>
+
+---
+
+> **Beta Software** - This project is under active development. Some features may be incomplete or contain bugs. [Report issues here](https://github.com/sodiumpanel/panel/issues).
+
+## Why Sodium?
+
+| Feature | Sodium | Others |
+|---------|--------|--------|
+| **Lightweight** | Minimal resource usage | Heavy dependencies |
+| **Easy Setup** | Single command install | Complex configuration |
+| **No .env files** | JSON config, setup wizard | Manual environment setup |
+| **Flexible Database** | File, SQLite, MySQL, PostgreSQL | Usually MySQL only |
+| **Modern Stack** | Node.js, TypeScript | PHP, older tech |
+
+## Quick Start
 
 ```bash
-git clone https://github.com/zt3xdv/sodium.git
+git clone https://github.com/sodiumpanel/panel.git
 cd sodium
 npm install
 npm run build
@@ -44,8 +70,21 @@ See [docs/](docs/) for full documentation:
 
 ## Related
 
-- [Sodium Reaction](https://github.com/zt3xdv/sodium-reaction) - Node daemon for Sodium Panel
+- [Sodium Reaction](https://github.com/sodiumpanel/reaction) - Node daemon for Sodium Panel
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting PRs.
+
+- Found a bug? [Open an issue](https://github.com/sodiumpanel/panel/issues)
+- Have an idea? [Start a discussion](https://github.com/sodiumpanel/panel/discussions)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) - Feel free to use, modify, and distribute.
+
+---
+
+<p align="center">
+  <sub>Built with care by the Sodium team</sub>
+</p>
