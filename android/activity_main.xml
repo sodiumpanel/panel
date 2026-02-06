@@ -1,83 +1,248 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0a0a0a">
-    
+
+    <!-- Panel List View -->
     <LinearLayout
-        android:id="@+id/setup_layout"
+        android:id="@+id/panel_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="32dp"
-        android:visibility="gone">
-        
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⚡"
-            android:textSize="64sp"
-            android:layout_marginBottom="16dp" />
-        
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sodium"
-            android:textColor="#d97339"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-        
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Enter your panel URL"
-            android:textColor="#888888"
-            android:textSize="16sp"
-            android:layout_marginBottom="32dp" />
-        
-        <EditText
-            android:id="@+id/url_input"
+        android:visibility="visible">
+
+        <!-- Header -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="https://panel.example.com"
-            android:textColor="#ffffff"
-            android:textColorHint="#666666"
-            android:background="@drawable/input_bg"
-            android:padding="16dp"
-            android:textSize="16sp"
-            android:inputType="textUri"
-            android:layout_marginBottom="16dp" />
-        
-        <Button
-            android:id="@+id/connect_btn"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="20dp"
+            android:paddingTop="40dp">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_bolt"
+                android:layout_marginEnd="12dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sodium"
+                    android:textColor="#ffffff"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Game Server Manager"
+                    android:textColor="#666666"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Empty State -->
+        <LinearLayout
+            android:id="@+id/empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp"
+            android:visibility="visible">
+
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/ic_server"
+                android:alpha="0.3"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No Panels"
+                android:textColor="#ffffff"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add your first Sodium panel to get started"
+                android:textColor="#666666"
+                android:textSize="14sp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Panel List -->
+        <ScrollView
+            android:id="@+id/panel_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="gone"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:id="@+id/panel_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <!-- FAB -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Connect"
-            android:textColor="#ffffff"
-            android:background="@drawable/button_bg"
-            android:padding="16dp"
-            android:textSize="16sp"
-            android:textAllCaps="false" />
+            android:padding="24dp">
+
+            <ImageButton
+                android:id="@+id/fab_add"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="end"
+                android:background="@drawable/fab_bg"
+                android:src="@drawable/ic_add"
+                android:scaleType="center"
+                android:elevation="8dp"
+                android:contentDescription="Add panel" />
+        </FrameLayout>
     </LinearLayout>
-    
-    <WebView
-        android:id="@+id/webview"
+
+    <!-- Add/Edit Panel View -->
+    <LinearLayout
+        android:id="@+id/add_panel_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
-    
-    <Button
-        android:id="@+id/reset_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="16dp"
-        android:text="⚙"
-        android:textSize="20sp"
-        android:background="@drawable/reset_btn_bg"
-        android:padding="12dp"
-        android:visibility="gone" />
-</RelativeLayout>
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:paddingTop="40dp">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/icon_btn_bg"
+                android:src="@drawable/ic_back"
+                android:scaleType="center"
+                android:contentDescription="Back" />
+
+            <TextView
+                android:id="@+id/add_panel_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Panel"
+                android:textColor="#ffffff"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+
+        <!-- Form -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Panel Name"
+                android:textColor="#888888"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/input_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="My Server"
+                android:textColor="#ffffff"
+                android:textColorHint="#444444"
+                android:background="@drawable/input_bg"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:inputType="text"
+                android:layout_marginBottom="20dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Panel URL"
+                android:textColor="#888888"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/input_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="https://panel.example.com"
+                android:textColor="#ffffff"
+                android:textColorHint="#444444"
+                android:background="@drawable/input_bg"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:inputType="textUri"
+                android:layout_marginBottom="32dp" />
+
+            <Button
+                android:id="@+id/btn_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Panel"
+                android:textColor="#ffffff"
+                android:background="@drawable/button_bg"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- WebView -->
+    <FrameLayout
+        android:id="@+id/webview_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <WebView
+            android:id="@+id/webview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ImageButton
+            android:id="@+id/btn_close_webview"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="16dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/icon_btn_bg"
+            android:src="@drawable/ic_back"
+            android:scaleType="center"
+            android:elevation="8dp"
+            android:contentDescription="Close" />
+    </FrameLayout>
+</FrameLayout>

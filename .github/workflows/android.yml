@@ -48,6 +48,7 @@ jobs:
           # Copy Android source files from repo
           cp android/MainActivity.java android-app/app/src/main/java/com/sodium/app/
           cp android/activity_main.xml android-app/app/src/main/res/layout/
+          cp android/res/layout/* android-app/app/src/main/res/layout/ 2>/dev/null || true
           cp android/AndroidManifest.xml android-app/app/src/main/
           cp android/res/values/* android-app/app/src/main/res/values/
           cp android/res/drawable/* android-app/app/src/main/res/drawable/
