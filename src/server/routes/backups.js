@@ -93,9 +93,10 @@ router.post('/:serverId/backups', authenticateUser, async (req, res) => {
   
   // Request backup from Wings
   try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup`, {
-      backup_uuid: backupId,
-      ignore: ignored || []
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backups`, {
+      adapter: 'wings',
+      uuid: backupId,
+      ignore: ignored?.join('\n') || ''
     });
   } catch (e) {
     logger.warn(`Backup request failed: ${e.message}`);
@@ -140,7 +141,7 @@ router.delete('/:serverId/backups/:backupId', authenticateUser, async (req, res)
   
   // Delete from Wings
   try {
-    await wingsRequest(node, 'DELETE', `/api/servers/${server.uuid}/backup/${backup.uuid}`);
+    await wingsRequest(node, 'DELETE', `/api/servers/${server.uuid}/backups/${backup.uuid}`);
   } catch (e) {
     logger.warn(`Backup delete from Wings failed: ${e.message}`);
   }
@@ -172,7 +173,7 @@ router.post('/:serverId/backups/:backupId/restore', authenticateUser, async (req
   }
   
   try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup/${backup.uuid}/restore`);
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backups/${backup.uuid}/restore`);
     res.json({ success: true });
   } catch (e) {
     logger.error(`Backup restore failed: ${e.message}`);
@@ -197,7 +198,7 @@ router.get('/:serverId/backups/:backupId/download', authenticateUser, async (req
   }
   
   try {
-    const response = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/backup/${backup.uuid}`);
+    const response = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/backups/${backup.uuid}`);
     res.json({ url: response.download_url || response.url });
   } catch (e) {
     logger.error(`Backup download URL failed: ${e.message}`);

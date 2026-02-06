@@ -1,5 +1,5 @@
 import express from 'express';
-import { loadSchedules, saveSchedules, loadServers, loadNodes } from '../db.js';
+import { loadSchedules, saveSchedules, loadServers, saveServers, loadNodes } from '../db.js';
 import { authenticateUser } from '../utils/auth.js';
 import { generateUUID, wingsRequest } from '../utils/helpers.js';
 import logger from '../utils/logger.js';
@@ -362,7 +362,33 @@ async function executeTask(task, server, node) {
       break;
       
     case 'backup':
-      await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup`, {});
+      const backupUuid = generateUUID();
+      // Save backup to database
+      const serversData = loadServers();
+      const serverIdx = serversData.servers.findIndex(s => s.id === server.id);
+      if (serverIdx !== -1) {
+        if (!serversData.servers[serverIdx].backups) {
+          serversData.servers[serverIdx].backups = [];
+        }
+        serversData.servers[serverIdx].backups.push({
+          id: backupUuid,
+          uuid: backupUuid,
+          name: `Scheduled Backup ${new Date().toLocaleDateString()}`,
+          ignored_files: [],
+          bytes: 0,
+          checksum: null,
+          is_successful: false,
+          is_locked: false,
+          created_at: new Date().toISOString(),
+          completed_at: null
+        });
+        saveServers(serversData);
+      }
+      await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backups`, {
+        adapter: 'wings',
+        uuid: backupUuid,
+        ignore: ''
+      });
       break;
   }
   
