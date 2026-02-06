@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0a0a0a">
+    
+    <LinearLayout
+        android:id="@+id/setup_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡"
+            android:textSize="64sp"
+            android:layout_marginBottom="16dp" />
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sodium"
+            android:textColor="#d97339"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enter your panel URL"
+            android:textColor="#888888"
+            android:textSize="16sp"
+            android:layout_marginBottom="32dp" />
+        
+        <EditText
+            android:id="@+id/url_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://panel.example.com"
+            android:textColor="#ffffff"
+            android:textColorHint="#666666"
+            android:background="@drawable/input_bg"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:inputType="textUri"
+            android:layout_marginBottom="16dp" />
+        
+        <Button
+            android:id="@+id/connect_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Connect"
+            android:textColor="#ffffff"
+            android:background="@drawable/button_bg"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:textAllCaps="false" />
+    </LinearLayout>
+    
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+    
+    <Button
+        android:id="@+id/reset_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:text="⚙"
+        android:textSize="20sp"
+        android:background="@drawable/reset_btn_bg"
+        android:padding="12dp"
+        android:visibility="gone" />
+</RelativeLayout>
