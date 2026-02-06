@@ -1841,6 +1841,62 @@ function show(options = {}) {
   });
 }
 
+function custom(options = {}) {
+  return new Promise((resolve) => {
+    const { 
+      title = 'Modal', 
+      html = '', 
+      confirmText = 'Confirm', 
+      cancelText = 'Cancel',
+      danger = false,
+      width = '500px'
+    } = options;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-backdrop"></div>
+      <div class="modal-content" style="max-width: ${width};">
+        <div class="modal-header">
+          <h3>${escapeHtml$1(title)}</h3>
+          <button class="modal-close" id="modal-close-btn">
+            <span class="material-icons-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          ${html}
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="modal-cancel">${cancelText}</button>
+          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modal-confirm">${confirmText}</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add('active'));
+    
+    const close = (result) => {
+      modal.classList.remove('active');
+      setTimeout(() => modal.remove(), 150);
+      resolve(result);
+    };
+    
+    modal.querySelector('#modal-cancel').onclick = () => close(false);
+    modal.querySelector('#modal-close-btn').onclick = () => close(false);
+    modal.querySelector('#modal-confirm').onclick = () => close(true);
+    modal.querySelector('.modal-backdrop').onclick = () => close(false);
+    
+    const handleKey = (e) => {
+      if (e.key === 'Escape') {
+        close(false);
+        document.removeEventListener('keydown', handleKey);
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+  });
+}
+
 function alert(message, options = {}) {
   return new Promise((resolve) => {
     const { title = 'Alert', confirmText = 'OK' } = options;
@@ -3550,7 +3606,7 @@ function renderCreateForm(remaining) {
     </div>
   `;
   
-  setupEventListeners(remaining);
+  setupEventListeners$1(remaining);
   updateDockerImages();
 }
 
@@ -3661,7 +3717,7 @@ function updateNodesGrid() {
   }
 }
 
-function setupEventListeners(remaining) {
+function setupEventListeners$1(remaining) {
   // Nest tabs
   document.querySelectorAll('.nest-tab').forEach(tab => {
     tab.onclick = () => {
@@ -3843,7 +3899,7 @@ function formatBytes(bytes, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 }
 
-function formatDate$3(dateString) {
+function formatDate$6(dateString) {
   if (!dateString) return '--';
   const date = new Date(dateString);
   const now = new Date();
@@ -41618,7 +41674,7 @@ function renderFilesList(files, serverId) {
       </div>
       <div class="file-info">
         <span class="file-name">${file.name}</span>
-        <span class="file-meta">${isDir ? '--' : formatBytes(file.size)} • ${formatDate$2(file.modified_at)}</span>
+        <span class="file-meta">${isDir ? '--' : formatBytes(file.size)} • ${formatDate$5(file.modified_at)}</span>
       </div>
       <div class="file-actions">
         ${!isDir && isArchive(file) ? `
@@ -41733,7 +41789,7 @@ function renderFilesList(files, serverId) {
   });
 }
 
-function formatDate$2(dateStr) {
+function formatDate$5(dateStr) {
   if (!dateStr) return '--';
   const date = new Date(dateStr);
   return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -44110,7 +44166,7 @@ function renderDetailsForm(server) {
         </div>
         <div class="info-row">
           <span class="info-label">Created</span>
-          <span class="info-value">${formatDate$1(server.created_at)}</span>
+          <span class="info-value">${formatDate$4(server.created_at)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Address</span>
@@ -44349,7 +44405,7 @@ async function deleteServer() {
   }
 }
 
-function formatDate$1(dateStr) {
+function formatDate$4(dateStr) {
   if (!dateStr) return 'Unknown';
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', {
@@ -44479,7 +44535,7 @@ async function loadBackups(serverId) {
           <div class="backup-meta">
             ${backup.is_successful ? formatBytes(backup.bytes || 0) : '<span class="backup-progress">Creating backup...</span>'}
             <span class="separator">•</span>
-            ${formatDate$3(backup.created_at)}
+            ${formatDate$6(backup.created_at)}
           </div>
           ${backup.checksum ? `<div class="backup-checksum" title="SHA256 Checksum">Checksum: ${backup.checksum}</div>` : ''}
         </div>
@@ -45579,7 +45635,7 @@ function setupSearchListeners(tab, loadViewCallback) {
   }
 }
 
-const navigateTo$9 = (...args) => window.adminNavigate(...args);
+const navigateTo$b = (...args) => window.adminNavigate(...args);
 
 async function renderNodesList(container, username, loadView) {
   try {
@@ -45648,12 +45704,12 @@ async function renderNodesList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$9);
+    setupBreadcrumbListeners(navigateTo$b);
     setupPaginationListeners('nodes', loadView);
     setupSearchListeners('nodes', loadView);
     
     document.querySelectorAll('.list-card[data-id]').forEach(card => {
-      card.onclick = () => navigateTo$9('nodes', card.dataset.id);
+      card.onclick = () => navigateTo$b('nodes', card.dataset.id);
     });
     
     document.getElementById('create-node-btn').onclick = () => createNewNode();
@@ -45701,7 +45757,7 @@ async function renderNodeDetail(container, username, nodeId) {
       <div class="detail-content" id="node-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$9);
+    setupBreadcrumbListeners(navigateTo$b);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -45721,7 +45777,7 @@ async function renderNodeDetail(container, username, nodeId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$9('nodes');
+        navigateTo$b('nodes');
       } catch (e) {
         error('Failed to delete node');
       }
@@ -45938,7 +45994,7 @@ function renderNodeSubTab(node, locations, username) {
             body: JSON.stringify({ node: nodeData })
           });
           success('Node updated successfully');
-          navigateTo$9('nodes', node.id, 'settings');
+          navigateTo$b('nodes', node.id, 'settings');
         } catch (e) {
           error('Failed to update node');
         }
@@ -46085,7 +46141,7 @@ async function createNewNode() {
     
     const data = await res.json();
     if (data.node?.id) {
-      navigateTo$9('nodes', data.node.id, 'about');
+      navigateTo$b('nodes', data.node.id, 'about');
       info('Configure your new node');
     } else {
       error('Failed to create node');
@@ -46095,7 +46151,7 @@ async function createNewNode() {
   }
 }
 
-const navigateTo$8 = (...args) => window.adminNavigate(...args);
+const navigateTo$a = (...args) => window.adminNavigate(...args);
 
 async function renderServersList(container, username, loadView) {
   try {
@@ -46209,12 +46265,12 @@ async function renderServersList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$8);
+    setupBreadcrumbListeners(navigateTo$a);
     setupPaginationListeners('servers', loadView);
     setupSearchListeners('servers', loadView);
     
     document.querySelectorAll('.clickable-row[data-id], .list-card[data-id]').forEach(el => {
-      el.onclick = () => navigateTo$8('servers', el.dataset.id);
+      el.onclick = () => navigateTo$a('servers', el.dataset.id);
     });
     
     document.getElementById('create-server-btn').onclick = () => createNewServer();
@@ -46263,7 +46319,7 @@ async function renderServerDetail(container, username, serverId) {
       <div class="detail-content" id="server-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$8);
+    setupBreadcrumbListeners(navigateTo$a);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -46283,7 +46339,7 @@ async function renderServerDetail(container, username, serverId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$8('servers');
+        navigateTo$a('servers');
       } catch (e) {
         error('Failed to delete server');
       }
@@ -46572,7 +46628,7 @@ function renderServerSubTab(server, username) {
             
             if (res.ok) {
               success('Server installation started');
-              navigateTo$8('servers', server.id, 'manage');
+              navigateTo$a('servers', server.id, 'manage');
             } else {
               const data = await res.json();
               error(data.error || 'Installation failed');
@@ -46619,7 +46675,7 @@ function renderServerSubTab(server, username) {
             body: JSON.stringify({})
           });
           success(`Server ${action}ed`);
-          navigateTo$8('servers', server.id, 'manage');
+          navigateTo$a('servers', server.id, 'manage');
         } catch (e) {
           error(`Failed to ${action} server`);
         }
@@ -46634,7 +46690,7 @@ function renderServerSubTab(server, username) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
           });
-          navigateTo$8('servers');
+          navigateTo$a('servers');
         } catch (e) {
           error('Failed to delete server');
         }
@@ -46873,7 +46929,7 @@ async function createNewServer() {
     
     const data = await res.json();
     if (data.server?.id) {
-      navigateTo$8('servers', data.server.id, 'details');
+      navigateTo$a('servers', data.server.id, 'details');
       info('Configure your server, then click "Install" when ready');
     } else {
       error(data.error || 'Failed to create server');
@@ -46895,7 +46951,7 @@ window.suspendServerAdmin = async function(serverId) {
       // But adminNavigate changes state. To reload current view we can just call the render function again
       // or re-navigate to same place.
       const currentTab = state.currentView.tab;
-      navigateTo$8(currentTab);
+      navigateTo$a(currentTab);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to suspend');
@@ -46914,7 +46970,7 @@ window.unsuspendServerAdmin = async function(serverId) {
     });
     if (res.ok) {
       const currentTab = state.currentView.tab;
-      navigateTo$8(currentTab);
+      navigateTo$a(currentTab);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to unsuspend');
@@ -46934,7 +46990,7 @@ window.deleteServerAdmin = async function(serverId) {
       body: JSON.stringify({})
     });
     const currentTab = state.currentView.tab;
-    navigateTo$8(currentTab);
+    navigateTo$a(currentTab);
   } catch (e) {
     error('Failed to delete server');
   }
@@ -47028,7 +47084,7 @@ async function showTransferModal(server) {
       } else {
         success('Server transfer completed');
         modal.remove();
-        navigateTo$8('servers', server.id, 'details');
+        navigateTo$a('servers', server.id, 'details');
       }
     } catch (e) {
       messageEl.textContent = 'Transfer failed';
@@ -47039,7 +47095,7 @@ async function showTransferModal(server) {
   };
 }
 
-const navigateTo$7 = (...args) => window.adminNavigate(...args);
+const navigateTo$9 = (...args) => window.adminNavigate(...args);
 
 async function renderUsersList(container, username, loadView) {
   try {
@@ -47152,12 +47208,12 @@ async function renderUsersList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$7);
+    setupBreadcrumbListeners(navigateTo$9);
     setupPaginationListeners('users', loadView);
     setupSearchListeners('users', loadView);
     
     document.querySelectorAll('.clickable-row[data-id], .list-card[data-id]').forEach(el => {
-      el.onclick = () => navigateTo$7('users', el.dataset.id);
+      el.onclick = () => navigateTo$9('users', el.dataset.id);
     });
     
     document.getElementById('create-user-btn')?.addEventListener('click', () => {
@@ -47293,7 +47349,7 @@ async function renderUserDetail(container, username, userId) {
       <div class="detail-content" id="user-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$7);
+    setupBreadcrumbListeners(navigateTo$9);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = async () => {
@@ -47409,7 +47465,7 @@ async function renderUserSubTab(user, username) {
           
           if (data.success) {
             success('User deleted. ' + data.deletedServers + ' server(s) removed.');
-            navigateTo$7('users');
+            navigateTo$9('users');
           } else {
             error(data.error || 'Failed to delete user');
             btn.disabled = false;
@@ -47464,7 +47520,7 @@ async function renderUserSubTab(user, username) {
         `;
         
         document.querySelectorAll('.user-server-item').forEach(el => {
-          el.onclick = () => navigateTo$7('servers', el.dataset.serverId);
+          el.onclick = () => navigateTo$9('servers', el.dataset.serverId);
         });
       } catch (e) {
         content.innerHTML = '<div class="error">Failed to load servers</div>';
@@ -47514,7 +47570,7 @@ async function renderUserSubTab(user, username) {
             body: JSON.stringify({ updates })
           });
           success('Permissions updated');
-          navigateTo$7('users', user.id, 'permissions');
+          navigateTo$9('users', user.id, 'permissions');
         } catch (e) {
           error('Failed to update permissions');
         }
@@ -47579,7 +47635,7 @@ async function renderUserSubTab(user, username) {
             body: JSON.stringify({ updates: { limits } })
           });
           success('Limits updated');
-          navigateTo$7('users', user.id, 'limits');
+          navigateTo$9('users', user.id, 'limits');
         } catch (e) {
           error('Failed to update limits');
         }
@@ -47588,7 +47644,7 @@ async function renderUserSubTab(user, username) {
   }
 }
 
-const navigateTo$6 = (...args) => window.adminNavigate(...args);
+const navigateTo$8 = (...args) => window.adminNavigate(...args);
 
 function renderAdminEggIcon(egg) {
   if (!egg.icon) {
@@ -47687,7 +47743,7 @@ async function renderNestsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$6);
+    setupBreadcrumbListeners(navigateTo$8);
     
     document.getElementById('create-nest-btn').onclick = () => showNestModal(username, null, loadView);
     
@@ -47703,7 +47759,7 @@ async function renderNestsList(container, username, loadView) {
     
     // Click on egg card to open detail view
     document.querySelectorAll('.egg-card.clickable').forEach(card => {
-      card.onclick = () => navigateTo$6('eggs', card.dataset.eggId);
+      card.onclick = () => navigateTo$8('eggs', card.dataset.eggId);
     });
     
   } catch (e) {
@@ -47958,7 +48014,7 @@ window.editNestAdmin = async function(nestId) {
   if (nest) {
     // We need to trigger showNestModal. Since we don't have loadView reference here easily,
     // we rely on the modal's save function using adminNavigate or we pass a dummy.
-    showNestModal(localStorage.getItem('username'), nest, () => navigateTo$6('nests'));
+    showNestModal(localStorage.getItem('username'), nest, () => navigateTo$8('nests'));
   }
 };
 
@@ -47972,7 +48028,7 @@ window.deleteNestAdmin = async function(nestId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
-    navigateTo$6('nests');
+    navigateTo$8('nests');
   } catch (e) {
     error('Failed to delete nest');
   }
@@ -48013,7 +48069,7 @@ async function createNewEgg(nestId = null) {
     
     const createData = await createRes.json();
     if (createData.egg?.id) {
-      navigateTo$6('eggs', createData.egg.id, 'about');
+      navigateTo$8('eggs', createData.egg.id, 'about');
       info('Configure your new egg');
     } else {
       error(createData.error || 'Failed to create egg');
@@ -48024,7 +48080,7 @@ async function createNewEgg(nestId = null) {
 }
 
 window.editEggAdmin = function(eggId) {
-  navigateTo$6('eggs', eggId);
+  navigateTo$8('eggs', eggId);
 };
 
 window.deleteEggAdmin = async function(eggId) {
@@ -48037,7 +48093,7 @@ window.deleteEggAdmin = async function(eggId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
-    navigateTo$6('nests');
+    navigateTo$8('nests');
   } catch (e) {
     error('Failed to delete egg');
   }
@@ -48086,7 +48142,7 @@ async function renderEggDetail(container, username, eggId) {
       <div class="detail-content" id="egg-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$6);
+    setupBreadcrumbListeners(navigateTo$8);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -48106,7 +48162,7 @@ async function renderEggDetail(container, username, eggId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$6('nests');
+        navigateTo$8('nests');
       } catch (e) {
         error('Failed to delete egg');
       }
@@ -48273,7 +48329,7 @@ function renderEggAboutTab(content, egg, nests, username) {
         })
       });
       success('Egg updated');
-      navigateTo$6('eggs', egg.id, 'about');
+      navigateTo$8('eggs', egg.id, 'about');
     } catch (e) {
       error('Failed to update egg');
     }
@@ -48348,7 +48404,7 @@ function renderEggConfigTab(content, egg, username) {
         })
       });
       success('Startup config updated');
-      navigateTo$6('eggs', egg.id, 'configuration');
+      navigateTo$8('eggs', egg.id, 'configuration');
     } catch (e) {
       error('Failed to update config');
     }
@@ -48384,7 +48440,7 @@ function renderEggConfigTab(content, egg, username) {
         })
       });
       success('Advanced config updated');
-      navigateTo$6('eggs', egg.id, 'configuration');
+      navigateTo$8('eggs', egg.id, 'configuration');
     } catch (e) {
       error('Failed to update config');
     }
@@ -48470,7 +48526,7 @@ function renderEggVariablesTab(content, egg, username) {
           body: JSON.stringify({ egg: { variables: newVars } })
         });
         success('Variable deleted');
-        navigateTo$6('eggs', egg.id, 'variables');
+        navigateTo$8('eggs', egg.id, 'variables');
       } catch (e) {
         error('Failed to delete variable');
       }
@@ -48572,7 +48628,7 @@ function showVariableModal(egg, editIndex, username) {
       });
       modal.remove();
       success(isEdit ? 'Variable updated' : 'Variable added');
-      navigateTo$6('eggs', egg.id, 'variables');
+      navigateTo$8('eggs', egg.id, 'variables');
     } catch (e) {
       error('Failed to save variable');
     }
@@ -48626,14 +48682,14 @@ function renderEggInstallTab(content, egg, username) {
         })
       });
       success('Install script updated');
-      navigateTo$6('eggs', egg.id, 'install');
+      navigateTo$8('eggs', egg.id, 'install');
     } catch (e) {
       error('Failed to update install script');
     }
   };
 }
 
-const navigateTo$5 = (...args) => window.adminNavigate(...args);
+const navigateTo$7 = (...args) => window.adminNavigate(...args);
 
 async function renderLocationsList(container, username, loadView) {
   try {
@@ -48680,7 +48736,7 @@ async function renderLocationsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$5);
+    setupBreadcrumbListeners(navigateTo$7);
     
     document.getElementById('create-location-btn').onclick = () => showLocationModal(username, loadView);
     
@@ -48761,7 +48817,7 @@ window.deleteLocationAdmin = async function(locationId) {
   }
 };
 
-const navigateTo$4 = (...args) => window.adminNavigate(...args);
+const navigateTo$6 = (...args) => window.adminNavigate(...args);
 
 let currentSettingsTab = 'general';
 
@@ -48810,7 +48866,7 @@ async function renderSettingsPage(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$4);
+    setupBreadcrumbListeners(navigateTo$6);
     
     container.querySelectorAll('.settings-nav-item').forEach(btn => {
       btn.onclick = () => {
@@ -49905,7 +49961,7 @@ async function saveSettings(newConfig) {
   }
 }
 
-const navigateTo$3 = (...args) => window.adminNavigate(...args);
+const navigateTo$5 = (...args) => window.adminNavigate(...args);
 
 async function renderAnnouncementsList(container, username, loadView) {
   try {
@@ -50054,7 +50110,7 @@ async function renderAnnouncementsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$3);
+    setupBreadcrumbListeners(navigateTo$5);
     
     let editingId = null;
     
@@ -50147,9 +50203,9 @@ async function renderAnnouncementsList(container, username, loadView) {
   }
 }
 
-const navigateTo$2 = (...args) => window.adminNavigate(...args);
+const navigateTo$4 = (...args) => window.adminNavigate(...args);
 
-function formatTimeAgo(dateString) {
+function formatTimeAgo$2(dateString) {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now - date;
@@ -50242,7 +50298,7 @@ async function renderAuditLogPage(container, username) {
                   </div>
                   <div class="audit-log-meta">
                     ${log.ip ? `<span class="ip">${escapeHtml$1(log.ip)}</span>` : ''}
-                    <span class="time">${formatTimeAgo(log.createdAt)}</span>
+                    <span class="time">${formatTimeAgo$2(log.createdAt)}</span>
                   </div>
                 </div>
               </div>
@@ -50258,7 +50314,7 @@ async function renderAuditLogPage(container, username) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$2);
+    setupBreadcrumbListeners(navigateTo$4);
     
   } catch (e) {
     container.innerHTML = '<div class="error">Failed to load audit log</div>';
@@ -50342,7 +50398,7 @@ async function renderActivityLogPage(container, username) {
                   </div>
                   <div class="activity-log-meta">
                     ${log.ip ? `<span class="ip">${escapeHtml$1(log.ip)}</span>` : ''}
-                    <span class="time">${formatTimeAgo(log.createdAt)}</span>
+                    <span class="time">${formatTimeAgo$2(log.createdAt)}</span>
                   </div>
                 </div>
               </div>
@@ -50358,14 +50414,14 @@ async function renderActivityLogPage(container, username) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$2);
+    setupBreadcrumbListeners(navigateTo$4);
     
   } catch (e) {
     container.innerHTML = '<div class="error">Failed to load activity log</div>';
   }
 }
 
-const navigateTo$1 = (...args) => window.adminNavigate(...args);
+const navigateTo$3 = (...args) => window.adminNavigate(...args);
 
 const WEBHOOK_TYPES = [
   { id: 'discord', label: 'Discord', icon: 'smart_toy' },
@@ -50461,7 +50517,7 @@ async function renderWebhooksList(container, username, loadView) {
       ${renderWebhookModal()}
     `;
     
-    setupBreadcrumbListeners(navigateTo$1);
+    setupBreadcrumbListeners(navigateTo$3);
     setupWebhookListeners(webhooks, loadView);
     
   } catch (e) {
@@ -50760,6 +50816,1400 @@ function setupWebhookListeners(webhooks, loadView) {
   };
 }
 
+const navigateTo$2 = (...args) => window.adminNavigate(...args);
+
+let currentBillingTab = 'overview';
+
+const BILLING_TABS = [
+  { id: 'overview', label: 'Overview', icon: 'dashboard' },
+  { id: 'plans', label: 'Plans', icon: 'inventory_2' },
+  { id: 'subscriptions', label: 'Subscriptions', icon: 'card_membership' },
+  { id: 'invoices', label: 'Invoices', icon: 'receipt_long' },
+  { id: 'payments', label: 'Payments', icon: 'payments' },
+  { id: 'settings', label: 'Settings', icon: 'settings' }
+];
+
+async function renderBillingPage(container, username, loadView) {
+  const urlParams = new URLSearchParams(window.location.search);
+  currentBillingTab = urlParams.get('tab') || 'overview';
+  
+  container.innerHTML = `
+    <div class="admin-header">
+      ${renderBreadcrumb([{ label: 'Billing' }])}
+    </div>
+    
+    <div class="settings-layout">
+      <aside class="settings-sidebar">
+        <nav class="settings-nav">
+          ${BILLING_TABS.map(tab => `
+            <button class="settings-nav-item ${currentBillingTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">
+              <span class="material-icons-outlined">${tab.icon}</span>
+              <span>${tab.label}</span>
+            </button>
+          `).join('')}
+        </nav>
+      </aside>
+      
+      <div class="settings-content" id="billing-content">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+  `;
+  
+  setupBreadcrumbListeners(navigateTo$2);
+  
+  container.querySelectorAll('.settings-nav-item').forEach(btn => {
+    btn.onclick = () => {
+      currentBillingTab = btn.dataset.tab;
+      container.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      history.replaceState(null, '', `/admin/billing?tab=${currentBillingTab}`);
+      renderBillingContent();
+    };
+  });
+  
+  renderBillingContent();
+}
+
+async function renderBillingContent() {
+  const content = document.getElementById('billing-content');
+  if (!content) return;
+  
+  content.innerHTML = '<div class="loading-spinner"></div>';
+  
+  switch (currentBillingTab) {
+    case 'overview':
+      await renderBillingOverview(content);
+      break;
+    case 'plans':
+      await renderPlansTab(content);
+      break;
+    case 'subscriptions':
+      await renderSubscriptionsTab(content);
+      break;
+    case 'invoices':
+      await renderInvoicesTab(content);
+      break;
+    case 'payments':
+      await renderPaymentsTab(content);
+      break;
+    case 'settings':
+      await renderBillingSettings(content);
+      break;
+  }
+}
+
+async function renderBillingOverview(content) {
+  try {
+    const [statsRes, configRes] = await Promise.all([
+      api('/api/billing/admin/stats'),
+      api('/api/billing/admin/settings')
+    ]);
+    
+    const stats = await statsRes.json();
+    const { billing } = await configRes.json();
+    
+    const symbol = billing?.currencySymbol || '$';
+    
+    content.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2>Billing Overview</h2>
+          <p>Summary of billing activity and revenue.</p>
+        </div>
+        
+        ${!billing?.enabled ? `
+          <div class="alert alert-warning">
+            <span class="material-icons-outlined">warning</span>
+            <div>
+              <strong>Billing is disabled</strong>
+              <p>Enable billing in settings to start accepting payments.</p>
+            </div>
+          </div>
+        ` : ''}
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><span class="material-icons-outlined">inventory_2</span></div>
+            <div class="stat-info">
+              <span class="stat-value">${stats.activePlans || 0}</span>
+              <span class="stat-label">Active Plans</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><span class="material-icons-outlined">card_membership</span></div>
+            <div class="stat-info">
+              <span class="stat-value">${stats.activeSubscriptions || 0}</span>
+              <span class="stat-label">Active Subscriptions</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><span class="material-icons-outlined">attach_money</span></div>
+            <div class="stat-info">
+              <span class="stat-value">${symbol}${(stats.totalRevenue || 0).toFixed(2)}</span>
+              <span class="stat-label">Total Revenue</span>
+            </div>
+          </div>
+          <div class="stat-card ${stats.overdueInvoices > 0 ? 'stat-warning' : ''}">
+            <div class="stat-icon"><span class="material-icons-outlined">receipt_long</span></div>
+            <div class="stat-info">
+              <span class="stat-value">${stats.pendingInvoices || 0}</span>
+              <span class="stat-label">Pending Invoices</span>
+            </div>
+          </div>
+        </div>
+        
+        ${stats.overdueInvoices > 0 ? `
+          <div class="alert alert-danger" style="margin-top: 1.5rem;">
+            <span class="material-icons-outlined">error</span>
+            <div>
+              <strong>${stats.overdueInvoices} overdue invoice(s)</strong>
+              <p>Some invoices are past their due date and require attention.</p>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  } catch (e) {
+    content.innerHTML = '<div class="error">Failed to load billing overview</div>';
+  }
+}
+
+async function renderPlansTab(content) {
+  try {
+    const res = await api('/api/billing/admin/plans');
+    const { plans } = await res.json();
+    
+    const configRes = await api('/api/billing/admin/settings');
+    const { billing } = await configRes.json();
+    const symbol = billing?.currencySymbol || '$';
+    
+    content.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <div>
+            <h2>Billing Plans</h2>
+            <p>Manage subscription plans and pricing.</p>
+          </div>
+          <button class="btn btn-primary" id="create-plan-btn">
+            <span class="material-icons-outlined">add</span>
+            Create Plan
+          </button>
+        </div>
+        
+        <div class="plans-grid">
+          ${plans.length === 0 ? `
+            <div class="empty-state">
+              <span class="material-icons-outlined">inventory_2</span>
+              <p>No plans created yet</p>
+            </div>
+          ` : plans.map(plan => `
+            <div class="plan-card ${!plan.active ? 'plan-inactive' : ''}">
+              <div class="plan-header">
+                <h3>${escapeHtml$1(plan.name)}</h3>
+                ${!plan.active ? '<span class="badge badge-warning">Inactive</span>' : ''}
+                ${!plan.visible ? '<span class="badge badge-secondary">Hidden</span>' : ''}
+              </div>
+              <div class="plan-price">
+                <span class="price-amount">${symbol}${plan.price.toFixed(2)}</span>
+                <span class="price-cycle">/${plan.billingCycle}</span>
+              </div>
+              <p class="plan-description">${escapeHtml$1(plan.description || 'No description')}</p>
+              <div class="plan-limits">
+                <div class="limit-item">
+                  <span class="material-icons-outlined">dns</span>
+                  <span>${plan.limits?.servers || 0} Servers</span>
+                </div>
+                <div class="limit-item">
+                  <span class="material-icons-outlined">memory</span>
+                  <span>${plan.limits?.memory || 0} MB RAM</span>
+                </div>
+                <div class="limit-item">
+                  <span class="material-icons-outlined">storage</span>
+                  <span>${plan.limits?.disk || 0} MB Disk</span>
+                </div>
+              </div>
+              <div class="plan-actions">
+                <button class="btn btn-sm btn-secondary edit-plan-btn" data-id="${plan.id}">Edit</button>
+                <button class="btn btn-sm btn-danger delete-plan-btn" data-id="${plan.id}">Delete</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('create-plan-btn').onclick = () => showPlanModal();
+    
+    content.querySelectorAll('.edit-plan-btn').forEach(btn => {
+      btn.onclick = () => {
+        const plan = plans.find(p => p.id === btn.dataset.id);
+        if (plan) showPlanModal(plan);
+      };
+    });
+    
+    content.querySelectorAll('.delete-plan-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const confirmed = await confirm$1({ 
+          title: 'Delete Plan', 
+          message: 'Are you sure? This cannot be undone.',
+          danger: true 
+        });
+        if (!confirmed) return;
+        
+        try {
+          const res = await api(`/api/billing/admin/plans/${btn.dataset.id}`, { method: 'DELETE' });
+          if (res.ok) {
+            success('Plan deleted');
+            renderBillingContent();
+          } else {
+            const data = await res.json();
+            error(data.error || 'Failed to delete plan');
+          }
+        } catch (e) {
+          error('Failed to delete plan');
+        }
+      };
+    });
+  } catch (e) {
+    content.innerHTML = '<div class="error">Failed to load plans</div>';
+  }
+}
+
+async function showPlanModal(existingPlan = null) {
+  const isEdit = !!existingPlan;
+  
+  const html = `
+    <form id="plan-form" class="modal-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Plan Name *</label>
+          <input type="text" name="name" value="${escapeHtml$1(existingPlan?.name || '')}" required />
+        </div>
+        <div class="form-group">
+          <label>Price *</label>
+          <input type="number" name="price" value="${existingPlan?.price || 0}" min="0" step="0.01" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="2">${escapeHtml$1(existingPlan?.description || '')}</textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Billing Cycle</label>
+          <select name="billingCycle">
+            <option value="monthly" ${existingPlan?.billingCycle === 'monthly' ? 'selected' : ''}>Monthly</option>
+            <option value="yearly" ${existingPlan?.billingCycle === 'yearly' ? 'selected' : ''}>Yearly</option>
+            <option value="weekly" ${existingPlan?.billingCycle === 'weekly' ? 'selected' : ''}>Weekly</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sort Order</label>
+          <input type="number" name="sortOrder" value="${existingPlan?.sortOrder || 0}" />
+        </div>
+      </div>
+      <h4 style="margin: 1rem 0 0.5rem;">Resource Limits</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Servers</label>
+          <input type="number" name="servers" value="${existingPlan?.limits?.servers || 2}" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Memory (MB)</label>
+          <input type="number" name="memory" value="${existingPlan?.limits?.memory || 2048}" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Disk (MB)</label>
+          <input type="number" name="disk" value="${existingPlan?.limits?.disk || 10240}" min="0" />
+        </div>
+        <div class="form-group">
+          <label>CPU (%)</label>
+          <input type="number" name="cpu" value="${existingPlan?.limits?.cpu || 200}" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Backups</label>
+          <input type="number" name="backups" value="${existingPlan?.limits?.backups || 3}" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Allocations</label>
+          <input type="number" name="allocations" value="${existingPlan?.limits?.allocations || 5}" min="0" />
+        </div>
+      </div>
+      <div class="form-toggles" style="margin-top: 1rem;">
+        <label class="toggle-item">
+          <input type="checkbox" name="active" ${existingPlan?.active !== false ? 'checked' : ''} />
+          <span class="toggle-content">
+            <span class="toggle-title">Active</span>
+          </span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" name="visible" ${existingPlan?.visible !== false ? 'checked' : ''} />
+          <span class="toggle-content">
+            <span class="toggle-title">Visible to Users</span>
+          </span>
+        </label>
+      </div>
+    </form>
+  `;
+  
+  const confirmed = await custom({
+    title: isEdit ? 'Edit Plan' : 'Create Plan',
+    html,
+    confirmText: isEdit ? 'Save Changes' : 'Create Plan',
+    width: '600px'
+  });
+  
+  if (!confirmed) return;
+  
+  const form = document.getElementById('plan-form');
+  const planData = {
+    name: form.name.value,
+    description: form.description.value,
+    price: parseFloat(form.price.value) || 0,
+    billingCycle: form.billingCycle.value,
+    sortOrder: parseInt(form.sortOrder.value) || 0,
+    limits: {
+      servers: parseInt(form.servers.value) || 0,
+      memory: parseInt(form.memory.value) || 0,
+      disk: parseInt(form.disk.value) || 0,
+      cpu: parseInt(form.cpu.value) || 0,
+      backups: parseInt(form.backups.value) || 0,
+      allocations: parseInt(form.allocations.value) || 0
+    },
+    active: form.active.checked,
+    visible: form.visible.checked
+  };
+  
+  try {
+    const url = isEdit ? `/api/billing/admin/plans/${existingPlan.id}` : '/api/billing/admin/plans';
+    const method = isEdit ? 'PUT' : 'POST';
+    
+    const res = await api(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: planData })
+    });
+    
+    if (res.ok) {
+      success(isEdit ? 'Plan updated' : 'Plan created');
+      renderBillingContent();
+    } else {
+      const data = await res.json();
+      error(data.error || 'Failed to save plan');
+    }
+  } catch (e) {
+    error('Failed to save plan');
+  }
+}
+
+async function renderSubscriptionsTab(content) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const page = parseInt(urlParams.get('page')) || 1;
+  const status = urlParams.get('status') || '';
+  
+  try {
+    let url = `/api/billing/admin/subscriptions?page=${page}&per_page=20`;
+    if (status) url += `&status=${status}`;
+    
+    const res = await api(url);
+    const { subscriptions, meta } = await res.json();
+    
+    content.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2>Subscriptions</h2>
+          <div class="filter-group">
+            <select id="status-filter" class="form-select">
+              <option value="">All Status</option>
+              <option value="active" ${status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="pending" ${status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="cancelled" ${status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+              <option value="expired" ${status === 'expired' ? 'selected' : ''}>Expired</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Started</th>
+                <th>Expires</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${subscriptions.length === 0 ? `
+                <tr><td colspan="6" class="empty-cell">No subscriptions found</td></tr>
+              ` : subscriptions.map(sub => `
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <span class="username">${escapeHtml$1(sub.user?.username || 'Unknown')}</span>
+                      <span class="email">${escapeHtml$1(sub.user?.email || '')}</span>
+                    </div>
+                  </td>
+                  <td>${escapeHtml$1(sub.plan?.name || 'Unknown')}</td>
+                  <td><span class="badge badge-${getStatusColor$2(sub.status)}">${sub.status}</span></td>
+                  <td>${formatDate$3(sub.currentPeriodStart)}</td>
+                  <td>${formatDate$3(sub.currentPeriodEnd)}</td>
+                  <td>
+                    <div class="action-btns">
+                      <select class="form-select form-select-sm status-change" data-id="${sub.id}">
+                        <option value="active" ${sub.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="pending" ${sub.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="cancelled" ${sub.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                        <option value="expired" ${sub.status === 'expired' ? 'selected' : ''}>Expired</option>
+                      </select>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        ${renderPagination(meta, (p) => {
+          history.replaceState(null, '', `/admin/billing?tab=subscriptions&page=${p}${status ? `&status=${status}` : ''}`);
+          renderBillingContent();
+        })}
+      </div>
+    `;
+    
+    document.getElementById('status-filter').onchange = (e) => {
+      history.replaceState(null, '', `/admin/billing?tab=subscriptions${e.target.value ? `&status=${e.target.value}` : ''}`);
+      renderBillingContent();
+    };
+    
+    content.querySelectorAll('.status-change').forEach(select => {
+      select.onchange = async (e) => {
+        try {
+          const res = await api(`/api/billing/admin/subscriptions/${select.dataset.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: e.target.value })
+          });
+          if (res.ok) {
+            success('Subscription updated');
+          } else {
+            error('Failed to update subscription');
+            renderBillingContent();
+          }
+        } catch (e) {
+          error('Failed to update subscription');
+        }
+      };
+    });
+  } catch (e) {
+    content.innerHTML = '<div class="error">Failed to load subscriptions</div>';
+  }
+}
+
+async function renderInvoicesTab(content) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const page = parseInt(urlParams.get('page')) || 1;
+  const status = urlParams.get('status') || '';
+  
+  try {
+    let url = `/api/billing/admin/invoices?page=${page}&per_page=20`;
+    if (status) url += `&status=${status}`;
+    
+    const res = await api(url);
+    const { invoices, meta } = await res.json();
+    
+    const configRes = await api('/api/billing/admin/settings');
+    const { billing } = await configRes.json();
+    const symbol = billing?.currencySymbol || '$';
+    
+    content.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2>Invoices</h2>
+          <div class="filter-group">
+            <select id="invoice-status-filter" class="form-select">
+              <option value="">All Status</option>
+              <option value="pending" ${status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="paid" ${status === 'paid' ? 'selected' : ''}>Paid</option>
+              <option value="cancelled" ${status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoices.length === 0 ? `
+                <tr><td colspan="6" class="empty-cell">No invoices found</td></tr>
+              ` : invoices.map(inv => `
+                <tr class="${inv.status === 'pending' && new Date(inv.dueDate) < new Date() ? 'row-danger' : ''}">
+                  <td>
+                    <div class="user-cell">
+                      <span class="username">${escapeHtml$1(inv.user?.username || 'Unknown')}</span>
+                      <span class="email">${escapeHtml$1(inv.user?.email || '')}</span>
+                    </div>
+                  </td>
+                  <td><strong>${symbol}${inv.total.toFixed(2)}</strong></td>
+                  <td><span class="badge badge-${getInvoiceStatusColor(inv.status)}">${inv.status}</span></td>
+                  <td>${formatDate$3(inv.dueDate)}</td>
+                  <td>${formatDate$3(inv.createdAt)}</td>
+                  <td>
+                    <div class="action-btns">
+                      ${inv.status === 'pending' ? `
+                        <button class="btn btn-sm btn-success mark-paid-btn" data-id="${inv.id}">Mark Paid</button>
+                        <button class="btn btn-sm btn-danger cancel-invoice-btn" data-id="${inv.id}">Cancel</button>
+                      ` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        ${renderPagination(meta, (p) => {
+          history.replaceState(null, '', `/admin/billing?tab=invoices&page=${p}${status ? `&status=${status}` : ''}`);
+          renderBillingContent();
+        })}
+      </div>
+    `;
+    
+    document.getElementById('invoice-status-filter').onchange = (e) => {
+      history.replaceState(null, '', `/admin/billing?tab=invoices${e.target.value ? `&status=${e.target.value}` : ''}`);
+      renderBillingContent();
+    };
+    
+    content.querySelectorAll('.mark-paid-btn').forEach(btn => {
+      btn.onclick = async () => {
+        try {
+          const res = await api(`/api/billing/admin/invoices/${btn.dataset.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'paid' })
+          });
+          if (res.ok) {
+            success('Invoice marked as paid');
+            renderBillingContent();
+          } else {
+            error('Failed to update invoice');
+          }
+        } catch (e) {
+          error('Failed to update invoice');
+        }
+      };
+    });
+    
+    content.querySelectorAll('.cancel-invoice-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const confirmed = await confirm$1({ title: 'Cancel Invoice', message: 'Are you sure?', danger: true });
+        if (!confirmed) return;
+        
+        try {
+          const res = await api(`/api/billing/admin/invoices/${btn.dataset.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'cancelled' })
+          });
+          if (res.ok) {
+            success('Invoice cancelled');
+            renderBillingContent();
+          } else {
+            error('Failed to cancel invoice');
+          }
+        } catch (e) {
+          error('Failed to cancel invoice');
+        }
+      };
+    });
+  } catch (e) {
+    content.innerHTML = '<div class="error">Failed to load invoices</div>';
+  }
+}
+
+async function renderPaymentsTab(content) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const page = parseInt(urlParams.get('page')) || 1;
+  
+  try {
+    const res = await api(`/api/billing/admin/payments?page=${page}&per_page=20`);
+    const { payments, meta } = await res.json();
+    
+    const configRes = await api('/api/billing/admin/settings');
+    const { billing } = await configRes.json();
+    const symbol = billing?.currencySymbol || '$';
+    
+    content.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2>Payments</h2>
+          <p>All payment transactions.</p>
+        </div>
+        
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${payments.length === 0 ? `
+                <tr><td colspan="5" class="empty-cell">No payments found</td></tr>
+              ` : payments.map(pay => `
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <span class="username">${escapeHtml$1(pay.user?.username || 'Unknown')}</span>
+                      <span class="email">${escapeHtml$1(pay.user?.email || '')}</span>
+                    </div>
+                  </td>
+                  <td><strong>${symbol}${(pay.amount || 0).toFixed(2)}</strong></td>
+                  <td>${pay.method || 'manual'}</td>
+                  <td><span class="badge badge-${pay.status === 'completed' ? 'success' : 'warning'}">${pay.status}</span></td>
+                  <td>${formatDate$3(pay.createdAt)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        ${renderPagination(meta, (p) => {
+          history.replaceState(null, '', `/admin/billing?tab=payments&page=${p}`);
+          renderBillingContent();
+        })}
+      </div>
+    `;
+  } catch (e) {
+    content.innerHTML = '<div class="error">Failed to load payments</div>';
+  }
+}
+
+async function renderBillingSettings(content) {
+  try {
+    const res = await api('/api/billing/admin/settings');
+    const { billing, tickets } = await res.json();
+    
+    content.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2>Billing Settings</h2>
+          <p>Configure billing and payment options.</p>
+        </div>
+        
+        <form id="billing-settings-form" class="settings-form">
+          <div class="detail-card">
+            <h3>General Settings</h3>
+            <div class="form-toggles">
+              <label class="toggle-item">
+                <input type="checkbox" name="enabled" ${billing?.enabled ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Enable Billing</span>
+                  <span class="toggle-desc">Allow users to subscribe to plans and make payments</span>
+                </span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" name="requireEmail" ${billing?.requireEmail ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Require Email</span>
+                  <span class="toggle-desc">Users must have an email to use billing</span>
+                </span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" name="requireEmailVerification" ${billing?.requireEmailVerification ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Require Email Verification</span>
+                  <span class="toggle-desc">Users must verify their email before billing</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Currency & Taxes</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Currency Code</label>
+                <input type="text" name="currency" value="${escapeHtml$1(billing?.currency || 'USD')}" maxlength="3" />
+              </div>
+              <div class="form-group">
+                <label>Currency Symbol</label>
+                <input type="text" name="currencySymbol" value="${escapeHtml$1(billing?.currencySymbol || '$')}" maxlength="3" />
+              </div>
+              <div class="form-group">
+                <label>Tax Rate (%)</label>
+                <input type="number" name="taxRate" value="${billing?.taxRate || 0}" min="0" max="100" step="0.01" />
+              </div>
+              <div class="form-group">
+                <label>Grace Period (Days)</label>
+                <input type="number" name="gracePeriodDays" value="${billing?.gracePeriodDays || 3}" min="0" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Payment Methods</h3>
+            <div class="form-toggles">
+              <label class="toggle-item">
+                <input type="checkbox" name="manualEnabled" ${billing?.paymentMethods?.manual?.enabled ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Manual Payments</span>
+                  <span class="toggle-desc">Admin manually marks invoices as paid</span>
+                </span>
+              </label>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+              <label>Manual Payment Instructions</label>
+              <textarea name="manualInstructions" rows="3">${escapeHtml$1(billing?.paymentMethods?.manual?.instructions || '')}</textarea>
+              <small class="form-hint">Shown to users when they need to pay manually</small>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Email Notifications</h3>
+            <div class="form-toggles">
+              <label class="toggle-item">
+                <input type="checkbox" name="notifyInvoiceCreated" ${billing?.notifications?.invoiceCreated ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Invoice Created</span>
+                </span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" name="notifyPaymentReceived" ${billing?.notifications?.paymentReceived ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Payment Received</span>
+                </span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" name="notifySubscriptionExpiring" ${billing?.notifications?.subscriptionExpiring ? 'checked' : ''} />
+                <span class="toggle-content">
+                  <span class="toggle-title">Subscription Expiring</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <span class="material-icons-outlined">save</span>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+    
+    document.getElementById('billing-settings-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      
+      const settings = {
+        billing: {
+          enabled: form.enabled.checked,
+          requireEmail: form.requireEmail.checked,
+          requireEmailVerification: form.requireEmailVerification.checked,
+          currency: form.currency.value,
+          currencySymbol: form.currencySymbol.value,
+          taxRate: parseFloat(form.taxRate.value) || 0,
+          gracePeriodDays: parseInt(form.gracePeriodDays.value) || 3,
+          paymentMethods: {
+            manual: {
+              enabled: form.manualEnabled.checked,
+              instructions: form.manualInstructions.value
+            }
+          },
+          notifications: {
+            invoiceCreated: form.notifyInvoiceCreated.checked,
+            paymentReceived: form.notifyPaymentReceived.checked,
+            subscriptionExpiring: form.notifySubscriptionExpiring.checked
+          }
+        }
+      };
+      
+      try {
+        const res = await api('/api/billing/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings)
+        });
+        
+        if (res.ok) {
+          success('Settings saved');
+        } else {
+          error('Failed to save settings');
+        }
+      } catch (e) {
+        error('Failed to save settings');
+      }
+    };
+  } catch (e) {
+    content.innerHTML = '<div class="error">Failed to load settings</div>';
+  }
+}
+
+function getStatusColor$2(status) {
+  switch (status) {
+    case 'active': return 'success';
+    case 'pending': return 'warning';
+    case 'cancelled': return 'danger';
+    case 'expired': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+function getInvoiceStatusColor(status) {
+  switch (status) {
+    case 'paid': return 'success';
+    case 'pending': return 'warning';
+    case 'cancelled': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+function formatDate$3(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString();
+}
+
+const navigateTo$1 = (...args) => window.adminNavigate(...args);
+
+let ticketConfig$1 = null;
+
+async function renderTicketsList(container, username, loadView) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const page = parseInt(urlParams.get('page')) || 1;
+  const status = urlParams.get('status') || '';
+  const category = urlParams.get('category') || '';
+  const priority = urlParams.get('priority') || '';
+  
+  try {
+    const [ticketsRes, statsRes, configRes] = await Promise.all([
+      api(`/api/tickets/admin/all?page=${page}&per_page=20${status ? `&status=${status}` : ''}${category ? `&category=${category}` : ''}${priority ? `&priority=${priority}` : ''}`),
+      api('/api/tickets/admin/stats'),
+      api('/api/tickets/config')
+    ]);
+    
+    const { tickets, meta } = await ticketsRes.json();
+    const stats = await statsRes.json();
+    ticketConfig$1 = await configRes.json();
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([{ label: 'Tickets' }])}
+      </div>
+      
+      <div class="stats-grid stats-grid-compact">
+        <div class="stat-card stat-small">
+          <span class="stat-value">${stats.open || 0}</span>
+          <span class="stat-label">Open</span>
+        </div>
+        <div class="stat-card stat-small">
+          <span class="stat-value">${stats.answered || 0}</span>
+          <span class="stat-label">Answered</span>
+        </div>
+        <div class="stat-card stat-small">
+          <span class="stat-value">${stats.closed || 0}</span>
+          <span class="stat-label">Closed</span>
+        </div>
+        <div class="stat-card stat-small">
+          <span class="stat-value">${stats.total || 0}</span>
+          <span class="stat-label">Total</span>
+        </div>
+      </div>
+      
+      <div class="list-controls">
+        <div class="filter-group">
+          <select id="status-filter" class="form-select">
+            <option value="">All Status</option>
+            <option value="open" ${status === 'open' ? 'selected' : ''}>Open</option>
+            <option value="answered" ${status === 'answered' ? 'selected' : ''}>Answered</option>
+            <option value="closed" ${status === 'closed' ? 'selected' : ''}>Closed</option>
+          </select>
+          <select id="category-filter" class="form-select">
+            <option value="">All Categories</option>
+            ${ticketConfig$1.categories.map(c => `
+              <option value="${c}" ${category === c ? 'selected' : ''}>${c}</option>
+            `).join('')}
+          </select>
+          <select id="priority-filter" class="form-select">
+            <option value="">All Priorities</option>
+            ${ticketConfig$1.priorities.map(p => `
+              <option value="${p}" ${priority === p ? 'selected' : ''}>${p}</option>
+            `).join('')}
+          </select>
+        </div>
+      </div>
+      
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Subject</th>
+              <th>User</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tickets.length === 0 ? `
+              <tr><td colspan="8" class="empty-cell">No tickets found</td></tr>
+            ` : tickets.map(ticket => `
+              <tr class="ticket-row ${ticket.status === 'open' && ticket.priority === 'Urgent' ? 'row-urgent' : ''}">
+                <td><span class="ticket-number">#${ticket.ticketNumber}</span></td>
+                <td>
+                  <a href="#" class="ticket-subject-link" data-id="${ticket.id}">
+                    ${escapeHtml$1(ticket.subject)}
+                  </a>
+                </td>
+                <td>
+                  <div class="user-cell">
+                    <span class="username">${escapeHtml$1(ticket.user?.username || 'Unknown')}</span>
+                    <span class="email">${escapeHtml$1(ticket.user?.email || '')}</span>
+                  </div>
+                </td>
+                <td><span class="badge badge-secondary">${escapeHtml$1(ticket.category)}</span></td>
+                <td><span class="badge badge-${getPriorityColor$1(ticket.priority)}">${ticket.priority}</span></td>
+                <td><span class="badge badge-${getStatusColor$1(ticket.status)}">${ticket.status}</span></td>
+                <td>${formatTimeAgo$1(ticket.updatedAt)}</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="btn btn-sm btn-primary view-ticket-btn" data-id="${ticket.id}">
+                      <span class="material-icons-outlined">visibility</span>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-ticket-btn" data-id="${ticket.id}">
+                      <span class="material-icons-outlined">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      ${renderPagination(meta, (p) => {
+        const params = new URLSearchParams();
+        params.set('page', p);
+        if (status) params.set('status', status);
+        if (category) params.set('category', category);
+        if (priority) params.set('priority', priority);
+        history.replaceState(null, '', `/admin/tickets?${params.toString()}`);
+        loadView();
+      })}
+    `;
+    
+    setupBreadcrumbListeners(navigateTo$1);
+    setupFilters(loadView, status, category, priority);
+    setupTicketActions(container, loadView);
+    
+  } catch (e) {
+    container.innerHTML = '<div class="error">Failed to load tickets</div>';
+  }
+}
+
+function setupFilters(loadView, currentStatus, currentCategory, currentPriority) {
+  const updateUrl = () => {
+    const params = new URLSearchParams();
+    const status = document.getElementById('status-filter').value;
+    const category = document.getElementById('category-filter').value;
+    const priority = document.getElementById('priority-filter').value;
+    
+    if (status) params.set('status', status);
+    if (category) params.set('category', category);
+    if (priority) params.set('priority', priority);
+    
+    history.replaceState(null, '', `/admin/tickets${params.toString() ? '?' + params.toString() : ''}`);
+    loadView();
+  };
+  
+  document.getElementById('status-filter').onchange = updateUrl;
+  document.getElementById('category-filter').onchange = updateUrl;
+  document.getElementById('priority-filter').onchange = updateUrl;
+}
+
+function setupTicketActions(container, loadView) {
+  container.querySelectorAll('.view-ticket-btn, .ticket-subject-link').forEach(el => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      const id = el.dataset.id;
+      showTicketDetail(id, loadView);
+    };
+  });
+  
+  container.querySelectorAll('.delete-ticket-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const confirmed = await confirm$1({
+        title: 'Delete Ticket',
+        message: 'Are you sure you want to delete this ticket? This cannot be undone.',
+        danger: true
+      });
+      if (!confirmed) return;
+      
+      try {
+        const res = await api(`/api/tickets/admin/${btn.dataset.id}`, { method: 'DELETE' });
+        if (res.ok) {
+          success('Ticket deleted');
+          loadView();
+        } else {
+          error('Failed to delete ticket');
+        }
+      } catch (e) {
+        error('Failed to delete ticket');
+      }
+    };
+  });
+}
+
+async function showTicketDetail(ticketId, loadView) {
+  try {
+    const res = await api(`/api/tickets/${ticketId}`);
+    const { ticket, messages } = await res.json();
+    
+    const html = `
+      <div class="ticket-detail-modal">
+        <div class="ticket-header-info">
+          <div class="ticket-meta">
+            <span class="badge badge-${getStatusColor$1(ticket.status)}">${ticket.status}</span>
+            <span class="badge badge-${getPriorityColor$1(ticket.priority)}">${ticket.priority}</span>
+            <span class="badge badge-secondary">${ticket.category}</span>
+          </div>
+          <div class="ticket-controls">
+            <select id="ticket-status-select" class="form-select form-select-sm">
+              <option value="open" ${ticket.status === 'open' ? 'selected' : ''}>Open</option>
+              <option value="answered" ${ticket.status === 'answered' ? 'selected' : ''}>Answered</option>
+              <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''}>Closed</option>
+            </select>
+            <select id="ticket-priority-select" class="form-select form-select-sm">
+              ${ticketConfig$1.priorities.map(p => `
+                <option value="${p}" ${ticket.priority === p ? 'selected' : ''}>${p}</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+        
+        <div class="ticket-messages">
+          ${messages.map(msg => `
+            <div class="ticket-message ${msg.isStaff ? 'staff-message' : 'user-message'}">
+              <div class="message-header">
+                <span class="message-author">
+                  ${escapeHtml$1(msg.user?.displayName || msg.user?.username || 'Unknown')}
+                  ${msg.isStaff ? '<span class="staff-badge">Staff</span>' : ''}
+                </span>
+                <span class="message-time">${formatTimeAgo$1(msg.createdAt)}</span>
+              </div>
+              <div class="message-body">${escapeHtml$1(msg.message)}</div>
+            </div>
+          `).join('')}
+        </div>
+        
+        ${ticket.status !== 'closed' ? `
+          <div class="ticket-reply-form">
+            <textarea id="reply-message" placeholder="Type your reply..." rows="3"></textarea>
+          </div>
+        ` : ''}
+      </div>
+    `;
+    
+    const result = await custom({
+      title: `#${ticket.ticketNumber}: ${escapeHtml$1(ticket.subject)}`,
+      html,
+      confirmText: ticket.status !== 'closed' ? 'Send Reply' : 'Close',
+      cancelText: 'Back',
+      width: '700px'
+    });
+    
+    const newStatus = document.getElementById('ticket-status-select')?.value;
+    const newPriority = document.getElementById('ticket-priority-select')?.value;
+    const replyMessage = document.getElementById('reply-message')?.value?.trim();
+    
+    if (newStatus !== ticket.status || newPriority !== ticket.priority) {
+      await api(`/api/tickets/admin/${ticketId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, priority: newPriority })
+      });
+    }
+    
+    if (result && replyMessage && ticket.status !== 'closed') {
+      await api(`/api/tickets/${ticketId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: replyMessage })
+      });
+      success('Reply sent');
+    }
+    
+    loadView();
+    
+  } catch (e) {
+    error('Failed to load ticket');
+  }
+}
+
+async function renderTicketDetail$1(container, username, ticketId) {
+  try {
+    const res = await api(`/api/tickets/${ticketId}`);
+    const { ticket, messages } = await res.json();
+    
+    const configRes = await api('/api/tickets/config');
+    ticketConfig$1 = await configRes.json();
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([
+          { label: 'Tickets', onClick: () => navigateTo$1('tickets') },
+          { label: `#${ticket.ticketNumber}` }
+        ])}
+      </div>
+      
+      <div class="ticket-detail-page">
+        <div class="ticket-main">
+          <div class="detail-card">
+            <div class="ticket-detail-header">
+              <h2>${escapeHtml$1(ticket.subject)}</h2>
+              <div class="ticket-badges">
+                <span class="badge badge-${getStatusColor$1(ticket.status)}">${ticket.status}</span>
+                <span class="badge badge-${getPriorityColor$1(ticket.priority)}">${ticket.priority}</span>
+                <span class="badge badge-secondary">${ticket.category}</span>
+              </div>
+            </div>
+            
+            <div class="ticket-messages-list">
+              ${messages.map(msg => `
+                <div class="ticket-message ${msg.isStaff ? 'staff-message' : 'user-message'}">
+                  <div class="message-header">
+                    <span class="message-author">
+                      ${escapeHtml$1(msg.user?.displayName || msg.user?.username || 'Unknown')}
+                      ${msg.isStaff ? '<span class="staff-badge">Staff</span>' : ''}
+                    </span>
+                    <span class="message-time">${formatTimeAgo$1(msg.createdAt)}</span>
+                  </div>
+                  <div class="message-body">${escapeHtml$1(msg.message).replace(/\n/g, '<br>')}</div>
+                </div>
+              `).join('')}
+            </div>
+            
+            ${ticket.status !== 'closed' ? `
+              <form id="reply-form" class="ticket-reply-form">
+                <textarea name="message" placeholder="Type your reply..." rows="4" required></textarea>
+                <button type="submit" class="btn btn-primary">
+                  <span class="material-icons-outlined">send</span>
+                  Send Reply
+                </button>
+              </form>
+            ` : `
+              <div class="ticket-closed-notice">
+                <span class="material-icons-outlined">lock</span>
+                This ticket is closed
+                <button class="btn btn-sm btn-secondary" id="reopen-ticket-btn">Reopen</button>
+              </div>
+            `}
+          </div>
+        </div>
+        
+        <aside class="ticket-sidebar">
+          <div class="detail-card">
+            <h3>Ticket Info</h3>
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Created</span>
+                <span class="info-value">${formatDate$2(ticket.createdAt)}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Updated</span>
+                <span class="info-value">${formatTimeAgo$1(ticket.updatedAt)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Actions</h3>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="update-status" class="form-select">
+                <option value="open" ${ticket.status === 'open' ? 'selected' : ''}>Open</option>
+                <option value="answered" ${ticket.status === 'answered' ? 'selected' : ''}>Answered</option>
+                <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''}>Closed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="update-priority" class="form-select">
+                ${ticketConfig$1.priorities.map(p => `
+                  <option value="${p}" ${ticket.priority === p ? 'selected' : ''}>${p}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="update-category" class="form-select">
+                ${ticketConfig$1.categories.map(c => `
+                  <option value="${c}" ${ticket.category === c ? 'selected' : ''}>${c}</option>
+                `).join('')}
+              </select>
+            </div>
+            <button class="btn btn-primary btn-block" id="update-ticket-btn">Update Ticket</button>
+            <button class="btn btn-danger btn-block" id="delete-ticket-btn" style="margin-top: 0.5rem;">Delete Ticket</button>
+          </div>
+        </aside>
+      </div>
+    `;
+    
+    setupBreadcrumbListeners(navigateTo$1);
+    
+    const replyForm = document.getElementById('reply-form');
+    if (replyForm) {
+      replyForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const message = replyForm.message.value.trim();
+        if (!message) return;
+        
+        try {
+          const res = await api(`/api/tickets/${ticketId}/reply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+          });
+          
+          if (res.ok) {
+            success('Reply sent');
+            renderTicketDetail$1(container, username, ticketId);
+          } else {
+            error('Failed to send reply');
+          }
+        } catch (e) {
+          error('Failed to send reply');
+        }
+      };
+    }
+    
+    document.getElementById('update-ticket-btn').onclick = async () => {
+      const status = document.getElementById('update-status').value;
+      const priority = document.getElementById('update-priority').value;
+      const category = document.getElementById('update-category').value;
+      
+      try {
+        const res = await api(`/api/tickets/admin/${ticketId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, priority, category })
+        });
+        
+        if (res.ok) {
+          success('Ticket updated');
+          renderTicketDetail$1(container, username, ticketId);
+        } else {
+          error('Failed to update ticket');
+        }
+      } catch (e) {
+        error('Failed to update ticket');
+      }
+    };
+    
+    document.getElementById('delete-ticket-btn').onclick = async () => {
+      const confirmed = await confirm$1({
+        title: 'Delete Ticket',
+        message: 'Are you sure? This cannot be undone.',
+        danger: true
+      });
+      if (!confirmed) return;
+      
+      try {
+        const res = await api(`/api/tickets/admin/${ticketId}`, { method: 'DELETE' });
+        if (res.ok) {
+          success('Ticket deleted');
+          navigateTo$1('tickets');
+        } else {
+          error('Failed to delete ticket');
+        }
+      } catch (e) {
+        error('Failed to delete ticket');
+      }
+    };
+    
+    const reopenBtn = document.getElementById('reopen-ticket-btn');
+    if (reopenBtn) {
+      reopenBtn.onclick = async () => {
+        try {
+          const res = await api(`/api/tickets/${ticketId}/reopen`, { method: 'POST' });
+          if (res.ok) {
+            success('Ticket reopened');
+            renderTicketDetail$1(container, username, ticketId);
+          } else {
+            error('Failed to reopen ticket');
+          }
+        } catch (e) {
+          error('Failed to reopen ticket');
+        }
+      };
+    }
+    
+  } catch (e) {
+    container.innerHTML = '<div class="error">Failed to load ticket</div>';
+  }
+}
+
+function getStatusColor$1(status) {
+  switch (status) {
+    case 'open': return 'warning';
+    case 'answered': return 'info';
+    case 'closed': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+function getPriorityColor$1(priority) {
+  switch (priority) {
+    case 'Urgent': return 'danger';
+    case 'High': return 'warning';
+    case 'Medium': return 'info';
+    case 'Low': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+function formatTimeAgo$1(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now - date;
+  
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
+function formatDate$2(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString();
+}
+
 function navigateTo(tab, id = null, subTab = null) {
   state.currentView = { 
     type: id ? 'detail' : 'list', 
@@ -50842,6 +52292,9 @@ async function loadView() {
       case 'eggs':
         await renderEggDetail(container, username, state.currentView.id);
         break;
+      case 'tickets':
+        await renderTicketDetail$1(container, username, state.currentView.id);
+        break;
     }
   } else {
     switch (state.currentView.tab) {
@@ -50875,6 +52328,12 @@ async function loadView() {
       case 'webhooks':
         await renderWebhooksList(container, username, loadView);
         break;
+      case 'billing':
+        await renderBillingPage(container, username, loadView);
+        break;
+      case 'tickets':
+        await renderTicketsList(container, username, loadView);
+        break;
     }
   }
 }
@@ -50902,7 +52361,7 @@ const activityLabels = {
   'subuser:remove': { label: 'Removed subuser', icon: 'person_remove' }
 };
 
-function formatDate(dateString) {
+function formatDate$1(dateString) {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now - date;
@@ -50957,7 +52416,7 @@ async function renderActivityLog() {
                   ${log.details?.method ? `<div class="activity-detail">Method: ${escapeHtml$1(log.details.method)}</div>` : ''}
                   ${log.ip ? `<div class="activity-detail ip">IP: ${escapeHtml$1(log.ip)}</div>` : ''}
                 </div>
-                <div class="activity-time">${formatDate(log.createdAt)}</div>
+                <div class="activity-time">${formatDate$1(log.createdAt)}</div>
               </div>
             `;
           }).join('')}
@@ -51461,6 +52920,710 @@ async function renderSetup() {
   render();
 }
 
+let billingConfig = null;
+
+async function renderBilling() {
+  const app = document.getElementById('app');
+  const user = getUser();
+  
+  if (!user) {
+    window.location.href = '/auth';
+    return;
+  }
+  
+  app.innerHTML = '<div class="loading-spinner"></div>';
+  
+  try {
+    const [configRes, requirementsRes, subscriptionRes, plansRes] = await Promise.all([
+      api('/api/billing/config'),
+      api('/api/billing/requirements'),
+      api('/api/billing/my/subscription'),
+      api('/api/billing/plans')
+    ]);
+    
+    billingConfig = await configRes.json();
+    const requirements = await requirementsRes.json();
+    const { subscription } = await subscriptionRes.json();
+    const { plans } = await plansRes.json();
+    
+    if (!billingConfig.enabled) {
+      app.innerHTML = `
+        <div class="page-container">
+          <div class="empty-state">
+            <span class="material-icons-outlined">payments_off</span>
+            <h2>Billing Not Available</h2>
+            <p>Billing is currently disabled on this panel.</p>
+            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    const symbol = billingConfig.currencySymbol || '$';
+    
+    app.innerHTML = `
+      <div class="page-container">
+        <div class="page-header">
+          <h1>Billing</h1>
+          <p>Manage your subscription and payments</p>
+        </div>
+        
+        ${!requirements.met ? `
+          <div class="alert alert-warning">
+            <span class="material-icons-outlined">warning</span>
+            <div>
+              <strong>Requirements Not Met</strong>
+              <ul>
+                ${requirements.errors.map(e => `<li>${escapeHtml$1(e)}</li>`).join('')}
+              </ul>
+              <a href="/settings" class="btn btn-sm btn-primary" style="margin-top: 0.5rem;">Update Profile</a>
+            </div>
+          </div>
+        ` : ''}
+        
+        <div class="billing-layout">
+          <div class="billing-main">
+            ${subscription ? renderCurrentSubscription(subscription, symbol) : renderNoSubscription()}
+            
+            ${!subscription ? `
+              <div class="detail-card">
+                <h2>Available Plans</h2>
+                <div class="plans-grid">
+                  ${plans.length === 0 ? `
+                    <p class="text-muted">No plans available at this time.</p>
+                  ` : plans.sort((a, b) => a.sortOrder - b.sortOrder).map(plan => `
+                    <div class="plan-card">
+                      <div class="plan-header">
+                        <h3>${escapeHtml$1(plan.name)}</h3>
+                      </div>
+                      <div class="plan-price">
+                        <span class="price-amount">${symbol}${plan.price.toFixed(2)}</span>
+                        <span class="price-cycle">/${plan.billingCycle}</span>
+                      </div>
+                      <p class="plan-description">${escapeHtml$1(plan.description || '')}</p>
+                      <ul class="plan-features">
+                        <li><span class="material-icons-outlined">dns</span> ${plan.limits?.servers || 0} Servers</li>
+                        <li><span class="material-icons-outlined">memory</span> ${plan.limits?.memory || 0} MB RAM</li>
+                        <li><span class="material-icons-outlined">storage</span> ${plan.limits?.disk || 0} MB Disk</li>
+                        <li><span class="material-icons-outlined">speed</span> ${plan.limits?.cpu || 0}% CPU</li>
+                      </ul>
+                      <button class="btn btn-primary btn-block subscribe-btn" 
+                              data-plan-id="${plan.id}" 
+                              ${!requirements.met ? 'disabled' : ''}>
+                        ${plan.price === 0 ? 'Activate Free Plan' : 'Subscribe'}
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+          
+          <aside class="billing-sidebar">
+            <div class="detail-card">
+              <h3>Payment History</h3>
+              <div id="payment-history">
+                <div class="loading-spinner"></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    `;
+    
+    loadPaymentHistory(symbol);
+    setupEventListeners(requirements.met);
+    
+  } catch (e) {
+    app.innerHTML = `<div class="error">Failed to load billing information</div>`;
+  }
+}
+
+function renderCurrentSubscription(subscription, symbol) {
+  const plan = subscription.plan;
+  const expiresDate = new Date(subscription.currentPeriodEnd);
+  const isExpiringSoon = expiresDate - new Date() < 7 * 24 * 60 * 60 * 1000;
+  
+  return `
+    <div class="detail-card subscription-card">
+      <div class="subscription-header">
+        <div>
+          <h2>Current Subscription</h2>
+          <span class="badge badge-${subscription.status === 'active' ? 'success' : 'warning'}">${subscription.status}</span>
+        </div>
+      </div>
+      
+      <div class="subscription-details">
+        <div class="subscription-plan">
+          <h3>${escapeHtml$1(plan?.name || 'Unknown Plan')}</h3>
+          <p class="plan-price">${symbol}${(plan?.price || 0).toFixed(2)}/${plan?.billingCycle || 'month'}</p>
+        </div>
+        
+        <div class="subscription-info">
+          <div class="info-item">
+            <span class="info-label">Started</span>
+            <span class="info-value">${formatDate(subscription.currentPeriodStart)}</span>
+          </div>
+          <div class="info-item ${isExpiringSoon ? 'expiring-soon' : ''}">
+            <span class="info-label">Expires</span>
+            <span class="info-value">${formatDate(subscription.currentPeriodEnd)}</span>
+          </div>
+        </div>
+        
+        <div class="subscription-limits">
+          <h4>Your Limits</h4>
+          <div class="limits-grid">
+            <div class="limit-item">
+              <span class="limit-value">${plan?.limits?.servers || 0}</span>
+              <span class="limit-label">Servers</span>
+            </div>
+            <div class="limit-item">
+              <span class="limit-value">${plan?.limits?.memory || 0}</span>
+              <span class="limit-label">MB RAM</span>
+            </div>
+            <div class="limit-item">
+              <span class="limit-value">${plan?.limits?.disk || 0}</span>
+              <span class="limit-label">MB Disk</span>
+            </div>
+            <div class="limit-item">
+              <span class="limit-value">${plan?.limits?.cpu || 0}%</span>
+              <span class="limit-label">CPU</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="subscription-actions">
+        <button class="btn btn-danger" id="cancel-subscription-btn">Cancel Subscription</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderNoSubscription() {
+  return `
+    <div class="detail-card">
+      <div class="empty-subscription">
+        <span class="material-icons-outlined">card_membership</span>
+        <h3>No Active Subscription</h3>
+        <p>Choose a plan below to get started.</p>
+      </div>
+    </div>
+  `;
+}
+
+async function loadPaymentHistory(symbol) {
+  const container = document.getElementById('payment-history');
+  if (!container) return;
+  
+  try {
+    const [invoicesRes, paymentsRes] = await Promise.all([
+      api('/api/billing/my/invoices'),
+      api('/api/billing/my/payments')
+    ]);
+    
+    const { invoices } = await invoicesRes.json();
+    const { payments } = await paymentsRes.json();
+    
+    if (invoices.length === 0 && payments.length === 0) {
+      container.innerHTML = '<p class="text-muted">No payment history</p>';
+      return;
+    }
+    
+    const pendingInvoices = invoices.filter(i => i.status === 'pending');
+    
+    container.innerHTML = `
+      ${pendingInvoices.length > 0 ? `
+        <div class="pending-invoices">
+          <h4>Pending Invoices</h4>
+          ${pendingInvoices.map(inv => `
+            <div class="invoice-item pending">
+              <div class="invoice-info">
+                <span class="invoice-amount">${symbol}${inv.total.toFixed(2)}</span>
+                <span class="invoice-date">Due: ${formatDate(inv.dueDate)}</span>
+              </div>
+              <span class="badge badge-warning">Pending</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      
+      <div class="payment-list">
+        <h4>Recent Payments</h4>
+        ${payments.slice(0, 5).map(pay => `
+          <div class="payment-item">
+            <div class="payment-info">
+              <span class="payment-amount">${symbol}${(pay.amount || 0).toFixed(2)}</span>
+              <span class="payment-date">${formatDate(pay.createdAt)}</span>
+            </div>
+            <span class="badge badge-${pay.status === 'completed' ? 'success' : 'secondary'}">${pay.status}</span>
+          </div>
+        `).join('')}
+        ${payments.length === 0 ? '<p class="text-muted">No payments yet</p>' : ''}
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = '<p class="text-muted">Failed to load history</p>';
+  }
+}
+
+function setupEventListeners(requirementsMet) {
+  document.querySelectorAll('.subscribe-btn').forEach(btn => {
+    btn.onclick = async () => {
+      if (!requirementsMet) {
+        error('Please complete your profile requirements first');
+        return;
+      }
+      
+      const planId = btn.dataset.planId;
+      
+      const confirmed = await confirm$1({
+        title: 'Subscribe to Plan',
+        message: 'Are you sure you want to subscribe to this plan?'
+      });
+      
+      if (!confirmed) return;
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      
+      try {
+        const res = await api('/api/billing/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          success(data.message || 'Subscription created');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          error(data.error || 'Failed to subscribe');
+          btn.disabled = false;
+          btn.textContent = 'Subscribe';
+        }
+      } catch (e) {
+        error('Failed to subscribe');
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
+      }
+    };
+  });
+  
+  const cancelBtn = document.getElementById('cancel-subscription-btn');
+  if (cancelBtn) {
+    cancelBtn.onclick = async () => {
+      const confirmed = await confirm$1({
+        title: 'Cancel Subscription',
+        message: 'Are you sure you want to cancel your subscription? You will lose access to your current plan benefits.',
+        danger: true
+      });
+      
+      if (!confirmed) return;
+      
+      try {
+        const res = await api('/api/billing/cancel', { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+          success('Subscription cancelled');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          error(data.error || 'Failed to cancel');
+        }
+      } catch (e) {
+        error('Failed to cancel subscription');
+      }
+    };
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString();
+}
+
+function cleanupBilling() {}
+
+let ticketConfig = null;
+
+async function renderTickets(params = {}) {
+  const app = document.getElementById('app');
+  const user = getUser();
+  
+  if (!user) {
+    window.location.href = '/auth';
+    return;
+  }
+  
+  app.innerHTML = '<div class="loading-spinner"></div>';
+  
+  try {
+    const configRes = await api('/api/tickets/config');
+    ticketConfig = await configRes.json();
+    
+    if (!ticketConfig.enabled) {
+      app.innerHTML = `
+        <div class="page-container">
+          <div class="empty-state">
+            <span class="material-icons-outlined">support_agent_off</span>
+            <h2>Support Not Available</h2>
+            <p>The ticket system is currently disabled.</p>
+            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    if (params.id) {
+      await renderTicketDetail(params.id);
+    } else {
+      await renderTicketList();
+    }
+    
+  } catch (e) {
+    app.innerHTML = `<div class="error">Failed to load tickets</div>`;
+  }
+}
+
+async function renderTicketList() {
+  const app = document.getElementById('app');
+  
+  try {
+    const res = await api('/api/tickets');
+    const { tickets } = await res.json();
+    
+    app.innerHTML = `
+      <div class="page-container">
+        <div class="page-header">
+          <div>
+            <h1>Support Tickets</h1>
+            <p>Get help from our support team</p>
+          </div>
+          <button class="btn btn-primary" id="create-ticket-btn">
+            <span class="material-icons-outlined">add</span>
+            New Ticket
+          </button>
+        </div>
+        
+        <div class="tickets-list">
+          ${tickets.length === 0 ? `
+            <div class="empty-state">
+              <span class="material-icons-outlined">confirmation_number</span>
+              <h3>No Tickets</h3>
+              <p>You haven't created any support tickets yet.</p>
+            </div>
+          ` : tickets.map(ticket => `
+            <a href="/tickets/${ticket.id}" class="ticket-item" data-link>
+              <div class="ticket-main-info">
+                <span class="ticket-number">#${ticket.ticketNumber}</span>
+                <span class="ticket-subject">${escapeHtml$1(ticket.subject)}</span>
+              </div>
+              <div class="ticket-meta">
+                <span class="badge badge-${getStatusColor(ticket.status)}">${ticket.status}</span>
+                <span class="badge badge-${getPriorityColor(ticket.priority)}">${ticket.priority}</span>
+                <span class="badge badge-secondary">${ticket.category}</span>
+                <span class="ticket-time">${formatTimeAgo(ticket.updatedAt)}</span>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('create-ticket-btn').onclick = () => showCreateTicketModal();
+    
+  } catch (e) {
+    app.innerHTML = `<div class="error">Failed to load tickets</div>`;
+  }
+}
+
+async function renderTicketDetail(ticketId) {
+  const app = document.getElementById('app');
+  
+  try {
+    const res = await api(`/api/tickets/${ticketId}`);
+    
+    if (!res.ok) {
+      app.innerHTML = `
+        <div class="page-container">
+          <div class="error-state">
+            <h2>Ticket Not Found</h2>
+            <a href="/tickets" class="btn btn-primary">Back to Tickets</a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    const { ticket, messages } = await res.json();
+    
+    app.innerHTML = `
+      <div class="page-container">
+        <div class="page-header">
+          <div>
+            <a href="/tickets" class="back-link" data-link>
+              <span class="material-icons-outlined">arrow_back</span>
+              Back to Tickets
+            </a>
+            <h1>#${ticket.ticketNumber}: ${escapeHtml$1(ticket.subject)}</h1>
+            <div class="ticket-badges">
+              <span class="badge badge-${getStatusColor(ticket.status)}">${ticket.status}</span>
+              <span class="badge badge-${getPriorityColor(ticket.priority)}">${ticket.priority}</span>
+              <span class="badge badge-secondary">${ticket.category}</span>
+            </div>
+          </div>
+          <div class="ticket-actions">
+            ${ticket.status === 'closed' ? `
+              <button class="btn btn-secondary" id="reopen-ticket-btn">
+                <span class="material-icons-outlined">lock_open</span>
+                Reopen
+              </button>
+            ` : `
+              <button class="btn btn-danger" id="close-ticket-btn">
+                <span class="material-icons-outlined">check_circle</span>
+                Close Ticket
+              </button>
+            `}
+          </div>
+        </div>
+        
+        <div class="ticket-conversation">
+          <div class="messages-list">
+            ${messages.map(msg => `
+              <div class="message ${msg.isStaff ? 'staff-message' : 'user-message'}">
+                <div class="message-avatar">
+                  <span class="material-icons-outlined">${msg.isStaff ? 'support_agent' : 'person'}</span>
+                </div>
+                <div class="message-content">
+                  <div class="message-header">
+                    <span class="message-author">
+                      ${escapeHtml$1(msg.user?.displayName || msg.user?.username || 'Unknown')}
+                      ${msg.isStaff ? '<span class="staff-label">Staff</span>' : ''}
+                    </span>
+                    <span class="message-time">${formatTimeAgo(msg.createdAt)}</span>
+                  </div>
+                  <div class="message-body">${escapeHtml$1(msg.message).replace(/\n/g, '<br>')}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${ticket.status !== 'closed' ? `
+            <form id="reply-form" class="reply-form">
+              <textarea name="message" placeholder="Type your message..." rows="4" required></textarea>
+              <button type="submit" class="btn btn-primary">
+                <span class="material-icons-outlined">send</span>
+                Send Reply
+              </button>
+            </form>
+          ` : `
+            <div class="ticket-closed-notice">
+              <span class="material-icons-outlined">lock</span>
+              <p>This ticket is closed. Reopen it to continue the conversation.</p>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+    
+    setupTicketDetailListeners(ticketId, ticket);
+    
+  } catch (e) {
+    app.innerHTML = `<div class="error">Failed to load ticket</div>`;
+  }
+}
+
+function setupTicketDetailListeners(ticketId, ticket) {
+  const replyForm = document.getElementById('reply-form');
+  if (replyForm) {
+    replyForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const message = replyForm.message.value.trim();
+      if (!message) return;
+      
+      const btn = replyForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      
+      try {
+        const res = await api(`/api/tickets/${ticketId}/reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        
+        if (res.ok) {
+          success('Reply sent');
+          await renderTicketDetail(ticketId);
+        } else {
+          const data = await res.json();
+          error(data.error || 'Failed to send reply');
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons-outlined">send</span> Send Reply';
+        }
+      } catch (e) {
+        error('Failed to send reply');
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons-outlined">send</span> Send Reply';
+      }
+    };
+  }
+  
+  const closeBtn = document.getElementById('close-ticket-btn');
+  if (closeBtn) {
+    closeBtn.onclick = async () => {
+      const confirmed = await confirm$1({
+        title: 'Close Ticket',
+        message: 'Are you sure you want to close this ticket?'
+      });
+      if (!confirmed) return;
+      
+      try {
+        const res = await api(`/api/tickets/${ticketId}/close`, { method: 'POST' });
+        if (res.ok) {
+          success('Ticket closed');
+          await renderTicketDetail(ticketId);
+        } else {
+          error('Failed to close ticket');
+        }
+      } catch (e) {
+        error('Failed to close ticket');
+      }
+    };
+  }
+  
+  const reopenBtn = document.getElementById('reopen-ticket-btn');
+  if (reopenBtn) {
+    reopenBtn.onclick = async () => {
+      try {
+        const res = await api(`/api/tickets/${ticketId}/reopen`, { method: 'POST' });
+        if (res.ok) {
+          success('Ticket reopened');
+          await renderTicketDetail(ticketId);
+        } else {
+          error('Failed to reopen ticket');
+        }
+      } catch (e) {
+        error('Failed to reopen ticket');
+      }
+    };
+  }
+}
+
+async function showCreateTicketModal() {
+  const html = `
+    <form id="create-ticket-form" class="modal-form">
+      <div class="form-group">
+        <label>Subject *</label>
+        <input type="text" name="subject" required maxlength="200" placeholder="Brief description of your issue" />
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Category</label>
+          <select name="category">
+            ${ticketConfig.categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select name="priority">
+            ${ticketConfig.priorities.map(p => `<option value="${p}" ${p === 'Medium' ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Message *</label>
+        <textarea name="message" rows="6" required placeholder="Describe your issue in detail..."></textarea>
+      </div>
+    </form>
+  `;
+  
+  const confirmed = await custom({
+    title: 'Create Support Ticket',
+    html,
+    confirmText: 'Create Ticket',
+    width: '600px'
+  });
+  
+  if (!confirmed) return;
+  
+  const form = document.getElementById('create-ticket-form');
+  const ticketData = {
+    subject: form.subject.value,
+    category: form.category.value,
+    priority: form.priority.value,
+    message: form.message.value
+  };
+  
+  try {
+    const res = await api('/api/tickets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ticketData)
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      success('Ticket created');
+      window.location.href = `/tickets/${data.ticket.id}`;
+    } else {
+      error(data.error || 'Failed to create ticket');
+    }
+  } catch (e) {
+    error('Failed to create ticket');
+  }
+}
+
+function getStatusColor(status) {
+  switch (status) {
+    case 'open': return 'warning';
+    case 'answered': return 'info';
+    case 'closed': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+function getPriorityColor(priority) {
+  switch (priority) {
+    case 'Urgent': return 'danger';
+    case 'High': return 'warning';
+    case 'Medium': return 'info';
+    case 'Low': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now - date;
+  
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
+function cleanupTickets() {}
+
+var tickets = /*#__PURE__*/Object.freeze({
+__proto__: null,
+renderTickets: renderTickets,
+cleanupTickets: cleanupTickets
+});
+
 const routes = {
   '/': {
     redirect: '/auth'
@@ -51582,6 +53745,34 @@ const routes = {
     render: (params) => renderAdmin('webhooks', params),
     cleanup: cleanupAdmin,
     options: { title: 'Webhooks', auth: true, sidebar: true }
+  },
+  '/admin/billing': {
+    render: (params) => renderAdmin('billing', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Billing', auth: true, sidebar: true }
+  },
+  '/admin/tickets': {
+    render: (params) => renderAdmin('tickets', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Tickets', auth: true, sidebar: true }
+  },
+  '/billing': {
+    render: renderBilling,
+    cleanup: cleanupBilling,
+    options: {
+      title: 'Billing',
+      auth: true,
+      sidebar: true
+    }
+  },
+  '/tickets': {
+    render: () => renderTickets(),
+    cleanup: cleanupTickets,
+    options: {
+      title: 'Support',
+      auth: true,
+      sidebar: true
+    }
   },
   '/profile': {
     render: renderProfile,
@@ -51761,7 +53952,9 @@ function renderSidebar() {
       label: 'Account',
       items: [
         { path: '/profile', icon: 'person', label: 'Profile' },
-        { path: '/settings', icon: 'settings', label: 'Settings' }
+        { path: '/settings', icon: 'settings', label: 'Settings' },
+        { path: '/billing', icon: 'payments', label: 'Billing' },
+        { path: '/tickets', icon: 'support_agent', label: 'Support' }
       ]
     }
   ];
@@ -51776,6 +53969,8 @@ function renderSidebar() {
       { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
       { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
       { path: '/admin/webhooks', icon: 'webhook', label: 'Webhooks' },
+      { path: '/admin/billing', icon: 'payments', label: 'Billing' },
+      { path: '/admin/tickets', icon: 'support_agent', label: 'Tickets' },
       { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
       { path: '/admin/settings', icon: 'tune', label: 'Panel Settings' }
     ]
@@ -51946,6 +54141,23 @@ function router() {
     const serverId = path.split('/')[2];
     if (serverId) {
       route = getServerRoute(serverId);
+    }
+  }
+  
+  if (!route && path.startsWith('/tickets/')) {
+    const ticketId = path.split('/')[2];
+    if (ticketId) {
+      route = {
+        render: async () => {
+          const { renderTickets } = await Promise.resolve().then(function () { return tickets; });
+          renderTickets({ id: ticketId });
+        },
+        options: {
+          title: 'Ticket',
+          auth: true,
+          sidebar: true
+        }
+      };
     }
   }
   

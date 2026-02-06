@@ -73,7 +73,10 @@ export const ACTIVITY_TYPES = {
   FILE_DELETE: 'file:delete',
   FILE_UPLOAD: 'file:upload',
   SUBUSER_ADD: 'subuser:add',
-  SUBUSER_REMOVE: 'subuser:remove'
+  SUBUSER_REMOVE: 'subuser:remove',
+  BILLING: 'billing:action',
+  SUPPORT: 'support:action',
+  SETTINGS_CHANGE: 'settings:change'
 };
 
 export const AUDIT_TYPES = {

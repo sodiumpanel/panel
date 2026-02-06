@@ -30,7 +30,13 @@ const COLLECTIONS = {
   auditLogs: 9,
   activityLogs: 10,
   webhooks: 11,
-  schedules: 12
+  schedules: 12,
+  billingPlans: 13,
+  billingSubscriptions: 14,
+  billingPayments: 15,
+  billingInvoices: 16,
+  tickets: 17,
+  ticketMessages: 18
 };
 
 let cache = {
@@ -45,7 +51,13 @@ let cache = {
   auditLogs: [],
   activityLogs: [],
   webhooks: [],
-  schedules: []
+  schedules: [],
+  billingPlans: [],
+  billingSubscriptions: [],
+  billingPayments: [],
+  billingInvoices: [],
+  tickets: [],
+  ticketMessages: []
 };
 
 let dbConnection = null;
@@ -359,6 +371,12 @@ const auditLogsAccessors = createCollectionAccessors('auditLogs');
 const activityLogsAccessors = createCollectionAccessors('activityLogs');
 const webhooksAccessors = createCollectionAccessors('webhooks');
 const schedulesAccessors = createCollectionAccessors('schedules');
+const billingPlansAccessors = createCollectionAccessors('billingPlans');
+const billingSubscriptionsAccessors = createCollectionAccessors('billingSubscriptions');
+const billingPaymentsAccessors = createCollectionAccessors('billingPayments');
+const billingInvoicesAccessors = createCollectionAccessors('billingInvoices');
+const ticketsAccessors = createCollectionAccessors('tickets');
+const ticketMessagesAccessors = createCollectionAccessors('ticketMessages');
 
 export const loadUsers = usersAccessors.load;
 export const saveUsers = usersAccessors.save;
@@ -384,6 +402,18 @@ export const loadWebhooks = webhooksAccessors.load;
 export const saveWebhooks = webhooksAccessors.save;
 export const loadSchedules = schedulesAccessors.load;
 export const saveSchedules = schedulesAccessors.save;
+export const loadBillingPlans = billingPlansAccessors.load;
+export const saveBillingPlans = billingPlansAccessors.save;
+export const loadBillingSubscriptions = billingSubscriptionsAccessors.load;
+export const saveBillingSubscriptions = billingSubscriptionsAccessors.save;
+export const loadBillingPayments = billingPaymentsAccessors.load;
+export const saveBillingPayments = billingPaymentsAccessors.save;
+export const loadBillingInvoices = billingInvoicesAccessors.load;
+export const saveBillingInvoices = billingInvoicesAccessors.save;
+export const loadTickets = ticketsAccessors.load;
+export const saveTickets = ticketsAccessors.save;
+export const loadTicketMessages = ticketMessagesAccessors.load;
+export const saveTicketMessages = ticketMessagesAccessors.save;
 
 export function loadConfig() {
   return loadFullConfig();
