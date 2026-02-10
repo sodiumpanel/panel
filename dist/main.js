@@ -3235,6 +3235,7 @@ async function loadServers() {
       </div>
     `).join('');
     
+    // Wah
     connectStatusSockets(data.servers);
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load servers</div>`;
