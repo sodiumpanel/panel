@@ -48,16 +48,16 @@ export function renderServerPage(serverId) {
         </div>
         <div class="server-header-right">
           <div class="power-buttons">
-            <button class="btn btn-success btn-sm" id="btn-start" title="Start">
+            <button class="power-action start" id="btn-start" title="Start">
               <span class="material-icons-outlined">play_arrow</span>
             </button>
-            <button class="btn btn-warning btn-sm" id="btn-restart" title="Restart">
+            <button class="power-action restart" id="btn-restart" title="Restart">
               <span class="material-icons-outlined">refresh</span>
             </button>
-            <button class="btn btn-danger btn-sm" id="btn-stop" title="Stop">
+            <button class="power-action stop" id="btn-stop" title="Stop">
               <span class="material-icons-outlined">stop</span>
             </button>
-            <button class="btn btn-danger btn-sm" id="btn-kill" title="Kill">
+            <button class="power-action kill" id="btn-kill" title="Kill">
               <span class="material-icons-outlined">power_settings_new</span>
             </button>
           </div>
@@ -109,7 +109,7 @@ export function renderServerPage(serverId) {
           
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">monitoring</span>
+              <span class="material-icons-outlined">monitor</span>
               <h3>Resources</h3>
             </div>
             <div class="sidebar-card">

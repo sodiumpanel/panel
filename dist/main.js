@@ -1078,7 +1078,7 @@ function renderDashboard() {
           <div class="section-header">
             <span class="material-icons-outlined">dns</span>
             <h2>Servers</h2>
-            <a href="/servers" class="btn btn-ghost btn-sm">View All</a>
+            <a href="/servers" class="muted">View All</a>
           </div>
           <div class="servers-list" id="servers-list">
             <div class="loading-spinner"></div>
@@ -2008,9 +2008,7 @@ function renderSettings() {
               </button>
             </div>
             <div class="ssh-keys-list" id="ssh-keys-list">
-              <div class="loading-spinner">
-                <span class="material-icons-outlined spinning">sync</span>
-              </div>
+              <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
@@ -2030,9 +2028,7 @@ function renderSettings() {
               </button>
             </div>
             <div class="api-keys-list" id="api-keys-list">
-              <div class="loading-spinner">
-                <span class="material-icons-outlined spinning">sync</span>
-              </div>
+              <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
@@ -2052,9 +2048,7 @@ function renderSettings() {
               </button>
             </div>
             <div class="webhooks-list" id="webhooks-list">
-              <div class="loading-spinner">
-                <span class="material-icons-outlined spinning">sync</span>
-              </div>
+              <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
@@ -3205,17 +3199,18 @@ async function loadServers() {
         </div>
         <div class="server-card-content">
           <div class="server-actions">
-            <button class="btn btn-success btn-sm btn-icon" onclick="serverPower('${server.id}', 'start')" title="Start">
+            <button class="power-action start" onclick="serverPower('${server.id}', 'start')" title="Start">
               <span class="material-icons-outlined">play_arrow</span>
             </button>
-            <button class="btn btn-warning btn-sm btn-icon" onclick="serverPower('${server.id}', 'restart')" title="Restart">
+            <button class="power-action restart" onclick="serverPower('${server.id}', 'restart')" title="Restart">
               <span class="material-icons-outlined">refresh</span>
             </button>
-            <button class="btn btn-danger btn-sm btn-icon" onclick="serverPower('${server.id}', 'stop')" title="Stop">
+            <button class="power-action stop" onclick="serverPower('${server.id}', 'stop')" title="Stop">
               <span class="material-icons-outlined">stop</span>
             </button>
-            <a href="/server/${server.id}" class="btn btn-primary btn-sm btn-icon" title="Console">
-              <span class="material-icons-outlined">terminal</span>
+            <a href="/server/${server.id}" class="btn btn-ghost" title="Console">
+              <span class="material-icons-outlined">open_in_new</span>
+              Open
             </a>
           </div>
           <div class="server-info">
@@ -10872,7 +10867,7 @@ class TileBuilder {
         this.flushBuffer();
         let parent = this.ensureMarks(marks, openStart);
         let prev = parent.lastChild;
-        if (prev && prev.isText() && !(prev.flags & 8 /* TileFlag.Composition */)) {
+        if (prev && prev.isText() && !(prev.flags & 8 /* TileFlag.Composition */) && prev.length + text.length < 512 /* C.Chunk */) {
             this.cache.reused.set(prev, 2 /* Reused.DOM */);
             let tile = parent.children[parent.children.length - 1] = new TextTile(prev.dom, prev.text + text);
             tile.parent = parent;
@@ -11366,7 +11361,7 @@ class TileUpdate {
                     }
                     else {
                         b.ensureLine(pendingLineAttrs);
-                        b.addText(chars, active, openStart);
+                        b.addText(chars, active, pos == from ? openStart : active.length);
                         pos += chars.length;
                     }
                     pendingLineAttrs = null;
@@ -12347,7 +12342,9 @@ function posAtCoords(view, coords, precise, scanY) {
         if (scanY == null)
             break;
         if (block.type == BlockType.Text) {
-            // Check whether we aren't landing the top/bottom padding of the line
+            if (scanY < 0 ? block.to < view.viewport.from : block.from > view.viewport.to)
+                break;
+            // Check whether we aren't landing on the top/bottom padding of the line
             let rect = view.docView.coordsAt(scanY < 0 ? block.from : block.to, scanY);
             if (rect && (scanY < 0 ? rect.top <= yOffset + docTop : rect.bottom >= yOffset + docTop))
                 break;
@@ -17703,7 +17700,7 @@ function rectanglesForRange(view, className, range) {
         return pieces(top).concat(between).concat(pieces(bottom));
     }
     function piece(left, top, right, bottom) {
-        return new RectangleMarker(className, left - base.left, top - base.top, right - left, bottom - top);
+        return new RectangleMarker(className, left - base.left, top - base.top, Math.max(0, right - left), bottom - top);
     }
     function pieces({ top, bottom, horizontal }) {
         let pieces = [];
@@ -20893,12 +20890,12 @@ class TreeNode extends BaseNode {
     get name() { return this._tree.type.name; }
     get to() { return this.from + this._tree.length; }
     nextChild(i, dir, pos, side, mode = 0) {
-        var _a;
         for (let parent = this;;) {
             for (let { children, positions } = parent._tree, e = dir > 0 ? children.length : -1; i != e; i += dir) {
-                let next = children[i], start = positions[i] + parent.from;
+                let next = children[i], start = positions[i] + parent.from, mounted;
                 if (!((mode & IterMode.EnterBracketed) && next instanceof Tree &&
-                    ((_a = MountedTree.get(next)) === null || _a === void 0 ? void 0 : _a.overlay) === null && (start >= pos || start + next.length <= pos)) &&
+                    (mounted = MountedTree.get(next)) && !mounted.overlay && mounted.bracketed &&
+                    pos >= start && pos <= start + next.length) &&
                     !checkSide(side, pos, start, start + next.length))
                     continue;
                 if (next instanceof TreeBuffer) {
@@ -26067,13 +26064,15 @@ function changeBlockComment(option, state, ranges = state.selection.ranges) {
 function changeLineComment(option, state, ranges = state.selection.ranges) {
     let lines = [];
     let prevLine = -1;
-    for (let { from, to } of ranges) {
-        let startI = lines.length, minIndent = 1e9;
-        let token = getConfig(state, from).line;
-        if (!token)
-            continue;
+    ranges: for (let { from, to } of ranges) {
+        let startI = lines.length, minIndent = 1e9, token;
         for (let pos = from; pos <= to;) {
             let line = state.doc.lineAt(pos);
+            if (token == undefined) {
+                token = getConfig(state, line.from).line;
+                if (!token)
+                    continue ranges;
+            }
             if (line.from > prevLine && (from == to || to > line.from)) {
                 prevLine = line.from;
                 let indent = /^\s*/.exec(line.text)[0].length;
@@ -26437,7 +26436,8 @@ class HistoryState {
         let branch = side == 0 /* BranchName.Done */ ? this.done : this.undone;
         if (branch.length == 0)
             return null;
-        let event = branch[branch.length - 1], selection = event.selectionsAfter[0] || state.selection;
+        let event = branch[branch.length - 1], selection = event.selectionsAfter[0] ||
+            (event.startSelection ? event.startSelection.map(event.changes.invertedDesc, 1) : state.selection);
         if (onlySelection && event.selectionsAfter.length) {
             return state.update({
                 selection: event.selectionsAfter[event.selectionsAfter.length - 1],
@@ -31489,6 +31489,8 @@ class LintPanel {
         this.view = view;
         this.items = [];
         let onkeydown = (event) => {
+            if (event.ctrlKey || event.altKey || event.metaKey)
+                return;
             if (event.keyCode == 27) { // Escape
                 closeLintPanel(this.view);
                 this.view.focus();
@@ -38018,7 +38020,7 @@ function readTag(input) {
 
 function readAnchor(input) {
   input.advance();
-  while (!isSep(input.next) && charTag(input.tag) != "f") input.advance();
+  while (!isSep(input.next) && charTag(input.next) != "f") input.advance();
 }
   
 function readQuoted(input, scan) {
@@ -44748,16 +44750,16 @@ function renderServerPage(serverId) {
         </div>
         <div class="server-header-right">
           <div class="power-buttons">
-            <button class="btn btn-success btn-sm" id="btn-start" title="Start">
+            <button class="power-action start" id="btn-start" title="Start">
               <span class="material-icons-outlined">play_arrow</span>
             </button>
-            <button class="btn btn-warning btn-sm" id="btn-restart" title="Restart">
+            <button class="power-action restart" id="btn-restart" title="Restart">
               <span class="material-icons-outlined">refresh</span>
             </button>
-            <button class="btn btn-danger btn-sm" id="btn-stop" title="Stop">
+            <button class="power-action stop" id="btn-stop" title="Stop">
               <span class="material-icons-outlined">stop</span>
             </button>
-            <button class="btn btn-danger btn-sm" id="btn-kill" title="Kill">
+            <button class="power-action kill" id="btn-kill" title="Kill">
               <span class="material-icons-outlined">power_settings_new</span>
             </button>
           </div>
@@ -44809,7 +44811,7 @@ function renderServerPage(serverId) {
           
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">monitoring</span>
+              <span class="material-icons-outlined">monitor</span>
               <h3>Resources</h3>
             </div>
             <div class="sidebar-card">
@@ -49105,9 +49107,7 @@ function renderOAuthSettings(content, config) {
       </div>
       
       <div class="oauth-providers-grid" id="oauth-providers-list">
-        <div class="loading-spinner">
-          <span class="material-icons-outlined spinning">sync</span>
-        </div>
+        <div class="loading-spinner"></div>
       </div>
     </div>
   `;
@@ -49401,9 +49401,7 @@ function renderApiKeysSettings(content, config) {
       </div>
       
       <div class="api-keys-list" id="app-api-keys-list">
-        <div class="loading-spinner">
-          <span class="material-icons-outlined spinning">sync</span>
-        </div>
+        <div class="loading-spinner"></div>
       </div>
     </div>
     
@@ -52033,7 +52031,7 @@ async function checkSetup() {
     const data = await res.json();
     return data.installed;
   } catch {
-    return true; // Assume installed if can't check
+    return true;
   }
 }
 

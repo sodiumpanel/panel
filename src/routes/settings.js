@@ -124,9 +124,7 @@ export function renderSettings() {
               </button>
             </div>
             <div class="ssh-keys-list" id="ssh-keys-list">
-              <div class="loading-spinner">
-                <span class="material-icons-outlined spinning">sync</span>
-              </div>
+              <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
@@ -146,9 +144,7 @@ export function renderSettings() {
               </button>
             </div>
             <div class="api-keys-list" id="api-keys-list">
-              <div class="loading-spinner">
-                <span class="material-icons-outlined spinning">sync</span>
-              </div>
+              <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
@@ -168,9 +164,7 @@ export function renderSettings() {
               </button>
             </div>
             <div class="webhooks-list" id="webhooks-list">
-              <div class="loading-spinner">
-                <span class="material-icons-outlined spinning">sync</span>
-              </div>
+              <div class="loading-spinner"></div>
             </div>
           </div>
         </div>

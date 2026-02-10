@@ -68,7 +68,7 @@ export function renderDashboard() {
           <div class="section-header">
             <span class="material-icons-outlined">dns</span>
             <h2>Servers</h2>
-            <a href="/servers" class="btn btn-ghost btn-sm">View All</a>
+            <a href="/servers" class="muted">View All</a>
           </div>
           <div class="servers-list" id="servers-list">
             <div class="loading-spinner"></div>

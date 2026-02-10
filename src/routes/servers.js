@@ -66,17 +66,18 @@ async function loadServers() {
         </div>
         <div class="server-card-content">
           <div class="server-actions">
-            <button class="btn btn-success btn-sm btn-icon" onclick="serverPower('${server.id}', 'start')" title="Start">
+            <button class="power-action start" onclick="serverPower('${server.id}', 'start')" title="Start">
               <span class="material-icons-outlined">play_arrow</span>
             </button>
-            <button class="btn btn-warning btn-sm btn-icon" onclick="serverPower('${server.id}', 'restart')" title="Restart">
+            <button class="power-action restart" onclick="serverPower('${server.id}', 'restart')" title="Restart">
               <span class="material-icons-outlined">refresh</span>
             </button>
-            <button class="btn btn-danger btn-sm btn-icon" onclick="serverPower('${server.id}', 'stop')" title="Stop">
+            <button class="power-action stop" onclick="serverPower('${server.id}', 'stop')" title="Stop">
               <span class="material-icons-outlined">stop</span>
             </button>
-            <a href="/server/${server.id}" class="btn btn-primary btn-sm btn-icon" title="Console">
-              <span class="material-icons-outlined">terminal</span>
+            <a href="/server/${server.id}" class="btn btn-ghost" title="Console">
+              <span class="material-icons-outlined">open_in_new</span>
+              Open
             </a>
           </div>
           <div class="server-info">

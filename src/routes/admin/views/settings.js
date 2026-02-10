@@ -349,9 +349,7 @@ function renderOAuthSettings(content, config) {
       </div>
       
       <div class="oauth-providers-grid" id="oauth-providers-list">
-        <div class="loading-spinner">
-          <span class="material-icons-outlined spinning">sync</span>
-        </div>
+        <div class="loading-spinner"></div>
       </div>
     </div>
   `;
@@ -645,9 +643,7 @@ function renderApiKeysSettings(content, config) {
       </div>
       
       <div class="api-keys-list" id="app-api-keys-list">
-        <div class="loading-spinner">
-          <span class="material-icons-outlined spinning">sync</span>
-        </div>
+        <div class="loading-spinner"></div>
       </div>
     </div>
     

@@ -326,11 +326,11 @@ input, textarea, select { font: inherit; }
     .material-icons-outlined { font-size: 20px; }
     .nav-text { font-weight: 500; font-size: 13px; }
     
-    &:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+    &:hover { color: var(--text-primary); }
     
     &.active {
       color: var(--accent);
-      background: var(--accent-muted);
+      //background: var(--accent-muted);
       .material-icons-outlined { color: var(--accent); }
     }
   }
@@ -346,7 +346,7 @@ input, textarea, select { font: inherit; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   font-weight: 500;
   font-size: 13px;
   border-radius: var(--radius-md);
@@ -373,6 +373,9 @@ input, textarea, select { font: inherit; }
   color: var(--danger);
   &:hover:not(:disabled) { background: rgba(237, 66, 69, .2); }
 }
+
+.btn-success { background: var(--success); color: #fff; &:hover { filter: brightness(.9); } }
+.btn-warning { background: var(--warning); color: #000; &:hover { filter: brightness(.9); } }
 
 .btn-ghost {
   background: transparent;

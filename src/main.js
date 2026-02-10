@@ -11,7 +11,7 @@ async function checkSetup() {
     const data = await res.json();
     return data.installed;
   } catch {
-    return true; // Assume installed if can't check
+    return true;
   }
 }
 

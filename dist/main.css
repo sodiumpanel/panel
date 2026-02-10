@@ -463,11 +463,9 @@ input, textarea, select {
 }
 .sidebar .nav-link:hover {
   color: var(--text-primary);
-  background: var(--bg-tertiary);
 }
 .sidebar .nav-link.active {
   color: var(--accent);
-  background: var(--accent-muted);
 }
 .sidebar .nav-link.active .material-icons-outlined {
   color: var(--accent);
@@ -485,7 +483,7 @@ input, textarea, select {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   font-weight: 500;
   font-size: 13px;
   border-radius: var(--radius-md);
@@ -521,6 +519,22 @@ input, textarea, select {
 }
 .btn-danger:hover:not(:disabled) {
   background: rgba(237, 66, 69, 0.2);
+}
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}
+.btn-success:hover {
+  filter: brightness(0.9);
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: #000;
+}
+.btn-warning:hover {
+  filter: brightness(0.9);
 }
 
 .btn-ghost {
@@ -1213,9 +1227,6 @@ input, textarea, select {
 .dashboard-header .greeting .greeting-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--accent-muted) 0%, transparent 100%);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3290,6 +3301,19 @@ input, textarea, select {
     transform: rotate(360deg);
   }
 }
+.power-action {
+  padding: 6px;
+}
+.power-action.start {
+  color: var(--success);
+}
+.power-action.restart {
+  color: var(--warning);
+}
+.power-action.stop, .power-action.kill {
+  color: var(--danger);
+}
+
 .server-page {
   display: flex;
   flex-direction: column;
@@ -3438,11 +3462,11 @@ input, textarea, select {
   margin-bottom: 0.6rem;
 }
 .sidebar-section .section-header .material-icons-outlined {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--accent);
 }
 .sidebar-section .section-header h3 {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -6395,22 +6419,6 @@ input, textarea, select {
   .pagination .page-total {
     display: none;
   }
-}
-
-.btn-success {
-  background: var(--success);
-  color: #fff;
-}
-.btn-success:hover {
-  filter: brightness(0.9);
-}
-
-.btn-warning {
-  background: var(--warning);
-  color: #000;
-}
-.btn-warning:hover {
-  filter: brightness(0.9);
 }
 
 .error-page {

@@ -1,3 +1,17 @@
+.power-action {
+  padding: 6px;
+
+  &.start {
+    color: var(--success);
+  }
+  &.restart {
+    color: var(--warning);
+  }
+  &.stop, &.kill {
+    color: var(--danger);
+  }
+}
+
 .server-page {
   display: flex;
   flex-direction: column;
@@ -98,8 +112,8 @@
     gap: .4rem;
     margin-bottom: .6rem;
     
-    .material-icons-outlined { font-size: 1rem; color: var(--accent); }
-    h3 { font-size: .7rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .04em; margin: 0; }
+    .material-icons-outlined { font-size: 1.2rem; color: var(--accent); }
+    h3 { font-size: .75rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .04em; margin: 0; }
   }
 }
 
