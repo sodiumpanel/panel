@@ -19,7 +19,7 @@ export function renderProfile() {
         <div class="profile-card">
           <div class="avatar-section">
             <div class="avatar" id="avatar-preview">
-              <span class="material-icons-outlined">person</span>
+              <img src="/default-avatar.png" alt="Avatar">
             </div>
             <div class="avatar-info">
               <h3 id="profile-display-name">${escapeHtml(displayName)}</h3>
@@ -59,51 +59,6 @@ export function renderProfile() {
             </div>
           </div>
           
-          <div class="form-section">
-            <h3>Social Links</h3>
-            <p class="section-description">These will be visible on your public profile</p>
-            
-            <div class="form-group">
-              <label for="link-website">Website</label>
-              <div class="input-wrapper">
-                <span class="material-icons-outlined">language</span>
-                <input type="url" id="link-website" name="website" placeholder="https://yourwebsite.com">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="link-twitter">Twitter / X</label>
-              <div class="input-wrapper">
-                <span class="material-icons-outlined">alternate_email</span>
-                <input type="url" id="link-twitter" name="twitter" placeholder="https://twitter.com/username">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="link-github">GitHub</label>
-              <div class="input-wrapper">
-                <span class="material-icons-outlined">code</span>
-                <input type="url" id="link-github" name="github" placeholder="https://github.com/username">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="link-discord">Discord</label>
-              <div class="input-wrapper">
-                <span class="material-icons-outlined">chat</span>
-                <input type="url" id="link-discord" name="discord" placeholder="https://discord.gg/invite">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="link-instagram">Instagram</label>
-              <div class="input-wrapper">
-                <span class="material-icons-outlined">photo_camera</span>
-                <input type="url" id="link-instagram" name="instagram" placeholder="https://instagram.com/username">
-              </div>
-            </div>
-          </div>
-          
           <div class="form-actions">
             <div class="message" id="profile-message"></div>
             <button type="submit" class="btn btn-primary">
@@ -140,18 +95,10 @@ export function renderProfile() {
     const bio = form.querySelector('#bio').value.trim();
     const avatar = form.querySelector('#avatar-url').value.trim();
     
-    const links = {
-      website: form.querySelector('#link-website').value.trim(),
-      twitter: form.querySelector('#link-twitter').value.trim(),
-      github: form.querySelector('#link-github').value.trim(),
-      discord: form.querySelector('#link-discord').value.trim(),
-      instagram: form.querySelector('#link-instagram').value.trim()
-    };
-    
     const messageEl = form.querySelector('#profile-message');
     const btn = form.querySelector('button[type="submit"]');
     
-    if (!validateUrls([avatar, ...Object.values(links)])) {
+    if (!validateUrls([avatar])) {
       messageEl.textContent = 'Invalid URL detected. Only https:// URLs are allowed.';
       messageEl.className = 'message error';
       return;
@@ -166,8 +113,7 @@ export function renderProfile() {
         body: JSON.stringify({
           displayName,
           bio,
-          avatar,
-          links
+          avatar
         })
       });
       
@@ -186,6 +132,9 @@ export function renderProfile() {
         
         const navDisplayName = document.querySelector('.user-display-name');
         if (navDisplayName) navDisplayName.textContent = escapeHtml(displayName);
+        
+        const navAvatar = document.querySelector('#navbar .user-avatar img');
+        if (navAvatar) navAvatar.src = avatar || '/default-avatar.png';
       }
     } catch (err) {
       messageEl.textContent = 'Connection error. Please try again.';
@@ -218,7 +167,7 @@ function validateUrls(urls) {
 
 function updateAvatarPreview(url, container) {
   if (!url || !validateUrls([url])) {
-    container.innerHTML = '<span class="material-icons-outlined">person</span>';
+    container.innerHTML = '<img src="/default-avatar.png" alt="Avatar">';
     return;
   }
   
@@ -228,7 +177,7 @@ function updateAvatarPreview(url, container) {
     container.appendChild(img);
   };
   img.onerror = () => {
-    container.innerHTML = '<span class="material-icons-outlined">person</span>';
+    container.innerHTML = '<img src="/default-avatar.png" alt="Avatar">';
   };
   img.src = url;
   img.alt = 'Avatar';

@@ -38,50 +38,9 @@ async function loadUserProfile(targetUsername) {
     const user = data.user;
     const isPrivate = user.isPrivate;
     
-    const linkIcons = {
-      website: 'language',
-      twitter: 'alternate_email',
-      github: 'code',
-      discord: 'chat',
-      instagram: 'photo_camera'
-    };
-    
-    const linkLabels = {
-      website: 'Website',
-      twitter: 'Twitter',
-      github: 'GitHub',
-      discord: 'Discord',
-      instagram: 'Instagram'
-    };
-    
-    let linksHtml = '';
-    if (!isPrivate && user.links) {
-      const activeLinks = Object.entries(user.links).filter(([_, url]) => url);
-      if (activeLinks.length > 0) {
-        linksHtml = `
-          <div class="user-links">
-            <h3>Links</h3>
-            <div class="links-list">
-              ${activeLinks.map(([key, url]) => {
-                const safeUrl = escapeUrl(url);
-                if (!safeUrl) return '';
-                return `
-                  <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="link-item">
-                    <span class="material-icons-outlined">${linkIcons[key] || 'link'}</span>
-                    <span>${escapeHtml(linkLabels[key] || key)}</span>
-                    <span class="material-icons-outlined external">open_in_new</span>
-                  </a>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        `;
-      }
-    }
-    
     const avatarHtml = user.avatar ? 
-      `<img src="${escapeUrl(user.avatar)}" alt="Avatar" onerror="this.parentElement.innerHTML='<span class=\\'material-icons-outlined\\'>person</span>'">` :
-      `<span class="material-icons-outlined">person</span>`;
+      `<img src="${escapeUrl(user.avatar)}" alt="Avatar" onerror="this.src='/default-avatar.png'">` :
+      `<img src="/default-avatar.png" alt="Avatar">`;
     
     container.innerHTML = `
       <div class="user-profile-card">
@@ -109,8 +68,6 @@ async function loadUserProfile(targetUsername) {
             <p>This profile is private</p>
           </div>
         ` : ''}
-        
-        ${linksHtml}
         
         ${!isPrivate && user.createdAt ? `
           <div class="user-meta">

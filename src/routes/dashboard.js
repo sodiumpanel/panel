@@ -149,6 +149,7 @@ async function loadQuickStats() {
     
     const online = data.servers.filter(s => s.status === 'running').length;
     const starting = data.servers.filter(s => s.status === 'starting').length;
+    const stopping = data.servers.filter(s => s.status === 'stopping').length;
     const offline = data.servers.filter(s => s.status === 'offline' || !s.status).length;
     
     container.innerHTML = `
@@ -156,12 +157,14 @@ async function loadQuickStats() {
         <span class="material-icons-outlined">check_circle</span>
         <span>${online} online</span>
       </div>
-      ${starting > 0 ? `
       <div class="stat-chip starting">
         <span class="material-icons-outlined">hourglass_top</span>
         <span>${starting} starting</span>
       </div>
-      ` : ''}
+      <div class="stat-chip stopping">
+        <span class="material-icons-outlined">pending</span>
+        <span>${stopping} stopping</span>
+      </div>
       <div class="stat-chip offline">
         <span class="material-icons-outlined">cancel</span>
         <span>${offline} offline</span>
@@ -261,7 +264,7 @@ async function loadServers() {
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
-          <span class="status status-loading" data-status-id="${server.id}">loading...</span>
+          <span class="server-status" data-status-id="${server.id}">--</span>
           <span class="material-icons-outlined">chevron_right</span>
         </div>
       </a>
@@ -303,8 +306,44 @@ function connectStatusSockets(servers) {
 function updateServerStatus(serverId, status) {
   const el = document.querySelector(`[data-status-id="${serverId}"]`);
   if (!el) return;
-  el.className = `status status-${status}`;
+  el.className = `server-status status-${status}`;
   el.textContent = status;
+  updateQuickStats();
+}
+
+function updateQuickStats() {
+  const container = document.getElementById('quick-stats');
+  if (!container) return;
+  
+  const badges = document.querySelectorAll('[data-status-id]');
+  let online = 0, starting = 0, stopping = 0, offline = 0;
+  
+  badges.forEach(el => {
+    const s = el.textContent.trim();
+    if (s === 'running') online++;
+    else if (s === 'starting') starting++;
+    else if (s === 'stopping') stopping++;
+    else if (s === 'offline' || s === '--') offline++;
+  });
+  
+  container.innerHTML = `
+    <div class="stat-chip online">
+      <span class="material-icons-outlined">check_circle</span>
+      <span>${online} online</span>
+    </div>
+    <div class="stat-chip starting">
+      <span class="material-icons-outlined">hourglass_top</span>
+      <span>${starting} starting</span>
+    </div>
+    <div class="stat-chip stopping">
+      <span class="material-icons-outlined">pending</span>
+      <span>${stopping} stopping</span>
+    </div>
+    <div class="stat-chip offline">
+      <span class="material-icons-outlined">cancel</span>
+      <span>${offline} offline</span>
+    </div>
+  `;
 }
 
 async function loadAnnouncements() {

@@ -63,26 +63,6 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">lock</span>
-            <h3>Privacy</h3>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title">Profile Visibility</span>
-              <span class="setting-description">Control who can see your profile</span>
-            </div>
-            <div class="setting-control">
-              <select id="privacy-select" class="select-input">
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
             <span class="material-icons-outlined">security</span>
             <h3>Security</h3>
           </div>
@@ -115,15 +95,15 @@ export function renderSettings() {
             <h3>SSH Keys</h3>
           </div>
           
-          <div class="ssh-keys-container">
-            <div class="ssh-keys-header">
+          <div class="api-keys-container">
+            <div class="api-keys-header">
               <p class="setting-description">SSH keys for SFTP authentication</p>
               <button class="btn btn-primary btn-sm" id="add-ssh-key-btn">
                 <span class="material-icons-outlined">add</span>
                 <span>Add Key</span>
               </button>
             </div>
-            <div class="ssh-keys-list" id="ssh-keys-list">
+            <div class="api-keys-list" id="ssh-keys-list">
               <div class="loading-spinner"></div>
             </div>
           </div>
@@ -363,11 +343,6 @@ export function renderSettings() {
     saveSettings({ notifications: notificationsToggle.checked });
   });
   
-  const privacySelect = app.querySelector('#privacy-select');
-  privacySelect.addEventListener('change', () => {
-    saveSettings({ privacy: privacySelect.value });
-  });
-  
   const modal = app.querySelector('#password-modal');
   const changePasswordBtn = app.querySelector('#change-password-btn');
   const closeModal = app.querySelector('#close-modal');
@@ -445,10 +420,9 @@ async function loadSettings() {
     const data = await res.json();
     
     if (data.user?.settings) {
-      const { theme, notifications, privacy } = data.user.settings;
+      const { theme, notifications } = data.user.settings;
       
       const notificationsToggle = document.getElementById('notifications-toggle');
-      const privacySelect = document.getElementById('privacy-select');
       
       if (theme) {
         setTheme(theme);
@@ -460,7 +434,6 @@ async function loadSettings() {
         }
       }
       if (notificationsToggle) notificationsToggle.checked = notifications !== false;
-      if (privacySelect && privacy) privacySelect.value = privacy;
     }
   } catch (err) {
     console.error('Failed to load settings:', err);
@@ -564,12 +537,12 @@ async function loadSshKeys() {
     }
     
     list.innerHTML = keys.map(key => `
-      <div class="ssh-key-item" data-id="${key.id}">
-        <div class="ssh-key-info">
-          <span class="ssh-key-name">${key.name}</span>
-          <span class="ssh-key-fingerprint">${key.fingerprint}</span>
-          <span class="ssh-key-meta">
-            Added ${new Date(key.created_at).toLocaleDateString()}
+      <div class="api-key-item" data-id="${key.id}">
+        <div class="api-key-info">
+          <span class="api-key-name">${key.name}</span>
+          <span class="api-key-meta">
+            ${key.fingerprint}
+            • Added ${new Date(key.created_at).toLocaleDateString()}
             ${key.last_used ? `• Last used ${new Date(key.last_used).toLocaleDateString()}` : ''}
           </span>
         </div>
@@ -593,7 +566,12 @@ async function loadSshKeys() {
       };
     });
   } catch (e) {
-    list.innerHTML = `<div class="error">Failed to load SSH keys</div>`;
+    list.innerHTML = `
+      <div class="empty-state error">
+        <span class="material-icons-outlined">error</span>
+        <p>Failed to load SSH keys</p>
+      </div>
+    `;
   }
 }
 
@@ -616,17 +594,20 @@ function setupSshKeysHandlers() {
         </div>
         <form id="ssh-key-form">
           <div class="form-group">
-            <label>Key Name</label>
-            <input type="text" name="name" required placeholder="My Laptop" maxlength="50" />
+            <label for="ssh-key-name-input">Key Name</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined">label</span>
+              <input type="text" id="ssh-key-name-input" name="name" required placeholder="My Laptop" maxlength="50">
+            </div>
           </div>
           <div class="form-group">
-            <label>Public Key</label>
-            <textarea name="public_key" required rows="5" placeholder="ssh-ed25519 AAAA... user@host"></textarea>
+            <label for="ssh-key-public-input">Public Key</label>
+            <textarea id="ssh-key-public-input" name="public_key" required rows="5" placeholder="ssh-ed25519 AAAA... user@host"></textarea>
             <small class="form-hint">Paste your public key (id_ed25519.pub, id_rsa.pub, etc.)</small>
           </div>
           <div class="message" id="ssh-key-message"></div>
           <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" onclick="this.closest('.modal').remove()">Cancel</button>
+            <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
             <button type="submit" class="btn btn-primary">Add Key</button>
           </div>
         </form>

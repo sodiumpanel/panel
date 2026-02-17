@@ -1,5 +1,5 @@
 import { routes, getUserRoute, getServerRoute } from './routes/routes.js';
-import { renderNav } from './components/nav.js';
+import { renderNav, updateNav } from './components/nav.js';
 import { renderSidebar } from './components/sidebar.js';
 
 let mounted = false;
@@ -152,6 +152,7 @@ export function router() {
       updateSidebarActiveLink(path);
     }
     
+    updateNav();
     route.render();
     currentCleanup = route.cleanup || null;
     

@@ -1,4 +1,4 @@
-import { clearAuth } from '../utils/api.js';
+import { clearAuth, api } from '../utils/api.js';
 import { escapeHtml } from '../utils/security.js';
 
 export function renderNav() {
@@ -16,7 +16,7 @@ export function renderNav() {
           <span class="material-icons-outlined">menu</span>
         </button>
         <a href="/dashboard" class="nav-brand">
-          <span class="material-icons-outlined">bolt</span>
+          <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="22" height="22">
           <span class="brand-text">Sodium</span>
         </a>
       </div>
@@ -26,7 +26,7 @@ export function renderNav() {
           <div class="user-menu" id="user-menu">
             <button class="user-menu-btn" id="user-menu-btn">
               <div class="user-avatar">
-                <span class="material-icons-outlined">person</span>
+                <img src="/default-avatar.png" alt="Avatar" onerror="this.src='/default-avatar.png'">
               </div>
               <span class="user-display-name">${displayName}</span>
               <span class="material-icons-outlined dropdown-icon">expand_more</span>
@@ -91,4 +91,25 @@ export function renderNav() {
   }, 0);
   
   return nav;
+}
+
+export async function updateNav() {
+  const avatarEl = document.querySelector('#navbar .user-avatar img');
+  const nameEl = document.querySelector('#navbar .user-display-name');
+  if (!avatarEl) return;
+  
+  const username = localStorage.getItem('username');
+  if (!username) return;
+  
+  try {
+    const res = await api(`/api/user/profile?username=${encodeURIComponent(username)}&viewer=${encodeURIComponent(username)}`);
+    const data = await res.json();
+    
+    if (data.user) {
+      avatarEl.src = data.user.avatar || '/default-avatar.png';
+      if (nameEl) nameEl.textContent = data.user.displayName || username;
+    }
+  } catch {
+    // Keep defaults on error
+  }
 }

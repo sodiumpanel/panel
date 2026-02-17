@@ -167,7 +167,6 @@ async function loadBackups(serverId) {
     });
     
   } catch (e) {
-    console.error('Failed to load backups:', e);
     container.innerHTML = `<div class="error">Failed to load backups</div>`;
   }
 }

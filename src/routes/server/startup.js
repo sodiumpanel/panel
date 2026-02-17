@@ -6,6 +6,7 @@ import { escapeHtml } from '../../utils/security.js';
 let currentServerId = null;
 let serverData = null;
 let eggData = null;
+let nestsData = null;
 
 function parseRules(rulesString) {
   const rules = {
@@ -186,13 +187,15 @@ async function loadStartupData(serverId) {
   const content = document.getElementById('startup-content');
   
   try {
-    const [serverRes, startupRes] = await Promise.all([
+    const [serverRes, startupRes, nestsRes] = await Promise.all([
       api(`/api/servers/${serverId}`),
-      api(`/api/servers/${serverId}/startup`)
+      api(`/api/servers/${serverId}/startup`),
+      api(`/api/servers/nests`)
     ]);
     
     const serverJson = await serverRes.json();
     const startupJson = await startupRes.json();
+    const nestsJson = await nestsRes.json();
     
     if (serverJson.error || startupJson.error) {
       content.innerHTML = `<div class="error">${serverJson.error || startupJson.error}</div>`;
@@ -201,6 +204,7 @@ async function loadStartupData(serverId) {
     
     serverData = serverJson.server;
     eggData = startupJson.egg;
+    nestsData = nestsJson.nests || [];
     
     renderStartupForm(serverData, eggData);
   } catch (e) {
@@ -225,10 +229,20 @@ function renderStartupForm(server, egg) {
     </div>
     <div class="startup-preview">
       <span class="preview-label">Preview:</span>
-      <code id="startup-preview">${escapeHtml(parseStartupCommand(server.startup || egg?.startup || '', server.environment || {}))}</code>
+      <code id="startup-preview">${escapeHtml(parseStartupCommand(server.startup || egg?.startup || '', server.environment || {}, server))}</code>
     </div>
     
     <div class="form-group" style="margin-top: 20px;">
+      <label>Server Egg</label>
+      <div class="input-wrapper">
+        <span class="material-icons-outlined">egg</span>
+        <select name="egg_id" id="egg-select" class="select-input">
+          ${getEggOptions(server)}
+        </select>
+      </div>
+    </div>
+    
+    <div class="form-group" style="margin-top: 12px;">
       <label>Docker Image</label>
       <div class="input-wrapper">
         <span class="material-icons-outlined">inventory_2</span>
@@ -295,7 +309,7 @@ function renderStartupForm(server, egg) {
   const updatePreview = () => {
     const env = getEnvironmentFromForm();
     const cmd = startupInput.value;
-    previewEl.textContent = parseStartupCommand(cmd, env);
+    previewEl.textContent = parseStartupCommand(cmd, env, serverData);
   };
   
   startupInput.addEventListener('input', updatePreview);
@@ -309,6 +323,41 @@ function renderStartupForm(server, egg) {
     saveStartup();
   };
   
+  document.getElementById('egg-select').onchange = async (e) => {
+    const newEggId = e.target.value;
+    if (!newEggId || newEggId === serverData.egg_id) return;
+    
+    const confirmed = await modal.confirm({
+      title: 'Change Egg',
+      message: 'Changing the egg will delete all server files and reinstall the server with the new egg configuration. This action cannot be undone!',
+      confirmText: 'Change & Reinstall',
+      danger: true
+    });
+    
+    if (!confirmed) {
+      e.target.value = serverData.egg_id;
+      return;
+    }
+    
+    try {
+      const res = await api(`/api/servers/${currentServerId}/startup`, {
+        method: 'PUT',
+        body: JSON.stringify({ egg_id: newEggId })
+      });
+      const data = await res.json();
+      if (res.ok && data.egg_changed) {
+        toast.success('Egg changed, server is reinstalling...');
+        window.router.navigateTo('/servers');
+      } else {
+        toast.error(data.error || 'Failed to change egg');
+        e.target.value = serverData.egg_id;
+      }
+    } catch (err) {
+      toast.error('Failed to change egg');
+      e.target.value = serverData.egg_id;
+    }
+  };
+  
   document.getElementById('reset-startup').onclick = async () => {
     const confirmed = await modal.confirm({ 
       title: 'Reset Configuration', 
@@ -320,6 +369,23 @@ function renderStartupForm(server, egg) {
       resetToDefaults();
     }
   };
+}
+
+function getEggOptions(server) {
+  const currentEggId = server.egg_id || '';
+  let options = '';
+  
+  for (const nest of (nestsData || [])) {
+    const nestEggs = nest.eggs || [];
+    if (nestEggs.length === 0) continue;
+    options += `<optgroup label="${escapeHtml(nest.name)}">`;
+    for (const egg of nestEggs) {
+      options += `<option value="${escapeHtml(egg.id)}" ${currentEggId === egg.id ? 'selected' : ''}>${escapeHtml(egg.name)}</option>`;
+    }
+    options += `</optgroup>`;
+  }
+  
+  return options || '<option value="">No eggs available</option>';
 }
 
 function getDockerImagesOptions(server, egg) {
@@ -374,12 +440,27 @@ function validateAllVariables() {
   return !hasErrors;
 }
 
-function parseStartupCommand(command, environment) {
+function getBuiltInVariables(server) {
+  if (!server) return {};
+  const alloc = server.allocation || {};
+  const limits = server.limits || {};
+  return {
+    SERVER_MEMORY: String(limits.memory || ''),
+    SERVER_IP: alloc.ip || '0.0.0.0',
+    SERVER_PORT: String(alloc.port || ''),
+    SERVER_DISK: String(limits.disk || ''),
+    SERVER_CPU: String(limits.cpu || ''),
+  };
+}
+
+function parseStartupCommand(command, environment, server) {
   if (!command) return '';
   
   let parsed = command;
   
-  for (const [key, value] of Object.entries(environment)) {
+  const allVars = { ...getBuiltInVariables(server), ...environment };
+  
+  for (const [key, value] of Object.entries(allVars)) {
     const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
     parsed = parsed.replace(regex, value || '');
     
@@ -462,11 +543,12 @@ async function resetToDefaults() {
   
   const env = getEnvironmentFromForm();
   document.getElementById('startup-preview').textContent = 
-    parseStartupCommand(eggData.startup || '', env);
+    parseStartupCommand(eggData.startup || '', env, serverData);
 }
 
 export function cleanupStartupTab() {
   currentServerId = null;
   serverData = null;
   eggData = null;
+  nestsData = null;
 }

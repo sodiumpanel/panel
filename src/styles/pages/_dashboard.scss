@@ -75,6 +75,10 @@
         .material-icons-outlined { color: var(--success); }
       }
       
+      &.starting, &.stopping {
+        .material-icons-outlined { color: var(--warning); }
+      }
+      
       &.offline {
         .material-icons-outlined { color: var(--text-tertiary); }
         color: var(--text-secondary);

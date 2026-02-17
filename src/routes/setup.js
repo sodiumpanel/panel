@@ -27,7 +27,7 @@ export async function renderSetup() {
           <div class="setup-header">
             <div class="setup-header-top">
               <div class="setup-logo">
-                <span class="material-icons-outlined">bolt</span>
+                <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
                 <span>Sodium Setup</span>
               </div>
               <button class="theme-toggle" id="theme-toggle" title="Toggle theme">

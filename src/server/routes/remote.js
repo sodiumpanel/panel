@@ -197,49 +197,62 @@ router.post('/activity', (req, res) => {
 });
 
 // Backup completion callback from Wings
-router.post('/servers/:uuid/backup', (req, res) => {
+// Wings calls POST /api/remote/backups/{backup_uuid}
+router.post('/backups/:backupUuid', (req, res) => {
   const node = authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
   const { successful, checksum, checksum_type, size } = req.body;
-  const backupUuid = req.body.backup_uuid || req.body.uuid;
+  const backupUuid = req.params.backupUuid;
   
   const data = loadServers();
-  const serverIdx = data.servers.findIndex(s => s.uuid === req.params.uuid && s.node_id === node.id);
+  const nodeServers = data.servers.filter(s => s.node_id === node.id);
   
-  if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
-  
-  const backupIdx = (data.servers[serverIdx].backups || []).findIndex(b => b.uuid === backupUuid);
-  
-  if (backupIdx !== -1) {
-    data.servers[serverIdx].backups[backupIdx].is_successful = successful === true;
-    data.servers[serverIdx].backups[backupIdx].bytes = size || 0;
-    data.servers[serverIdx].backups[backupIdx].checksum = checksum_type && checksum ? `${checksum_type}:${checksum}` : checksum;
-    data.servers[serverIdx].backups[backupIdx].completed_at = new Date().toISOString();
-    saveServers(data);
+  let found = false;
+  for (const server of nodeServers) {
+    const backupIdx = (server.backups || []).findIndex(b => b.uuid === backupUuid);
+    if (backupIdx !== -1) {
+      const serverIdx = data.servers.findIndex(s => s.id === server.id);
+      data.servers[serverIdx].backups[backupIdx].is_successful = successful === true;
+      data.servers[serverIdx].backups[backupIdx].bytes = size || 0;
+      data.servers[serverIdx].backups[backupIdx].checksum = checksum_type && checksum ? `${checksum_type}:${checksum}` : checksum;
+      data.servers[serverIdx].backups[backupIdx].completed_at = new Date().toISOString();
+      saveServers(data);
+      found = true;
+      break;
+    }
   }
+  
+  if (!found) return res.status(404).json({ error: 'Backup not found' });
   
   res.json({ success: true });
 });
 
-// Backup restore completion callback from Wings  
-router.post('/servers/:uuid/restore', (req, res) => {
+// Backup restore completion callback from Wings
+// Wings calls POST /api/remote/backups/{backup_uuid}/restore
+router.post('/backups/:backupUuid/restore', (req, res) => {
   const node = authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
   const { successful } = req.body;
+  const backupUuid = req.params.backupUuid;
   
   const data = loadServers();
-  const serverIdx = data.servers.findIndex(s => s.uuid === req.params.uuid && s.node_id === node.id);
+  const nodeServers = data.servers.filter(s => s.node_id === node.id);
   
-  if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
-  
-  if (data.servers[serverIdx].status === 'restoring_backup') {
-    data.servers[serverIdx].status = successful ? 'offline' : 'restore_failed';
-    saveServers(data);
+  for (const server of nodeServers) {
+    const hasBackup = (server.backups || []).some(b => b.uuid === backupUuid);
+    if (hasBackup) {
+      const serverIdx = data.servers.findIndex(s => s.id === server.id);
+      if (data.servers[serverIdx].status === 'restoring_backup') {
+        data.servers[serverIdx].status = successful ? 'offline' : 'restore_failed';
+        saveServers(data);
+      }
+      return res.json({ success: true });
+    }
   }
   
-  res.json({ success: true });
+  res.status(404).json({ error: 'Backup not found' });
 });
 
 router.post('/sftp/auth', async (req, res) => {

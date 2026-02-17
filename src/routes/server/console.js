@@ -11,7 +11,6 @@ let statusCallback = null;
 let resourcesCallback = null;
 let serverIdGetter = null;
 let resizeTimeout = null;
-let receivedLogs = new Set();
 let currentServerId = null;
 
 export function setConsoleCallbacks(onStatus, onResources, getServerId) {
@@ -43,7 +42,6 @@ export function initConsoleTab(serverId) {
   
   cleanupConsoleTab();
   currentServerId = serverId;
-  receivedLogs.clear();
   
   initTerminal();
   connectWebSocket(serverId);
@@ -203,6 +201,7 @@ function handleSocketMessage(message) {
   
   switch (event) {
     case 'auth success':
+      if (terminal) terminal.clear();
       consoleSocket.send(JSON.stringify({ event: 'send logs', args: [null] }));
       consoleSocket.send(JSON.stringify({ event: 'send stats', args: [null] }));
       break;
@@ -214,16 +213,7 @@ function handleSocketMessage(message) {
       
     case 'console output':
       if (args && args[0] && terminal) {
-        const logLine = args[0];
-        const logHash = hashLog(logLine);
-        if (!receivedLogs.has(logHash)) {
-          receivedLogs.add(logHash);
-          if (receivedLogs.size > 1000) {
-            const iterator = receivedLogs.values();
-            receivedLogs.delete(iterator.next().value);
-          }
-          terminal.writeln(logLine);
-        }
+        terminal.writeln(args[0]);
       }
       break;
       
@@ -298,17 +288,6 @@ function writeError(text) {
   }
 }
 
-function hashLog(text) {
-  let hash = 0;
-  const str = text.slice(0, 200);
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(36) + '_' + text.length;
-}
-
 async function sendCommand(serverId) {
   const input = document.getElementById('command-input');
   const command = input.value.trim();
@@ -367,5 +346,4 @@ export function cleanupConsoleTab() {
   }
   
   currentServerId = null;
-  receivedLogs.clear();
 }

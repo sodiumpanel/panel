@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { loadUsers, saveUsers, loadServers, loadConfig } from '../db.js';
-import { validateUsername, sanitizeText, sanitizeUrl, sanitizeLinks, generateUUID } from '../utils/helpers.js';
+import { validateUsername, sanitizeText, sanitizeUrl, generateUUID } from '../utils/helpers.js';
 import { authenticateUser } from '../utils/auth.js';
 import { getTransporter } from '../utils/mail.js';
 
@@ -46,7 +46,7 @@ router.get('/profile', (req, res) => {
 });
 
 router.put('/profile', authenticateUser, (req, res) => {
-  const { displayName, bio, avatar, links } = req.body;
+  const { displayName, bio, avatar } = req.body;
   
   const data = loadUsers();
   const userIndex = data.users.findIndex(u => u.id === req.user.id);
@@ -67,10 +67,6 @@ router.put('/profile', authenticateUser, (req, res) => {
   
   if (avatar !== undefined) {
     user.avatar = sanitizeUrl(avatar);
-  }
-  
-  if (links !== undefined) {
-    user.links = sanitizeLinks(links);
   }
   
   data.users[userIndex] = user;

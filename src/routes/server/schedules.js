@@ -25,9 +25,8 @@ export function renderSchedulesTab(serverId) {
 
 export async function initSchedulesTab(serverId) {
   currentServerId = serverId;
-  await loadSchedules();
-  
   document.getElementById('create-schedule-btn')?.addEventListener('click', showCreateScheduleModal);
+  await loadSchedules();
 }
 
 export function cleanupSchedulesTab() {
@@ -252,9 +251,10 @@ function showScheduleModal(schedule, isDuplicate = false) {
   
   const modal = document.createElement('div');
   modal.id = 'schedule-modal';
-  modal.className = 'modal-overlay';
+  modal.className = 'modal';
   modal.innerHTML = `
-    <div class="modal modal-md">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
       <div class="modal-header">
         <h3>${isEdit ? 'Edit Schedule' : isDuplicate ? 'Duplicate Schedule' : 'Create Schedule'}</h3>
         <button class="modal-close" id="close-schedule-modal">
@@ -315,7 +315,7 @@ function showScheduleModal(schedule, isDuplicate = false) {
           </label>
         </div>
         
-        <div class="modal-footer">
+        <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancel-schedule-modal">Cancel</button>
           <button type="submit" class="btn btn-primary">${isEdit ? 'Save' : isDuplicate ? 'Duplicate' : 'Create'}</button>
         </div>
@@ -324,11 +324,15 @@ function showScheduleModal(schedule, isDuplicate = false) {
   `;
   
   document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('active'));
   
-  const closeModal = () => modal.remove();
+  const closeModal = () => {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 150);
+  };
   document.getElementById('close-schedule-modal').onclick = closeModal;
   document.getElementById('cancel-schedule-modal').onclick = closeModal;
-  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+  modal.querySelector('.modal-backdrop').onclick = closeModal;
   
   document.getElementById('schedule-form').onsubmit = async (e) => {
     e.preventDefault();
@@ -363,17 +367,22 @@ function showScheduleModal(schedule, isDuplicate = false) {
         ? `/api/servers/${currentServerId}/schedules/${schedule.id}`
         : `/api/servers/${currentServerId}/schedules`;
       
-      await api(url, {
+      const res = await api(url, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to save schedule');
+      }
+      
       toast.success(isEdit ? 'Schedule updated' : 'Schedule created');
       closeModal();
       await loadSchedules();
-    } catch {
-      toast.error('Failed to save schedule');
+    } catch (err) {
+      toast.error(err.message || 'Failed to save schedule');
       btn.disabled = false;
     }
   };
@@ -402,9 +411,10 @@ function showTaskModal(scheduleId, task) {
   
   const modal = document.createElement('div');
   modal.id = 'task-modal';
-  modal.className = 'modal-overlay';
+  modal.className = 'modal';
   modal.innerHTML = `
-    <div class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
       <div class="modal-header">
         <h3>${isEdit ? 'Edit Task' : 'Add Task'}</h3>
         <button class="modal-close" id="close-task-modal">
@@ -452,7 +462,7 @@ function showTaskModal(scheduleId, task) {
           </label>
         </div>
         
-        <div class="modal-footer">
+        <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancel-task-modal">Cancel</button>
           <button type="submit" class="btn btn-primary">${isEdit ? 'Save' : 'Add Task'}</button>
         </div>
@@ -461,11 +471,15 @@ function showTaskModal(scheduleId, task) {
   `;
   
   document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('active'));
   
-  const closeModal = () => modal.remove();
+  const closeModal = () => {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 150);
+  };
   document.getElementById('close-task-modal').onclick = closeModal;
   document.getElementById('cancel-task-modal').onclick = closeModal;
-  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+  modal.querySelector('.modal-backdrop').onclick = closeModal;
   
   const actionSelect = document.getElementById('task-action');
   const payloadGroup = document.getElementById('payload-group');
@@ -517,17 +531,22 @@ function showTaskModal(scheduleId, task) {
         ? `/api/servers/${currentServerId}/schedules/${scheduleId}/tasks/${task.id}`
         : `/api/servers/${currentServerId}/schedules/${scheduleId}/tasks`;
       
-      await api(url, {
+      const res = await api(url, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
       
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to save task');
+      }
+      
       toast.success(isEdit ? 'Task updated' : 'Task added');
       closeModal();
       await loadSchedules();
-    } catch {
-      toast.error('Failed to save task');
+    } catch (err) {
+      toast.error(err.message || 'Failed to save task');
       btn.disabled = false;
     }
   };

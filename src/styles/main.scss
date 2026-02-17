@@ -31,9 +31,23 @@ button {
   background: none;
   cursor: pointer;
   color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  &:focus { outline: none; }
 }
 
-input, textarea, select { font: inherit; }
+input, textarea, select {
+  font: inherit;
+  &:focus { outline: none; }
+}
+
+.input-wrapper input,
+.input-wrapper select {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+a { -webkit-tap-highlight-color: transparent; }
 
 #loading {
   position: fixed;

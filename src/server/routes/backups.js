@@ -1,4 +1,6 @@
 import express from 'express';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { loadServers, saveServers, loadNodes, loadConfig } from '../db.js';
 import { wingsRequest, generateUUID } from '../utils/helpers.js';
 import { hasPermission } from '../utils/permissions.js';
@@ -110,7 +112,7 @@ router.post('/:serverId/backups', authenticateUser, async (req, res) => {
   
   // Request backup from Wings
   try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backups`, {
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup`, {
       adapter: 'wings',
       uuid: backupId,
       ignore: ignored?.join('\n') || ''
@@ -158,7 +160,7 @@ router.delete('/:serverId/backups/:backupId', authenticateUser, async (req, res)
   
   // Delete from Wings
   try {
-    await wingsRequest(node, 'DELETE', `/api/servers/${server.uuid}/backups/${backup.uuid}`);
+    await wingsRequest(node, 'DELETE', `/api/servers/${server.uuid}/backup/${backup.uuid}`);
   } catch (e) {
     logger.warn(`Backup delete from Wings failed for ${server.name}: ${e.message}`);
   }
@@ -191,7 +193,9 @@ router.post('/:serverId/backups/:backupId/restore', authenticateUser, async (req
   }
   
   try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backups/${backup.uuid}/restore`);
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup/${backup.uuid}/restore`, {
+      adapter: 'wings'
+    });
     logger.info(`Backup "${backup.name}" restore initiated for server ${server.name}`);
     res.json({ success: true });
   } catch (e) {
@@ -217,9 +221,16 @@ router.get('/:serverId/backups/:backupId/download', authenticateUser, async (req
   }
   
   try {
-    const response = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/backups/${backup.uuid}`);
+    const uniqueId = crypto.randomBytes(16).toString('hex');
+    const token = jwt.sign({
+      server_uuid: server.uuid,
+      backup_uuid: backup.uuid,
+      unique_id: uniqueId
+    }, node.daemon_token, { algorithm: 'HS256', expiresIn: '15m' });
+    
+    const url = `${node.scheme}://${node.fqdn}:${node.daemon_port}/download/backup?token=${token}`;
     logger.debug(`Download URL generated for backup ${backup.id}`);
-    res.json({ url: response.download_url || response.url });
+    res.json({ url });
   } catch (e) {
     logger.error(`Backup download URL failed for ${server.name}: ${e.message}`);
     res.status(500).json({ error: 'Failed to get download URL' });
@@ -289,50 +300,6 @@ router.post('/:serverId/backups/webhook', async (req, res) => {
   }
   
   res.json({ success: true });
-});
-
-// POST /:serverId/backups/refresh - Refresh backup states from Wings
-router.post('/:serverId/backups/refresh', authenticateUser, async (req, res) => {
-  const result = await getServerAndNode(req.params.serverId, req.user, 'backup.read');
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  
-  const { server, node } = result;
-  const data = loadServers();
-  const serverIdx = data.servers.findIndex(s => s.id === req.params.serverId);
-  const backups = data.servers[serverIdx].backups || [];
-  
-  let updatedCount = 0;
-  
-  for (const backup of backups) {
-    if (backup.is_successful) continue;
-    
-    try {
-      const response = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/backups/${backup.uuid}`);
-      
-      if (response.is_successful !== undefined) {
-        backup.is_successful = response.is_successful === true;
-        backup.bytes = response.size || response.bytes || backup.bytes;
-        backup.checksum = response.checksum || backup.checksum;
-        if (backup.is_successful && !backup.completed_at) {
-          backup.completed_at = new Date().toISOString();
-        }
-        updatedCount++;
-      }
-    } catch (e) {
-      logger.debug(`Could not refresh backup ${backup.id}: ${e.message}`);
-    }
-  }
-  
-  if (updatedCount > 0) {
-    saveServers(data);
-    logger.info(`Refreshed ${updatedCount} backup(s) for server ${server.name}`);
-  }
-  
-  res.json({ 
-    success: true, 
-    updated: updatedCount,
-    backups: data.servers[serverIdx].backups 
-  });
 });
 
 export default router;

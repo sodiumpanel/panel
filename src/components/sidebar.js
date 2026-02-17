@@ -80,7 +80,7 @@ export function renderSidebar() {
   sidebar.innerHTML = `
     <div class="sidebar-header">
       <a href="/dashboard" class="sidebar-brand">
-        <span class="material-icons-outlined">bolt</span>
+        <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="22" height="22">
         <span class="brand-text">Sodium</span>
       </a>
     </div>

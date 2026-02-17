@@ -493,7 +493,7 @@ async function executeTask(task, server, node) {
           completed_at: null
         });
         saveServers(serversData);
-        await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backups`, {
+        await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup`, {
           adapter: 'wings',
           uuid: backupUuid,
           ignore: ''

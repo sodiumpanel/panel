@@ -920,11 +920,6 @@ function renderFilesList(files, serverId) {
         <span class="file-meta">${isDir ? '--' : formatBytes(file.size)} • ${formatDate(file.modified_at)}${searchPath}</span>
       </div>
       <div class="file-actions">
-        ${!isDir && previewType ? `
-          <button class="btn btn-sm btn-ghost btn-preview" title="Preview">
-            <span class="material-icons-outlined">visibility</span>
-          </button>
-        ` : ''}
         ${!isDir && isArchive(file) ? `
           <button class="btn btn-sm btn-ghost btn-decompress" title="Extract">
             <span class="material-icons-outlined">unarchive</span>
@@ -984,9 +979,7 @@ function renderFilesList(files, serverId) {
       const canEdit = item.dataset.editable === 'true';
       const filePath = item.dataset.path || (currentPath === '/' ? `/${name}` : `${currentPath}/${name}`);
 
-      if (preview) {
-        openPreview(serverId, name, preview, filePath);
-      } else if (canEdit) {
+      if (canEdit) {
         editFile(serverId, filePath);
       }
     };
@@ -1038,17 +1031,6 @@ function renderFilesList(files, serverId) {
       const item = btn.closest('.file-item');
       const name = item.dataset.name;
       chmodFile(serverId, name);
-    };
-  });
-
-  filesList.querySelectorAll('.file-item .btn-preview').forEach(btn => {
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      const item = btn.closest('.file-item');
-      const name = item.dataset.name;
-      const preview = item.dataset.preview;
-      const filePath = item.dataset.path || (currentPath === '/' ? `/${name}` : `${currentPath}/${name}`);
-      openPreview(serverId, name, preview, filePath);
     };
   });
 

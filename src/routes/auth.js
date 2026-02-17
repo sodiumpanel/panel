@@ -26,7 +26,7 @@ export function renderAuth() {
       <div class="auth-card" id="auth-card">
         <div class="auth-header" id="auth-header">
           <div class="logo">
-            <span class="material-icons-outlined">bolt</span>
+            <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
             <span class="logo-text">Sodium</span>
           </div>
           <p class="auth-subtitle">Welcome back</p>
@@ -369,7 +369,7 @@ function render2FAScreen(username, password) {
       <div class="auth-card">
         <div class="auth-header">
           <div class="logo">
-            <span class="material-icons-outlined">bolt</span>
+            <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
             <span class="logo-text">Sodium</span>
           </div>
           <p class="auth-subtitle">Two-Factor Authentication</p>
@@ -604,7 +604,7 @@ function renderForgotPassword() {
       <div class="auth-card">
         <div class="auth-header">
           <div class="logo">
-            <span class="material-icons-outlined">bolt</span>
+            <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
             <span class="logo-text">Sodium</span>
           </div>
           <p class="auth-subtitle">Reset your password</p>
@@ -748,7 +748,7 @@ export async function renderResetPassword() {
         <div class="auth-card">
           <div class="auth-header">
             <div class="logo">
-              <span class="material-icons-outlined">bolt</span>
+              <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
               <span class="logo-text">Sodium</span>
             </div>
             <p class="auth-subtitle">Reset password for <strong>${data.username}</strong></p>

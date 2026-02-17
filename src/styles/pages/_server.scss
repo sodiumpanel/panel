@@ -681,11 +681,12 @@
   
   .variable-description { font-size: .7rem; color: var(--text-tertiary); margin: 0 0 .6rem; line-height: 1.4; }
   
-  input {
+  input, select {
     width: 100%;
     padding: .4rem .6rem;
     font-family: monospace;
     font-size: .75rem;
+    color: var(--text-primary);
     background: var(--bg-elevated);
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
@@ -757,12 +758,13 @@
     textarea { min-height: 70px; resize: vertical; font-family: inherit; }
   }
   
-  .form-info { padding: .75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm); }
+  .form-info { display: flex; flex-direction: column; gap: .25rem; padding: .75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm); }
   
   .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
     padding: .4rem 0;
     
     .info-label { font-size: .75rem; color: var(--text-tertiary); }

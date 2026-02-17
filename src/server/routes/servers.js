@@ -540,18 +540,96 @@ router.post('/:id/reinstall', authenticateUser, async (req, res) => {
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
+  const eggs = loadEggs();
+  const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
+  
+  let startupConfig = { done: ['Done'] };
+  let stopConfig = { type: 'command', value: 'stop' };
+  
+  try {
+    if (egg.config?.startup) {
+      const parsed = JSON.parse(egg.config.startup);
+      if (parsed.done) {
+        startupConfig.done = Array.isArray(parsed.done) ? parsed.done : [parsed.done];
+      }
+    }
+    if (egg.config?.stop) {
+      if (egg.config.stop === '^C') {
+        stopConfig = { type: 'signal', value: 'SIGINT' };
+      } else {
+        stopConfig = { type: 'command', value: egg.config.stop };
+      }
+    }
+  } catch (e) {
+    logger.debug(`Error parsing egg config for reinstall: ${e.message}`);
+  }
+  
+  const defaultEnv = {};
+  if (egg.variables && Array.isArray(egg.variables)) {
+    for (const v of egg.variables) {
+      defaultEnv[v.env_variable] = v.default_value || '';
+    }
+  }
+  
   const data = loadServers();
   const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
   data.servers[serverIndex].status = 'installing';
   saveServers(data);
   
   try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/reinstall`);
+    const wingsPayload = {
+      uuid: server.uuid,
+      start_on_completion: false,
+      suspended: false,
+      environment: { ...defaultEnv, ...server.environment },
+      invocation: server.startup,
+      skip_egg_scripts: false,
+      build: {
+        memory_limit: server.limits?.memory || 512,
+        swap: server.limits?.swap || 0,
+        io_weight: server.limits?.io || 500,
+        cpu_limit: server.limits?.cpu || 100,
+        disk_space: server.limits?.disk || 1024,
+        threads: null
+      },
+      container: {
+        image: server.docker_image || egg.docker_image
+      },
+      allocations: server.allocation ? {
+        default: {
+          ip: server.allocation.ip,
+          port: server.allocation.port
+        },
+        mappings: {
+          [server.allocation.ip]: [server.allocation.port]
+        }
+      } : { default: { ip: '0.0.0.0', port: 25565 }, mappings: {} },
+      mounts: [],
+      egg: {
+        id: egg.id || '',
+        file_denylist: []
+      },
+      process_configuration: {
+        startup: {
+          done: startupConfig.done,
+          user_interaction: [],
+          strip_ansi: false
+        },
+        stop: stopConfig,
+        configs: []
+      }
+    };
+    
+    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/reinstall`, wingsPayload);
     res.json({ success: true });
   } catch (e) {
     logger.error(`Reinstall failed: ${e.message}`);
-    data.servers[serverIndex].status = 'offline';
-    saveServers(data);
+    const updated = loadServers();
+    const idx = updated.servers.findIndex(s => s.id === req.params.id);
+    if (idx !== -1) {
+      updated.servers[idx].status = 'offline';
+      saveServers(updated);
+    }
     res.status(500).json({ error: 'Failed to reinstall server: ' + e.message });
   }
 });
@@ -596,7 +674,7 @@ router.get('/:id/startup', authenticateUser, async (req, res) => {
 });
 
 router.put('/:id/startup', authenticateUser, async (req, res) => {
-  const { startup, docker_image, environment } = req.body;
+  const { startup, docker_image, environment, egg_id } = req.body;
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
@@ -604,6 +682,119 @@ router.put('/:id/startup', authenticateUser, async (req, res) => {
   const data = loadServers();
   const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
   const eggs = loadEggs();
+  
+  // Handle egg change
+  if (egg_id && egg_id !== server.egg_id) {
+    const newEgg = eggs.eggs.find(e => e.id === egg_id);
+    if (!newEgg) return res.status(400).json({ error: 'Egg not found' });
+    if (newEgg.admin_only && !req.user.isAdmin) return res.status(403).json({ error: 'This egg is admin-only' });
+    
+    data.servers[serverIndex].egg_id = egg_id;
+    data.servers[serverIndex].startup = newEgg.startup || '';
+    data.servers[serverIndex].docker_image = newEgg.docker_image || '';
+    
+    const newEnv = {};
+    if (newEgg.variables && Array.isArray(newEgg.variables)) {
+      for (const v of newEgg.variables) {
+        newEnv[v.env_variable] = v.default_value || '';
+      }
+    }
+    data.servers[serverIndex].environment = newEnv;
+    data.servers[serverIndex].status = 'installing';
+    saveServers(data);
+    
+    let startupConfig = { done: ['Done'] };
+    let stopConfig = { type: 'command', value: 'stop' };
+    
+    try {
+      if (newEgg.config?.startup) {
+        const parsed = JSON.parse(newEgg.config.startup);
+        if (parsed.done) {
+          startupConfig.done = Array.isArray(parsed.done) ? parsed.done : [parsed.done];
+        }
+      }
+      if (newEgg.config?.stop) {
+        if (newEgg.config.stop === '^C') {
+          stopConfig = { type: 'signal', value: 'SIGINT' };
+        } else {
+          stopConfig = { type: 'command', value: newEgg.config.stop };
+        }
+      }
+    } catch (e) {
+      logger.debug(`Error parsing egg config for egg change: ${e.message}`);
+    }
+    
+    try {
+      const wingsPayload = {
+        uuid: server.uuid,
+        start_on_completion: false,
+        suspended: false,
+        environment: newEnv,
+        invocation: newEgg.startup || '',
+        skip_egg_scripts: false,
+        build: {
+          memory_limit: server.limits?.memory || 512,
+          swap: server.limits?.swap || 0,
+          io_weight: server.limits?.io || 500,
+          cpu_limit: server.limits?.cpu || 100,
+          disk_space: server.limits?.disk || 1024,
+          threads: null
+        },
+        container: {
+          image: newEgg.docker_image || ''
+        },
+        allocations: server.allocation ? {
+          default: {
+            ip: server.allocation.ip,
+            port: server.allocation.port
+          },
+          mappings: {
+            [server.allocation.ip]: [server.allocation.port]
+          }
+        } : { default: { ip: '0.0.0.0', port: 25565 }, mappings: {} },
+        mounts: [],
+        egg: {
+          id: newEgg.id || '',
+          file_denylist: []
+        },
+        process_configuration: {
+          startup: {
+            done: startupConfig.done,
+            user_interaction: [],
+            strip_ansi: false
+          },
+          stop: stopConfig,
+          configs: []
+        }
+      };
+      
+      // Delete all server files before reinstalling
+      try {
+        const fileList = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/files/list-directory?directory=/`);
+        if (Array.isArray(fileList) && fileList.length > 0) {
+          const filesToDelete = fileList.map(f => f.name);
+          await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/delete`, {
+            root: '/',
+            files: filesToDelete
+          });
+        }
+      } catch (e) {
+        logger.warn(`Egg change file cleanup failed: ${e.message}`);
+      }
+      
+      await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/reinstall`, wingsPayload);
+    } catch (e) {
+      logger.error(`Egg change reinstall failed: ${e.message}`);
+      const updated = loadServers();
+      const idx = updated.servers.findIndex(s => s.id === req.params.id);
+      if (idx !== -1) {
+        updated.servers[idx].status = 'offline';
+        saveServers(updated);
+      }
+    }
+    return res.json({ success: true, server: data.servers[serverIndex], egg_changed: true });
+  }
+  
   const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
   const variables = egg.variables || [];
   
@@ -982,9 +1173,18 @@ router.post('/:id/files/paste', authenticateUser, async (req, res) => {
     } else {
       for (const name of files) {
         const location = sourceDir === '/' ? `/${name}` : `${sourceDir}/${name}`;
+        // Snapshot file names before copy to detect the new name
+        let beforeNames = null;
+        if (srcNorm !== destNorm) {
+          const beforeList = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/files/list-directory?directory=${encodeURIComponent(sourceDir || '/')}`);
+          beforeNames = new Set((Array.isArray(beforeList) ? beforeList : []).map(f => f.name));
+        }
         await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/files/copy`, { location });
         if (srcNorm !== destNorm) {
-          const copiedName = getCopyName(name);
+          const afterList = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/files/list-directory?directory=${encodeURIComponent(sourceDir || '/')}`);
+          const afterNames = (Array.isArray(afterList) ? afterList : []).map(f => f.name);
+          const newFile = afterNames.find(n => !beforeNames.has(n) && n.includes(' copy'));
+          const copiedName = newFile || getCopyName(name);
           const from = srcNorm ? `${srcNorm}/${copiedName}` : copiedName;
           const to = destNorm ? `${destNorm}/${name}` : name;
           await wingsRequest(node, 'PUT', `/api/servers/${server.uuid}/files/rename`, {
@@ -1349,114 +1549,6 @@ router.post('/:id/unsuspend', authenticateUser, async (req, res) => {
   }
   
   res.json({ success: true });
-});
-
-// ==================== BACKUPS ====================
-
-router.get('/:id/backups', authenticateUser, async (req, res) => {
-  const result = await getServerAndNode(req.params.id, req.user, 'backup.read');
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  const { server, node } = result;
-  
-  try {
-    const backups = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/backup`);
-    res.json({ backups: backups || [] });
-  } catch (e) {
-    res.json({ backups: [] });
-  }
-});
-
-router.post('/:id/backups', authenticateUser, async (req, res) => {
-  const result = await getServerAndNode(req.params.id, req.user, 'backup.create');
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  const { server, node } = result;
-  
-  const data = loadServers();
-  const serverData = data.servers.find(s => s.id === req.params.id);
-  const users = loadUsers();
-  const owner = users.users.find(u => u.id === serverData.user_id);
-  
-  const backupLimit = owner?.limits?.backups ?? 3;
-  const featureLimit = serverData.feature_limits?.backups ?? 0;
-  const effectiveLimit = Math.max(backupLimit, featureLimit);
-  
-  if (effectiveLimit <= 0) {
-    return res.status(400).json({ error: 'Backups are disabled for this server' });
-  }
-  
-  try {
-    const existingBackups = await wingsRequest(node, 'GET', `/api/servers/${server.uuid}/backup`);
-    if (Array.isArray(existingBackups) && existingBackups.length >= effectiveLimit) {
-      return res.status(400).json({ error: `Backup limit reached (${effectiveLimit})` });
-    }
-  } catch (e) {
-    // Continue if we can't check
-  }
-  
-  const { name, ignored } = req.body;
-  
-  try {
-    const backup = await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup`, {
-      adapter: 'wings',
-      uuid: generateUUID(),
-      ignore: ignored || ''
-    });
-    
-    res.json({ success: true, backup });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-router.get('/:id/backups/:backupId/download', authenticateUser, async (req, res) => {
-  const result = await getServerAndNode(req.params.id, req.user, 'backup.read');
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  const { server, node } = result;
-  
-  try {
-    const downloadUrl = `${node.scheme}://${node.fqdn}:${node.daemon_port}/download/backup?token=${node.daemon_token}&server=${server.uuid}&backup=${req.params.backupId}`;
-    res.json({ url: downloadUrl });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-router.post('/:id/backups/:backupId/restore', authenticateUser, async (req, res) => {
-  const result = await getServerAndNode(req.params.id, req.user, 'backup.restore');
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  const { server, node } = result;
-  
-  const { truncate } = req.body;
-  
-  try {
-    await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup/${req.params.backupId}/restore`, {
-      truncate: truncate !== false
-    });
-    
-    const data = loadServers();
-    const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
-    if (serverIdx !== -1) {
-      data.servers[serverIdx].status = 'restoring_backup';
-      saveServers(data);
-    }
-    
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-router.delete('/:id/backups/:backupId', authenticateUser, async (req, res) => {
-  const result = await getServerAndNode(req.params.id, req.user, 'backup.delete');
-  if (result.error) return res.status(result.status).json({ error: result.error });
-  const { server, node } = result;
-  
-  try {
-    await wingsRequest(node, 'DELETE', `/api/servers/${server.uuid}/backup/${req.params.backupId}`);
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
 });
 
 export default router;
