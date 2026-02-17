@@ -16,8 +16,6 @@
 
 ---
 
-> **Beta Software** - This project is under active development. Some features may be incomplete or contain bugs. [Report issues here](https://github.com/sodiumpanel/panel/issues).
-
 ## Why Sodium?
 
 | Feature | Sodium | Others |
