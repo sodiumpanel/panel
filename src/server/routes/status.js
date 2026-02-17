@@ -2,6 +2,7 @@ import express from 'express';
 import { loadNodes, loadLocations, loadServers, loadUsers } from '../db.js';
 import { wingsRequest } from '../utils/helpers.js';
 import { getNodeAvailableResources } from '../utils/node-resources.js';
+import { authenticateUser } from '../utils/auth.js';
 
 const router = express.Router();
 
@@ -50,7 +51,7 @@ router.get('/status/nodes', async (req, res) => {
   res.json({ nodes: publicNodes });
 });
 
-router.get('/nodes/available', (req, res) => {
+router.get('/nodes/available', authenticateUser, (req, res) => {
   const nodes = loadNodes();
   const availableNodes = nodes.nodes
     .filter(n => !n.maintenance_mode)
@@ -71,7 +72,7 @@ router.get('/nodes/available', (req, res) => {
   res.json({ nodes: availableNodes });
 });
 
-router.get('/nodes/:id/ports', (req, res) => {
+router.get('/nodes/:id/ports', authenticateUser, (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).json({ error: 'Username required' });
   

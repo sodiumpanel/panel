@@ -380,21 +380,75 @@ function calculateNextRun(cron) {
   next.setMilliseconds(0);
   next.setMinutes(next.getMinutes() + 1);
   
-  const maxIterations = 366 * 24 * 60;
+  // Limit search to ~2 years to avoid infinite loops
+  const maxDate = new Date(now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
   
-  for (let i = 0; i < maxIterations; i++) {
-    const minute = next.getMinutes();
-    const hour = next.getHours();
-    const dayOfMonth = next.getDate();
-    const month = next.getMonth() + 1;
-    const dayOfWeek = next.getDay();
+  while (next < maxDate) {
+    // Advance month if needed
+    if (cron.month !== '*' && next.getMonth() + 1 !== parseInt(cron.month)) {
+      const targetMonth = parseInt(cron.month) - 1;
+      if (next.getMonth() > targetMonth) {
+        next.setFullYear(next.getFullYear() + 1);
+      }
+      next.setMonth(targetMonth, 1);
+      next.setHours(0, 0, 0, 0);
+      continue;
+    }
     
+    // Advance day of month if needed
+    if (cron.day_of_month !== '*' && next.getDate() !== parseInt(cron.day_of_month)) {
+      const targetDay = parseInt(cron.day_of_month);
+      if (next.getDate() > targetDay) {
+        next.setMonth(next.getMonth() + 1, targetDay);
+      } else {
+        next.setDate(targetDay);
+      }
+      next.setHours(0, 0, 0, 0);
+      continue;
+    }
+    
+    // Advance day of week if needed
+    if (cron.day_of_week !== '*') {
+      const targetDow = parseInt(cron.day_of_week);
+      const currentDow = next.getDay();
+      if (currentDow !== targetDow) {
+        const daysUntil = (targetDow - currentDow + 7) % 7 || 7;
+        next.setDate(next.getDate() + daysUntil);
+        next.setHours(0, 0, 0, 0);
+        continue;
+      }
+    }
+    
+    // Advance hour if needed
+    if (cron.hour !== '*' && next.getHours() !== parseInt(cron.hour)) {
+      const targetHour = parseInt(cron.hour);
+      if (next.getHours() > targetHour) {
+        next.setDate(next.getDate() + 1);
+        next.setHours(targetHour, 0, 0, 0);
+      } else {
+        next.setHours(targetHour, 0, 0, 0);
+      }
+      continue;
+    }
+    
+    // Advance minute if needed
+    if (cron.minute !== '*' && next.getMinutes() !== parseInt(cron.minute)) {
+      const targetMinute = parseInt(cron.minute);
+      if (next.getMinutes() > targetMinute) {
+        next.setHours(next.getHours() + 1, targetMinute, 0, 0);
+      } else {
+        next.setMinutes(targetMinute, 0, 0);
+      }
+      continue;
+    }
+    
+    // All fields match
     if (
-      matchesCronField(minute, cron.minute) &&
-      matchesCronField(hour, cron.hour) &&
-      matchesCronField(dayOfMonth, cron.day_of_month) &&
-      matchesCronField(month, cron.month) &&
-      matchesCronField(dayOfWeek, cron.day_of_week)
+      matchesCronField(next.getMinutes(), cron.minute) &&
+      matchesCronField(next.getHours(), cron.hour) &&
+      matchesCronField(next.getDate(), cron.day_of_month) &&
+      matchesCronField(next.getMonth() + 1, cron.month) &&
+      matchesCronField(next.getDay(), cron.day_of_week)
     ) {
       return next.toISOString();
     }
@@ -426,7 +480,8 @@ async function executeSchedule(schedule, server) {
   
   for (const task of sortedTasks) {
     if (task.time_offset > 0) {
-      await new Promise(resolve => setTimeout(resolve, task.time_offset * 1000));
+      const offset = Math.min(task.time_offset, 30) * 1000;
+      await new Promise(resolve => setTimeout(resolve, offset));
     }
     
     try {

@@ -3,40 +3,23 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { loadServers, saveServers, loadNodes, loadConfig } from '../db.js';
 import { wingsRequest, generateUUID } from '../utils/helpers.js';
-import { hasPermission } from '../utils/permissions.js';
 import { authenticateUser } from '../utils/auth.js';
+import { getServerAndNode } from '../utils/server-access.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-async function getServerAndNode(serverId, user, requiredPermission = null) {
-  const data = loadServers();
-  const server = data.servers.find(s => s.id === serverId);
-  if (!server) return { error: 'Server not found', status: 404 };
-  
-  if (server.suspended) {
-    return { error: 'Server is suspended', status: 403 };
-  }
-  
-  if (!user) return { error: 'User not found', status: 404 };
-  
+function authenticateNode(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const credentials = authHeader.slice(7);
+  const dotIndex = credentials.indexOf('.');
+  if (dotIndex === -1) return null;
+  const tokenId = credentials.substring(0, dotIndex);
+  const token = credentials.substring(dotIndex + 1);
   const nodes = loadNodes();
-  const node = nodes.nodes.find(n => n.id === server.node_id);
-  
-  if (user.isAdmin || server.user_id === user.id) {
-    if (!node) return { error: 'Node not available', status: 400 };
-    return { server, node, user, isOwner: true };
-  }
-  
-  const subuser = (server.subusers || []).find(s => s.user_id === user.id);
-  if (!subuser) return { error: 'Forbidden', status: 403 };
-  
-  if (requiredPermission && !hasPermission(subuser, requiredPermission)) {
-    return { error: 'Permission denied', status: 403 };
-  }
-  
-  if (!node) return { error: 'Node not available', status: 400 };
-  return { server, node, user, isOwner: false, subuser };
+  const node = nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
+  return node;
 }
 
 // GET /:serverId/backups - List backups
@@ -263,7 +246,9 @@ router.post('/:serverId/backups/:backupId/lock', authenticateUser, async (req, r
 });
 
 // POST /:serverId/backups/webhook - Wings webhook for backup completion
-router.post('/:serverId/backups/webhook', async (req, res) => {
+router.post('/:serverId/backups/webhook', (req, res) => {
+  const node = authenticateNode(req);
+  if (!node) return res.status(401).json({ error: 'Invalid token' });
   const { backup_id, is_successful, bytes, checksum } = req.body;
   
   if (!backup_id) {

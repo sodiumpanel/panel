@@ -37,6 +37,7 @@ export function renderDashboard() {
   
   app.innerHTML = `
     <div class="dashboard-container">
+      <div id="node-alerts-container"></div>
       <div id="email-verification-banner"></div>
       <div id="announcements-container"></div>
       
@@ -181,7 +182,7 @@ async function loadLimits() {
   if (!container) return;
   
   try {
-    const res = await fetch(`/api/user/limits?username=${encodeURIComponent(username)}`);
+    const res = await api(`/api/user/limits?username=${encodeURIComponent(username)}`);
     const data = await res.json();
     
     const calcPercent = (used, limit) => limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
@@ -257,13 +258,29 @@ async function loadServers() {
       return;
     }
     
+    // Show node down alerts
+    const downNodes = [...new Set(data.servers.filter(s => s.node_online === false).map(s => s.node_name || 'Unknown'))];
+    const alertsContainer = document.getElementById('node-alerts-container');
+    if (alertsContainer) {
+      alertsContainer.innerHTML = downNodes.length > 0 ? downNodes.map(name => `
+        <div class="node-alert-banner">
+          <span class="material-icons-outlined">warning</span>
+          <div>
+            <strong>Node "${escapeHtml(name)}" is offline</strong>
+            <p>Servers on this node may be unreachable. <a href="/status">View status</a></p>
+          </div>
+        </div>
+      `).join('') : '';
+    }
+    
     container.innerHTML = data.servers.map(server => `
-      <a href="/server/${server.id}" class="server-item">
+      <a href="/server/${server.id}" class="server-item ${server.node_online === false ? 'node-down' : ''}">
         <div class="server-info">
           <span class="server-name">${escapeHtml(server.name)}</span>
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
+          ${server.node_online === false ? '<span class="node-down-badge"><span class="material-icons-outlined">cloud_off</span>Node Down</span>' : ''}
           <span class="server-status" data-status-id="${server.id}">--</span>
           <span class="material-icons-outlined">chevron_right</span>
         </div>

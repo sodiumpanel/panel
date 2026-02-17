@@ -33,7 +33,7 @@ describe('Database Operations', () => {
   describe('findById', () => {
     it('should return undefined for non-existent id', async () => {
       const { findById } = await import('../src/server/db.js');
-      const result = findById('users', 'non-existent-id');
+      const result = await findById('users', 'non-existent-id');
       assert.strictEqual(result, undefined);
     });
   });

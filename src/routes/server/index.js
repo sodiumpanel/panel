@@ -39,6 +39,13 @@ export function renderServerPage(serverId) {
   
   app.innerHTML = `
     <div class="server-page">
+      <div class="node-down-banner" id="node-down-banner" style="display:none">
+        <span class="material-icons-outlined">warning</span>
+        <div class="node-down-text">
+          <strong>Node Offline</strong>
+          <p>The node hosting this server is currently unreachable. Actions like start, stop, and file management may not work until the node is back online.</p>
+        </div>
+      </div>
       <div class="server-header">
         <div class="server-header-left">
           <div class="server-title">
@@ -305,12 +312,57 @@ async function loadServerDetails(serverId) {
     const nodeEl = document.getElementById('server-node');
     if (nodeEl) nodeEl.textContent = serverData.node_name || 'Unknown';
     
+    // Show node down banner and disable controls
+    const nodeDown = serverData.node_online === false;
+    const nodeBanner = document.getElementById('node-down-banner');
+    if (nodeBanner) {
+      nodeBanner.style.display = nodeDown ? 'flex' : 'none';
+    }
+    if (nodeDown) {
+      disableServerControls();
+    }
+    
     // Check if server is installing
     if (serverData.status === 'installing') {
       showInstallingScreen();
     }
   } catch (e) {
     console.error('Failed to load server:', e);
+  }
+}
+
+function disableServerControls() {
+  ['btn-start', 'btn-restart', 'btn-stop', 'btn-kill'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.disabled = true;
+      btn.title = 'Node is offline';
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+    }
+  });
+  
+  // Disable tabs that need the node
+  document.querySelectorAll('.server-tab').forEach(tab => {
+    const tabId = tab.dataset.tab;
+    if (['console', 'files', 'backups', 'startup', 'schedules'].includes(tabId)) {
+      tab.disabled = true;
+      tab.classList.add('disabled');
+      tab.title = 'Node is offline';
+    }
+  });
+  
+  // Show message in tab content
+  const content = document.getElementById('tab-content');
+  if (content) {
+    content.innerHTML = `
+      <div class="node-offline-tab">
+        <span class="material-icons-outlined">cloud_off</span>
+        <h3>Node Unreachable</h3>
+        <p>The node hosting this server is currently offline. Server management is unavailable until the node comes back online.</p>
+        <a href="/status" class="btn btn-sm">View System Status</a>
+      </div>
+    `;
   }
 }
 

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { DATA_DIR, loadFullConfig, saveFullConfig, CONFIG_FILE } from './config.js';
 import logger from './utils/logger.js';
+import { isRedisConnected, redisGet, redisSet, redisDel } from './redis.js';
 
 const DB_FILE = path.join(DATA_DIR, 'sodium.db');
 const MAGIC = Buffer.from('SODIUM01');
@@ -106,11 +107,19 @@ async function initExternalDb() {
   return false;
 }
 
+function sanitizeTableName(name) {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+    throw new Error(`Invalid table name: ${name}`);
+  }
+  return name;
+}
+
 async function createMysqlTables() {
   const tables = Object.keys(COLLECTIONS);
   for (const table of tables) {
+    const safe = sanitizeTableName(table);
     await dbConnection.execute(`
-      CREATE TABLE IF NOT EXISTS ${table} (
+      CREATE TABLE IF NOT EXISTS \`${safe}\` (
         id VARCHAR(255) PRIMARY KEY,
         data JSON NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -123,8 +132,9 @@ async function createMysqlTables() {
 async function createPostgresTables() {
   const tables = Object.keys(COLLECTIONS);
   for (const table of tables) {
+    const safe = sanitizeTableName(table);
     await dbConnection.query(`
-      CREATE TABLE IF NOT EXISTS ${table} (
+      CREATE TABLE IF NOT EXISTS "${safe}" (
         id VARCHAR(255) PRIMARY KEY,
         data JSONB NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -137,8 +147,9 @@ async function createPostgresTables() {
 function createSqliteTables() {
   const tables = Object.keys(COLLECTIONS);
   for (const table of tables) {
+    const safe = sanitizeTableName(table);
     dbConnection.exec(`
-      CREATE TABLE IF NOT EXISTS ${table} (
+      CREATE TABLE IF NOT EXISTS "${safe}" (
         id TEXT PRIMARY KEY,
         data TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -239,7 +250,26 @@ function encodeCollection(collectionId, records) {
   return Buffer.concat([header, ...encoded], 5 + totalDataSize);
 }
 
+let saveTimeout = null;
+
 function saveDatabase() {
+  if (dbConnection) return;
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveTimeout = null;
+    const collections = Object.entries(COLLECTIONS).map(([name, id]) => 
+      encodeCollection(id, cache[name] || [])
+    );
+    const collectionCount = Buffer.alloc(1);
+    collectionCount.writeUInt8(collections.length, 0);
+    const data = Buffer.concat([MAGIC, collectionCount, ...collections]);
+    fs.writeFile(DB_FILE, data, (err) => {
+      if (err) logger.warn(`Failed to save database: ${err.message}`);
+    });
+  }, 100);
+}
+
+function saveDatabaseSync() {
   if (dbConnection) return;
   const collections = Object.entries(COLLECTIONS).map(([name, id]) => 
     encodeCollection(id, cache[name] || [])
@@ -291,7 +321,7 @@ function loadDatabase() {
   }
   
   if (collectionCount < expectedCollectionCount) {
-    saveDatabase();
+    saveDatabaseSync();
   }
 }
 
@@ -318,7 +348,7 @@ function migrateFromJson() {
       }
     }
   }
-  saveDatabase();
+  saveDatabaseSync();
 }
 
 let dbReady = false;
@@ -393,8 +423,16 @@ export function saveConfig(data) {
   saveFullConfig(data);
 }
 
-export function findById(collection, id) {
-  return cache[collection]?.find(r => r.id === id);
+export async function findById(collection, id) {
+  if (isRedisConnected()) {
+    const cached = await redisGet(`${collection}:${id}`);
+    if (cached) return cached;
+  }
+  const record = cache[collection]?.find(r => r.id === id);
+  if (record && isRedisConnected()) {
+    await redisSet(`${collection}:${id}`, record);
+  }
+  return record;
 }
 
 export function findByField(collection, field, value) {
@@ -404,6 +442,7 @@ export function findByField(collection, field, value) {
 export function insert(collection, record) {
   if (!cache[collection]) cache[collection] = [];
   cache[collection].push(record);
+  if (isRedisConnected()) redisSet(`${collection}:${record.id}`, record);
   if (dbConnection) saveToExternalDb(collection, record);
   else saveDatabase();
   return record;
@@ -413,6 +452,7 @@ export function updateById(collection, id, updates) {
   const idx = cache[collection]?.findIndex(r => r.id === id);
   if (idx === -1 || idx === undefined) return null;
   cache[collection][idx] = { ...cache[collection][idx], ...updates };
+  if (isRedisConnected()) redisSet(`${collection}:${id}`, cache[collection][idx]);
   if (dbConnection) saveToExternalDb(collection, cache[collection][idx]);
   else saveDatabase();
   return cache[collection][idx];
@@ -423,6 +463,7 @@ export function deleteById(collection, id) {
   const idx = cache[collection].findIndex(r => r.id === id);
   if (idx === -1) return false;
   cache[collection].splice(idx, 1);
+  if (isRedisConnected()) redisDel(`${collection}:${id}`);
   if (dbConnection) deleteFromExternalDb(collection, id);
   else saveDatabase();
   return true;

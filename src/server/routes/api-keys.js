@@ -101,12 +101,14 @@ router.post('/', authenticateUser, (req, res) => {
   }
   
   const token = generateApiToken();
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   const apiKey = {
     id: generateUUID(),
     userId: req.user.id,
     type: API_KEY_TYPES.USER,
     name: name.trim(),
     token,
+    tokenHash,
     permissions,
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
@@ -177,6 +179,7 @@ router.post('/application', authenticateUser, requireAdmin, (req, res) => {
   
   const data = loadApiKeys();
   const token = generateApiToken();
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   
   const apiKey = {
     id: generateUUID(),
@@ -184,6 +187,7 @@ router.post('/application', authenticateUser, requireAdmin, (req, res) => {
     type: API_KEY_TYPES.APPLICATION,
     name: name.trim(),
     token,
+    tokenHash,
     permissions,
     createdAt: new Date().toISOString(),
     createdBy: req.user.username,

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { loadWebhooks } from '../db.js';
 import logger from './logger.js';
 import { generateWebhookImage } from './webhook-image.js';
@@ -55,14 +56,17 @@ async function sendWebhook(webhook, event, data) {
     'User-Agent': 'Sodium-Panel/1.0'
   };
   
+  const body = JSON.stringify(payload);
+  
   if (webhook.secret) {
-    headers['X-Webhook-Secret'] = webhook.secret;
+    const signature = crypto.createHmac('sha256', webhook.secret).update(body).digest('hex');
+    headers['X-Webhook-Signature'] = `sha256=${signature}`;
   }
   
   const response = await fetch(webhook.url, {
     method: 'POST',
     headers,
-    body: JSON.stringify(payload)
+    body
   });
   
   if (!response.ok) {

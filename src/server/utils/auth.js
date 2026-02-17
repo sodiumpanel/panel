@@ -95,7 +95,13 @@ export function authenticateApiKey(req, res, next) {
   }
   
   const data = loadApiKeys();
-  const apiKey = (data.apiKeys || []).find(k => k.token === token);
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const apiKey = (data.apiKeys || []).find(k => {
+    if (k.tokenHash) {
+      return k.tokenHash === tokenHash;
+    }
+    return k.token === token;
+  });
   
   if (!apiKey) {
     return res.status(401).json({ error: 'Invalid API key' });
@@ -124,7 +130,7 @@ export function authenticateApiKey(req, res, next) {
   req.user = {
     id: user.id,
     username: user.username,
-    isAdmin: user.isAdmin || apiKey.type === 'application',
+    isAdmin: user.isAdmin,
     role: getUserRole(user)
   };
   

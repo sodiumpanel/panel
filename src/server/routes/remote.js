@@ -1,8 +1,53 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { loadNodes, loadServers, saveServers, loadEggs, loadUsers } from '../db.js';
 
 const router = express.Router();
+
+function getProcessConfiguration(egg) {
+  const config = egg.config || {};
+  
+  let startupDone = ['Done'];
+  if (config.startup) {
+    try {
+      const parsed = typeof config.startup === 'string' ? JSON.parse(config.startup) : config.startup;
+      if (parsed.done) {
+        startupDone = Array.isArray(parsed.done) ? parsed.done : [parsed.done];
+      }
+    } catch {}
+  }
+  
+  let stop = { type: 'command', value: 'stop' };
+  if (config.stop) {
+    const stopVal = typeof config.stop === 'string' ? config.stop : 'stop';
+    if (stopVal === '^C') {
+      stop = { type: 'signal', value: 'SIGINT' };
+    } else {
+      stop = { type: 'command', value: stopVal };
+    }
+  }
+  
+  let configs = [];
+  if (config.files) {
+    try {
+      const parsed = typeof config.files === 'string' ? JSON.parse(config.files) : config.files;
+      configs = Object.entries(parsed).map(([file, conf]) => ({
+        parser: conf.parser || 'file',
+        file,
+        replace: conf.find ? Object.entries(conf.find).map(([match, value]) => ({
+          match, replace_with: value
+        })) : []
+      }));
+    } catch {}
+  }
+  
+  return {
+    startup: { done: startupDone, user_interaction: [], strip_ansi: false },
+    stop,
+    configs
+  };
+}
 
 function authenticateNode(req) {
   const authHeader = req.headers.authorization;
@@ -13,7 +58,14 @@ function authenticateNode(req) {
   const tokenId = credentials.substring(0, dotIndex);
   const token = credentials.substring(dotIndex + 1);
   const nodes = loadNodes();
-  const node = nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
+  const node = nodes.nodes.find(n => {
+    if (n.daemon_token_id !== tokenId) return false;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(n.daemon_token), Buffer.from(token));
+    } catch {
+      return false;
+    }
+  });
   return node;
 }
 
@@ -70,21 +122,10 @@ router.get('/servers', (req, res) => {
         mounts: [],
         egg: {
           id: egg.id || '',
-          file_denylist: []
+          file_denylist: egg.file_denylist || []
         }
       },
-      process_configuration: {
-        startup: {
-          done: ['Done'],
-          user_interaction: [],
-          strip_ansi: false
-        },
-        stop: {
-          type: 'command',
-          value: 'stop'
-        },
-        configs: []
-      }
+      process_configuration: getProcessConfiguration(egg)
     };
   });
   
@@ -147,13 +188,9 @@ router.get('/servers/:uuid', (req, res) => {
         mappings: { [server.allocation?.ip || '0.0.0.0']: [server.allocation?.port || 25565] }
       },
       mounts: [],
-      egg: { id: egg.id || '', file_denylist: [] }
+      egg: { id: egg.id || '', file_denylist: egg.file_denylist || [] }
     },
-    process_configuration: {
-      startup: { done: ['Done'], user_interaction: [], strip_ansi: false },
-      stop: { type: 'command', value: 'stop' },
-      configs: []
-    }
+    process_configuration: getProcessConfiguration(egg)
   });
 });
 

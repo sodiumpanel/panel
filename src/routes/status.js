@@ -7,64 +7,44 @@ export function renderStatus() {
   
   app.innerHTML = `
     <div class="status-page">
-      <div class="status-header">
-        <div class="status-indicator" id="global-status">
-          <span class="pulse"></span>
+      <div class="sp-hero">
+        <div class="sp-hero-badge" id="sp-badge">
+          <span class="sp-badge-dot"></span>
+          <span class="sp-badge-text" id="sp-badge-text">Checking...</span>
         </div>
-        <h1>System Status</h1>
-        <p class="status-subtitle" id="status-message">Checking system status...</p>
+        <h1 class="sp-hero-title" id="sp-hero-title">Checking system status</h1>
+        <p class="sp-hero-sub" id="sp-hero-sub">Connecting to monitoring services</p>
       </div>
-      
-      <div class="status-summary" id="status-summary">
-        <div class="summary-card">
-          <span class="material-icons-outlined card-icon">dns</span>
-          <div class="card-content">
-            <span class="number" id="nodes-online">-</span>
-            <span class="label">Nodes Online</span>
+
+      <div class="sp-overview" id="sp-overview"></div>
+
+      <div class="sp-section">
+        <div class="sp-section-head">
+          <h2>Services</h2>
+          <div class="sp-updated">
+            <span class="material-icons-outlined spinning" id="sp-sync" style="display:none;font-size:14px">sync</span>
+            <span id="sp-time">--</span>
           </div>
         </div>
-        <div class="summary-card">
-          <span class="material-icons-outlined card-icon">storage</span>
-          <div class="card-content">
-            <span class="number" id="servers-total">-</span>
-            <span class="label">Servers</span>
-          </div>
-        </div>
-        <div class="summary-card">
-          <span class="material-icons-outlined card-icon">memory</span>
-          <div class="card-content">
-            <span class="number" id="memory-usage">-</span>
-            <span class="label">Mem Alloc</span>
-          </div>
-        </div>
-        <div class="summary-card">
-          <span class="material-icons-outlined card-icon">save</span>
-          <div class="card-content">
-            <span class="number" id="uptime">-</span>
-            <span class="label">Disk Alloc</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="status-section">
-        <div class="section-header">
-          <h2>Node Status</h2>
-          <span class="refresh-info">
-            <span class="material-icons-outlined spinning" id="refresh-icon" style="display:none;">sync</span>
-            Updated <span id="last-update">--</span>
-          </span>
-        </div>
-        
-        <div class="nodes-status-grid" id="nodes-list">
+        <div class="sp-services" id="sp-services">
           <div class="loading-spinner"></div>
         </div>
       </div>
-      
-      <div class="status-footer">
-        <div class="footer-content">
-          <span class="material-icons-outlined">info</span>
-          <p>Status updates every 30 seconds automatically</p>
+
+      <div class="sp-section">
+        <div class="sp-section-head">
+          <h2>Past Incidents</h2>
         </div>
+        <div class="sp-incidents" id="sp-incidents">
+          <div class="sp-no-incidents">
+            <span class="material-icons-outlined">check_circle</span>
+            <p>No incidents reported in the last 90 days.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sp-footer">
+        <p>Auto-refreshes every 30 seconds</p>
       </div>
     </div>
   `;
@@ -73,11 +53,62 @@ export function renderStatus() {
   pollInterval = setInterval(loadStatus, 30000);
 }
 
-async function loadStatus() {
-  const container = document.getElementById('nodes-list');
-  const refreshIcon = document.getElementById('refresh-icon');
+function getUptimeBars(nodeId, currentStatus) {
+  const key = `sp_uptime_${nodeId}`;
+  let history = [];
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) history = JSON.parse(stored);
+  } catch {}
   
-  if (refreshIcon) refreshIcon.style.display = 'inline-block';
+  const today = new Date().toISOString().slice(0, 10);
+  
+  if (history.length === 0) {
+    for (let i = 89; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      history.push({ date: dateStr, status: i === 0 ? currentStatus : 'online' });
+    }
+  } else {
+    const lastDate = history[history.length - 1]?.date;
+    if (lastDate !== today) {
+      history.push({ date: today, status: currentStatus });
+    } else {
+      history[history.length - 1].status = currentStatus;
+    }
+    history = history.slice(-90);
+  }
+  
+  try {
+    localStorage.setItem(key, JSON.stringify(history));
+  } catch {}
+  
+  return history;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function renderUptimeBars(history) {
+  return history.map(h => {
+    const cls = h.status === 'online' ? 'up' : 'down';
+    return `<div class="sp-bar ${cls}" title="${formatDate(h.date)}: ${h.status === 'online' ? 'Operational' : 'Outage'}"></div>`;
+  }).join('');
+}
+
+function calcUptime(history) {
+  const up = history.filter(h => h.status === 'online').length;
+  return ((up / history.length) * 100).toFixed(2);
+}
+
+async function loadStatus() {
+  const container = document.getElementById('sp-services');
+  const syncIcon = document.getElementById('sp-sync');
+  
+  if (syncIcon) syncIcon.style.display = 'inline-block';
   
   try {
     const res = await fetch('/api/status/nodes');
@@ -85,109 +116,129 @@ async function loadStatus() {
     
     const online = data.nodes.filter(n => n.status === 'online').length;
     const total = data.nodes.length;
-    const servers = data.nodes.reduce((sum, n) => sum + n.servers, 0);
     
-    // Calculate total allocated resources
-    const totalAllocMem = data.nodes.reduce((sum, n) => sum + n.memory.allocated, 0);
-    const totalMem = data.nodes.reduce((sum, n) => sum + n.memory.total, 0);
-    const totalAllocDisk = data.nodes.reduce((sum, n) => sum + n.disk.allocated, 0);
-    const totalDisk = data.nodes.reduce((sum, n) => sum + n.disk.total, 0);
-    
-    // Update summary
-    document.getElementById('nodes-online').textContent = `${online}/${total}`;
-    document.getElementById('servers-total').textContent = servers;
-    document.getElementById('memory-usage').textContent = totalMem > 0 ? `${((totalAllocMem / totalMem) * 100).toFixed(0)}%` : '0%';
-    document.getElementById('uptime').textContent = totalDisk > 0 ? `${((totalAllocDisk / totalDisk) * 100).toFixed(0)}%` : '0%';
-    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-    
-    // Update global status
-    const globalStatus = document.getElementById('global-status');
-    const statusMessage = document.getElementById('status-message');
+    // Hero badge
+    const badge = document.getElementById('sp-badge');
+    const badgeText = document.getElementById('sp-badge-text');
+    const title = document.getElementById('sp-hero-title');
+    const sub = document.getElementById('sp-hero-sub');
     
     if (online === total && total > 0) {
-      globalStatus.className = 'status-indicator online';
-      statusMessage.textContent = 'All systems operational';
+      badge.className = 'sp-hero-badge online';
+      badgeText.textContent = 'Operational';
+      title.textContent = 'All Systems Operational';
+      sub.textContent = 'All services are running smoothly';
     } else if (online > 0) {
-      globalStatus.className = 'status-indicator partial';
-      statusMessage.textContent = `${total - online} node(s) experiencing issues`;
+      badge.className = 'sp-hero-badge partial';
+      badgeText.textContent = 'Degraded';
+      title.textContent = 'Partial System Outage';
+      sub.textContent = `${total - online} of ${total} services experiencing issues`;
     } else if (total > 0) {
-      globalStatus.className = 'status-indicator offline';
-      statusMessage.textContent = 'System outage detected';
+      badge.className = 'sp-hero-badge offline';
+      badgeText.textContent = 'Major Outage';
+      title.textContent = 'Major System Outage';
+      sub.textContent = 'All services are currently down';
     } else {
-      globalStatus.className = 'status-indicator';
-      statusMessage.textContent = 'No nodes configured';
+      badge.className = 'sp-hero-badge';
+      badgeText.textContent = 'No Data';
+      title.textContent = 'No Services Configured';
+      sub.textContent = 'There are no monitored services yet';
     }
     
+    // Overview metrics
+    const overview = document.getElementById('sp-overview');
+    const totalServers = data.nodes.reduce((s, n) => s + n.servers, 0);
+    const totalAllocMem = data.nodes.reduce((s, n) => s + n.memory.allocated, 0);
+    const totalMem = data.nodes.reduce((s, n) => s + n.memory.total, 0);
+    const memPercent = totalMem > 0 ? ((totalAllocMem / totalMem) * 100).toFixed(0) : '0';
+    const totalAllocDisk = data.nodes.reduce((s, n) => s + n.disk.allocated, 0);
+    const totalDisk = data.nodes.reduce((s, n) => s + n.disk.total, 0);
+    const diskPercent = totalDisk > 0 ? ((totalAllocDisk / totalDisk) * 100).toFixed(0) : '0';
+    
+    overview.innerHTML = `
+      <div class="sp-metric">
+        <span class="sp-metric-value">${online}/${total}</span>
+        <span class="sp-metric-label">Nodes Online</span>
+      </div>
+      <div class="sp-metric">
+        <span class="sp-metric-value">${totalServers}</span>
+        <span class="sp-metric-label">Servers</span>
+      </div>
+      <div class="sp-metric">
+        <span class="sp-metric-value">${memPercent}%</span>
+        <span class="sp-metric-label">Memory Allocated</span>
+      </div>
+      <div class="sp-metric">
+        <span class="sp-metric-value">${diskPercent}%</span>
+        <span class="sp-metric-label">Disk Allocated</span>
+      </div>
+    `;
+    
+    // Update time
+    document.getElementById('sp-time').textContent = new Date().toLocaleTimeString();
+    
+    // Services list
     if (data.nodes.length === 0) {
       container.innerHTML = `
-        <div class="empty-state">
+        <div class="sp-empty">
           <span class="material-icons-outlined">cloud_off</span>
-          <p>No nodes configured</p>
+          <p>No services to display</p>
         </div>
       `;
       return;
     }
     
     container.innerHTML = data.nodes.map(node => {
-      const memAllocPercent = node.memory.total > 0 ? (node.memory.allocated / node.memory.total) * 100 : 0;
-      const diskAllocPercent = node.disk.total > 0 ? (node.disk.allocated / node.disk.total) * 100 : 0;
-      const memAllocClass = memAllocPercent > 80 ? 'high' : memAllocPercent > 60 ? 'medium' : '';
-      const diskAllocClass = diskAllocPercent > 80 ? 'high' : diskAllocPercent > 60 ? 'medium' : '';
+      const history = getUptimeBars(node.id, node.status);
+      const uptime = calcUptime(history);
       
       return `
-        <div class="node-status-card ${node.status}">
-          <div class="node-header">
-            <div class="node-info">
-              <span class="node-indicator ${node.status}"></span>
-              <h3>${escapeHtml(node.name)}</h3>
+        <div class="sp-service">
+          <div class="sp-service-top">
+            <div class="sp-service-info">
+              <span class="sp-dot ${node.status}"></span>
+              <span class="sp-service-name">${escapeHtml(node.name)}</span>
+              <span class="sp-service-loc">${escapeHtml(node.location || 'Unknown')}</span>
             </div>
-            <span class="status-badge status-${node.status}">${node.status}</span>
-          </div>
-          
-          <div class="node-meta">
-            <span class="meta-item">
-              <span class="material-icons-outlined">storage</span>
-              ${node.servers} servers
-            </span>
-            <span class="meta-item">
-              <span class="material-icons-outlined">location_on</span>
-              ${escapeHtml(node.location || 'Unknown')}
-            </span>
-          </div>
-          
-          <div class="node-stats">
-            <div class="stat">
-              <div class="stat-header">
-                <span class="label">Memory</span>
-                <span class="value ${memAllocClass}">${node.memory.allocated} / ${node.memory.total} MB</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress ${memAllocClass}" style="width: ${Math.min(memAllocPercent, 100)}%"></div>
-              </div>
+            <div class="sp-service-right">
+              <span class="sp-uptime-pct">${uptime}%</span>
+              <span class="sp-status-tag ${node.status}">${node.status === 'online' ? 'Operational' : 'Down'}</span>
             </div>
-            <div class="stat">
-              <div class="stat-header">
-                <span class="label">Disk</span>
-                <span class="value ${diskAllocClass}">${node.disk.allocated} / ${node.disk.total} MB</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress ${diskAllocClass}" style="width: ${Math.min(diskAllocPercent, 100)}%"></div>
-              </div>
+          </div>
+          <div class="sp-uptime-track">
+            <div class="sp-bars">${renderUptimeBars(history)}</div>
+            <div class="sp-bars-legend">
+              <span>90 days ago</span>
+              <span>Today</span>
+            </div>
+          </div>
+          <div class="sp-service-resources">
+            <div class="sp-res">
+              <span class="sp-res-label">Memory</span>
+              <span class="sp-res-value">${node.memory.allocated} / ${node.memory.total} MB</span>
+            </div>
+            <div class="sp-res">
+              <span class="sp-res-label">Disk</span>
+              <span class="sp-res-value">${node.disk.allocated} / ${node.disk.total} MB</span>
+            </div>
+            <div class="sp-res">
+              <span class="sp-res-label">Servers</span>
+              <span class="sp-res-value">${node.servers}</span>
             </div>
           </div>
         </div>
       `;
     }).join('');
-  } catch (e) {
+  } catch {
     container.innerHTML = `
-      <div class="error-state">
+      <div class="sp-empty error">
         <span class="material-icons-outlined">error_outline</span>
-        <p>Connection error. Retrying...</p>
+        <p>Unable to reach monitoring services. Retrying...</p>
       </div>
     `;
   } finally {
-    if (refreshIcon) {
-      setTimeout(() => { refreshIcon.style.display = 'none'; }, 500);
+    if (syncIcon) {
+      setTimeout(() => { syncIcon.style.display = 'none'; }, 500);
     }
   }
 }

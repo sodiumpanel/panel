@@ -1,6 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { loadUsers, saveUsers, loadConfig } from '../db.js';
 import { validateUsername, sanitizeText, generateUUID, generateToken } from '../utils/helpers.js';
 import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
@@ -100,8 +101,11 @@ const OAUTH_CONFIGS = {
 
 const authLimiter = rateLimit({ windowMs: 60000, max: 5, message: 'Too many attempts, try again later' });
 
+// Temporary store for OAuth one-time codes
+const oauthCodes = new Map();
+
 function generate2FACode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 999999).toString();
 }
 
 router.post('/register', authLimiter, async (req, res) => {
@@ -154,10 +158,10 @@ router.post('/register', authLimiter, async (req, res) => {
   const verificationToken = requireEmail ? generateToken() : null;
   const newUser = {
     id: generateUUID(),
-    username: sanitizeText(username),
+    username: username,
     email: email || null,
     password: hashedPassword,
-    displayName: sanitizeText(username),
+    displayName: username,
     bio: '',
     avatar: '',
     links: {},
@@ -291,7 +295,7 @@ router.post('/login', authLimiter, async (req, res) => {
     }
   }
   
-  const { password: _, twoFactorCode: __, twoFactorExpires: ___, ...userWithoutSensitive } = user;
+  const { password: _, twoFactorCode: __, twoFactorExpires: ___, verificationToken: __vt, resetToken: __rt, resetTokenExpires: __rte, ...userWithoutSensitive } = user;
   const token = jwt.sign(
     { id: user.id, username: user.username, isAdmin: user.isAdmin },
     JWT_SECRET,
@@ -577,11 +581,6 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
       u.oauth_connections?.some(c => c.provider_id === provider.id && c.oauth_id === oauthId)
     );
     
-    if (!user && email) {
-      // Check if user exists with this email (for linking)
-      user = data.users.find(u => u.email === email);
-    }
-    
     if (user) {
       // Update OAuth connection if needed
       if (!user.oauth_connections) user.oauth_connections = [];
@@ -598,7 +597,7 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
     } else {
       // Create new user
       const defaults = config.defaults || {};
-      const safeUsername = sanitizeText(username || `user_${oauthId.substring(0, 8)}`);
+      const safeUsername = (username || `user_${oauthId.substring(0, 8)}`).replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 20);
       
       // Ensure unique username
       let finalUsername = safeUsername;
@@ -642,25 +641,44 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
       saveUsers(data);
     }
     
-    // Generate JWT
+    // Generate a one-time code that can be exchanged for a JWT
+    const oauthCode = crypto.randomBytes(32).toString('hex');
     const token = jwt.sign(
       { id: user.id, username: user.username, isAdmin: user.isAdmin },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
     
+    // Store the code -> token mapping temporarily
+    oauthCodes.set(oauthCode, { token, expires: Date.now() + 60000 });
+    
     logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'oauth', provider: provider.name }, req.ip);
     
     // Clear oauth state cookie
     res.clearCookie('oauth_state');
     
-    // Redirect to frontend with token
-    res.redirect(`/auth/callback?token=${token}`);
+    // Redirect to frontend with one-time code instead of token
+    res.redirect(`/auth/callback?code=${oauthCode}`);
     
   } catch (e) {
     console.error('OAuth error:', e);
     res.redirect('/auth?error=oauth_failed');
   }
+});
+
+// Exchange OAuth one-time code for JWT token
+router.post('/oauth/exchange', (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: 'Code is required' });
+  
+  const entry = oauthCodes.get(code);
+  oauthCodes.delete(code);
+  
+  if (!entry || entry.expires < Date.now()) {
+    return res.status(400).json({ error: 'Invalid or expired code' });
+  }
+  
+  res.json({ token: entry.token });
 });
 
 // ==================== EMAIL VERIFICATION ====================

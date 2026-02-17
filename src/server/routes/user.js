@@ -8,7 +8,7 @@ import { getTransporter } from '../utils/mail.js';
 
 const router = express.Router();
 
-router.get('/profile', (req, res) => {
+router.get('/profile', authenticateUser, (req, res) => {
   const { username, viewer } = req.query;
   
   if (!username) {
@@ -26,7 +26,7 @@ router.get('/profile', (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
   
-  const { password: _, ...userWithoutPassword } = user;
+  const { password: _, verificationToken: _vt, resetToken: _rt, resetTokenExpires: _rte, twoFactorCode: _tfc, twoFactorExpires: _tfe, ...safeUser } = user;
   
   const isOwner = viewer && viewer.toLowerCase() === username.toLowerCase();
   const isPublic = user.settings?.privacy === 'public';
@@ -42,7 +42,7 @@ router.get('/profile', (req, res) => {
     });
   }
   
-  res.json({ user: userWithoutPassword });
+  res.json({ user: safeUser });
 });
 
 router.put('/profile', authenticateUser, (req, res) => {
@@ -175,7 +175,7 @@ router.put('/password', authenticateUser, async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-router.get('/limits', (req, res) => {
+router.get('/limits', authenticateUser, (req, res) => {
   const { username } = req.query;
   const users = loadUsers();
   const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());

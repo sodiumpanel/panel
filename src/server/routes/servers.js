@@ -4,7 +4,33 @@ import { wingsRequest, sanitizeText, generateUUID, validateVariableValue } from 
 import { getNodeAvailableResources } from '../utils/node-resources.js';
 import { hasPermission } from '../utils/permissions.js';
 import { authenticateUser } from '../utils/auth.js';
+import { getServerAndNode } from '../utils/server-access.js';
 import logger from '../utils/logger.js';
+
+// Cache node status to avoid hammering Wings on every request
+const nodeStatusCache = new Map();
+const NODE_STATUS_TTL = 15000; // 15s
+
+async function checkNodeOnline(node) {
+  const cached = nodeStatusCache.get(node.id);
+  if (cached && Date.now() - cached.time < NODE_STATUS_TTL) return cached.online;
+  
+  let online = false;
+  try {
+    const url = `${node.scheme}://${node.fqdn}:${node.daemon_port}/api/system`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${node.daemon_token}`, 'Accept': 'application/json' },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    online = res.ok;
+  } catch {}
+  
+  nodeStatusCache.set(node.id, { online, time: Date.now() });
+  return online;
+}
 
 const router = express.Router();
 
@@ -39,9 +65,8 @@ router.get('/nests', authenticateUser, (req, res) => {
   const eggs = loadEggs();
   const user = req.user;
   
-  nests.nests.forEach(nest => {
-    // Filter eggs: if admin_only is true, only show to admins
-    nest.eggs = eggs.eggs.filter(e => {
+  const result = nests.nests.map(nest => {
+    const nestEggs = eggs.eggs.filter(e => {
       if (e.nest_id !== nest.id) return false;
       if (e.admin_only && !user?.isAdmin) return false;
       return true;
@@ -53,50 +78,14 @@ router.get('/nests', authenticateUser, (req, res) => {
       docker_images: e.docker_images,
       variables: e.variables || []
     }));
-  });
+    return { ...nest, eggs: nestEggs };
+  }).filter(n => n.eggs.length > 0);
   
-  // Filter out empty nests
-  nests.nests = nests.nests.filter(n => n.eggs.length > 0);
-  
-  res.json(nests);
+  res.json({ nests: result });
 });
 
-// Helper privado para este router - ahora recibe el user del middleware
-async function getServerAndNode(serverId, user, requiredPermission = null) {
-  const data = loadServers();
-  const server = data.servers.find(s => s.id === serverId);
-  if (!server) return { error: 'Server not found', status: 404 };
-  
-  if (server.suspended) {
-    return { error: 'Server is suspended', status: 403 };
-  }
-  
-  if (!user) return { error: 'User not found', status: 404 };
-  
-  const nodes = loadNodes();
-  const node = nodes.nodes.find(n => n.id === server.node_id);
-  
-  // Admin or owner has full access
-  if (user.isAdmin || server.user_id === user.id) {
-    if (!node) return { error: 'Node not available', status: 400 };
-    return { server, node, user, isOwner: true };
-  }
-  
-  // Check if subuser
-  const subuser = (server.subusers || []).find(s => s.user_id === user.id);
-  if (!subuser) return { error: 'Forbidden', status: 403 };
-  
-  // Verify specific permission if required
-  if (requiredPermission && !hasPermission(subuser, requiredPermission)) {
-    return { error: 'Permission denied', status: 403 };
-  }
-  
-  if (!node) return { error: 'Node not available', status: 400 };
-  return { server, node, user, isOwner: false, subuser };
-}
-
 // Lista de servidores del usuario
-router.get('/', authenticateUser, (req, res) => {
+router.get('/', authenticateUser, async (req, res) => {
   const user = req.user;
   const users = loadUsers();
   const fullUser = users.users.find(u => u.id === user.id);
@@ -104,6 +93,14 @@ router.get('/', authenticateUser, (req, res) => {
   
   const data = loadServers();
   const nodes = loadNodes();
+  
+  // Check node statuses in parallel
+  const uniqueNodeIds = [...new Set(data.servers.map(s => s.node_id))];
+  const nodeStatuses = {};
+  await Promise.all(uniqueNodeIds.map(async (nodeId) => {
+    const node = nodes.nodes.find(n => n.id === nodeId);
+    nodeStatuses[nodeId] = node ? await checkNodeOnline(node) : false;
+  }));
   
   // Servers owned by user
   const ownedServers = data.servers
@@ -115,6 +112,7 @@ router.get('/', authenticateUser, (req, res) => {
         ...server,
         node_address: node && primary ? `${node.fqdn}:${primary.port}` : null,
         node_name: node?.name || null,
+        node_online: nodeStatuses[server.node_id] ?? false,
         is_owner: true
       };
     });
@@ -130,6 +128,7 @@ router.get('/', authenticateUser, (req, res) => {
         ...server,
         node_address: node && primary ? `${node.fqdn}:${primary.port}` : null,
         node_name: node?.name || null,
+        node_online: nodeStatuses[server.node_id] ?? false,
         is_owner: false,
         permissions: subuser?.permissions || []
       };
@@ -408,10 +407,13 @@ router.get('/:id', authenticateUser, async (req, res) => {
   const nodes = loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
+  const nodeOnline = node ? await checkNodeOnline(node) : false;
+  
   const serverWithNode = {
     ...server,
     node_address: node ? `${node.fqdn}:${server.allocation?.port || 25565}` : null,
     node_name: node?.name || null,
+    node_online: nodeOnline,
     is_owner: isOwner,
     is_admin_access: user.isAdmin && !isOwner && !isSubuser
   };
@@ -1371,14 +1373,10 @@ router.delete('/:id/allocations/:allocId', authenticateUser, async (req, res) =>
 
 // GET /:id/subusers - List subusers
 router.get('/:id/subusers', authenticateUser, async (req, res) => {
-  const user = req.user;
   const result = await getServerAndNode(req.params.id, req.user, 'user.read');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
-  const { server, isOwner } = result;
-  if (!isOwner && !hasPermission(result.subuser, 'user.read')) {
-    return res.status(403).json({ error: 'Permission denied' });
-  }
+  const { server } = result;
   
   const users = loadUsers();
   const subusers = (server.subusers || []).map(s => {

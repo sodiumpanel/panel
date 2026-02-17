@@ -60,7 +60,9 @@ export function loadFullConfig() {
       configCache = deepMerge(DEFAULT_CONFIG, data);
       return configCache;
     }
-  } catch {}
+  } catch (err) {
+    console.warn(`[CONFIG] Failed to load config.json: ${err.message}, using defaults`);
+  }
   
   return DEFAULT_CONFIG;
 }

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { loadConfig } from '../db.js';
 
 export function isAdmin(user) {
-  return user && user.role === 'admin';
+  return user && (user.isAdmin === true || user.role === 'admin');
 }
 
 export function sanitizeText(str) {

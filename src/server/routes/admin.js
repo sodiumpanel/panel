@@ -19,19 +19,20 @@ const router = express.Router();
 router.use(authenticateUser, requireAdmin);
 
 router.get('/nodes', (req, res) => {
-  const { page = 1, per_page = 10 } = req.query;
+  const { page = 1, per_page: rawPerPage = 10 } = req.query;
+  const per_page = parseInt(rawPerPage) || 10;
   const data = loadNodes();
   const total = data.nodes.length;
   const totalPages = Math.ceil(total / per_page);
   const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
   const start = (currentPage - 1) * per_page;
-  const nodes = data.nodes.slice(start, start + parseInt(per_page));
+  const nodes = data.nodes.slice(start, start + per_page);
   
   res.json({
     nodes,
     meta: {
       current_page: currentPage,
-      per_page: parseInt(per_page),
+      per_page,
       total,
       total_pages: totalPages
     }
@@ -143,7 +144,7 @@ router.post('/locations', (req, res) => {
   const { location } = req.body;
   const data = loadLocations();
   const newLocation = {
-    id: (data.locations.length + 1).toString(),
+    id: generateUUID(),
     short: sanitizeText(location.short),
     long: sanitizeText(location.long)
   };
@@ -161,7 +162,8 @@ router.delete('/locations/:id', (req, res) => {
 
 // ==================== USERS ====================
 router.get('/users', (req, res) => {
-  const { page = 1, per_page = 10, search = '' } = req.query;
+  const { page = 1, per_page: rawPerPage = 10, search = '' } = req.query;
+  const per_page = parseInt(rawPerPage) || 10;
   const data = loadUsers();
   let allUsers = data.users.map(({ password, ...u }) => u);
   
@@ -179,13 +181,13 @@ router.get('/users', (req, res) => {
   const totalPages = Math.ceil(total / per_page);
   const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
   const start = (currentPage - 1) * per_page;
-  const users = allUsers.slice(start, start + parseInt(per_page));
+  const users = allUsers.slice(start, start + per_page);
   
   res.json({
     users,
     meta: {
       current_page: currentPage,
-      per_page: parseInt(per_page),
+      per_page,
       total,
       total_pages: totalPages
     }
@@ -332,17 +334,18 @@ router.delete('/users/:id', async (req, res) => {
 router.get('/nests', (req, res) => {
   const nests = loadNests();
   const eggs = loadEggs();
-  nests.nests.forEach(nest => {
-    nest.eggs = eggs.eggs.filter(e => e.nest_id === nest.id);
-  });
-  res.json(nests);
+  const result = nests.nests.map(nest => ({
+    ...nest,
+    eggs: eggs.eggs.filter(e => e.nest_id === nest.id)
+  }));
+  res.json({ nests: result });
 });
 
 router.post('/nests', (req, res) => {
   const { nest } = req.body;
   const data = loadNests();
   const newNest = {
-    id: (data.nests.length + 1).toString(),
+    id: generateUUID(),
     name: sanitizeText(nest.name),
     description: sanitizeText(nest.description || '')
   };

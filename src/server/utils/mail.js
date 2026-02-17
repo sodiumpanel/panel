@@ -23,7 +23,7 @@ export function initMailer() {
         pass: mail.pass
       },
       tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: mail.rejectUnauthorized !== false
       }
     });
     

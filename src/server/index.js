@@ -26,6 +26,7 @@ import metricsRoutes, { recordRequest } from './routes/metrics.js';
 import applicationApiRoutes from './routes/application-api.js';
 import { setupWebSocket } from './socket.js';
 import { isInstalled, loadFullConfig } from './config.js';
+import { initRedis } from './redis.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -33,32 +34,27 @@ const server = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.set('trust proxy', 1);
+app.set('trust proxy', process.env.TRUST_PROXY || 1);
 app.disable('x-powered-by');
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"]
+    }
+  },
   crossOriginEmbedderPolicy: false
 }));
 
-app.use(express.json({ strict: false }));
-app.use(express.text({ type: 'application/json' }));
+app.use(express.json());
 app.use(cookieParser());
-
-// Middleware global de limpieza
-app.use((req, res, next) => {
-  if (req.body === 'null' || req.body === null || req.body === '') {
-    req.body = {};
-  }
-  if (typeof req.body === 'string') {
-    try {
-      req.body = JSON.parse(req.body);
-    } catch {
-      // Invalid JSON body, use empty object
-      req.body = {};
-    }
-  }
-  next();
-});
 
 // Metrics middleware
 app.use((req, res, next) => {
@@ -112,8 +108,9 @@ app.get(/.*/, (req, res) => {
 async function startServer() {
   setupWebSocket(server);
   
-  // Start schedule runner if installed
+  // Initialize Redis if configured
   if (isInstalled()) {
+    await initRedis();
     startScheduler();
   }
   
@@ -126,3 +123,26 @@ startServer().catch(err => {
   logger.error(`Server startup failed: ${err.message}`);
   process.exit(1);
 });
+
+async function shutdown(signal) {
+  logger.info(`${signal} received, shutting down gracefully...`);
+  
+  server.close(() => {
+    logger.info('HTTP server closed');
+  });
+  
+  try {
+    const { closeRedis } = await import('./redis.js');
+    await closeRedis();
+  } catch {}
+  
+  setTimeout(() => {
+    logger.warn('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000).unref();
+  
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
