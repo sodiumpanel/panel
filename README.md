@@ -16,6 +16,25 @@
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/assets/dashboard.gif" alt="Dashboard" width="700"><br>
+  <sub>Dashboard — Overview of your servers at a glance</sub>
+</p>
+
+<p align="center">
+  <img src="docs/assets/server.gif" alt="Server Management" width="700"><br>
+  <sub>Server Management — Console, files, and resource monitoring</sub>
+</p>
+
+<p align="center">
+  <img src="docs/assets/admin.gif" alt="Admin Panel" width="700"><br>
+  <sub>Admin Panel — Full control over users, nodes, and servers</sub>
+</p>
+
+---
+
 ## Why Sodium?
 
 | Feature | Sodium | Others |

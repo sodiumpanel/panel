@@ -19,12 +19,13 @@
             background: #09090b;
             color: #fafafa;
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
         a { color: inherit; text-decoration: none; }
 
         .container {
-            max-width: 1000px;
+            max-width: 1100px; /* Un poco más ancho para que quepan las dos columnas */
             margin: 0 auto;
             padding: 0 20px;
         }
@@ -33,6 +34,9 @@
         nav {
             padding: 20px 0;
             border-bottom: 1px solid #27272a;
+            position: relative;
+            z-index: 10;
+            background: #09090b;
         }
 
         nav .container {
@@ -62,9 +66,23 @@
 
         .nav-links a:hover { color: #fff; }
 
-        /* Hero */
+        /* Hero - NUEVO LAYOUT FLEX */
         .hero {
-            padding: 100px 0 80px;
+            padding: 80px 0;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            display: flex;
+            align-items: center; /* Centrado vertical */
+            justify-content: space-between;
+            gap: 40px; /* Espacio entre texto e imagen */
+        }
+
+        .hero-text {
+            flex: 1;
+            max-width: 550px; /* Evita que el texto se estire demasiado */
+            z-index: 2; /* Asegura que el texto esté por encima si se solapan */
         }
 
         .hero h1 {
@@ -81,8 +99,28 @@
         .hero p {
             color: #a1a1aa;
             font-size: 18px;
-            max-width: 500px;
             margin-bottom: 32px;
+        }
+
+        .hero-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-image img {
+            max-width: 140%; /* Un poco más grande para efecto visual */
+            width: 600px; /* Tamaño base */
+            height: auto;
+            
+            /* MÁSCARA DE TRANSPARENCIA A LA IZQUIERDA */
+            /* Transparente (0%) -> Opaco (20%) -> Opaco (100%) */
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 25%, black 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 25%, black 100%);
+            
+            opacity: 0.95;
+            transform: scale(1.05); /* Ligero zoom para impacto */
         }
 
         .buttons {
@@ -471,8 +509,34 @@
             color: #e07a3a;
         }
 
-        @media (max-width: 600px) {
-            .hero h1 { font-size: 32px; }
+        /* RESPONSIVE HERO */
+        @media (max-width: 900px) {
+            .hero-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-text {
+                max-width: 100%;
+            }
+
+            .buttons {
+                justify-content: center;
+            }
+
+            .hero-image {
+                margin-top: 40px;
+                width: 100%;
+            }
+            
+            .hero-image img {
+                max-width: 100%;
+                /* En móvil quitamos un poco el efecto lateral para que se vea completa centrada */
+                -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+                mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            }
+            
+            .hero h1 { font-size: 36px; }
             .nav-links { display: none; }
             .compare-table { font-size: 14px; }
             .deployment-grid { grid-template-columns: 1fr; }
@@ -499,20 +563,30 @@
     </nav>
 
     <section class="hero">
-        <div class="container">
-            <p style="display:inline-block;background:#27272a;color:#a1a1aa;font-size:12px;padding:6px 12px;border-radius:20px;margin-bottom:16px;">Work in progress</p>
-            <h1>Game servers,<br><span>without the headache.</span></h1>
-            <p>Sodium is a simple panel for managing game servers. No Docker, no 47-step install guides. Just clone it and run. MySQL/PostgreSQL available when you need them.</p>
-            <div class="buttons">
-                <a href="https://github.com/sodiumpanel/panel" class="btn btn-primary">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    View on GitHub
-                </a>
-                <a href="#install" class="btn btn-ghost">Get started</a>
+        <!-- Contenedor Flex para layout lado a lado -->
+        <div class="container hero-container">
+            
+            <!-- Columna Izquierda: Texto -->
+            <div class="hero-text">
+                <h1>Game servers,<br><span>without the headache.</span></h1>
+                <p>Sodium is a simple panel for managing game servers. No 47-step install guides. Just clone it and run.</p>
+                <div class="buttons">
+                    <a href="https://github.com/sodiumpanel/panel" class="btn btn-primary">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        View on GitHub
+                    </a>
+                    <a href="#install" class="btn btn-ghost">Get started</a>
+                </div>
+                <div class="install-cmd">
+                    <span>$</span> git clone https://github.com/sodiumpanel/panel.git
+                </div>
             </div>
-            <div class="install-cmd">
-                <span>$</span> git clone https://github.com/sodiumpanel/panel.git
+
+            <!-- Columna Derecha: Imagen PNG -->
+            <div class="hero-image">
+                <img src="assets/hero.png" alt="Sodium Dashboard">
             </div>
+
         </div>
     </section>
 
@@ -564,7 +638,7 @@
                         <li><strong>Database:</strong> File-based (built-in)</li>
                         <li><strong>Redis:</strong> Not needed</li>
                         <li><strong>Nodes:</strong> 1-2 nodes</li>
-                        <li><strong>Users:</strong> Up to ~500 concurrent</li>
+                        <li><strong>Users:</strong> Up to ~150 concurrent</li>
                     </ul>
                     <div class="deployment-note">Just run <code>npm start</code> and you're done. Data stored in <code>data/</code> folder.</div>
                 </div>
@@ -689,7 +763,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>Can I migrate from Pterodactyl?</h3>
-                    <p>Not directly. Different database format. You'd need to recreate servers manually.</p>
+                    <p>Partially. We have some script to help with this.</p>
                 </div>
                 <div class="faq-item">
                     <h3>Does it run on Windows?</h3>
@@ -718,7 +792,7 @@
 
     <footer>
         <div class="container">
-            <p>MIT License. Made by <a href="https://github.com/zt3xdv">zt3xdv</a></p>
+            <p>MIT License. Made by <a href="https://github.com/sodiumpanel">Sodium Team</a></p>
             <div class="footer-links">
                 <a href="https://github.com/sodiumpanel/panel">GitHub</a>
                 <a href="https://github.com/sodiumpanel/panel/issues">Issues</a>
