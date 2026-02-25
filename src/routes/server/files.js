@@ -818,7 +818,11 @@ async function loadFiles(serverId, path) {
     renderFilesList(data.files || [], serverId);
   } catch (e) {
     console.error('Failed to load files:', e);
-    filesList.innerHTML = '<div class="files-error">Failed to load files</div>';
+    const isNodeError = e.message?.includes('node') || e.message?.includes('connect') || e.message?.includes('offline');
+    const msg = isNodeError 
+      ? '<span class="material-icons-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
+      : 'Failed to load files';
+    filesList.innerHTML = `<div class="files-error">${msg}</div>`;
   }
 }
 

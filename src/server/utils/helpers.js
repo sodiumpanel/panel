@@ -57,6 +57,81 @@ export function generateToken(length = 64) {
   return crypto.randomBytes(length).toString('base64url').slice(0, length);
 }
 
+export class NodeError extends Error {
+  constructor(message, code, originalError = null) {
+    super(message);
+    this.name = 'NodeError';
+    this.code = code;
+    this.originalError = originalError;
+  }
+}
+
+function classifyNodeError(error, node) {
+  const msg = error?.message?.toLowerCase() || '';
+  const cause = error?.cause?.code || error?.code || '';
+
+  if (cause === 'ECONNREFUSED' || msg.includes('econnrefused')) {
+    return new NodeError(
+      `Node "${node.name}" is not responding (connection refused on ${node.fqdn}:${node.daemon_port})`,
+      'NODE_OFFLINE', error
+    );
+  }
+
+  if (cause === 'ECONNRESET' || msg.includes('econnreset')) {
+    return new NodeError(
+      `Connection to node "${node.name}" was reset`,
+      'NODE_CONNECTION_RESET', error
+    );
+  }
+
+  if (cause === 'ETIMEDOUT' || cause === 'ETIME' || msg.includes('etimedout') || msg.includes('timeout') || error.name === 'AbortError' || msg.includes('aborted')) {
+    return new NodeError(
+      `Node "${node.name}" did not respond in time (timeout)`,
+      'NODE_TIMEOUT', error
+    );
+  }
+
+  if (cause === 'ENOTFOUND' || msg.includes('enotfound') || msg.includes('getaddrinfo')) {
+    return new NodeError(
+      `Node "${node.name}" hostname could not be resolved (${node.fqdn})`,
+      'NODE_DNS_ERROR', error
+    );
+  }
+
+  if (cause === 'EHOSTUNREACH' || msg.includes('ehostunreach')) {
+    return new NodeError(
+      `Node "${node.name}" is unreachable (${node.fqdn})`,
+      'NODE_UNREACHABLE', error
+    );
+  }
+
+  if (cause === 'ENETUNREACH' || msg.includes('enetunreach')) {
+    return new NodeError(
+      `Network unreachable when connecting to node "${node.name}"`,
+      'NODE_NETWORK_ERROR', error
+    );
+  }
+
+  if (msg.includes('ssl') || msg.includes('tls') || msg.includes('cert') || msg.includes('self-signed') || cause === 'DEPTH_ZERO_SELF_SIGNED_CERT' || cause === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
+    return new NodeError(
+      `SSL/TLS error connecting to node "${node.name}" (${node.fqdn})`,
+      'NODE_SSL_ERROR', error
+    );
+  }
+
+  if (msg.includes('fetch failed') || msg.includes('failed to fetch') || msg === 'fetch failed') {
+    return new NodeError(
+      `Cannot connect to node "${node.name}" (${node.fqdn}:${node.daemon_port})`,
+      'NODE_OFFLINE', error
+    );
+  }
+
+  return new NodeError(
+    `Node "${node.name}" communication error: ${error.message || 'Unknown error'}`,
+    'NODE_UNKNOWN_ERROR', error
+  );
+}
+
 export async function wingsRequest(node, method, endpoint, data = null, rawContent = false) {
   const url = `${node.scheme}://${node.fqdn}:${node.daemon_port}${endpoint}`;
   
@@ -71,21 +146,39 @@ export async function wingsRequest(node, method, endpoint, data = null, rawConte
     headers['Content-Type'] = 'application/json';
   }
   
-  const options = { method, headers };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  const options = { method, headers, signal: controller.signal };
   if (data !== null) {
     options.body = rawContent ? data : JSON.stringify(data);
   }
   
   try {
     const response = await fetch(url, options);
+    clearTimeout(timeout);
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      const statusMessages = {
+        401: `Node "${node.name}" rejected authentication (invalid token)`,
+        403: `Node "${node.name}" denied access`,
+        404: `Resource not found on node "${node.name}"`,
+        409: `Conflict: resource is busy on node "${node.name}"`,
+        429: `Node "${node.name}" is rate limiting requests`,
+        500: `Node "${node.name}" internal error`,
+        502: `Node "${node.name}" returned a bad gateway error`,
+        503: `Node "${node.name}" is temporarily unavailable`,
+      };
+      const message = error.error || statusMessages[response.status] || `Node "${node.name}" returned HTTP ${response.status}`;
+      throw new NodeError(message, `NODE_HTTP_${response.status}`);
     }
+
     return response.json().catch(() => ({}));
   } catch (error) {
-
-    throw error;
+    clearTimeout(timeout);
+    if (error instanceof NodeError) throw error;
+    throw classifyNodeError(error, node);
   }
 }
 

@@ -183,7 +183,8 @@ router.post('/:serverId/backups/:backupId/restore', authenticateUser, async (req
     res.json({ success: true });
   } catch (e) {
     logger.error(`Backup restore failed for ${server.name}: ${e.message}`);
-    res.status(500).json({ error: 'Failed to restore backup' });
+    const status = e.code?.startsWith('NODE_') ? 502 : 500;
+    res.status(status).json({ error: e.message, code: e.code || 'UNKNOWN' });
   }
 });
 

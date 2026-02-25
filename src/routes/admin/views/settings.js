@@ -282,17 +282,22 @@ function renderDefaultsSettings(content, config) {
             <div class="form-group">
               <label>Max Memory (MB)</label>
               <input type="number" name="default_memory" value="${config.defaults?.memory || 2048}" min="0" step="128" />
-              <small class="form-hint">Total memory allocation across all servers</small>
+              <small class="form-hint">Total memory allocation across new users</small>
             </div>
             <div class="form-group">
               <label>Max Disk (MB)</label>
               <input type="number" name="default_disk" value="${config.defaults?.disk || 10240}" min="0" step="1024" />
-              <small class="form-hint">Total disk space across all servers</small>
+              <small class="form-hint">Total disk space across new users</small>
             </div>
             <div class="form-group">
               <label>Max CPU (%)</label>
               <input type="number" name="default_cpu" value="${config.defaults?.cpu || 200}" min="0" step="25" />
               <small class="form-hint">Total CPU allocation (100% = 1 core)</small>
+            </div>
+            <div class="form-group">
+              <label>Max Allocations (Ports)</label>
+              <input type="number" name="default_allocations" value="${config.defaults?.allocations || 5}" min="0" step="1" />
+              <small class="form-hint">Total Ports across new users</small>
             </div>
             <div class="form-group">
               <label>Max Backups</label>
@@ -322,6 +327,7 @@ function renderDefaultsSettings(content, config) {
         memory: parseInt(form.default_memory.value) || 2048,
         disk: parseInt(form.default_disk.value) || 10240,
         cpu: parseInt(form.default_cpu.value) || 200,
+        allocatipns: parseInt(form.default_allocations.value) || 5,
         backups: parseInt(form.default_backups.value) || 3
       }
     };

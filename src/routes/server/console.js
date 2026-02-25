@@ -192,7 +192,7 @@ async function connectWebSocket(serverId) {
   
   consoleSocket.onerror = (error) => {
     console.error('WebSocket error:', error);
-    writeError('WebSocket connection failed');
+    writeError('Connection to the node failed. The node may be offline or unreachable.');
   };
 }
 
