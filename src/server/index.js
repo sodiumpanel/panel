@@ -33,7 +33,8 @@ import { loadPlugins, getPluginRouters, getPluginClientData } from './plugins/ma
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const server = createServer(app);
-const PORT = process.env.PORT || 3000;
+const config = loadFullConfig();
+const PORT = process.env.PORT || (config.panel.port || 3000);
 
 // Security middleware
 app.set('trust proxy', process.env.TRUST_PROXY || 1);
