@@ -1,4 +1,5 @@
 import { escapeHtml, escapeUrl } from '../utils/security.js';
+import { state } from '../utils/state.js';
 
 export function renderUser(targetUsername) {
   const app = document.getElementById('app');
@@ -18,7 +19,7 @@ export function renderUser(targetUsername) {
 
 async function loadUserProfile(targetUsername) {
   const container = document.querySelector('.user-container');
-  const viewer = localStorage.getItem('username') || '';
+  const viewer = state.username;
   
   try {
     const res = await fetch(`/api/user/profile?username=${encodeURIComponent(targetUsername)}&viewer=${encodeURIComponent(viewer)}`);

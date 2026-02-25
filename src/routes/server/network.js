@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { state } from '../../utils/state.js';
 import * as toast from '../../utils/toast.js';
 import * as modal from '../../utils/modal.js';
 
@@ -30,7 +31,7 @@ export async function initNetworkTab(serverId) {
 }
 
 async function loadAllocations() {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const list = document.getElementById('allocations-list');
   
   try {
@@ -91,7 +92,7 @@ function renderAllocations() {
 }
 
 async function addAllocation() {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const btn = document.getElementById('btn-add-allocation');
   
   btn.disabled = true;
@@ -121,7 +122,7 @@ async function addAllocation() {
 }
 
 async function setAllocationPrimary(allocId) {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   try {
     const res = await api(`/api/servers/${currentServerId}/allocations/${allocId}/primary`, {
@@ -146,7 +147,7 @@ async function deleteAllocation(allocId) {
   const confirmed = await modal.confirm({ title: 'Delete Allocation', message: 'Delete this allocation?', danger: true });
   if (!confirmed) return;
   
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   try {
     const res = await api(`/api/servers/${currentServerId}/allocations/${allocId}`, {

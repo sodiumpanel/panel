@@ -1,12 +1,13 @@
-import { getTheme, setTheme, getAvailableThemes } from '../utils/theme.js';
+import { getTheme, setTheme, saveTheme, getAvailableThemes } from '../utils/theme.js';
 import { clearAuth, api } from '../utils/api.js';
+import { state } from '../utils/state.js';
 import * as modal from '../utils/modal.js';
 
 export function renderSettings() {
   const app = document.getElementById('app');
   app.className = 'settings-page';
   
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   app.innerHTML = `
     <div class="settings-container">
@@ -332,10 +333,9 @@ export function renderSettings() {
     const card = e.target.closest('.theme-card');
     if (!card) return;
     const theme = card.dataset.theme;
-    setTheme(theme);
+    saveTheme(theme);
     themeGrid.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
     card.classList.add('active');
-    saveSettings({ theme });
   });
   
   const notificationsToggle = app.querySelector('#notifications-toggle');
@@ -416,7 +416,7 @@ export function renderSettings() {
 
 async function loadSettings() {
   try {
-    const res = await fetch(`/api/user/profile?username=${encodeURIComponent(localStorage.getItem('username'))}`);
+    const res = await fetch(`/api/user/profile?username=${encodeURIComponent(state.username)}`);
     const data = await res.json();
     
     if (data.user?.settings) {

@@ -134,6 +134,11 @@ export const routes = {
     cleanup: cleanupAdmin,
     options: { title: 'Webhooks', auth: true, sidebar: true }
   },
+  '/admin/plugins': {
+    render: (params) => renderAdmin('plugins', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Plugins', auth: true, sidebar: true }
+  },
   '/profile': {
     render: renderProfile,
     options: {

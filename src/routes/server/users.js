@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { state } from '../../utils/state.js';
 import { PERMISSIONS, PERMISSION_GROUPS } from '../../utils/permissions.js';
 import * as toast from '../../utils/toast.js';
 import * as modal from '../../utils/modal.js';
@@ -66,7 +67,7 @@ export async function initUsersTab(serverId) {
 }
 
 async function loadSubusers() {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const list = document.getElementById('subusers-list');
   
   try {
@@ -213,7 +214,7 @@ function getSelectedPermissions() {
 }
 
 async function saveSubuser(editId) {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const permissions = getSelectedPermissions();
   const saveBtn = document.getElementById('save-subuser');
   
@@ -257,7 +258,7 @@ async function deleteSubuser(id) {
   const confirmed = await modal.confirm({ title: 'Remove Subuser', message: 'Remove this subuser?', danger: true });
   if (!confirmed) return;
   
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   try {
     const res = await api(`/api/servers/${currentServerId}/subusers/${id}`, {

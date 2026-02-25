@@ -2,6 +2,7 @@ import { escapeHtml } from '../../../utils/security.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
+import { state as appState } from '../../../utils/state.js';
 import { state } from '../state.js';
 import { renderBreadcrumb, setupBreadcrumbListeners } from '../utils/ui.js';
 
@@ -375,7 +376,7 @@ window.editNestAdmin = async function(nestId) {
   if (nest) {
     // We need to trigger showNestModal. Since we don't have loadView reference here easily,
     // we rely on the modal's save function using adminNavigate or we pass a dummy.
-    showNestModal(localStorage.getItem('username'), nest, () => navigateTo('nests'));
+    showNestModal(appState.username, nest, () => navigateTo('nests'));
   }
 };
 

@@ -1,17 +1,16 @@
 import { escapeHtml } from '../utils/security.js';
 import * as toast from '../utils/toast.js';
-import { api, getToken, getUser } from '../utils/api.js';
+import { api, getToken } from '../utils/api.js';
+import { state } from '../utils/state.js';
 
 let pollInterval = null;
 let statusSockets = new Map();
 
 export async function renderServers() {
   const app = document.getElementById('app');
-  const user = getUser();
-  
   let canCreate = true;
   try {
-    const limitsRes = await api(`/api/user/limits?username=${encodeURIComponent(user.username)}`);
+    const limitsRes = await api(`/api/user/limits?username=${encodeURIComponent(state.username)}`);
     const limitsData = await limitsRes.json();
     canCreate = limitsData.canCreateServers !== false;
   } catch {}

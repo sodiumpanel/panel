@@ -1,4 +1,5 @@
 import { clearAuth, api } from '../utils/api.js';
+import { state } from '../utils/state.js';
 import { escapeHtml } from '../utils/security.js';
 
 export function renderNav() {
@@ -6,8 +7,9 @@ export function renderNav() {
   nav.id = 'navbar';
   nav.className = 'navbar';
   
-  const displayName = escapeHtml(localStorage.getItem('displayName') || localStorage.getItem('username') || 'User');
-  const isLoggedIn = !!localStorage.getItem('loggedIn');
+  const user = state.user;
+  const displayName = escapeHtml(user?.displayName || user?.username || 'User');
+  const isLoggedIn = state.isLoggedIn;
   
   nav.innerHTML = `
     <div class="nav-content">
@@ -98,7 +100,7 @@ export async function updateNav() {
   const nameEl = document.querySelector('#navbar .user-display-name');
   if (!avatarEl) return;
   
-  const username = localStorage.getItem('username');
+  const username = state.username;
   if (!username) return;
   
   try {

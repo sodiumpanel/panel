@@ -486,6 +486,24 @@ export function getDbInfo() {
   };
 }
 
+let nextCollectionId = 100;
+
+export function registerDynamicCollection(name) {
+  if (COLLECTIONS[name]) return;
+  COLLECTIONS[name] = nextCollectionId++;
+  cache[name] = [];
+  if (dbConnection) {
+    const safe = sanitizeTableName(name);
+    if (dbDriver === 'mysql') {
+      dbConnection.execute(`CREATE TABLE IF NOT EXISTS \`${safe}\` (id VARCHAR(255) PRIMARY KEY, data JSON NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`).catch(() => {});
+    } else if (dbDriver === 'postgres') {
+      dbConnection.query(`CREATE TABLE IF NOT EXISTS "${safe}" (id VARCHAR(255) PRIMARY KEY, data JSONB NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`).catch(() => {});
+    } else if (dbDriver === 'sqlite') {
+      try { dbConnection.exec(`CREATE TABLE IF NOT EXISTS "${safe}" (id TEXT PRIMARY KEY, data TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`); } catch {}
+    }
+  }
+}
+
 export function reloadDatabase() {
   if (dbConnection) {
     return loadFromExternalDb();

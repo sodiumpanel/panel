@@ -1,14 +1,40 @@
+import { api, getToken } from './api.js';
+import { state } from './state.js';
+
 const THEMES = ['dark', 'light', 'amoled'];
-const STORAGE_KEY = 'sodium-theme';
+
+let _currentTheme = 'dark';
 
 export function getTheme() {
-  return localStorage.getItem(STORAGE_KEY) || 'dark';
+  return _currentTheme;
 }
 
 export function setTheme(theme) {
   if (!THEMES.includes(theme)) theme = 'dark';
-  localStorage.setItem(STORAGE_KEY, theme);
+  _currentTheme = theme;
   applyTheme(theme);
+}
+
+export async function saveTheme(theme) {
+  setTheme(theme);
+  if (!getToken()) return;
+  try {
+    await api('/api/user/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ settings: { theme } })
+    });
+  } catch {}
+}
+
+export async function loadUserTheme() {
+  if (!getToken()) return;
+  try {
+    await state.load();
+    const theme = state.user?.settings?.theme;
+    if (theme && THEMES.includes(theme)) {
+      setTheme(theme);
+    }
+  } catch {}
 }
 
 export function applyTheme(theme) {
@@ -25,5 +51,5 @@ export function getAvailableThemes() {
 }
 
 export function initTheme() {
-  applyTheme(getTheme());
+  applyTheme(_currentTheme);
 }

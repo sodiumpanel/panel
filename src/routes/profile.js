@@ -1,12 +1,13 @@
 import { escapeHtml, escapeUrl } from '../utils/security.js';
 import { api } from '../utils/api.js';
+import { state } from '../utils/state.js';
 
 export function renderProfile() {
   const app = document.getElementById('app');
   app.className = 'profile-page';
   
-  const username = localStorage.getItem('username');
-  const displayName = localStorage.getItem('displayName') || username;
+  const username = state.username;
+  const displayName = state.user?.displayName || username;
   
   app.innerHTML = `
     <div class="profile-container">
@@ -125,8 +126,6 @@ export function renderProfile() {
       } else {
         messageEl.textContent = 'Profile updated successfully!';
         messageEl.className = 'message success';
-        localStorage.setItem('displayName', displayName);
-        
         const profileDisplayName = document.getElementById('profile-display-name');
         if (profileDisplayName) profileDisplayName.textContent = escapeHtml(displayName);
         
@@ -185,7 +184,7 @@ function updateAvatarPreview(url, container) {
 
 async function loadProfile() {
   try {
-    const username = localStorage.getItem('username');
+    const username = state.username;
     const res = await fetch(`/api/user/profile?username=${encodeURIComponent(username)}&viewer=${encodeURIComponent(username)}`);
     const data = await res.json();
     

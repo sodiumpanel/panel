@@ -24,9 +24,11 @@ import setupRoutes from './routes/setup.js';
 import healthRoutes from './routes/health.js';
 import metricsRoutes, { recordRequest } from './routes/metrics.js';
 import applicationApiRoutes from './routes/application-api.js';
+import pluginsRoutes from './routes/plugins.js';
 import { setupWebSocket } from './socket.js';
 import { isInstalled, loadFullConfig } from './config.js';
 import { initRedis } from './redis.js';
+import { loadPlugins, getPluginRouters, getPluginClientData } from './plugins/manager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -87,6 +89,26 @@ app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/servers', backupsRoutes);
 app.use('/api', schedulesRoutes);
 app.use('/api/application', applicationApiRoutes);
+app.use('/api/admin/plugins', pluginsRoutes);
+
+// Plugin client data endpoint
+app.get('/api/plugins/client-data', (req, res) => {
+  res.json({ plugins: getPluginClientData() });
+});
+
+// Plugin routes (mounted dynamically)
+app.use('/api/plugins', (req, res, next) => {
+  const parts = req.path.split('/').filter(Boolean);
+  if (parts.length < 1) return next();
+  const pluginId = parts[0];
+  const routers = getPluginRouters();
+  const match = routers.find(r => r.id === pluginId);
+  if (match) {
+    req.url = '/' + parts.slice(1).join('/') || '/';
+    return match.router(req, res, next);
+  }
+  next();
+});
 
 // Fallback para SPA
 app.get(/.*/, (req, res) => {
@@ -100,6 +122,7 @@ async function startServer() {
   if (isInstalled()) {
     await initRedis();
     startScheduler();
+    await loadPlugins();
   }
   
   server.listen(PORT, () => {

@@ -1,6 +1,7 @@
 import { escapeHtml } from '../utils/security.js';
 import * as toast from '../utils/toast.js';
-import { api, getUser } from '../utils/api.js';
+import { api } from '../utils/api.js';
+import { state } from '../utils/state.js';
 
 let selectedNest = null;
 let selectedEgg = null;
@@ -12,7 +13,7 @@ let currentResources = { memory: 512, disk: 1024 };
 
 export async function renderCreateServer() {
   const app = document.getElementById('app');
-  const user = getUser();
+  const user = state.user;
   
   app.innerHTML = `
     <div class="create-server-page">

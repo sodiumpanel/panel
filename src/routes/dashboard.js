@@ -1,4 +1,5 @@
 import { api, getToken } from '../utils/api.js';
+import { state } from '../utils/state.js';
 import { escapeHtml } from '../utils/security.js';
 
 let pollInterval = null;
@@ -8,7 +9,7 @@ export function renderDashboard() {
   const app = document.getElementById('app');
   app.className = 'dashboard-page';
   
-  const displayName = localStorage.getItem('displayName') || localStorage.getItem('username');
+  const displayName = state.user?.displayName || state.username;
   
   const hour = new Date().getHours();
   let greeting, icon, subtitle;
@@ -177,7 +178,7 @@ async function loadQuickStats() {
 }
 
 async function loadLimits() {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const container = document.getElementById('limits-display');
   if (!container) return;
   
@@ -376,7 +377,10 @@ async function loadAnnouncements() {
       return;
     }
     
-    const dismissed = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
+    let dismissed = [];
+    try {
+      dismissed = state.user?.settings?.dismissedAnnouncements || [];
+    } catch {}
     const activeAnnouncements = data.announcements.filter(a => !dismissed.includes(a.id));
     
     if (activeAnnouncements.length === 0) {
@@ -399,12 +403,18 @@ async function loadAnnouncements() {
       </div>
     `).join('');
     
-    window.dismissAnnouncement = (id) => {
-      const dismissed = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
-      dismissed.push(id);
-      localStorage.setItem('dismissedAnnouncements', JSON.stringify(dismissed));
+    window.dismissAnnouncement = async (id) => {
       const banner = document.querySelector(`.announcement-banner[data-id="${id}"]`);
       if (banner) banner.remove();
+      try {
+        const current = state.user?.settings?.dismissedAnnouncements || [];
+        current.push(id);
+        await api('/api/user/settings', {
+          method: 'PUT',
+          body: JSON.stringify({ settings: { dismissedAnnouncements: current } })
+        });
+        state.update({ settings: { ...state.user?.settings, dismissedAnnouncements: current } });
+      } catch {}
     };
   } catch (e) {
     console.error('Failed to load announcements:', e);

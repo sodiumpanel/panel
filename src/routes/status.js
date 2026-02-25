@@ -53,13 +53,10 @@ export function renderStatus() {
   pollInterval = setInterval(loadStatus, 30000);
 }
 
+const uptimeCache = {};
+
 function getUptimeBars(nodeId, currentStatus) {
-  const key = `sp_uptime_${nodeId}`;
-  let history = [];
-  try {
-    const stored = localStorage.getItem(key);
-    if (stored) history = JSON.parse(stored);
-  } catch {}
+  let history = uptimeCache[nodeId] || [];
   
   const today = new Date().toISOString().slice(0, 10);
   
@@ -80,9 +77,7 @@ function getUptimeBars(nodeId, currentStatus) {
     history = history.slice(-90);
   }
   
-  try {
-    localStorage.setItem(key, JSON.stringify(history));
-  } catch {}
+  uptimeCache[nodeId] = history;
   
   return history;
 }

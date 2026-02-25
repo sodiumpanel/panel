@@ -1,4 +1,4 @@
-import { getUser } from '../../utils/api.js';
+import { state as appState } from '../../utils/state.js';
 import { state } from './state.js';
 
 import { renderNodesList, renderNodeDetail } from './views/nodes.js';
@@ -10,6 +10,7 @@ import { renderSettingsPage } from './views/settings.js';
 import { renderAnnouncementsList } from './views/announcements.js';
 import { renderAuditLogPage, renderActivityLogPage } from './views/logs.js';
 import { renderWebhooksList } from './views/webhooks.js';
+import { renderPluginsList } from './views/plugins.js';
 
 function navigateTo(tab, id = null, subTab = null) {
   state.currentView = { 
@@ -35,7 +36,7 @@ window.adminNavigate = navigateTo;
 
 export async function renderAdmin(tab = 'nodes', params = {}) {
   const app = document.getElementById('app');
-  const user = getUser();
+  const user = appState.user;
   
   app.innerHTML = '<div class="loading-spinner"></div>';
   
@@ -75,7 +76,7 @@ export async function renderAdmin(tab = 'nodes', params = {}) {
 
 export async function loadView() {
   const container = document.getElementById('admin-content');
-  const username = localStorage.getItem('username');
+  const username = appState.username;
   
   container.innerHTML = '<div class="loading-spinner"></div>';
   
@@ -125,6 +126,9 @@ export async function loadView() {
         break;
       case 'webhooks':
         await renderWebhooksList(container, username, loadView);
+        break;
+      case 'plugins':
+        await renderPluginsList(container);
         break;
     }
   }

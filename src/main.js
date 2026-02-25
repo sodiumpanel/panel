@@ -1,7 +1,9 @@
 import './styles/main.scss';
 import '@xterm/xterm/css/xterm.css';
 import { router } from './router.js';
-import { initTheme } from './utils/theme.js';
+import { initTheme, loadUserTheme } from './utils/theme.js';
+import { isLoggedIn } from './utils/api.js';
+import { loadPluginData } from './utils/plugins.js';
 
 initTheme();
 
@@ -25,6 +27,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   
+  if (isLoggedIn()) {
+    await Promise.all([loadUserTheme(), loadPluginData()]);
+  }
+
   setTimeout(() => {
     loading.classList.add('hidden');
     loading.addEventListener('transitionend', () => {

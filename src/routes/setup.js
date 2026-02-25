@@ -5,8 +5,7 @@ export async function renderSetup() {
   app.className = 'setup-page';
   
   // Theme handling
-  const savedTheme = localStorage.getItem('sodium-theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.documentElement.setAttribute('data-theme', 'dark');
   
   let currentStep = 1;
   const totalSteps = 5;
@@ -326,7 +325,6 @@ export async function renderSetup() {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('sodium-theme', next);
       render();
     });
     

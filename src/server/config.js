@@ -46,6 +46,11 @@ export const DEFAULT_CONFIG = {
   features: {
     subusers: true,
     disableUserServerCreation: false
+  },
+  plugins: {
+    enabled: true,
+    directory: 'data/plugins',
+    active: []
   }
 };
 

@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { state } from '../../utils/state.js';
 import { formatBytes } from '../../utils/format.js';
 import { renderConsoleTab, initConsoleTab, cleanupConsoleTab, setConsoleCallbacks } from './console.js';
 import { renderFilesTab, initFilesTab, cleanupFilesTab } from './files.js';
@@ -290,7 +291,7 @@ function cleanupCurrentTab() {
 }
 
 async function loadServerDetails(serverId) {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   try {
     const res = await api(`/api/servers/${serverId}`);
@@ -398,7 +399,7 @@ function showInstallingScreen() {
 }
 
 async function checkInstallStatus() {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   try {
     const res = await api(`/api/servers/${currentServerId}`);
@@ -426,7 +427,7 @@ async function checkInstallStatus() {
 }
 
 async function powerAction(serverId, action) {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   
   try {
     const res = await api(`/api/servers/${serverId}/power`, {

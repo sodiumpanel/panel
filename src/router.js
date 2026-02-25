@@ -105,7 +105,7 @@ export function router() {
     route = routes['/404'];
   }
   
-  const isAuthenticated = !!localStorage.getItem('auth_token');
+  const isAuthenticated = !!localStorage.getItem('auth_token'); // only localStorage usage: auth_token
   
   if (route.redirect) {
     window.history.replaceState({}, '', route.redirect);

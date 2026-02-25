@@ -1,4 +1,5 @@
-import { getUser } from '../utils/api.js';
+import { state } from '../utils/state.js';
+import { getPluginSidebarItems } from '../utils/plugins.js';
 
 export function renderSidebar() {
   const overlay = document.createElement('div');
@@ -10,7 +11,7 @@ export function renderSidebar() {
   sidebar.className = 'sidebar';
   
   const currentPath = window.location.pathname;
-  const user = getUser();
+  const user = state.user;
   
   const sections = [
     {
@@ -47,10 +48,30 @@ export function renderSidebar() {
       { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
       { path: '/admin/webhooks', icon: 'webhook', label: 'Webhooks' },
       { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
+      { path: '/admin/plugins', icon: 'extension', label: 'Plugins' },
       { path: '/admin/settings', icon: 'tune', label: 'Panel Settings' }
     ]
   };
   
+  // Plugin sidebar items
+  const pluginItems = getPluginSidebarItems();
+  if (pluginItems.length > 0) {
+    const insertIdx = sections.findIndex(s => s.label === 'Account');
+    const pluginSection = {
+      label: 'Plugins',
+      items: pluginItems.map(item => ({
+        path: item.href,
+        icon: item.icon || 'extension',
+        label: item.label
+      }))
+    };
+    if (insertIdx !== -1) {
+      sections.splice(insertIdx, 0, pluginSection);
+    } else {
+      sections.push(pluginSection);
+    }
+  }
+
   if (user?.isAdmin) {
     sections.push(adminSection);
   }

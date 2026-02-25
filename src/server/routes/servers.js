@@ -6,6 +6,7 @@ import { hasPermission } from '../utils/permissions.js';
 import { authenticateUser } from '../utils/auth.js';
 import { getServerAndNode } from '../utils/server-access.js';
 import logger from '../utils/logger.js';
+import { executeHook } from '../plugins/hooks.js';
 
 // Cache node status to avoid hammering Wings on every request
 const nodeStatusCache = new Map();
@@ -260,6 +261,11 @@ router.post('/', authenticateUser, async (req, res) => {
     allocation = { ip: '0.0.0.0', port: randomPort };
   }
   
+  const beforeCtx = await executeHook('server:beforeCreate', { user, name, node: selectedNode });
+  if (beforeCtx._denied) {
+    return res.status(403).json({ error: beforeCtx._denyReason || 'Server creation denied by plugin' });
+  }
+
   const uuid = generateUUID();
   const newServer = {
     id: uuid,
@@ -376,6 +382,7 @@ router.post('/', authenticateUser, async (req, res) => {
       saveServers(updatedServers);
     }
     
+    executeHook('server:onCreate', { server: newServer, user });
     res.json({ success: true, server: newServer });
   } catch (e) {
     logger.error(`Server create Wings error: ${e.message}`);
@@ -439,6 +446,7 @@ router.post('/:id/power', authenticateUser, async (req, res) => {
   const { server, node } = result;
   try {
     await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/power`, { action });
+    executeHook('server:onStatusChange', { server, action, user: req.user });
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -649,6 +657,7 @@ router.delete('/:id', authenticateUser, async (req, res) => {
   const data = loadServers();
   data.servers = data.servers.filter(s => s.id !== req.params.id);
   saveServers(data);
+  executeHook('server:onDelete', { server, user });
   res.json({ success: true });
 });
 

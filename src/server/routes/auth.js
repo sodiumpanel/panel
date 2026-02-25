@@ -8,6 +8,7 @@ import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
 import { rateLimit } from '../utils/rate-limiter.js';
 import { logActivity, ACTIVITY_TYPES } from '../utils/activity.js';
 import { sendVerificationEmail, send2FACode, sendPasswordReset, getTransporter } from '../utils/mail.js';
+import { executeHook } from '../plugins/hooks.js';
 
 const router = express.Router();
 
@@ -204,6 +205,7 @@ router.post('/register', authLimiter, async (req, res) => {
   );
   
   logActivity(newUser.id, ACTIVITY_TYPES.LOGIN, { method: 'register' }, req.ip);
+  executeHook('auth:afterRegister', { user: userWithoutPassword, ip: req.ip });
   
   res.json({ 
     success: true, 
@@ -303,6 +305,7 @@ router.post('/login', authLimiter, async (req, res) => {
   );
   
   logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'password' }, req.ip);
+  executeHook('auth:afterLogin', { user: userWithoutSensitive, ip: req.ip, method: 'password' });
   
   res.json({ success: true, user: userWithoutSensitive, token });
 });

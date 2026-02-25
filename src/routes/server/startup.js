@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { state } from '../../utils/state.js';
 import * as toast from '../../utils/toast.js';
 import * as modal from '../../utils/modal.js';
 import { escapeHtml } from '../../utils/security.js';
@@ -183,7 +184,7 @@ export async function initStartupTab(serverId) {
 }
 
 async function loadStartupData(serverId) {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const content = document.getElementById('startup-content');
   
   try {
@@ -475,7 +476,7 @@ function parseStartupCommand(command, environment, server) {
 }
 
 async function saveStartup() {
-  const username = localStorage.getItem('username');
+  const username = state.username;
   const saveBtn = document.getElementById('save-startup');
   
   // Validate before saving
