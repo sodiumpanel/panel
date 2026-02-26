@@ -33,7 +33,7 @@ export async function executeHook(event, context = {}) {
       await handler(ctx);
       if (ctx._denied) break;
     } catch (err) {
-      logger.warn(`[Plugins] Hook "${event}" error: ${err.message}`);
+      logger.warn(`Hook "${event}" error: ${err.message}`);
     }
   }
 

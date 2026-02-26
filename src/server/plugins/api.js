@@ -15,9 +15,9 @@ export function createPluginApi(plugin, manager) {
   plugin._eventHandlers = [];
 
   const pluginLogger = {
-    info: (msg) => logger.info(`[Plugin:${pluginId}] ${msg}`),
-    warn: (msg) => logger.warn(`[Plugin:${pluginId}] ${msg}`),
-    error: (msg) => logger.error(`[Plugin:${pluginId}] ${msg}`)
+    info: (msg) => logger.info(`Plugin:${pluginId}: ${msg}`),
+    warn: (msg) => logger.warn(`Plugin:${pluginId}: ${msg}`),
+    error: (msg) => logger.error(`Plugin:${pluginId}: ${msg}`)
   };
 
   const sodium = {

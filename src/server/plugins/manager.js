@@ -63,12 +63,12 @@ export async function loadPlugins() {
         await activatePlugin(plugin.id);
       }
     } catch (err) {
-      logger.warn(`[Plugins] Failed to load manifest for "${dir}": ${err.message}`);
+      logger.warn(`Failed to load manifest for "${dir}": ${err.message}`);
     }
   }
 
   startCronRunner();
-  logger.info(`[Plugins] Loaded ${plugins.size} plugins (${[...plugins.values()].filter(p => p.active).length} active)`);
+  logger.info(`Loaded ${plugins.size} plugins (${[...plugins.values()].filter(p => p.active).length} active)`);
 }
 
 export async function activatePlugin(pluginId) {
@@ -91,7 +91,7 @@ export async function activatePlugin(pluginId) {
       }
       plugin._serverModule = mod;
     } catch (err) {
-      logger.warn(`[Plugins] Failed to load server.js for "${pluginId}": ${err.message}`);
+      logger.warn(`Failed to load server.js for "${pluginId}": ${err.message}`);
     }
   }
 
@@ -103,7 +103,7 @@ export async function activatePlugin(pluginId) {
 
   plugin.active = true;
   updateActiveList(pluginId, true);
-  logger.info(`[Plugins] Activated "${pluginId}"`);
+  logger.info(`Activated "${pluginId}"`);
 }
 
 export async function deactivatePlugin(pluginId) {
@@ -130,7 +130,7 @@ export async function deactivatePlugin(pluginId) {
   plugin._methods = {};
 
   updateActiveList(pluginId, false);
-  logger.info(`[Plugins] Deactivated "${pluginId}"`);
+  logger.info(`Deactivated "${pluginId}"`);
 }
 
 function updateActiveList(pluginId, add) {
@@ -202,7 +202,7 @@ export function emitPluginEvent(event, data) {
         try {
           entry.handler(data);
         } catch (err) {
-          logger.warn(`[Plugins] Event handler error in "${plugin.id}": ${err.message}`);
+          logger.warn(`Event handler error in "${plugin.id}": ${err.message}`);
         }
       }
     }
@@ -260,7 +260,7 @@ function startCronRunner() {
       for (const cron of crons) {
         if (matchesCron(cron.schedule, now)) {
           cron.handler().catch(err =>
-            logger.warn(`[Plugins] Cron "${cron.id}" error: ${err.message}`)
+            logger.warn(`Cron "${cron.id}" error: ${err.message}`)
           );
         }
       }

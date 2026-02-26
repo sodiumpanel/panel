@@ -51869,10 +51869,10 @@ async function renderPluginsList(container) {
     container.innerHTML = `
       <div class="admin-section">
         <div class="section-header">
-          <h2>Plugins</h2>
-          <p class="section-desc">Manage installed plugins</p>
+          ${renderBreadcrumb([{ label: "Plugins" }])}
         </div>
-
+      </div>
+      <div class="admin-list">
         ${plugins.length === 0 ? `
           <div class="empty-state">
             <span class="material-icons-outlined">extension_off</span>
@@ -51880,8 +51880,8 @@ async function renderPluginsList(container) {
             <small>Place plugin folders in <code>data/plugins/</code> and restart the panel</small>
           </div>
         ` : `
-          <div class="table-container">
-            <table class="data-table">
+          <div class="list-table">
+            <table>
               <thead>
                 <tr>
                   <th>Name</th>
