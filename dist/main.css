@@ -1678,8 +1678,6 @@ a {
 }
 
 .profile-card {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
   padding: 20px;
 }
 @media (max-width: 480px) {
@@ -1732,8 +1730,6 @@ a {
 }
 
 .profile-form {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
   padding: 20px;
 }
 @media (max-width: 480px) {
@@ -1742,6 +1738,9 @@ a {
   }
 }
 .profile-form .form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 24px;
 }
 .profile-form .form-section h3 {

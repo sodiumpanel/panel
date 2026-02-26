@@ -11,11 +11,6 @@ export function renderProfile() {
   
   app.innerHTML = `
     <div class="profile-container">
-      <div class="profile-header">
-        <h1>Profile</h1>
-        <p>Manage your public profile information</p>
-      </div>
-      
       <div class="profile-content">
         <div class="profile-card">
           <div class="avatar-section">

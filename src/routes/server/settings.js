@@ -129,8 +129,8 @@ function renderDetailsForm(server) {
           <span class="info-value">${formatDate(server.created_at)}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Address</span>
-          <span class="info-value">${escapeHtml(server.allocation?.ip || '0.0.0.0')}:${server.allocation?.port || 25565}</span>
+          <span class="info-label">Port</span>
+          <span class="info-value">${server.allocation?.port || 25565}</span>
         </div>
       </div>
       

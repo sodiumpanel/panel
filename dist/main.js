@@ -1478,11 +1478,6 @@ function renderProfile() {
   
   app.innerHTML = `
     <div class="profile-container">
-      <div class="profile-header">
-        <h1>Profile</h1>
-        <p>Manage your public profile information</p>
-      </div>
-      
       <div class="profile-content">
         <div class="profile-card">
           <div class="avatar-section">
@@ -44814,8 +44809,8 @@ function renderDetailsForm(server) {
           <span class="info-value">${formatDate$2(server.created_at)}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Address</span>
-          <span class="info-value">${escapeHtml$1(server.allocation?.ip || '0.0.0.0')}:${server.allocation?.port || 25565}</span>
+          <span class="info-label">Port</span>
+          <span class="info-value">${server.allocation?.port || 25565}</span>
         </div>
       </div>
       
