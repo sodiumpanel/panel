@@ -43,11 +43,14 @@ export async function loadPlugins() {
         manifest,
         active: active.includes(manifest.id || dir),
         _router: null,
-        _pages: null,
+        _pages: [],
         _sidebarItems: [],
         _serverTabs: [],
         _dashboardWidgets: [],
         _adminTabs: [],
+        _adminPages: [],
+        _middlewares: [],
+        _eventHandlers: [],
         _serverModule: null,
         _clientModule: null,
         _api: null,
@@ -72,7 +75,7 @@ export async function activatePlugin(pluginId) {
   const plugin = plugins.get(pluginId);
   if (!plugin) throw new Error(`Plugin "${pluginId}" not found`);
 
-  const api = createPluginApi(plugin, { callPluginMethod });
+  const api = createPluginApi(plugin, { callPluginMethod, emitEvent: emitPluginEvent });
   plugin._api = api;
 
   // Load server module
@@ -114,7 +117,10 @@ export async function deactivatePlugin(pluginId) {
 
   plugin.active = false;
   plugin._router = null;
-  plugin._pages = null;
+  plugin._pages = [];
+  plugin._adminPages = [];
+  plugin._middlewares = [];
+  plugin._eventHandlers = [];
   plugin._sidebarItems = [];
   plugin._serverTabs = [];
   plugin._dashboardWidgets = [];
@@ -178,6 +184,31 @@ export function getPluginRouters() {
   return routers;
 }
 
+export function getPluginMiddlewares() {
+  const middlewares = [];
+  for (const plugin of plugins.values()) {
+    if (plugin.active && plugin._middlewares.length > 0) {
+      middlewares.push(...plugin._middlewares);
+    }
+  }
+  return middlewares;
+}
+
+export function emitPluginEvent(event, data) {
+  for (const plugin of plugins.values()) {
+    if (!plugin.active) continue;
+    for (const entry of plugin._eventHandlers) {
+      if (entry.event === event) {
+        try {
+          entry.handler(data);
+        } catch (err) {
+          logger.warn(`[Plugins] Event handler error in "${plugin.id}": ${err.message}`);
+        }
+      }
+    }
+  }
+}
+
 export function getPluginClientData() {
   const data = [];
   for (const plugin of plugins.values()) {
@@ -185,12 +216,14 @@ export function getPluginClientData() {
     data.push({
       id: plugin.id,
       name: plugin.manifest.name,
+      version: plugin.manifest.version,
       type: plugin.manifest.type,
-      pages: plugin._pages || null,
+      pages: plugin._pages || [],
       sidebarItems: plugin._sidebarItems || [],
       serverTabs: plugin._serverTabs || [],
       dashboardWidgets: plugin._dashboardWidgets || [],
       adminTabs: plugin._adminTabs || [],
+      adminPages: plugin._adminPages || [],
       hasClient: !!plugin._clientModule
     });
   }

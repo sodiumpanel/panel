@@ -172,6 +172,18 @@ export const routes = {
   }
 };
 
+export function getAdminPluginRoute(tabKey) {
+  return {
+    render: () => renderAdmin(tabKey),
+    cleanup: cleanupAdmin,
+    options: {
+      title: 'Plugin',
+      auth: true,
+      sidebar: true
+    }
+  };
+}
+
 export function getUserRoute(username) {
   return {
     render: () => renderUser(username),

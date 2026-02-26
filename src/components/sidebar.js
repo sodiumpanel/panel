@@ -1,5 +1,5 @@
 import { state } from '../utils/state.js';
-import { getPluginSidebarItems } from '../utils/plugins.js';
+import { getPluginSidebarItems, getPluginAdminPages } from '../utils/plugins.js';
 
 export function renderSidebar() {
   const overlay = document.createElement('div');
@@ -73,6 +73,15 @@ export function renderSidebar() {
   }
 
   if (user?.isAdmin) {
+    // Add plugin admin pages to admin section
+    const pluginAdminPages = getPluginAdminPages();
+    for (const page of pluginAdminPages) {
+      adminSection.items.push({
+        path: `/admin/plugin:${page.pluginId}:${page.id}`,
+        icon: page.icon || 'extension',
+        label: page.title || page.id
+      });
+    }
     sections.push(adminSection);
   }
   

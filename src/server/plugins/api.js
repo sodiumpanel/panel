@@ -2,12 +2,17 @@ import express from 'express';
 import { registerHook, removeAllHooks } from './hooks.js';
 import logger from '../utils/logger.js';
 import * as db from '../db.js';
+import { authenticateUser, requireAdmin } from '../utils/auth.js';
 
 export function createPluginApi(plugin, manager) {
   const pluginId = plugin.id;
   const collectionPrefix = `plugins_${pluginId}_`;
   const registeredCollections = [];
   const registeredCrons = [];
+
+  plugin._middlewares = [];
+  plugin._adminPages = [];
+  plugin._eventHandlers = [];
 
   const pluginLogger = {
     info: (msg) => logger.info(`[Plugin:${pluginId}] ${msg}`),
@@ -55,6 +60,9 @@ export function createPluginApi(plugin, manager) {
         const router = express.Router();
         fn(router);
         plugin._router = router;
+      },
+      addMiddleware(fn) {
+        plugin._middlewares.push(fn);
       }
     },
 
@@ -102,9 +110,49 @@ export function createPluginApi(plugin, manager) {
 
     logger: pluginLogger,
 
+    data: {
+      getUsers() { return db.getAll('users'); },
+      getServers() { return db.getAll('servers'); },
+      getNodes() { return db.getAll('nodes'); },
+      findUser(id) { return db.findById('users', id); },
+      findServer(id) { return db.findById('servers', id); },
+      findNode(id) { return db.findById('nodes', id); }
+    },
+
+    auth: {
+      requireUser: authenticateUser,
+      requireAdmin: requireAdmin
+    },
+
+    events: {
+      on(event, handler) {
+        plugin._eventHandlers.push({ event, handler });
+      },
+      emit(event, data) {
+        manager.emitEvent(event, data);
+      }
+    },
+
+    meta: {
+      id: pluginId,
+      name: plugin.manifest.name,
+      version: plugin.manifest.version
+    },
+
     ui: {
       registerPages(pages) {
-        plugin._pages = pages;
+        if (Array.isArray(pages)) {
+          plugin._pages = pages;
+        } else {
+          plugin._pages = Object.entries(pages).map(([id, page]) => ({ id, ...page }));
+        }
+      },
+      addPage(page) {
+        if (!plugin._pages) plugin._pages = [];
+        plugin._pages.push(page);
+      },
+      addAdminPage(page) {
+        plugin._adminPages.push(page);
       },
       addSidebarItem(item) {
         if (!plugin._sidebarItems) plugin._sidebarItems = [];
@@ -128,6 +176,7 @@ export function createPluginApi(plugin, manager) {
   sodium._cleanup = () => {
     removeAllHooks(pluginId);
     registeredCrons.length = 0;
+    plugin._eventHandlers.length = 0;
   };
 
   sodium._getCrons = () => registeredCrons;

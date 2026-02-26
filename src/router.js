@@ -1,6 +1,7 @@
-import { routes, getUserRoute, getServerRoute } from './routes/routes.js';
+import { routes, getUserRoute, getServerRoute, getAdminPluginRoute } from './routes/routes.js';
 import { renderNav, updateNav } from './components/nav.js';
 import { renderSidebar } from './components/sidebar.js';
+import { getPluginPages, renderPluginPage } from './utils/plugins.js';
 
 let mounted = false;
 let currentCleanup = null;
@@ -94,10 +95,36 @@ export function router() {
     }
   }
   
+  // Handle admin plugin pages (format: /admin/plugin:pluginId:pageId)
+  if (!route && path.startsWith('/admin/plugin:')) {
+    const tabKey = path.replace('/admin/', '');
+    route = getAdminPluginRoute(tabKey);
+  }
+  
   if (!route && path.startsWith('/server/')) {
     const serverId = path.split('/')[2];
     if (serverId) {
       route = getServerRoute(serverId);
+    }
+  }
+  
+  // Check plugin pages
+  if (!route) {
+    const pluginPages = getPluginPages();
+    const pluginPage = pluginPages.find(p => p.path === path);
+    if (pluginPage) {
+      route = {
+        render: () => {
+          const app = document.getElementById('app');
+          app.className = 'plugin-page';
+          renderPluginPage(pluginPage.pluginId, pluginPage.id, app);
+        },
+        options: {
+          title: pluginPage.title || 'Plugin',
+          auth: true,
+          sidebar: pluginPage.sidebar !== false
+        }
+      };
     }
   }
   

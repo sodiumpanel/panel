@@ -1332,11 +1332,12 @@ a {
   color: var(--text-secondary);
   font-size: 13px;
 }
-.dashboard-header .quick-stats {
+
+.quick-stats {
   display: flex;
   gap: 8px;
 }
-.dashboard-header .quick-stats .stat-chip {
+.quick-stats .stat-chip {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1347,23 +1348,23 @@ a {
   font-size: 12px;
   font-weight: 500;
 }
-.dashboard-header .quick-stats .stat-chip .material-icons-outlined {
+.quick-stats .stat-chip .material-icons-outlined {
   font-size: 14px;
 }
-.dashboard-header .quick-stats .stat-chip.online .material-icons-outlined {
+.quick-stats .stat-chip.online .material-icons-outlined {
   color: var(--success);
 }
-.dashboard-header .quick-stats .stat-chip.starting .material-icons-outlined, .dashboard-header .quick-stats .stat-chip.stopping .material-icons-outlined {
+.quick-stats .stat-chip.starting .material-icons-outlined, .quick-stats .stat-chip.stopping .material-icons-outlined {
   color: var(--warning);
 }
-.dashboard-header .quick-stats .stat-chip.offline .material-icons-outlined {
+.quick-stats .stat-chip.offline .material-icons-outlined {
   color: var(--text-tertiary);
 }
-.dashboard-header .quick-stats .stat-chip.offline {
+.quick-stats .stat-chip.offline {
   color: var(--text-secondary);
 }
 @media (max-width: 480px) {
-  .dashboard-header .quick-stats .stat-chip {
+  .quick-stats .stat-chip {
     padding: 5px 10px;
     font-size: 11px;
   }

@@ -258,9 +258,6 @@ function renderStartupForm(server, egg) {
   externalContent.innerHTML = `
     <form id="startup-form" class="startup-form">
       <div class="variables-section">
-        <h4>Environment Variables</h4>
-        <p class="form-hint">Configure the variables used by this server.</p>
-        
         <div class="variables-list">
           ${variables.length === 0 ? '<div class="empty">No variables defined for this egg</div>' : ''}
           ${variables.map(v => {

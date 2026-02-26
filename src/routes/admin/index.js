@@ -11,6 +11,7 @@ import { renderAnnouncementsList } from './views/announcements.js';
 import { renderAuditLogPage, renderActivityLogPage } from './views/logs.js';
 import { renderWebhooksList } from './views/webhooks.js';
 import { renderPluginsList } from './views/plugins.js';
+import { getPluginAdminPages, renderPluginAdminPage } from '../../utils/plugins.js';
 
 function navigateTo(tab, id = null, subTab = null) {
   state.currentView = { 
@@ -129,6 +130,15 @@ export async function loadView() {
         break;
       case 'plugins':
         await renderPluginsList(container);
+        break;
+      default:
+        // Check for plugin admin pages (format: "plugin:pluginId:pageId")
+        if (state.currentView.tab.startsWith('plugin:')) {
+          const parts = state.currentView.tab.split(':');
+          renderPluginAdminPage(parts[1], parts[2], container);
+        } else {
+          container.innerHTML = `<div class="empty-state"><p>Page not found</p></div>`;
+        }
         break;
     }
   }

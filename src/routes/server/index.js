@@ -9,6 +9,7 @@ import { renderUsersTab, initUsersTab, cleanupUsersTab } from './users.js';
 import { renderSchedulesTab, initSchedulesTab, cleanupSchedulesTab } from './schedules.js';
 import { renderSettingsTab, initSettingsTab, cleanupSettingsTab } from './settings.js';
 import { renderBackupsTab, initBackupsTab, cleanupBackupsTab } from './backups.js';
+import { getPluginServerTabs, renderPluginServerTab } from '../../utils/plugins.js';
 
 let currentServerId = null;
 let serverLimits = null;
@@ -78,6 +79,12 @@ export function renderServerPage(serverId) {
                   data-tab="${tab.id}" ${tab.disabled ? 'disabled' : ''}>
             <span class="material-icons-outlined">${tab.icon}</span>
             <span>${tab.label}</span>
+          </button>
+        `).join('')}
+        ${getPluginServerTabs().map(tab => `
+          <button class="server-tab" data-tab="plugin:${tab.pluginId}:${tab.id}">
+            <span class="material-icons-outlined">${tab.icon || 'extension'}</span>
+            <span>${tab.label || tab.id}</span>
           </button>
         `).join('')}
       </div>
@@ -257,7 +264,16 @@ function switchTab(tabId) {
       initSettingsTab(currentServerId);
       break;
     default:
-      content.innerHTML = `<div class="card"><p>Coming soon...</p></div>`;
+      // Handle plugin tabs (format: "plugin:pluginId:tabId")
+      if (tabId.startsWith('plugin:')) {
+        const parts = tabId.split(':');
+        const pluginId = parts[1];
+        const pluginTabId = parts[2];
+        content.innerHTML = '';
+        renderPluginServerTab(pluginId, pluginTabId, content, currentServerId);
+      } else {
+        content.innerHTML = `<div class="card"><p>Coming soon...</p></div>`;
+      }
   }
 }
 

@@ -28,7 +28,7 @@ import pluginsRoutes from './routes/plugins.js';
 import { setupWebSocket } from './socket.js';
 import { isInstalled, loadFullConfig } from './config.js';
 import { initRedis } from './redis.js';
-import { loadPlugins, getPluginRouters, getPluginClientData } from './plugins/manager.js';
+import { loadPlugins, getPluginRouters, getPluginClientData, getPlugin, getPluginMiddlewares } from './plugins/manager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -67,6 +67,20 @@ app.use(metricsRoutes);
 // Setup routes (always available)
 app.use('/api/setup', setupRoutes);
 
+// Plugin client data endpoint (no auth required - frontend needs this to load)
+app.get('/api/plugins/client-data', (req, res) => {
+  res.json({ plugins: getPluginClientData() });
+});
+
+// Serve plugin client.js files (no auth - loaded as ES modules)
+app.get('/api/plugins/:id/client.js', (req, res) => {
+  const plugin = getPlugin(req.params.id);
+  if (!plugin?.active || !plugin._clientModule) {
+    return res.status(404).json({ error: 'Plugin client not found' });
+  }
+  res.type('application/javascript').sendFile(plugin._clientModule);
+});
+
 // Middleware to check if installed
 app.use('/api', (req, res, next) => {
   if (!isInstalled() && !req.path.startsWith('/setup')) {
@@ -88,16 +102,21 @@ app.use('/api/admin/audit-logs', auditLogsRoutes);
 app.use('/api/activity', activityLogsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/servers', backupsRoutes);
-app.use('/api', schedulesRoutes);
-app.use('/api/application', applicationApiRoutes);
 app.use('/api/admin/plugins', pluginsRoutes);
 
-// Plugin client data endpoint
-app.get('/api/plugins/client-data', (req, res) => {
-  res.json({ plugins: getPluginClientData() });
+// Plugin middlewares (applied before plugin routes)
+app.use('/api/plugins', (req, res, next) => {
+  const middlewares = getPluginMiddlewares();
+  if (middlewares.length === 0) return next();
+  let i = 0;
+  const run = () => {
+    if (i >= middlewares.length) return next();
+    middlewares[i++](req, res, run);
+  };
+  run();
 });
 
-// Plugin routes (mounted dynamically)
+// Plugin routes (mounted dynamically - BEFORE schedulesRoutes to avoid global auth)
 app.use('/api/plugins', (req, res, next) => {
   const parts = req.path.split('/').filter(Boolean);
   if (parts.length < 1) return next();
@@ -110,6 +129,10 @@ app.use('/api/plugins', (req, res, next) => {
   }
   next();
 });
+
+// These must come after plugin routes (schedulesRoutes has global auth middleware)
+app.use('/api', schedulesRoutes);
+app.use('/api/application', applicationApiRoutes);
 
 // Fallback para SPA
 app.get(/.*/, (req, res) => {

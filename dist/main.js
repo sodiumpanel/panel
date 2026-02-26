@@ -4140,7 +4140,7 @@ async function connectWebSocket(serverId) {
   
   consoleSocket.onerror = (error) => {
     console.error('WebSocket error:', error);
-    writeError('WebSocket connection failed');
+    writeError('Connection to the node failed. The node may be offline or unreachable.');
   };
 }
 
@@ -41981,7 +41981,11 @@ async function loadFiles(serverId, path) {
     renderFilesList(data.files || [], serverId);
   } catch (e) {
     console.error('Failed to load files:', e);
-    filesList.innerHTML = '<div class="files-error">Failed to load files</div>';
+    const isNodeError = e.message?.includes('node') || e.message?.includes('connect') || e.message?.includes('offline');
+    const msg = isNodeError 
+      ? '<span class="material-icons-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
+      : 'Failed to load files';
+    filesList.innerHTML = `<div class="files-error">${msg}</div>`;
   }
 }
 
@@ -43203,9 +43207,6 @@ function renderStartupForm(server, egg) {
   externalContent.innerHTML = `
     <form id="startup-form" class="startup-form">
       <div class="variables-section">
-        <h4>Environment Variables</h4>
-        <p class="form-hint">Configure the variables used by this server.</p>
-        
         <div class="variables-list">
           ${variables.length === 0 ? '<div class="empty">No variables defined for this egg</div>' : ''}
           ${variables.map(v => {
@@ -45408,6 +45409,289 @@ function cleanupBackupsTab() {
   isModalOpen = false;
 }
 
+let _pluginData = null;
+let _loading = null;
+const _clientModules = new Map();
+const _renderFns = {
+  pages: new Map(),
+  serverTabs: new Map(),
+  widgets: new Map(),
+  adminPages: new Map()
+};
+const _eventHandlers = {};
+
+// --- Event system for client-side plugins ---
+
+function emitPluginEvent(event, data) {
+  const handlers = _eventHandlers[event];
+  if (!handlers) return;
+  for (const fn of handlers) {
+    try { fn(data); } catch (e) { console.warn(`[Plugin event] ${event} error:`, e); }
+  }
+}
+
+function onPluginEvent(event, handler) {
+  if (!_eventHandlers[event]) _eventHandlers[event] = [];
+  _eventHandlers[event].push(handler);
+}
+
+function offPluginEvent(event, handler) {
+  if (!_eventHandlers[event]) return;
+  _eventHandlers[event] = _eventHandlers[event].filter(h => h !== handler);
+}
+
+// --- Create client-side sodium API for a plugin ---
+
+function createClientApi(pluginMeta) {
+  const pluginId = pluginMeta.id;
+
+  return {
+    plugin: {
+      id: pluginId,
+      name: pluginMeta.name,
+      version: pluginMeta.version
+    },
+
+    api: (path, opts = {}) => {
+      const url = `/api/plugins/${pluginId}${path.startsWith('/') ? path : '/' + path}`;
+      return api(url, opts);
+    },
+
+    ui: {
+      onRenderPage(pageId, renderFn) {
+        _renderFns.pages.set(`${pluginId}:${pageId}`, renderFn);
+      },
+      onRenderServerTab(tabId, renderFn) {
+        _renderFns.serverTabs.set(`${pluginId}:${tabId}`, renderFn);
+      },
+      onRenderWidget(widgetId, renderFn) {
+        _renderFns.widgets.set(`${pluginId}:${widgetId}`, renderFn);
+      },
+      onRenderAdminPage(pageId, renderFn) {
+        _renderFns.adminPages.set(`${pluginId}:${pageId}`, renderFn);
+      }
+    },
+
+    events: {
+      on: onPluginEvent,
+      off: offPluginEvent,
+      emit: emitPluginEvent
+    },
+
+    navigate(path) {
+      if (window.router?.navigateTo) {
+        window.router.navigateTo(path);
+      }
+    },
+
+    toast: {
+      success: (msg) => success(msg),
+      error: (msg) => error(msg),
+      info: (msg) => info?.(msg) || success(msg)
+    },
+
+    modal: {
+      show: (opts) => show(opts),
+      confirm: (opts) => confirm$1?.(opts) || show(opts)
+    },
+
+    escapeHtml: escapeHtml$1
+  };
+}
+
+// --- Load plugin metadata + client modules ---
+
+async function loadPluginData() {
+  if (_pluginData) return _pluginData;
+  if (_loading) return _loading;
+
+  _loading = (async () => {
+    try {
+      const res = await fetch('/api/plugins/client-data');
+      const data = await res.json();
+      _pluginData = data.plugins || [];
+    } catch {
+      _pluginData = [];
+    }
+
+    // Load client modules for plugins that have them
+    const loadPromises = _pluginData
+      .filter(p => p.hasClient)
+      .map(async (pluginMeta) => {
+        try {
+          const mod = await import(`/api/plugins/${pluginMeta.id}/client.js`);
+          if (typeof mod.default === 'function') {
+            const clientApi = createClientApi(pluginMeta);
+            const result = mod.default(clientApi);
+            _clientModules.set(pluginMeta.id, result || {});
+          }
+        } catch (e) {
+          console.warn(`[Plugins] Failed to load client for "${pluginMeta.id}":`, e);
+        }
+      });
+
+    await Promise.allSettled(loadPromises);
+    _loading = null;
+    return _pluginData;
+  })();
+
+  return _loading;
+}
+
+// --- Sidebar items ---
+
+function getPluginSidebarItems() {
+  if (!_pluginData) return [];
+  const items = [];
+  for (const plugin of _pluginData) {
+    if (plugin.sidebarItems) {
+      items.push(...plugin.sidebarItems);
+    }
+    // Auto-add sidebar items for pages that don't have manual sidebar entries
+    if (plugin.pages) {
+      for (const page of plugin.pages) {
+        if (page.sidebar !== false) {
+          const alreadyAdded = items.some(i => i.href === page.path);
+          if (!alreadyAdded) {
+            items.push({
+              href: page.path,
+              icon: page.icon || 'extension',
+              label: page.title || page.id
+            });
+          }
+        }
+      }
+    }
+  }
+  return items;
+}
+
+// --- Plugin pages (routes) ---
+
+function getPluginPages() {
+  if (!_pluginData) return [];
+  const pages = [];
+  for (const plugin of _pluginData) {
+    if (plugin.pages) {
+      for (const page of plugin.pages) {
+        pages.push({ ...page, pluginId: plugin.id });
+      }
+    }
+  }
+  return pages;
+}
+
+function renderPluginPage(pluginId, pageId, container) {
+  const key = `${pluginId}:${pageId}`;
+  const renderFn = _renderFns.pages.get(key);
+  if (renderFn) {
+    renderFn(container);
+    emitPluginEvent('page.rendered', { pluginId, pageId });
+    return true;
+  }
+  container.innerHTML = `
+    <div class="empty-state">
+      <span class="material-icons-outlined">extension_off</span>
+      <p>Plugin page not available</p>
+    </div>
+  `;
+  return false;
+}
+
+// --- Server tabs ---
+
+function getPluginServerTabs() {
+  if (!_pluginData) return [];
+  const tabs = [];
+  for (const plugin of _pluginData) {
+    if (plugin.serverTabs) {
+      for (const tab of plugin.serverTabs) {
+        tabs.push({ ...tab, pluginId: plugin.id });
+      }
+    }
+  }
+  return tabs;
+}
+
+function renderPluginServerTab(pluginId, tabId, container, serverId) {
+  const key = `${pluginId}:${tabId}`;
+  const renderFn = _renderFns.serverTabs.get(key);
+  if (renderFn) {
+    renderFn(container, serverId);
+    emitPluginEvent('serverTab.rendered', { pluginId, tabId, serverId });
+    return true;
+  }
+  container.innerHTML = `<div class="empty-state"><p>Tab content not available</p></div>`;
+  return false;
+}
+
+// --- Dashboard widgets ---
+
+function getPluginDashboardWidgets() {
+  if (!_pluginData) return [];
+  const widgets = [];
+  for (const plugin of _pluginData) {
+    if (plugin.dashboardWidgets) {
+      for (const widget of plugin.dashboardWidgets) {
+        widgets.push({ ...widget, pluginId: plugin.id });
+      }
+    }
+  }
+  return widgets;
+}
+
+function renderPluginWidget(pluginId, widgetId, container) {
+  const key = `${pluginId}:${widgetId}`;
+  const renderFn = _renderFns.widgets.get(key);
+  if (renderFn) {
+    renderFn(container);
+    return true;
+  }
+  return false;
+}
+
+// --- Admin pages ---
+
+function getPluginAdminPages() {
+  if (!_pluginData) return [];
+  const pages = [];
+  for (const plugin of _pluginData) {
+    if (plugin.adminPages) {
+      for (const page of plugin.adminPages) {
+        pages.push({ ...page, pluginId: plugin.id });
+      }
+    }
+  }
+  return pages;
+}
+
+function renderPluginAdminPage(pluginId, pageId, container) {
+  const key = `${pluginId}:${pageId}`;
+  const renderFn = _renderFns.adminPages.get(key);
+  if (renderFn) {
+    renderFn(container);
+    emitPluginEvent('adminPage.rendered', { pluginId, pageId });
+    return true;
+  }
+  container.innerHTML = `<div class="empty-state"><p>Admin page not available</p></div>`;
+  return false;
+}
+
+// --- Cache management ---
+
+function clearPluginCache() {
+  _pluginData = null;
+  _loading = null;
+  _clientModules.clear();
+  _renderFns.pages.clear();
+  _renderFns.serverTabs.clear();
+  _renderFns.widgets.clear();
+  _renderFns.adminPages.clear();
+  for (const key of Object.keys(_eventHandlers)) {
+    delete _eventHandlers[key];
+  }
+}
+
 let currentServerId = null;
 let serverLimits = null;
 let currentTab = 'console';
@@ -45476,6 +45760,12 @@ function renderServerPage(serverId) {
                   data-tab="${tab.id}" ${tab.disabled ? 'disabled' : ''}>
             <span class="material-icons-outlined">${tab.icon}</span>
             <span>${tab.label}</span>
+          </button>
+        `).join('')}
+        ${getPluginServerTabs().map(tab => `
+          <button class="server-tab" data-tab="plugin:${tab.pluginId}:${tab.id}">
+            <span class="material-icons-outlined">${tab.icon || 'extension'}</span>
+            <span>${tab.label || tab.id}</span>
           </button>
         `).join('')}
       </div>
@@ -45655,7 +45945,16 @@ function switchTab(tabId) {
       initSettingsTab(currentServerId);
       break;
     default:
-      content.innerHTML = `<div class="card"><p>Coming soon...</p></div>`;
+      // Handle plugin tabs (format: "plugin:pluginId:tabId")
+      if (tabId.startsWith('plugin:')) {
+        const parts = tabId.split(':');
+        const pluginId = parts[1];
+        const pluginTabId = parts[2];
+        content.innerHTML = '';
+        renderPluginServerTab(pluginId, pluginTabId, content, currentServerId);
+      } else {
+        content.innerHTML = `<div class="card"><p>Coming soon...</p></div>`;
+      }
   }
 }
 
@@ -49835,17 +50134,22 @@ function renderDefaultsSettings(content, config) {
             <div class="form-group">
               <label>Max Memory (MB)</label>
               <input type="number" name="default_memory" value="${config.defaults?.memory || 2048}" min="0" step="128" />
-              <small class="form-hint">Total memory allocation across all servers</small>
+              <small class="form-hint">Total memory allocation across new users</small>
             </div>
             <div class="form-group">
               <label>Max Disk (MB)</label>
               <input type="number" name="default_disk" value="${config.defaults?.disk || 10240}" min="0" step="1024" />
-              <small class="form-hint">Total disk space across all servers</small>
+              <small class="form-hint">Total disk space across new users</small>
             </div>
             <div class="form-group">
               <label>Max CPU (%)</label>
               <input type="number" name="default_cpu" value="${config.defaults?.cpu || 200}" min="0" step="25" />
               <small class="form-hint">Total CPU allocation (100% = 1 core)</small>
+            </div>
+            <div class="form-group">
+              <label>Max Allocations (Ports)</label>
+              <input type="number" name="default_allocations" value="${config.defaults?.allocations || 5}" min="0" step="1" />
+              <small class="form-hint">Total Ports across new users</small>
             </div>
             <div class="form-group">
               <label>Max Backups</label>
@@ -49875,6 +50179,7 @@ function renderDefaultsSettings(content, config) {
         memory: parseInt(form.default_memory.value) || 2048,
         disk: parseInt(form.default_disk.value) || 10240,
         cpu: parseInt(form.default_cpu.value) || 200,
+        allocatipns: parseInt(form.default_allocations.value) || 5,
         backups: parseInt(form.default_backups.value) || 3
       }
     };
@@ -51833,6 +52138,15 @@ async function loadView() {
       case 'plugins':
         await renderPluginsList(container);
         break;
+      default:
+        // Check for plugin admin pages (format: "plugin:pluginId:pageId")
+        if (state.currentView.tab.startsWith('plugin:')) {
+          const parts = state.currentView.tab.split(':');
+          renderPluginAdminPage(parts[1], parts[2], container);
+        } else {
+          container.innerHTML = `<div class="empty-state"><p>Page not found</p></div>`;
+        }
+        break;
     }
   }
 }
@@ -52577,6 +52891,18 @@ const routes = {
   }
 };
 
+function getAdminPluginRoute(tabKey) {
+  return {
+    render: () => renderAdmin(tabKey),
+    cleanup: cleanupAdmin,
+    options: {
+      title: 'Plugin',
+      auth: true,
+      sidebar: true
+    }
+  };
+}
+
 function getUserRoute(username) {
   return {
     render: () => renderUser(username),
@@ -52713,78 +53039,6 @@ async function updateNav() {
   }
 }
 
-let _pluginData = null;
-let _loading = null;
-
-async function loadPluginData() {
-  if (_pluginData) return _pluginData;
-  if (_loading) return _loading;
-
-  _loading = fetch('/api/plugins/client-data')
-    .then(r => r.json())
-    .then(data => {
-      _pluginData = data.plugins || [];
-      _loading = null;
-      return _pluginData;
-    })
-    .catch(() => {
-      _pluginData = [];
-      _loading = null;
-      return [];
-    });
-
-  return _loading;
-}
-
-function getPluginSidebarItems() {
-  if (!_pluginData) return [];
-  const items = [];
-  for (const plugin of _pluginData) {
-    if (plugin.sidebarItems) {
-      items.push(...plugin.sidebarItems);
-    }
-  }
-  return items;
-}
-
-function getPluginPages() {
-  if (!_pluginData) return {};
-  const pages = {};
-  for (const plugin of _pluginData) {
-    if (plugin.pages) {
-      Object.assign(pages, plugin.pages);
-    }
-  }
-  return pages;
-}
-
-function getPluginServerTabs() {
-  if (!_pluginData) return [];
-  const tabs = [];
-  for (const plugin of _pluginData) {
-    if (plugin.serverTabs) {
-      tabs.push(...plugin.serverTabs);
-    }
-  }
-  return tabs;
-}
-
-function getPluginDashboardWidgets() {
-  if (!_pluginData) return [];
-  const widgets = [];
-  for (const plugin of _pluginData) {
-    if (plugin.dashboardWidgets) {
-      widgets.push(...plugin.dashboardWidgets);
-    }
-  }
-  return widgets;
-}
-
-function clearPluginCache() {
-  _pluginData = null;
-  _loading = null;
-}
-
 function renderSidebar() {
   const overlay = document.createElement('div');
   overlay.id = 'sidebar-overlay';
@@ -52857,6 +53111,15 @@ function renderSidebar() {
   }
 
   if (user?.isAdmin) {
+    // Add plugin admin pages to admin section
+    const pluginAdminPages = getPluginAdminPages();
+    for (const page of pluginAdminPages) {
+      adminSection.items.push({
+        path: `/admin/plugin:${page.pluginId}:${page.id}`,
+        icon: page.icon || 'extension',
+        label: page.title || page.id
+      });
+    }
     sections.push(adminSection);
   }
   
@@ -53017,10 +53280,36 @@ function router() {
     }
   }
   
+  // Handle admin plugin pages (format: /admin/plugin:pluginId:pageId)
+  if (!route && path.startsWith('/admin/plugin:')) {
+    const tabKey = path.replace('/admin/', '');
+    route = getAdminPluginRoute(tabKey);
+  }
+  
   if (!route && path.startsWith('/server/')) {
     const serverId = path.split('/')[2];
     if (serverId) {
       route = getServerRoute(serverId);
+    }
+  }
+  
+  // Check plugin pages
+  if (!route) {
+    const pluginPages = getPluginPages();
+    const pluginPage = pluginPages.find(p => p.path === path);
+    if (pluginPage) {
+      route = {
+        render: () => {
+          const app = document.getElementById('app');
+          app.className = 'plugin-page';
+          renderPluginPage(pluginPage.pluginId, pluginPage.id, app);
+        },
+        options: {
+          title: pluginPage.title || 'Plugin',
+          auth: true,
+          sidebar: pluginPage.sidebar !== false
+        }
+      };
     }
   }
   
