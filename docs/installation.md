@@ -43,7 +43,7 @@ On first launch, Sodium displays a setup wizard that guides you through configur
 1. **Panel Configuration** - Set panel name, public URL, and port
 2. **Database** - Choose storage backend (file, SQLite, MySQL, PostgreSQL)
 3. **Redis** - Optional caching for better performance at scale
-4. **Default Limits** - Resource limits for new users (servers, memory, disk, CPU)
+4. **Default Limits** - Resource limits for new users (servers, memory, disk, CPU, allocations, backups)
 5. **Admin Account** - Create the first administrator account
 
 The wizard automatically:
@@ -109,12 +109,22 @@ server {
 sodium/
 ├── data/              # Database and configuration (gitignored)
 │   ├── sodium.db      # Binary database file (when using file DB)
-│   ├── sodium.sqlite  # SQLite database (when using sqlite)
-│   └── config.json    # Panel configuration
+│   ├── config.json    # Panel configuration
+│   └── plugins/       # Installed plugins
 ├── dist/              # Built frontend assets
+├── eggs/              # Game server egg configs
+├── scripts/           # Migration and backup scripts
+├── tests/             # Test suite
 ├── src/
-│   ├── server/        # Backend (Express.js)
-│   └── ...            # Frontend source
+│   ├── server/        # Backend (Express.js 5)
+│   │   ├── routes/    # API route handlers
+│   │   ├── plugins/   # Plugin system
+│   │   └── utils/     # Auth, helpers, logger, mail, webhooks
+│   ├── routes/        # Frontend page components
+│   ├── components/    # Shared UI components
+│   ├── styles/        # SCSS stylesheets
+│   └── bundler/       # Rollup build system
+├── android/           # Android companion app
 └── assets/            # Static assets
 ```
 

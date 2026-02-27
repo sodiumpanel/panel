@@ -509,6 +509,81 @@
             color: #e07a3a;
         }
 
+        /* Changelog */
+        .changelog-list {
+            display: grid;
+            gap: 24px;
+        }
+
+        .changelog-entry {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 28px;
+        }
+
+        .changelog-entry.latest {
+            border-color: #e07a3a;
+        }
+
+        .changelog-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .changelog-version {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .changelog-date {
+            color: #71717a;
+            font-size: 13px;
+        }
+
+        .changelog-badge {
+            background: #e07a3a;
+            color: #000;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .changelog-section h4 {
+            font-size: 14px;
+            color: #a1a1aa;
+            margin-bottom: 8px;
+            margin-top: 16px;
+        }
+
+        .changelog-section h4:first-child {
+            margin-top: 0;
+        }
+
+        .changelog-section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .changelog-section li {
+            padding: 4px 0;
+            font-size: 14px;
+            color: #d4d4d8;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .changelog-section li::before {
+            content: '•';
+            color: #e07a3a;
+            position: absolute;
+            left: 0;
+        }
+
         /* RESPONSIVE HERO */
         @media (max-width: 900px) {
             .hero-container {
@@ -556,6 +631,7 @@
                 <a href="#features">Features</a>
                 <a href="#deployment">Deployment</a>
                 <a href="#install">Install</a>
+                <a href="#changelog">Changelog</a>
                 <a href="#docs">Docs</a>
                 <a href="https://github.com/sodiumpanel/panel">GitHub</a>
             </div>
@@ -605,7 +681,7 @@
                 </div>
                 <div class="feature">
                     <h3>Eggs</h3>
-                    <p>Pre-made configs for Minecraft, Terraria, and others. Add your own too.</p>
+                    <p>Pre-made configs for Minecraft, FiveM, ARK, Palworld, and 13+ generic runtimes. Add your own too.</p>
                 </div>
                 <div class="feature">
                     <h3>Lightweight</h3>
@@ -616,8 +692,20 @@
                     <p>File-based by default. MySQL, PostgreSQL or SQLite for production.</p>
                 </div>
                 <div class="feature">
-                    <h3>JWT auth</h3>
-                    <p>Secure by default. First user becomes admin automatically.</p>
+                    <h3>JWT auth + OAuth</h3>
+                    <p>Secure by default. Discord, Google, GitHub, GitLab, and more. Email 2FA and password reset included.</p>
+                </div>
+                <div class="feature">
+                    <h3>Backups & Schedules</h3>
+                    <p>Create, download, and restore server backups. Schedule tasks with cron expressions.</p>
+                </div>
+                <div class="feature">
+                    <h3>Webhooks</h3>
+                    <p>Discord, Slack, and generic HTTP webhooks. Get notified on server events automatically.</p>
+                </div>
+                <div class="feature">
+                    <h3>Plugin system</h3>
+                    <p>Extend Sodium with hooks, custom routes, middleware, and WebSocket support.</p>
                 </div>
             </div>
         </div>
@@ -699,6 +787,16 @@
                     <td class="yes">Just Node.js</td>
                     <td class="meh">PHP, Composer, MySQL, Redis, Nginx</td>
                 </tr>
+                <tr>
+                    <td>OAuth providers</td>
+                    <td class="yes">8 built-in (Discord, GitHub, Google...)</td>
+                    <td class="meh">None (community packages)</td>
+                </tr>
+                <tr>
+                    <td>Plugin system</td>
+                    <td class="yes">Built-in hooks, routes, middleware</td>
+                    <td class="meh">Limited (Blueprints)</td>
+                </tr>
                 </table>
         </div>
     </section>
@@ -733,6 +831,16 @@
         </div>
     </section>
 
+    <section id="changelog">
+        <div class="container">
+            <h2>Changelog</h2>
+            <p>What changed and when. Fetched from GitHub releases.</p>
+            <div class="changelog-list" id="changelog-list">
+                <div class="changelog-entry" style="text-align:center;color:#71717a;padding:40px;">Loading releases from GitHub...</div>
+            </div>
+        </div>
+    </section>
+
     <section id="docs">
         <div class="container">
             <h2>Docs</h2>
@@ -743,6 +851,7 @@
                 <a href="viewer.html?file=daemon-setup.md" class="doc-link">Daemon setup</a>
                 <a href="viewer.html?file=api.md" class="doc-link">API</a>
                 <a href="viewer.html?file=architecture.md" class="doc-link">Architecture</a>
+                <a href="viewer.html?file=plugins/getting-started.md" class="doc-link">Plugins</a>
                 <a href="https://github.com/sodiumpanel/panel-reaction" class="doc-link">Sodium Reaction ↗</a>
             </div>
         </div>
@@ -755,7 +864,7 @@
             <div class="faq-list">
                 <div class="faq-item">
                     <h3>Does it support Minecraft?</h3>
-                    <p>Yes. Java and Bedrock. Check the eggs folder for configs.</p>
+                    <p>Yes. Paper, Purpur, Fabric, Velocity, and PocketMine. Check the eggs folder for configs.</p>
                 </div>
                 <div class="faq-item">
                     <h3>Is it compatible with Wings?</h3>
@@ -799,5 +908,77 @@
             </div>
         </div>
     </footer>
+
+    <script>
+    (async function() {
+        const container = document.getElementById('changelog-list');
+        const REPO = 'sodiumpanel/panel';
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function parseMarkdown(body) {
+            if (!body) return '<p style="color:#71717a;font-size:14px;">No release notes.</p>';
+            let html = '';
+            const lines = body.split('\n');
+            let inList = false;
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    continue;
+                }
+                if (trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    const text = trimmed.replace(/^#{2,3}\s+/, '');
+                    html += `<h4>${text}</h4>`;
+                } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                    if (!inList) { html += '<ul>'; inList = true; }
+                    const text = trimmed.replace(/^[-*]\s+/, '')
+                        .replace(/`([^`]+)`/g, '<code style="color:#e07a3a;background:#27272a;padding:1px 5px;border-radius:3px;">$1</code>')
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                    html += `<li>${text}</li>`;
+                } else {
+                    if (inList) { html += '</ul>'; inList = false; }
+                    const text = trimmed
+                        .replace(/`([^`]+)`/g, '<code style="color:#e07a3a;background:#27272a;padding:1px 5px;border-radius:3px;">$1</code>')
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                    html += `<p style="color:#a1a1aa;font-size:14px;margin-bottom:8px;">${text}</p>`;
+                }
+            }
+            if (inList) html += '</ul>';
+            return html;
+        }
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${REPO}/releases`);
+            if (!res.ok) throw new Error(`GitHub API returned ${res.status}`);
+            const releases = await res.json();
+
+            if (!releases.length) {
+                container.innerHTML = '<div class="changelog-entry" style="text-align:center;color:#71717a;padding:40px;">No releases found. Check <a href="https://github.com/' + REPO + '/releases" style="color:#e07a3a;">GitHub</a>.</div>';
+                return;
+            }
+
+            container.innerHTML = releases.map((release, i) => `
+                <div class="changelog-entry${i === 0 ? ' latest' : ''}">
+                    <div class="changelog-header">
+                        <span class="changelog-version">${release.tag_name || release.name}</span>
+                        ${i === 0 ? '<span class="changelog-badge">Latest</span>' : ''}
+                        <span class="changelog-date">${formatDate(release.published_at || release.created_at)}</span>
+                    </div>
+                    <div class="changelog-section">
+                        ${parseMarkdown(release.body)}
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            container.innerHTML = '<div class="changelog-entry" style="text-align:center;color:#71717a;padding:40px;">Could not load releases. <a href="https://github.com/' + REPO + '/releases" style="color:#e07a3a;">View on GitHub</a></div>';
+        }
+    })();
+    </script>
 </body>
 </html>

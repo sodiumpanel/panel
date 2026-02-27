@@ -8,217 +8,320 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',system-ui,sans-serif;background:#09090b;color:#fafafa;line-height:1.7}
+        a{color:#e07a3a;text-decoration:none}
+        a:hover{text-decoration:underline}
 
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #09090b;
-            color: #fafafa;
-            line-height: 1.7;
-        }
+        .app{display:flex;min-height:100vh}
 
-        a { color: #e07a3a; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        /* Sidebar */
+        .sidebar{width:272px;border-right:1px solid #1e1e21;background:#0c0c0e;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:20;display:flex;flex-direction:column;transition:transform .2s}
+        .sidebar-header{padding:16px 20px;border-bottom:1px solid #1e1e21;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:8px;font-weight:600;color:#fafafa;font-size:15px}
+        .logo:hover{text-decoration:none}
+        .logo svg{width:20px;height:20px}
+        .logo-badge{font-size:10px;font-weight:500;background:#27272a;color:#a1a1aa;padding:2px 6px;border-radius:4px}
+        .search-box{padding:12px 16px 4px}
+        .search-wrapper{position:relative}
+        .search-input{width:100%;background:#18181b;border:1px solid #27272a;border-radius:8px;padding:8px 12px 8px 32px;color:#fafafa;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+        .search-input:focus{border-color:#e07a3a}
+        .search-input::placeholder{color:#52525b}
+        .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#52525b;pointer-events:none;width:14px;height:14px}
+        .nav-group{padding:12px 0}
+        .nav-group-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#52525b;padding:0 20px 6px}
+        .nav-item{display:block;padding:5px 20px 5px 28px;font-size:13px;color:#a1a1aa;cursor:pointer;border-left:2px solid transparent;transition:all .1s}
+        .nav-item:hover{color:#fafafa;background:#18181b;text-decoration:none}
+        .nav-item.active{color:#e07a3a;background:#1a1510;border-left-color:#e07a3a}
+        .nav-item.hidden{display:none}
 
-        nav {
-            padding: 20px 0;
-            border-bottom: 1px solid #27272a;
-            position: sticky;
-            top: 0;
-            background: #09090b;
-            z-index: 10;
-        }
+        /* Main */
+        .main{flex:1;margin-left:272px}
+        .topbar{padding:12px 32px;border-bottom:1px solid #1e1e21;display:flex;align-items:center;gap:8px;font-size:13px;color:#52525b}
+        .topbar a{color:#71717a;font-size:13px}
+        .topbar a:hover{color:#fafafa;text-decoration:none}
+        .topbar span{color:#52525b}
+        .content{max-width:800px;margin:0 auto;padding:40px 32px 80px}
 
-        nav .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* Mobile toggle */
+        .menu-btn{display:none;background:none;border:none;color:#a1a1aa;cursor:pointer;padding:4px}
+        .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:15}
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+        /* Markdown */
+        .md h1{font-size:30px;font-weight:700;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #27272a}
+        .md h2{font-size:21px;font-weight:600;margin:36px 0 14px;color:#fafafa}
+        .md h3{font-size:16px;font-weight:600;margin:28px 0 10px}
+        .md h4{font-size:14px;font-weight:600;margin:20px 0 8px;color:#d4d4d8}
+        .md p{margin-bottom:14px;color:#d4d4d8}
+        .md ul,.md ol{margin:0 0 14px 24px;color:#d4d4d8}
+        .md li{margin-bottom:6px}
+        .md code{font-family:'SF Mono','Consolas',monospace;font-size:13px;background:#18181b;padding:2px 6px;border-radius:4px;color:#e07a3a}
+        .md pre{background:#0a0a0a;border:1px solid #27272a;border-radius:8px;padding:16px;overflow-x:auto;margin-bottom:18px}
+        .md pre code{background:none;padding:0;color:#a1a1aa}
+        .md table{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:14px}
+        .md th,.md td{text-align:left;padding:10px 14px;border:1px solid #27272a}
+        .md th{background:#18181b;font-weight:600;font-size:13px}
+        .md td{color:#d4d4d8}
+        .md blockquote{border-left:3px solid #e07a3a;padding:12px 16px;margin:0 0 16px;color:#a1a1aa;background:#18181b;border-radius:0 8px 8px 0}
+        .md blockquote p{margin-bottom:0}
+        .md hr{border:none;border-top:1px solid #27272a;margin:28px 0}
+        .md strong{color:#fafafa}
+        .md img{max-width:100%;border-radius:8px}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            color: #fafafa;
-        }
+        .loading{color:#52525b;text-align:center;padding:60px 0;font-size:14px}
+        .error{color:#ef4444;background:#1c1917;border:1px solid #7f1d1d;padding:16px;border-radius:8px}
 
-        .logo svg { width: 22px; height: 22px; }
+        /* Home grid */
+        .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:24px}
+        .home-card{background:#18181b;border:1px solid #27272a;border-radius:10px;padding:20px;cursor:pointer;transition:all .15s}
+        .home-card:hover{border-color:#e07a3a;background:#1a1510;text-decoration:none}
+        .home-card h3{font-size:14px;font-weight:600;margin-bottom:4px;color:#fafafa}
+        .home-card p{font-size:12px;color:#71717a;margin:0}
 
-        .back {
-            color: #71717a;
-            font-size: 14px;
-        }
-
-        .back:hover { color: #a1a1aa; text-decoration: none; }
-
-        .content {
-            padding: 48px 0 80px;
-        }
-
-        /* Markdown styles */
-        .markdown h1 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #27272a;
-        }
-
-        .markdown h2 {
-            font-size: 22px;
-            font-weight: 600;
-            margin: 40px 0 16px;
-            color: #fafafa;
-        }
-
-        .markdown h3 {
-            font-size: 17px;
-            font-weight: 600;
-            margin: 32px 0 12px;
-        }
-
-        .markdown p {
-            margin-bottom: 16px;
-            color: #d4d4d8;
-        }
-
-        .markdown ul, .markdown ol {
-            margin: 0 0 16px 24px;
-            color: #d4d4d8;
-        }
-
-        .markdown li {
-            margin-bottom: 8px;
-        }
-
-        .markdown code {
-            font-family: 'SF Mono', 'Consolas', monospace;
-            font-size: 13px;
-            background: #18181b;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #e07a3a;
-        }
-
-        .markdown pre {
-            background: #0a0a0a;
-            border: 1px solid #27272a;
-            border-radius: 8px;
-            padding: 16px;
-            overflow-x: auto;
-            margin-bottom: 20px;
-        }
-
-        .markdown pre code {
-            background: none;
-            padding: 0;
-            color: #a1a1aa;
-        }
-
-        .markdown table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        .markdown th, .markdown td {
-            text-align: left;
-            padding: 10px 14px;
-            border: 1px solid #27272a;
-        }
-
-        .markdown th {
-            background: #18181b;
-            font-weight: 600;
-        }
-
-        .markdown td {
-            color: #d4d4d8;
-        }
-
-        .markdown blockquote {
-            border-left: 3px solid #e07a3a;
-            padding-left: 16px;
-            margin: 0 0 16px;
-            color: #a1a1aa;
-        }
-
-        .markdown hr {
-            border: none;
-            border-top: 1px solid #27272a;
-            margin: 32px 0;
-        }
-
-        .loading {
-            color: #71717a;
-            text-align: center;
-            padding: 60px 0;
-        }
-
-        .error {
-            color: #ef4444;
-            background: #1c1917;
-            border: 1px solid #7f1d1d;
-            padding: 16px;
-            border-radius: 8px;
+        /* Responsive */
+        @media(max-width:768px){
+            .sidebar{transform:translateX(-100%)}
+            .sidebar.open{transform:translateX(0)}
+            .overlay.open{display:block}
+            .main{margin-left:0}
+            .menu-btn{display:block}
+            .content{padding:24px 16px 60px}
+            .topbar{padding:12px 16px}
         }
     </style>
 </head>
 <body>
-    <nav>
-        <div class="container">
-            <a href="index.html" class="logo">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e07a3a">
-                    <path d="M11,21h-1l1-7H7.5c-0.88,0-0.33-0.75-0.31-0.78C8.48,10.94,10.42,7.54,13.01,3h1l-1,7h3.51c0.4,0,0.62,0.19,0.4,0.66C12.97,17.55,11,21,11,21z"/>
-                </svg>
-                Sodium
-            </a>
-            <a href="index.html#docs" class="back">← Back to docs</a>
-        </div>
-    </nav>
+    <div class="app">
+        <div class="overlay" id="overlay"></div>
 
-    <div class="content">
-        <div class="container">
-            <div id="markdown" class="markdown">
-                <p class="loading">Loading...</p>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e07a3a"><path d="M11,21h-1l1-7H7.5c-0.88,0-0.33-0.75-0.31-0.78C8.48,10.94,10.42,7.54,13.01,3h1l-1,7h3.51c0.4,0,0.62,0.19,0.4,0.66C12.97,17.55,11,21,11,21z"/></svg>
+                    Docs
+                </a>
+                <span class="logo-badge">v1.1.1</span>
+            </div>
+            <div class="search-box">
+                <div class="search-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" class="search-input" id="search" placeholder="Search docs..." autocomplete="off">
+                </div>
+            </div>
+            <nav id="nav"></nav>
+        </aside>
+
+        <div class="main">
+            <div class="topbar" id="topbar">
+                <button class="menu-btn" id="menu-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+                <a href="#" onclick="navigate(null);return false">Docs</a>
+            </div>
+            <div class="content">
+                <div id="page" class="md"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const file = params.get('file');
-        const container = document.getElementById('markdown');
+<script>
+// ============================
+// DOC PAGES - add new pages here
+// ============================
+const DOCS = [
+    { section: 'Getting Started', pages: [
+        { id: 'installation',  title: 'Installation',   file: 'installation.md',  desc: 'Setup guide for the panel' },
+        { id: 'configuration', title: 'Configuration',  file: 'configuration.md', desc: 'Panel and database config' },
+        { id: 'daemon-setup',  title: 'Daemon Setup',   file: 'daemon-setup.md',  desc: 'Setting up nodes with Sodium Reaction' },
+    ]},
+    { section: 'Reference', pages: [
+        { id: 'api',           title: 'API Reference',  file: 'api.md',           desc: 'REST API endpoints' },
+        { id: 'architecture',  title: 'Architecture',   file: 'architecture.md',  desc: 'System design overview' },
+    ]},
+    { section: 'Plugins', pages: [
+        { id: 'plugins-start',    title: 'Getting Started',    file: 'plugins/getting-started.md', desc: 'Create your first plugin' },
+        { id: 'plugins-manifest', title: 'Manifest',           file: 'plugins/manifest.md',        desc: 'Plugin manifest format' },
+        { id: 'plugins-hooks',    title: 'Hooks',              file: 'plugins/hooks.md',           desc: 'Server-side hook system' },
+        { id: 'plugins-routes',   title: 'HTTP Routes',        file: 'plugins/http-routes.md',     desc: 'Custom API routes' },
+        { id: 'plugins-ui',       title: 'UI Components',      file: 'plugins/ui-components.md',   desc: 'Frontend slots and injection' },
+        { id: 'plugins-db',       title: 'Database',            file: 'plugins/database.md',        desc: 'Plugin data storage' },
+        { id: 'plugins-settings', title: 'Settings',            file: 'plugins/settings.md',        desc: 'Plugin configuration UI' },
+        { id: 'plugins-cron',     title: 'Cron Jobs',           file: 'plugins/cron-jobs.md',       desc: 'Scheduled tasks' },
+        { id: 'plugins-lifecycle',title: 'Lifecycle',           file: 'plugins/lifecycle.md',       desc: 'Plugin load/unload events' },
+        { id: 'plugins-inter',    title: 'Inter-Plugin',        file: 'plugins/inter-plugin.md',    desc: 'Cross-plugin communication' },
+        { id: 'plugins-api',      title: 'API Reference',       file: 'plugins/api-reference.md',   desc: 'Full plugin API' },
+        { id: 'plugins-admin',    title: 'Admin API',           file: 'plugins/admin-api.md',       desc: 'Admin management endpoints' },
+    ]},
+    { section: 'Plugin Examples', pages: [
+        { id: 'ex-hello',     title: 'Hello World',           file: 'plugins/examples/hello-world.md',           desc: 'Minimal plugin example' },
+        { id: 'ex-discord',   title: 'Discord Notifications', file: 'plugins/examples/discord-notifications.md', desc: 'Send events to Discord' },
+        { id: 'ex-analytics', title: 'Analytics',             file: 'plugins/examples/analytics.md',             desc: 'Track panel usage' },
+        { id: 'ex-guard',     title: 'Server Guard',          file: 'plugins/examples/server-guard.md',          desc: 'Auto-restart crashed servers' },
+    ]},
+];
 
-        if (!file) {
-            container.innerHTML = '<p class="error">No file specified. Use ?file=filename.md</p>';
-        } else {
-            fetch(file)
-                .then(res => {
-                    if (!res.ok) throw new Error('File not found');
-                    return res.text();
-                })
-                .then(md => {
-                    container.innerHTML = marked.parse(md);
-                    // Update title
-                    const h1 = container.querySelector('h1');
-                    if (h1) document.title = h1.textContent + ' - Sodium';
-                })
-                .catch(err => {
-                    container.innerHTML = '<p class="error">Could not load: ' + file + '</p>';
-                });
+// Flatten for lookup
+const ALL_PAGES = DOCS.flatMap(s => s.pages);
+const PAGE_MAP = Object.fromEntries(ALL_PAGES.map(p => [p.id, p]));
+
+// State
+let currentPage = null;
+const cache = {};
+
+// DOM
+const $nav = document.getElementById('nav');
+const $page = document.getElementById('page');
+const $search = document.getElementById('search');
+const $topbar = document.getElementById('topbar');
+const $sidebar = document.getElementById('sidebar');
+const $overlay = document.getElementById('overlay');
+const $menuBtn = document.getElementById('menu-btn');
+
+// Build sidebar nav
+function buildNav() {
+    $nav.innerHTML = DOCS.map(section => `
+        <div class="nav-group">
+            <div class="nav-group-title">${section.section}</div>
+            ${section.pages.map(p => `<a class="nav-item" data-id="${p.id}" href="?file=${p.file}">${p.title}</a>`).join('')}
+        </div>
+    `).join('');
+
+    $nav.querySelectorAll('.nav-item').forEach(el => {
+        el.addEventListener('click', e => {
+            e.preventDefault();
+            navigate(el.dataset.id);
+            closeMobile();
+        });
+    });
+}
+
+// Search
+$search.addEventListener('input', () => {
+    const q = $search.value.toLowerCase().trim();
+    $nav.querySelectorAll('.nav-item').forEach(el => {
+        const page = PAGE_MAP[el.dataset.id];
+        if (!q) { el.classList.remove('hidden'); return; }
+        const match = page.title.toLowerCase().includes(q) || page.desc.toLowerCase().includes(q) || page.file.toLowerCase().includes(q);
+        el.classList.toggle('hidden', !match);
+    });
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); $search.focus(); }
+    if (e.key === 'Escape') { $search.blur(); $search.value = ''; $search.dispatchEvent(new Event('input')); }
+});
+
+// Navigate
+async function navigate(id) {
+    // Update URL
+    if (id) {
+        const page = PAGE_MAP[id];
+        history.pushState({ id }, '', `?file=${page.file}`);
+    } else {
+        history.pushState({ id: null }, '', 'viewer.html');
+    }
+    await render(id);
+}
+
+async function render(id) {
+    currentPage = id;
+    updateActiveNav();
+
+    if (!id) {
+        renderHome();
+        document.title = 'Docs - Sodium';
+        updateBreadcrumb(null);
+        return;
+    }
+
+    const page = PAGE_MAP[id];
+    if (!page) { $page.innerHTML = '<p class="error">Page not found.</p>'; return; }
+
+    $page.innerHTML = '<p class="loading">Loading...</p>';
+    document.title = page.title + ' - Sodium Docs';
+    updateBreadcrumb(page);
+
+    try {
+        if (!cache[page.file]) {
+            const res = await fetch(page.file);
+            if (!res.ok) throw new Error();
+            cache[page.file] = await res.text();
         }
-    </script>
+        $page.innerHTML = marked.parse(cache[page.file]);
+        // Make internal doc links SPA-navigable
+        $page.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            const match = ALL_PAGES.find(p => href === p.file || href.endsWith(p.file));
+            if (match) {
+                a.addEventListener('click', e => { e.preventDefault(); navigate(match.id); });
+            }
+        });
+        window.scrollTo(0, 0);
+    } catch {
+        $page.innerHTML = '<p class="error">Could not load: ' + page.file + '</p>';
+    }
+}
+
+function renderHome() {
+    $page.innerHTML = `
+        <h1>Sodium Documentation</h1>
+        <p style="color:#a1a1aa;margin-bottom:8px;">Everything you need to set up, configure, and extend Sodium.</p>
+        ${DOCS.map(section => `
+            <h2 style="font-size:16px;margin:28px 0 12px;color:#71717a;font-weight:600">${section.section}</h2>
+            <div class="home-grid">
+                ${section.pages.map(p => `
+                    <a class="home-card" href="?file=${p.file}" onclick="event.preventDefault();navigate('${p.id}')">
+                        <h3>${p.title}</h3>
+                        <p>${p.desc}</p>
+                    </a>
+                `).join('')}
+            </div>
+        `).join('')}
+    `;
+}
+
+function updateActiveNav() {
+    $nav.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === currentPage);
+    });
+}
+
+function updateBreadcrumb(page) {
+    const menuHtml = '<button class="menu-btn" id="menu-btn-inner" onclick="toggleMobile()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>';
+    if (!page) {
+        $topbar.innerHTML = menuHtml + '<span>Docs</span>';
+    } else {
+        const section = DOCS.find(s => s.pages.some(p => p.id === page.id));
+        $topbar.innerHTML = menuHtml + `<a href="#" onclick="navigate(null);return false">Docs</a><span>/</span><span style="color:#71717a">${section?.section || ''}</span><span>/</span><span style="color:#d4d4d8">${page.title}</span>`;
+    }
+}
+
+// Mobile
+function toggleMobile() { $sidebar.classList.toggle('open'); $overlay.classList.toggle('open'); }
+function closeMobile() { $sidebar.classList.remove('open'); $overlay.classList.remove('open'); }
+$menuBtn.addEventListener('click', toggleMobile);
+$overlay.addEventListener('click', closeMobile);
+
+// Popstate (browser back/forward)
+window.addEventListener('popstate', e => {
+    if (e.state?.id !== undefined) { render(e.state.id); }
+    else { initFromURL(); }
+});
+
+// Init
+function initFromURL() {
+    const params = new URLSearchParams(location.search);
+    const file = params.get('file');
+    if (file) {
+        const page = ALL_PAGES.find(p => p.file === file);
+        if (page) { render(page.id); return; }
+    }
+    render(null);
+}
+
+buildNav();
+initFromURL();
+</script>
 </body>
 </html>

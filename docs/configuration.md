@@ -36,17 +36,46 @@ Sodium stores all configuration in `data/config.json`. This file is created auto
     "password": ""
   },
   "registration": {
-    "enabled": true
+    "enabled": true,
+    "emailVerification": false,
+    "captcha": false,
+    "allowedDomains": null,
+    "blockedDomains": null
   },
   "defaults": {
     "servers": 2,
     "memory": 2048,
     "disk": 10240,
     "cpu": 200,
-    "allocations": 5
+    "allocations": 5,
+    "backups": 3
   },
   "features": {
-    "subusers": true
+    "subusers": true,
+    "disableUserServerCreation": false
+  },
+  "plugins": {
+    "enabled": true,
+    "directory": "data/plugins",
+    "active": []
+  },
+  "mail": {
+    "host": "",
+    "port": 587,
+    "user": "",
+    "pass": "",
+    "secure": false,
+    "fromName": "Sodium",
+    "fromEmail": ""
+  },
+  "security": {
+    "require2fa": false,
+    "require2faAdmin": false
+  },
+  "advanced": {
+    "consoleLines": 1000,
+    "maxUploadSize": 100,
+    "auditLogging": true
   }
 }
 ```
@@ -77,6 +106,10 @@ Sodium stores all configuration in `data/config.json`. This file is created auto
 
 **registration**
 - `enabled` - Allow new user registrations
+- `emailVerification` - Require email verification on signup
+- `captcha` - Enable captcha on registration
+- `allowedDomains` - Whitelist of allowed email domains (null = all)
+- `blockedDomains` - Blacklist of blocked email domains (null = none)
 
 **defaults** - Default limits for new users:
 - `servers` - Maximum servers
@@ -84,9 +117,37 @@ Sodium stores all configuration in `data/config.json`. This file is created auto
 - `disk` - Maximum disk (MB)
 - `cpu` - Maximum CPU (100 = 1 core)
 - `allocations` - Maximum port allocations
+- `backups` - Maximum backups per server
 
 **features**
 - `subusers` - Enable server sharing
+- `disableUserServerCreation` - Prevent non-admin users from creating servers
+
+**plugins**
+- `enabled` - Enable the plugin system
+- `directory` - Path to plugins directory (relative to project root)
+- `active` - Array of active plugin IDs
+
+**mail** (configured via Admin > Settings)
+- `host` - SMTP server host
+- `port` - SMTP server port (default: 587)
+- `user` - SMTP username
+- `pass` - SMTP password
+- `secure` - Use TLS
+- `fromName` - Sender display name
+- `fromEmail` - Sender email address
+
+**security** (configured via Admin > Settings)
+- `require2fa` - Require 2FA for all users
+- `require2faAdmin` - Require 2FA for admin users only
+
+**advanced** (configured via Admin > Settings)
+- `consoleLines` - Number of console lines to buffer (default: 1000)
+- `maxUploadSize` - Maximum file upload size in MB (default: 100)
+- `auditLogging` - Enable audit logging (default: true)
+
+**oauth** (configured via Admin > Settings)
+- `providers` - Array of OAuth provider configs (Discord, Google, GitHub, GitLab, Microsoft, Twitter, Facebook, Apple, Twitch, Slack, LinkedIn, Spotify, Reddit, Bitbucket, or custom)
 
 ## Database
 
@@ -122,7 +183,7 @@ If the configured external database is unavailable, Sodium will automatically fa
 
 ### Via Admin Panel
 
-Most settings can be changed through **Admin > Settings** in the web interface.
+Most settings can be changed through **Admin > Settings** in the web interface, including mail, security, advanced options, and OAuth providers.
 
 ### Manual Edit
 

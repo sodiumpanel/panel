@@ -7,6 +7,7 @@
 3. [Daemon Setup](daemon-setup.md) - Setting up Sodium Reaction on nodes
 4. [API Reference](api.md) - REST API documentation
 5. [Architecture](architecture.md) - System architecture overview
+6. [Plugins](plugins/getting-started.md) - Plugin system documentation
 
 ## Quick Start
 

@@ -50,6 +50,8 @@ After creating the node, click on it and go to Configuration tab.
 
 Click "Deploy Command" and run the command on your node. This creates the config and restarts the daemon.
 
+> **Note:** The auto-deploy command currently writes to `/etc/pterodactyl/config.yml` for Wings compatibility. If using Sodium Reaction, move the config to `/etc/sodium/config.yml` after deploy.
+
 ### Manual Configuration
 
 Save the config to `/etc/sodium/config.yml`:
