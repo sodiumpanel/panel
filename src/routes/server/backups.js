@@ -12,22 +12,20 @@ const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
 export function renderBackupsTab() {
   return `
     <div class="backups-tab">
-      <div class="card">
-        <div class="card-header">
-          <h3>Backups</h3>
-          <div class="card-header-actions">
-            <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
-              <span class="material-icons-outlined">refresh</span>
-            </button>
-            <button class="btn btn-primary btn-sm" id="btn-create-backup">
-              <span class="material-icons-outlined">add</span>
-              Create Backup
-            </button>
-          </div>
+      <div class="tab-header">
+        <h3>Backups</h3>
+        <div>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
+            <span class="material-icons-outlined">refresh</span>
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-create-backup">
+            <span class="material-icons-outlined">add</span>
+            Create Backup
+          </button>
         </div>
-        <div class="backups-list" id="backups-list">
-          <div class="loading">Loading backups...</div>
-        </div>
+      </div>
+      <div class="backups-list" id="backups-list">
+        <div class="loading-spinner"></div>
       </div>
     </div>
   `;

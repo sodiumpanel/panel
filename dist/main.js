@@ -4128,7 +4128,6 @@ async function connectWebSocket(serverId) {
   
   consoleSocket.onclose = () => {
     if (serverIdGetter && serverIdGetter() === serverId) {
-      writeInfo('connection closed, reconnecting...');
       setTimeout(() => connectWebSocket(serverId), 5000);
     }
   };
@@ -4147,11 +4146,6 @@ function handleSocketMessage(message) {
       if (terminal) terminal.clear();
       consoleSocket.send(JSON.stringify({ event: 'send logs', args: [null] }));
       consoleSocket.send(JSON.stringify({ event: 'send stats', args: [null] }));
-      break;
-      
-    case 'token expiring':
-    case 'token expired':
-      writeInfo('session expired, reconnecting...');
       break;
       
     case 'console output':
@@ -4214,11 +4208,11 @@ function writeInfo(text) {
 function writeStatus(status) {
   if (terminal) {
     const statusMessages = {
-      'starting': 'marked as starting...',
+      'starting': 'server marked as starting',
       'running': 'server is now running',
-      'stopping': 'marked as stopping...',
+      'stopping': 'server marked as stopping',
       'offline': 'server is now offline',
-      'killing': 'marked as killing...'
+      'killing': 'server marked as killing'
     };
     const msg = statusMessages[status] || `server status: ${status}`;
     terminal.writeln(`\x1b[90m${msg}\x1b[0m`);
@@ -41516,7 +41510,7 @@ function renderFilesTab() {
           </div>
         </div>
         <div class="files-list" id="files-list">
-          <div class="files-loading">Loading files...</div>
+          <div class="loading-spinner"></div>
         </div>
       </div>
     </div>
@@ -41957,7 +41951,7 @@ function clearSelection() {
 async function loadFiles(serverId, path) {
   const filesList = document.getElementById('files-list');
   
-  filesList.innerHTML = '<div class="files-loading">Loading files...</div>';
+  filesList.innerHTML = '<div class="loading-spinner"></div>';
   selectedFiles.clear();
   updateSelectionBar();
   updatePasteBar();
@@ -42887,7 +42881,7 @@ function restoreFilesList(serverId) {
       </div>
     </div>
     <div class="files-list" id="files-list">
-      <div class="files-loading">Loading files...</div>
+      <div class="loading-spinner"></div>
     </div>
   `;
   
@@ -45071,22 +45065,20 @@ const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
 function renderBackupsTab() {
   return `
     <div class="backups-tab">
-      <div class="card">
-        <div class="card-header">
-          <h3>Backups</h3>
-          <div class="card-header-actions">
-            <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
-              <span class="material-icons-outlined">refresh</span>
-            </button>
-            <button class="btn btn-primary btn-sm" id="btn-create-backup">
-              <span class="material-icons-outlined">add</span>
-              Create Backup
-            </button>
-          </div>
+      <div class="tab-header">
+        <h3>Backups</h3>
+        <div>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
+            <span class="material-icons-outlined">refresh</span>
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-create-backup">
+            <span class="material-icons-outlined">add</span>
+            Create Backup
+          </button>
         </div>
-        <div class="backups-list" id="backups-list">
-          <div class="loading">Loading backups...</div>
-        </div>
+      </div>
+      <div class="backups-list" id="backups-list">
+        <div class="loading-spinner"></div>
       </div>
     </div>
   `;
@@ -45704,10 +45696,10 @@ const tabs = [
   { id: 'console', label: 'Console', icon: 'terminal' },
   { id: 'files', label: 'Files', icon: 'folder' },
   { id: 'backups', label: 'Backups', icon: 'cloud' },
-  { id: 'startup', label: 'Startup', icon: 'play_circle' },
   { id: 'schedules', label: 'Schedules', icon: 'schedule' },
   { id: 'network', label: 'Network', icon: 'lan' },
   { id: 'users', label: 'Users', icon: 'group' },
+  { id: 'startup', label: 'Startup', icon: 'play_circle' },
   { id: 'settings', label: 'Settings', icon: 'settings' }
 ];
 

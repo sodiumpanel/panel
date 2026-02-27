@@ -185,7 +185,6 @@ async function connectWebSocket(serverId) {
   
   consoleSocket.onclose = () => {
     if (serverIdGetter && serverIdGetter() === serverId) {
-      writeInfo('connection closed, reconnecting...');
       setTimeout(() => connectWebSocket(serverId), 5000);
     }
   };
@@ -204,11 +203,6 @@ function handleSocketMessage(message) {
       if (terminal) terminal.clear();
       consoleSocket.send(JSON.stringify({ event: 'send logs', args: [null] }));
       consoleSocket.send(JSON.stringify({ event: 'send stats', args: [null] }));
-      break;
-      
-    case 'token expiring':
-    case 'token expired':
-      writeInfo('session expired, reconnecting...');
       break;
       
     case 'console output':
@@ -271,11 +265,11 @@ function writeInfo(text) {
 function writeStatus(status) {
   if (terminal) {
     const statusMessages = {
-      'starting': 'marked as starting...',
+      'starting': 'server marked as starting',
       'running': 'server is now running',
-      'stopping': 'marked as stopping...',
+      'stopping': 'server marked as stopping',
       'offline': 'server is now offline',
-      'killing': 'marked as killing...'
+      'killing': 'server marked as killing'
     };
     const msg = statusMessages[status] || `server status: ${status}`;
     terminal.writeln(`\x1b[90m${msg}\x1b[0m`);

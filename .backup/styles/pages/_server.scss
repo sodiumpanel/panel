@@ -798,27 +798,13 @@
   flex-direction: column;
   height: 100%;
   
-  .card {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 350px;
-    background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    padding: 12px;
-  }
-  
-  .card-header {
+  .tab-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    
-    h3 {
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0;
-    }
+    margin-bottom: 1rem;
+
+    h2 { font-size: 1.1rem; font-weight: 600; margin: 0;}
   }
 }
 

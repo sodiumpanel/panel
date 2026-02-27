@@ -358,7 +358,7 @@ export function renderFilesTab() {
           </div>
         </div>
         <div class="files-list" id="files-list">
-          <div class="files-loading">Loading files...</div>
+          <div class="loading-spinner"></div>
         </div>
       </div>
     </div>
@@ -799,7 +799,7 @@ function clearSelection() {
 async function loadFiles(serverId, path) {
   const filesList = document.getElementById('files-list');
   
-  filesList.innerHTML = '<div class="files-loading">Loading files...</div>';
+  filesList.innerHTML = '<div class="loading-spinner"></div>';
   selectedFiles.clear();
   updateSelectionBar();
   updatePasteBar();
@@ -1729,7 +1729,7 @@ function restoreFilesList(serverId) {
       </div>
     </div>
     <div class="files-list" id="files-list">
-      <div class="files-loading">Loading files...</div>
+      <div class="loading-spinner"></div>
     </div>
   `;
   

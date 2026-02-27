@@ -1,2 +1,2 @@
-1. Make all server tabs styles consistent. Using Backup tab style.
-2. Create a theme based plugin
+1. Create a theme based plugin
+2. Make the setup wizard a cli tui. to remove that checking from panel

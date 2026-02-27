@@ -28,10 +28,10 @@ const tabs = [
   { id: 'console', label: 'Console', icon: 'terminal' },
   { id: 'files', label: 'Files', icon: 'folder' },
   { id: 'backups', label: 'Backups', icon: 'cloud' },
-  { id: 'startup', label: 'Startup', icon: 'play_circle' },
   { id: 'schedules', label: 'Schedules', icon: 'schedule' },
   { id: 'network', label: 'Network', icon: 'lan' },
   { id: 'users', label: 'Users', icon: 'group' },
+  { id: 'startup', label: 'Startup', icon: 'play_circle' },
   { id: 'settings', label: 'Settings', icon: 'settings' }
 ];
 
