@@ -121,7 +121,7 @@ export function renderSidebar() {
     
     <div class="sidebar-footer">
       <div class="footer-content">
-        <span class="version">v1.0.0</span>
+        <span class="version">v1.1.2</span>
       </div>
     </div>
   `;

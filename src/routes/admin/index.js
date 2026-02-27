@@ -13,6 +13,8 @@ import { renderWebhooksList } from './views/webhooks.js';
 import { renderPluginsList } from './views/plugins.js';
 import { getPluginAdminPages, renderPluginAdminPage } from '../../utils/plugins.js';
 
+let loadViewGeneration = 0;
+
 function navigateTo(tab, id = null, subTab = null) {
   state.currentView = { 
     type: id ? 'detail' : 'list', 
@@ -76,10 +78,19 @@ export async function renderAdmin(tab = 'nodes', params = {}) {
 }
 
 export async function loadView() {
-  const container = document.getElementById('admin-content');
+  const parent = document.querySelector('.admin-page');
+  if (!parent) return;
   const username = appState.username;
+  const generation = ++loadViewGeneration;
   
+  // Replace admin-content element to invalidate any in-flight renders
+  const oldContainer = document.getElementById('admin-content');
+  if (oldContainer) oldContainer.remove();
+  
+  const container = document.createElement('div');
+  container.id = 'admin-content';
   container.innerHTML = '<div class="loading-spinner"></div>';
+  parent.appendChild(container);
   
   if (state.currentView.type === 'detail' && state.currentView.id) {
     switch (state.currentView.tab) {

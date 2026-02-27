@@ -5,6 +5,7 @@ import { getPluginPages, renderPluginPage } from './utils/plugins.js';
 
 let mounted = false;
 let currentCleanup = null;
+let routerTimeout = null;
 
 function clearMain() {
   const existing = document.getElementById('app');
@@ -43,10 +44,16 @@ function mountShell(withSidebar = false) {
       wrapper.className = withSidebar ? 'with-sidebar' : '';
       
       const existingSidebar = document.getElementById('sidebar');
+      const existingOverlay = document.getElementById('sidebar-overlay');
       if (withSidebar && !existingSidebar) {
+        if (existingOverlay) existingOverlay.remove();
         wrapper.insertBefore(renderSidebar(), wrapper.firstChild);
       } else if (!withSidebar && existingSidebar) {
         existingSidebar.remove();
+        if (existingOverlay) existingOverlay.remove();
+      } else if (withSidebar && existingSidebar) {
+        existingSidebar.classList.remove('open');
+        if (existingOverlay) existingOverlay.classList.remove('active');
       }
     }
   }
@@ -161,10 +168,17 @@ export function router() {
   
   document.title = 'Sodium - ' + (route.options?.title || 'App');
   
+  if (routerTimeout) {
+    clearTimeout(routerTimeout);
+    routerTimeout = null;
+  }
+  
   const appEl = document.getElementById('app');
   if (appEl) appEl.classList.add('fade-out');
   
-  setTimeout(() => {
+  routerTimeout = setTimeout(() => {
+    routerTimeout = null;
+    
     if (currentCleanup) {
       currentCleanup();
       currentCleanup = null;

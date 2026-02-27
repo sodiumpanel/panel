@@ -168,13 +168,15 @@ async function connectWebSocket(serverId) {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${wsProtocol}//${window.location.host}/ws/console?server=${serverId}&token=${encodeURIComponent(token)}`;
   
-  consoleSocket = new WebSocket(wsUrl);
+  const ws = new WebSocket(wsUrl);
+  consoleSocket = ws;
   
-  consoleSocket.onopen = () => {
+  ws.onopen = () => {
     // Connection established, auth handled by server
   };
   
-  consoleSocket.onmessage = (event) => {
+  ws.onmessage = (event) => {
+    if (consoleSocket !== ws) return;
     try {
       const message = JSON.parse(event.data);
       handleSocketMessage(message);
@@ -183,15 +185,18 @@ async function connectWebSocket(serverId) {
     }
   };
   
-  consoleSocket.onclose = () => {
+  ws.onclose = () => {
+    if (consoleSocket !== ws) return;
     if (serverIdGetter && serverIdGetter() === serverId) {
       setTimeout(() => connectWebSocket(serverId), 5000);
     }
   };
   
-  consoleSocket.onerror = (error) => {
+  ws.onerror = (error) => {
     console.error('WebSocket error:', error);
-    writeError('Connection to the node failed. The node may be offline or unreachable.');
+    if (consoleSocket === ws) {
+      writeError('Connection to the node failed. The node may be offline or unreachable.');
+    }
   };
 }
 
