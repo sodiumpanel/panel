@@ -10,8 +10,14 @@ const navigateTo = (...args) => window.adminNavigate(...args);
 export async function renderNodesList(container, username, loadView) {
   try {
     const search = state.searchQuery.nodes ? `&search=${encodeURIComponent(state.searchQuery.nodes)}` : '';
-    const res = await api(`/api/admin/nodes?page=${state.currentPage.nodes}&per_page=${state.itemsPerPage.nodes}${search}`);
+    const [res, statusRes] = await Promise.all([
+      api(`/api/admin/nodes?page=${state.currentPage.nodes}&per_page=${state.itemsPerPage.nodes}${search}`),
+      api('/api/status/nodes')
+    ]);
     const data = await res.json();
+    const statusData = await statusRes.json();
+    const nodeStatuses = {};
+    (statusData.nodes || []).forEach(n => { nodeStatuses[n.id] = n.status; });
     
     container.innerHTML = `
       <div class="admin-header">
@@ -44,7 +50,7 @@ export async function renderNodesList(container, username, loadView) {
                     <h3>${escapeHtml(node.name)}</h3>
                     <span class="list-card-subtitle">${escapeHtml(node.fqdn)}</span>
                   </div>
-                  <span class="status-indicator ${node.maintenance_mode ? 'status-warning' : 'status-success'}"></span>
+                  <span class="status-indicator ${node.maintenance_mode ? 'status-warning' : nodeStatuses[node.id] === 'online' ? 'status-success' : 'status-danger'}"></span>
                 </div>
                 <div class="list-card-stats">
                   <div class="stat">
@@ -91,14 +97,21 @@ export async function renderNodesList(container, username, loadView) {
 
 export async function renderNodeDetail(container, username, nodeId) {
   try {
-    const res = await api(`/api/admin/nodes`);
+    const [res, statusRes] = await Promise.all([
+      api(`/api/admin/nodes`),
+      api('/api/status/nodes')
+    ]);
     const data = await res.json();
+    const statusData = await statusRes.json();
     const node = data.nodes.find(n => n.id === nodeId);
     
     if (!node) {
       container.innerHTML = `<div class="error">Node not found</div>`;
       return;
     }
+    
+    const nodeStatus = (statusData.nodes || []).find(n => n.id === nodeId);
+    const isOnline = nodeStatus?.status === 'online';
     
     const locRes = await api('/api/admin/locations');
     const locData = await locRes.json();
@@ -134,7 +147,7 @@ export async function renderNodeDetail(container, username, nodeId) {
         state.currentView.subTab = tab.dataset.subtab;
         document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        renderNodeSubTab(node, locData.locations, username);
+        renderNodeSubTab(node, locData.locations, username, isOnline);
       };
     });
     
@@ -153,14 +166,14 @@ export async function renderNodeDetail(container, username, nodeId) {
       }
     };
     
-    renderNodeSubTab(node, locData.locations, username);
+    renderNodeSubTab(node, locData.locations, username, isOnline);
     
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load node</div>`;
   }
 }
 
-function renderNodeSubTab(node, locations, username) {
+function renderNodeSubTab(node, locations, username, isOnline) {
   const content = document.getElementById('node-detail-content');
   
   switch (state.currentView.subTab) {
@@ -224,6 +237,10 @@ function renderNodeSubTab(node, locations, username) {
           <div class="detail-card">
             <h3>Status</h3>
             <div class="status-grid">
+              <div class="status-item ${isOnline ? 'success' : 'danger'}">
+                <span class="material-icons-outlined">${isOnline ? 'check_circle' : 'cancel'}</span>
+                <span>${isOnline ? 'Online' : 'Offline'}</span>
+              </div>
               <div class="status-item ${node.maintenance_mode ? 'warning' : 'success'}">
                 <span class="material-icons-outlined">${node.maintenance_mode ? 'construction' : 'check_circle'}</span>
                 <span>${node.maintenance_mode ? 'Maintenance Mode' : 'Operational'}</span>

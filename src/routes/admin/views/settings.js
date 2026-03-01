@@ -281,17 +281,17 @@ function renderDefaultsSettings(content, config) {
             </div>
             <div class="form-group">
               <label>Max Memory (MB)</label>
-              <input type="number" name="default_memory" value="${config.defaults?.memory || 2048}" min="0" step="128" />
+              <input type="number" name="default_memory" value="${config.defaults?.memory || 2048}" min="0" step="1" />
               <small class="form-hint">Total memory allocation across new users</small>
             </div>
             <div class="form-group">
               <label>Max Disk (MB)</label>
-              <input type="number" name="default_disk" value="${config.defaults?.disk || 10240}" min="0" step="1024" />
+              <input type="number" name="default_disk" value="${config.defaults?.disk || 10240}" min="0" step="1" />
               <small class="form-hint">Total disk space across new users</small>
             </div>
             <div class="form-group">
               <label>Max CPU (%)</label>
-              <input type="number" name="default_cpu" value="${config.defaults?.cpu || 200}" min="0" step="25" />
+              <input type="number" name="default_cpu" value="${config.defaults?.cpu || 200}" min="0" step="1" />
               <small class="form-hint">Total CPU allocation (100% = 1 core)</small>
             </div>
             <div class="form-group">

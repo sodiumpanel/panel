@@ -97,6 +97,7 @@ export async function renderCreateServer() {
     selectedNest = nestsData.nests[0];
     selectedEgg = selectedNest.eggs[0];
     selectedNode = nodesData.nodes[0];
+    currentResources = { memory: Math.min(512, remaining.memory), disk: Math.min(1024, remaining.disk) };
     
     renderCreateForm(remaining);
     
@@ -166,7 +167,7 @@ function renderCreateForm(remaining) {
                     <span class="material-icons-outlined">memory</span>
                     Memory (MB)
                   </label>
-                  <input type="number" name="memory" value="512" min="128" max="${remaining.memory}" required />
+                  <input type="number" name="memory" value="${Math.min(512, remaining.memory)}" min="${Math.min(8, remaining.memory)}" max="${remaining.memory}" required />
                   <span class="resource-hint">Max: ${remaining.memory} MB</span>
                 </div>
                 <div class="resource-input">
@@ -174,7 +175,7 @@ function renderCreateForm(remaining) {
                     <span class="material-icons-outlined">storage</span>
                     Disk (MB)
                   </label>
-                  <input type="number" name="disk" value="1024" min="256" max="${remaining.disk}" required />
+                  <input type="number" name="disk" value="${Math.min(1024, remaining.disk)}" min="${Math.min(8, remaining.disk)}" max="${remaining.disk}" required />
                   <span class="resource-hint">Max: ${remaining.disk} MB</span>
                 </div>
                 <div class="resource-input">
@@ -182,7 +183,7 @@ function renderCreateForm(remaining) {
                     <span class="material-icons-outlined">speed</span>
                     CPU (%)
                   </label>
-                  <input type="number" name="cpu" value="100" min="25" max="${remaining.cpu}" required />
+                  <input type="number" name="cpu" value="${Math.min(100, remaining.cpu)}" min="${Math.min(5, remaining.cpu)}" max="${remaining.cpu}" required />
                   <span class="resource-hint">Max: ${remaining.cpu}%</span>
                 </div>
                 <div class="resource-input">
@@ -190,7 +191,7 @@ function renderCreateForm(remaining) {
                     <span class="material-icons-outlined">lan</span>
                     Allocations
                   </label>
-                  <input type="number" name="allocations" value="1" min="1" max="${remaining.allocations}" required />
+                  <input type="number" name="allocations" value="${Math.min(1, remaining.allocations)}" min="1" max="${remaining.allocations}" required />
                   <span class="resource-hint">Max: ${remaining.allocations}</span>
                 </div>
               </div>
