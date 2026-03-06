@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { loadUsers, saveUsers, loadConfig } from '../db.js';
+import { loadUsers, saveUsers, loadConfig, loadSessions, saveSessions } from '../db.js';
 import { validateUsername, sanitizeText, generateUUID, generateToken } from '../utils/helpers.js';
 import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
 import { rateLimit } from '../utils/rate-limiter.js';
@@ -110,11 +110,36 @@ function generate2FACode() {
 }
 
 router.post('/register', authLimiter, async (req, res) => {
-  const { username, password, email } = req.body;
+  const { username, password, email, captchaToken } = req.body;
   
   const config = loadConfig();
   if (!config.registration?.enabled) {
     return res.status(403).json({ error: 'Registration is currently disabled' });
+  }
+  
+  if (config.registration?.captcha && config.registration?.captchaSecretKey) {
+    if (!captchaToken) {
+      return res.status(400).json({ error: 'Captcha verification is required' });
+    }
+    
+    try {
+      const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          secret: config.registration.captchaSecretKey,
+          response: captchaToken,
+          remoteip: req.ip
+        })
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        return res.status(400).json({ error: 'Captcha verification failed' });
+      }
+    } catch (e) {
+      console.error('Captcha verification error:', e.message);
+      return res.status(500).json({ error: 'Captcha verification service unavailable' });
+    }
   }
   
   if (!username || !password) {
@@ -138,7 +163,7 @@ router.post('/register', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Password must be between 6 and 128 characters' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const existingUser = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
   
   if (existingUser) {
@@ -186,7 +211,7 @@ router.post('/register', authLimiter, async (req, res) => {
   };
   
   data.users.push(newUser);
-  saveUsers(data);
+  await saveUsers(data);
   
   // Send verification email if required and mail is configured
   if (requireEmail && email && verificationToken && getTransporter()) {
@@ -198,13 +223,28 @@ router.post('/register', authLimiter, async (req, res) => {
   }
   
   const { password: _, verificationToken: __, ...userWithoutPassword } = newUser;
+  
+  const sessionId = generateUUID();
   const token = jwt.sign(
-    { id: newUser.id, username: newUser.username, isAdmin: newUser.isAdmin },
+    { id: newUser.id, username: newUser.username, isAdmin: newUser.isAdmin, jti: sessionId },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
   
-  logActivity(newUser.id, ACTIVITY_TYPES.LOGIN, { method: 'register' }, req.ip);
+  // Create session record
+  const sessionsData = await loadSessions();
+  sessionsData.sessions.push({
+    id: sessionId,
+    userId: newUser.id,
+    ip: req.ip,
+    userAgent: req.headers['user-agent'] || 'Unknown',
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    revoked: false
+  });
+  await saveSessions(sessionsData);
+  
+  await logActivity(newUser.id, ACTIVITY_TYPES.LOGIN, { method: 'register' }, req.ip);
   executeHook('auth:afterRegister', { user: userWithoutPassword, ip: req.ip });
   
   res.json({ 
@@ -221,7 +261,10 @@ router.get('/config', (req, res) => {
   res.json({
     registration: {
       enabled: config.registration?.enabled || false,
-      emailVerification: config.registration?.emailVerification || false
+      emailVerification: config.registration?.emailVerification || false,
+      captcha: config.registration?.captcha || false,
+      captchaProvider: config.registration?.captchaProvider || 'turnstile',
+      captchaSiteKey: config.registration?.captchaSiteKey || ''
     },
     panel: {
       name: config.panel?.name || 'Sodium Panel'
@@ -236,7 +279,7 @@ router.post('/login', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Username and password are required' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
   
   if (!user) {
@@ -274,13 +317,13 @@ router.post('/login', authLimiter, async (req, res) => {
       // Clear 2FA code after successful verification
       user.twoFactorCode = null;
       user.twoFactorExpires = null;
-      saveUsers(data);
+      await saveUsers(data);
     } else {
       // No code provided, send one and return pending status
       const code = generate2FACode();
       user.twoFactorCode = code;
       user.twoFactorExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-      saveUsers(data);
+      await saveUsers(data);
       
       try {
         await send2FACode(user.email, user.username, code);
@@ -298,13 +341,28 @@ router.post('/login', authLimiter, async (req, res) => {
   }
   
   const { password: _, twoFactorCode: __, twoFactorExpires: ___, verificationToken: __vt, resetToken: __rt, resetTokenExpires: __rte, ...userWithoutSensitive } = user;
+  
+  const sessionId = generateUUID();
   const token = jwt.sign(
-    { id: user.id, username: user.username, isAdmin: user.isAdmin },
+    { id: user.id, username: user.username, isAdmin: user.isAdmin, jti: sessionId },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
   
-  logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'password' }, req.ip);
+  // Create session record
+  const sessionsData = await loadSessions();
+  sessionsData.sessions.push({
+    id: sessionId,
+    userId: user.id,
+    ip: req.ip,
+    userAgent: req.headers['user-agent'] || 'Unknown',
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    revoked: false
+  });
+  await saveSessions(sessionsData);
+  
+  await logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'password' }, req.ip);
   executeHook('auth:afterLogin', { user: userWithoutSensitive, ip: req.ip, method: 'password' });
   
   res.json({ success: true, user: userWithoutSensitive, token });
@@ -317,7 +375,7 @@ router.post('/2fa/resend', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Username and password are required' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
   
   if (!user) {
@@ -341,7 +399,7 @@ router.post('/2fa/resend', authLimiter, async (req, res) => {
   const code = generate2FACode();
   user.twoFactorCode = code;
   user.twoFactorExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-  saveUsers(data);
+  await saveUsers(data);
   
   try {
     await send2FACode(user.email, user.username, code);
@@ -577,7 +635,7 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
       return res.redirect('/auth?error=userinfo_failed');
     }
     
-    const data = loadUsers();
+    const data = await loadUsers();
     
     // Check if user exists with this OAuth connection
     let user = data.users.find(u => 
@@ -595,7 +653,7 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
           oauth_id: oauthId,
           connected_at: new Date().toISOString()
         });
-        saveUsers(data);
+        await saveUsers(data);
       }
     } else {
       // Create new user
@@ -641,21 +699,35 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
       };
       
       data.users.push(user);
-      saveUsers(data);
+      await saveUsers(data);
     }
     
     // Generate a one-time code that can be exchanged for a JWT
     const oauthCode = crypto.randomBytes(32).toString('hex');
+    const oauthSessionId = generateUUID();
     const token = jwt.sign(
-      { id: user.id, username: user.username, isAdmin: user.isAdmin },
+      { id: user.id, username: user.username, isAdmin: user.isAdmin, jti: oauthSessionId },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
     
+    // Create session record
+    const sessionsData = await loadSessions();
+    sessionsData.sessions.push({
+      id: oauthSessionId,
+      userId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      revoked: false
+    });
+    await saveSessions(sessionsData);
+    
     // Store the code -> token mapping temporarily
     oauthCodes.set(oauthCode, { token, expires: Date.now() + 60000 });
     
-    logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'oauth', provider: provider.name }, req.ip);
+    await logActivity(user.id, ACTIVITY_TYPES.LOGIN, { method: 'oauth', provider: provider.name }, req.ip);
     
     // Clear oauth state cookie
     res.clearCookie('oauth_state');
@@ -693,7 +765,7 @@ router.get('/verify-email', async (req, res) => {
     return res.status(400).json({ error: 'Verification token required' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.verificationToken === token);
   
   if (!user) {
@@ -711,15 +783,15 @@ router.get('/verify-email', async (req, res) => {
   user.emailVerified = true;
   user.verificationToken = null;
   user.verificationTokenExpires = null;
-  saveUsers(data);
+  await saveUsers(data);
   
-  logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'email_verified' }, req.ip);
+  await logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'email_verified' }, req.ip);
   
   res.json({ success: true, message: 'Email verified successfully' });
 });
 
 router.post('/resend-verification', authenticateUser, async (req, res) => {
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.id === req.user.id);
   
   if (!user) {
@@ -742,7 +814,7 @@ router.post('/resend-verification', authenticateUser, async (req, res) => {
   const verificationToken = generateToken();
   user.verificationToken = verificationToken;
   user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  saveUsers(data);
+  await saveUsers(data);
   
   try {
     await sendVerificationEmail(user.email, user.username, verificationToken);
@@ -753,9 +825,9 @@ router.post('/resend-verification', authenticateUser, async (req, res) => {
   }
 });
 
-router.get('/verification-status', authenticateUser, (req, res) => {
+router.get('/verification-status', authenticateUser, async (req, res) => {
   const config = loadConfig();
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.id === req.user.id);
   
   if (!user) {
@@ -784,7 +856,7 @@ router.post('/forgot-password', resetLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Invalid email format' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
   
   // Always return success to prevent email enumeration
@@ -805,14 +877,14 @@ router.post('/forgot-password', resetLimiter, async (req, res) => {
   const resetToken = generateToken();
   user.resetToken = resetToken;
   user.resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
-  saveUsers(data);
+  await saveUsers(data);
   
   try {
     const config = loadConfig();
     const panelUrl = config.panel?.url || `${req.protocol}://${req.get('host')}`;
     await sendPasswordReset(user.email, user.username, resetToken, panelUrl);
     
-    logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'password_reset_requested' }, req.ip);
+    await logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'password_reset_requested' }, req.ip);
     
     res.json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
   } catch (e) {
@@ -821,14 +893,14 @@ router.post('/forgot-password', resetLimiter, async (req, res) => {
   }
 });
 
-router.get('/reset-password/validate', (req, res) => {
+router.get('/reset-password/validate', async (req, res) => {
   const { token } = req.query;
   
   if (!token) {
     return res.status(400).json({ error: 'Reset token required' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.resetToken === token);
   
   if (!user) {
@@ -853,7 +925,7 @@ router.post('/reset-password', async (req, res) => {
     return res.status(400).json({ error: 'Password must be between 6 and 128 characters' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.resetToken === token);
   
   if (!user) {
@@ -868,9 +940,9 @@ router.post('/reset-password', async (req, res) => {
   user.password = await bcrypt.hash(password, 10);
   user.resetToken = null;
   user.resetTokenExpires = null;
-  saveUsers(data);
+  await saveUsers(data);
   
-  logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'password_reset_completed' }, req.ip);
+  await logActivity(user.id, ACTIVITY_TYPES.SETTINGS_CHANGE, { action: 'password_reset_completed' }, req.ip);
   
   res.json({ success: true, message: 'Password reset successfully' });
 });

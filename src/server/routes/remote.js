@@ -49,7 +49,7 @@ function getProcessConfiguration(egg) {
   };
 }
 
-function authenticateNode(req) {
+async function authenticateNode(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const credentials = authHeader.slice(7);
@@ -57,7 +57,7 @@ function authenticateNode(req) {
   if (dotIndex === -1) return null;
   const tokenId = credentials.substring(0, dotIndex);
   const token = credentials.substring(dotIndex + 1);
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => {
     if (n.daemon_token_id !== tokenId) return false;
     try {
@@ -69,17 +69,17 @@ function authenticateNode(req) {
   return node;
 }
 
-router.get('/servers', (req, res) => {
-  const node = authenticateNode(req);
+router.get('/servers', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
   const page = parseInt(req.query.page) || 0;
   const perPage = parseInt(req.query.per_page) || 50;
   
-  const allServers = loadServers();
+  const allServers = await loadServers();
   const nodeServers = allServers.servers.filter(s => s.node_id === node.id);
-  const eggs = loadEggs();
-  const users = loadUsers();
+  const eggs = await loadEggs();
+  const users = await loadUsers();
   
   const start = page * perPage;
   const paginatedServers = nodeServers.slice(start, start + perPage);
@@ -140,30 +140,30 @@ router.get('/servers', (req, res) => {
   });
 });
 
-router.post('/servers/reset', (req, res) => {
-  const node = authenticateNode(req);
+router.post('/servers/reset', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
-  const data = loadServers();
+  const data = await loadServers();
   data.servers = data.servers.map(s => {
     if (s.node_id === node.id && (s.status === 'installing' || s.status === 'restoring_backup')) {
       s.status = 'offline';
     }
     return s;
   });
-  saveServers(data);
+  await saveServers(data);
   res.json({ success: true });
 });
 
-router.get('/servers/:uuid', (req, res) => {
-  const node = authenticateNode(req);
+router.get('/servers/:uuid', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.uuid === req.params.uuid && s.node_id === node.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
   
   res.json({
@@ -194,15 +194,15 @@ router.get('/servers/:uuid', (req, res) => {
   });
 });
 
-router.get('/servers/:uuid/install', (req, res) => {
-  const node = authenticateNode(req);
+router.get('/servers/:uuid/install', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.uuid === req.params.uuid && s.node_id === node.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
   
   // Return install script info in Pterodactyl/Wings format
@@ -213,36 +213,36 @@ router.get('/servers/:uuid/install', (req, res) => {
   });
 });
 
-router.post('/servers/:uuid/install', (req, res) => {
-  const node = authenticateNode(req);
+router.post('/servers/:uuid/install', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIndex = data.servers.findIndex(s => s.uuid === req.params.uuid && s.node_id === node.id);
   if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
   
   const successful = req.body.successful === true || req.body.successful === 'true';
   data.servers[serverIndex].status = successful ? 'offline' : 'install_failed';
-  saveServers(data);
+  await saveServers(data);
   res.json({ success: true });
 });
 
-router.post('/activity', (req, res) => {
-  const node = authenticateNode(req);
+router.post('/activity', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   res.json({ success: true });
 });
 
 // Backup completion callback from Wings
 // Wings calls POST /api/remote/backups/{backup_uuid}
-router.post('/backups/:backupUuid', (req, res) => {
-  const node = authenticateNode(req);
+router.post('/backups/:backupUuid', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
   const { successful, checksum, checksum_type, size } = req.body;
   const backupUuid = req.params.backupUuid;
   
-  const data = loadServers();
+  const data = await loadServers();
   const nodeServers = data.servers.filter(s => s.node_id === node.id);
   
   let found = false;
@@ -254,7 +254,7 @@ router.post('/backups/:backupUuid', (req, res) => {
       data.servers[serverIdx].backups[backupIdx].bytes = size || 0;
       data.servers[serverIdx].backups[backupIdx].checksum = checksum_type && checksum ? `${checksum_type}:${checksum}` : checksum;
       data.servers[serverIdx].backups[backupIdx].completed_at = new Date().toISOString();
-      saveServers(data);
+      await saveServers(data);
       found = true;
       break;
     }
@@ -267,14 +267,14 @@ router.post('/backups/:backupUuid', (req, res) => {
 
 // Backup restore completion callback from Wings
 // Wings calls POST /api/remote/backups/{backup_uuid}/restore
-router.post('/backups/:backupUuid/restore', (req, res) => {
-  const node = authenticateNode(req);
+router.post('/backups/:backupUuid/restore', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
   const { successful } = req.body;
   const backupUuid = req.params.backupUuid;
   
-  const data = loadServers();
+  const data = await loadServers();
   const nodeServers = data.servers.filter(s => s.node_id === node.id);
   
   for (const server of nodeServers) {
@@ -283,7 +283,7 @@ router.post('/backups/:backupUuid/restore', (req, res) => {
       const serverIdx = data.servers.findIndex(s => s.id === server.id);
       if (data.servers[serverIdx].status === 'restoring_backup') {
         data.servers[serverIdx].status = successful ? 'offline' : 'restore_failed';
-        saveServers(data);
+        await saveServers(data);
       }
       return res.json({ success: true });
     }
@@ -293,7 +293,7 @@ router.post('/backups/:backupUuid/restore', (req, res) => {
 });
 
 router.post('/sftp/auth', async (req, res) => {
-  const node = authenticateNode(req);
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   
   const { username, password } = req.body;
@@ -309,7 +309,7 @@ router.post('/sftp/auth', async (req, res) => {
   }
   
   const [userName, serverIdent] = parts;
-  const users = loadUsers();
+  const users = await loadUsers();
   const userObj = users.users.find(u => u.username.toLowerCase() === userName.toLowerCase());
   if (!userObj) {
     return res.status(403).json({ error: 'Invalid credentials' });
@@ -320,7 +320,7 @@ router.post('/sftp/auth', async (req, res) => {
     return res.status(403).json({ error: 'Invalid credentials' });
   }
   
-  const servers = loadServers();
+  const servers = await loadServers();
   const server = servers.servers.find(s => 
     (s.uuid === serverIdent || s.uuid.startsWith(serverIdent)) && 
     (s.user_id === userObj.id || userObj.isAdmin)

@@ -8,8 +8,8 @@ const router = express.Router();
 
 router.use(authenticateUser);
 
-function getServerAccess(req, serverId) {
-  const servers = loadServers();
+async function getServerAccess(req, serverId) {
+  const servers = await loadServers();
   const server = servers.servers.find(s => s.id === serverId || s.uuid === serverId);
   if (!server) return null;
   
@@ -31,22 +31,22 @@ function hasSchedulePermission(req, server, permission) {
 }
 
 // List schedules for a server
-router.get('/servers/:serverId/schedules', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.get('/servers/:serverId/schedules', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const schedules = data.schedules.filter(s => s.server_id === server.id);
   
   res.json({ schedules });
 });
 
 // Get single schedule
-router.get('/servers/:serverId/schedules/:scheduleId', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.get('/servers/:serverId/schedules/:scheduleId', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const schedule = data.schedules.find(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (!schedule) return res.status(404).json({ error: 'Schedule not found' });
@@ -55,8 +55,8 @@ router.get('/servers/:serverId/schedules/:scheduleId', (req, res) => {
 });
 
 // Create schedule
-router.post('/servers/:serverId/schedules', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.post('/servers/:serverId/schedules', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.create')) {
@@ -80,7 +80,7 @@ router.post('/servers/:serverId/schedules', (req, res) => {
     return res.status(400).json({ error: cronValidation.error });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   
   const schedule = {
     id: generateUUID(),
@@ -96,7 +96,7 @@ router.post('/servers/:serverId/schedules', (req, res) => {
   };
   
   data.schedules.push(schedule);
-  saveSchedules(data);
+  await saveSchedules(data);
   
   logger.info(`Schedule "${schedule.name}" created for server ${server.name}`);
   
@@ -104,15 +104,15 @@ router.post('/servers/:serverId/schedules', (req, res) => {
 });
 
 // Update schedule
-router.put('/servers/:serverId/schedules/:scheduleId', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.put('/servers/:serverId/schedules/:scheduleId', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.update')) {
     return res.status(403).json({ error: 'Permission denied' });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const idx = data.schedules.findIndex(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Schedule not found' });
@@ -141,28 +141,28 @@ router.put('/servers/:serverId/schedules/:scheduleId', (req, res) => {
     data.schedules[idx].next_run_at = calculateNextRun(newCron);
   }
   
-  saveSchedules(data);
+  await saveSchedules(data);
   
   res.json({ success: true, schedule: data.schedules[idx] });
 });
 
 // Delete schedule
-router.delete('/servers/:serverId/schedules/:scheduleId', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.delete('/servers/:serverId/schedules/:scheduleId', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.delete')) {
     return res.status(403).json({ error: 'Permission denied' });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const idx = data.schedules.findIndex(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Schedule not found' });
   
   const schedule = data.schedules[idx];
   data.schedules.splice(idx, 1);
-  saveSchedules(data);
+  await saveSchedules(data);
   
   logger.info(`Schedule "${schedule.name}" deleted from server ${server.name}`);
   
@@ -171,14 +171,14 @@ router.delete('/servers/:serverId/schedules/:scheduleId', (req, res) => {
 
 // Execute schedule now
 router.post('/servers/:serverId/schedules/:scheduleId/execute', async (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.update')) {
     return res.status(403).json({ error: 'Permission denied' });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const schedule = data.schedules.find(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (!schedule) return res.status(404).json({ error: 'Schedule not found' });
@@ -189,7 +189,7 @@ router.post('/servers/:serverId/schedules/:scheduleId/execute', async (req, res)
     const idx = data.schedules.findIndex(s => s.id === schedule.id);
     data.schedules[idx].last_run_at = new Date().toISOString();
     data.schedules[idx].next_run_at = calculateNextRun(data.schedules[idx].cron);
-    saveSchedules(data);
+    await saveSchedules(data);
     
     res.json({ success: true });
   } catch (err) {
@@ -198,8 +198,8 @@ router.post('/servers/:serverId/schedules/:scheduleId/execute', async (req, res)
 });
 
 // Get next run time (preview without modifying)
-router.post('/servers/:serverId/schedules/preview-next-run', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.post('/servers/:serverId/schedules/preview-next-run', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   const { minute, hour, day_of_month, day_of_week, month } = req.body;
@@ -229,15 +229,15 @@ router.post('/servers/:serverId/schedules/preview-next-run', (req, res) => {
 // ========== TASKS ==========
 
 // Create task
-router.post('/servers/:serverId/schedules/:scheduleId/tasks', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.post('/servers/:serverId/schedules/:scheduleId/tasks', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.update')) {
     return res.status(403).json({ error: 'Permission denied' });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const idx = data.schedules.findIndex(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Schedule not found' });
@@ -268,21 +268,21 @@ router.post('/servers/:serverId/schedules/:scheduleId/tasks', (req, res) => {
   
   if (!data.schedules[idx].tasks) data.schedules[idx].tasks = [];
   data.schedules[idx].tasks.push(task);
-  saveSchedules(data);
+  await saveSchedules(data);
   
   res.json({ success: true, task });
 });
 
 // Update task
-router.put('/servers/:serverId/schedules/:scheduleId/tasks/:taskId', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.put('/servers/:serverId/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.update')) {
     return res.status(403).json({ error: 'Permission denied' });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const scheduleIdx = data.schedules.findIndex(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (scheduleIdx === -1) return res.status(404).json({ error: 'Schedule not found' });
@@ -305,21 +305,21 @@ router.put('/servers/:serverId/schedules/:scheduleId/tasks/:taskId', (req, res) 
   if (time_offset !== undefined) data.schedules[scheduleIdx].tasks[taskIdx].time_offset = parseInt(time_offset) || 0;
   if (continue_on_failure !== undefined) data.schedules[scheduleIdx].tasks[taskIdx].continue_on_failure = continue_on_failure;
   
-  saveSchedules(data);
+  await saveSchedules(data);
   
   res.json({ success: true, task: data.schedules[scheduleIdx].tasks[taskIdx] });
 });
 
 // Delete task
-router.delete('/servers/:serverId/schedules/:scheduleId/tasks/:taskId', (req, res) => {
-  const server = getServerAccess(req, req.params.serverId);
+router.delete('/servers/:serverId/schedules/:scheduleId/tasks/:taskId', async (req, res) => {
+  const server = await getServerAccess(req, req.params.serverId);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
   if (!hasSchedulePermission(req, server, 'schedule.update')) {
     return res.status(403).json({ error: 'Permission denied' });
   }
   
-  const data = loadSchedules();
+  const data = await loadSchedules();
   const scheduleIdx = data.schedules.findIndex(s => s.id === req.params.scheduleId && s.server_id === server.id);
   
   if (scheduleIdx === -1) return res.status(404).json({ error: 'Schedule not found' });
@@ -333,7 +333,7 @@ router.delete('/servers/:serverId/schedules/:scheduleId/tasks/:taskId', (req, re
   // Reorder sequence IDs
   data.schedules[scheduleIdx].tasks.forEach((t, i) => t.sequence_id = i + 1);
   
-  saveSchedules(data);
+  await saveSchedules(data);
   
   res.json({ success: true });
 });
@@ -460,7 +460,7 @@ function calculateNextRun(cron) {
 }
 
 async function executeSchedule(schedule, server) {
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
   if (!node) {
@@ -527,7 +527,7 @@ async function executeTask(task, server, node) {
         
       case 'backup':
         const backupUuid = generateUUID();
-        const serversData = loadServers();
+        const serversData = await loadServers();
         const serverIdx = serversData.servers.findIndex(s => s.id === server.id);
         if (serverIdx === -1) {
           throw new Error('Server not found in database');
@@ -547,7 +547,7 @@ async function executeTask(task, server, node) {
           created_at: new Date().toISOString(),
           completed_at: null
         });
-        saveServers(serversData);
+        await saveServers(serversData);
         await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/backup`, {
           adapter: 'wings',
           uuid: backupUuid,
@@ -571,8 +571,8 @@ async function executeTask(task, server, node) {
 // Schedule runner - checks every minute
 let schedulerInterval = null;
 
-function getSchedulesDueNow() {
-  const data = loadSchedules();
+async function getSchedulesDueNow() {
+  const data = await loadSchedules();
   const now = new Date();
   
   return data.schedules.filter(schedule => {
@@ -586,12 +586,12 @@ export function startScheduler() {
   if (schedulerInterval) return;
   
   schedulerInterval = setInterval(async () => {
-    const dueSchedules = getSchedulesDueNow();
+    const dueSchedules = await getSchedulesDueNow();
     
     if (dueSchedules.length === 0) return;
     
-    const servers = loadServers();
-    const nodes = loadNodes();
+    const servers = await loadServers();
+    const nodes = await loadNodes();
     const now = new Date();
     
     for (const schedule of dueSchedules) {
@@ -626,17 +626,17 @@ export function startScheduler() {
         logger.error(`Schedule "${schedule.name}" failed: ${err.message}`);
       }
       
-      const data = loadSchedules();
+      const data = await loadSchedules();
       const idx = data.schedules.findIndex(s => s.id === schedule.id);
       if (idx !== -1) {
         data.schedules[idx].last_run_at = now.toISOString();
         data.schedules[idx].next_run_at = calculateNextRun(schedule.cron);
-        saveSchedules(data);
+        await saveSchedules(data);
       }
     }
   }, 60000); // Check every minute
   
-  logger.info('Schedule runner started');
+
 }
 
 export function stopScheduler() {

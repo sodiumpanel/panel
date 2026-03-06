@@ -1,6 +1,7 @@
 import { clearAuth, api } from '../utils/api.js';
 import { state } from '../utils/state.js';
 import { escapeHtml } from '../utils/security.js';
+import { getBranding } from '../utils/branding.js';
 
 export function renderNav() {
   const nav = document.createElement('nav');
@@ -10,6 +11,7 @@ export function renderNav() {
   const user = state.user;
   const displayName = escapeHtml(user?.displayName || user?.username || 'User');
   const isLoggedIn = state.isLoggedIn;
+  const branding = getBranding();
   
   nav.innerHTML = `
     <div class="nav-content">
@@ -18,8 +20,8 @@ export function renderNav() {
           <span class="material-icons-outlined">menu</span>
         </button>
         <a href="/dashboard" class="nav-brand">
-          <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="22" height="22">
-          <span class="brand-text">Sodium</span>
+          <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${escapeHtml(branding.name)}" width="22" height="22">
+          <span class="brand-text">${escapeHtml(branding.name)}</span>
         </a>
       </div>
       

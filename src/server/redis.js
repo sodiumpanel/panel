@@ -3,7 +3,9 @@ import { loadFullConfig } from './config.js';
 import logger from './utils/logger.js';
 
 let client = null;
+let subscriber = null;
 let connected = false;
+const INVALIDATION_CHANNEL = 'sodium:cache:invalidate';
 
 export async function initRedis() {
   const config = loadFullConfig();
@@ -28,6 +30,19 @@ export async function initRedis() {
     await client.connect();
     connected = true;
     logger.info(`[REDIS] Connected to ${config.redis.host}:${config.redis.port}`);
+    
+    // Set up pub/sub subscriber for cache invalidation across panels
+    subscriber = client.duplicate();
+    subscriber.on('error', () => {});
+    await subscriber.connect();
+    await subscriber.subscribe(INVALIDATION_CHANNEL, (message) => {
+      try {
+        const key = message;
+        // Delete from local Redis cache (another panel invalidated it)
+        client.del(key).catch(() => {});
+      } catch {}
+    });
+    
     return true;
   } catch (err) {
     logger.warn(`[REDIS] Failed to connect: ${err.message}`);
@@ -67,9 +82,23 @@ export async function redisDel(key) {
   if (!isRedisConnected()) return false;
   try {
     await client.del(key);
+    // Notify other panels to invalidate this key
+    await client.publish(INVALIDATION_CHANNEL, key);
     return true;
   } catch (err) {
     logger.warn(`[REDIS] DEL ${key} failed: ${err.message}`);
+    return false;
+  }
+}
+
+export async function redisInvalidate(key) {
+  if (!isRedisConnected()) return false;
+  try {
+    await client.del(key);
+    await client.publish(INVALIDATION_CHANNEL, key);
+    return true;
+  } catch (err) {
+    logger.warn(`[REDIS] INVALIDATE ${key} failed: ${err.message}`);
     return false;
   }
 }
@@ -86,6 +115,13 @@ export async function redisFlush() {
 }
 
 export async function closeRedis() {
+  if (subscriber) {
+    try {
+      await subscriber.unsubscribe(INVALIDATION_CHANNEL);
+      await subscriber.quit();
+    } catch (_) {}
+    subscriber = null;
+  }
   if (client) {
     try {
       await client.quit();

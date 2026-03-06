@@ -224,8 +224,10 @@
 
     &.up { background: var(--success); opacity: 0.7; }
     &.down { background: var(--danger); opacity: 0.85; }
-    &.up:hover { opacity: 1; }
-    &.down:hover { opacity: 1; }
+    &.degraded { background: var(--warning, #f59e0b); opacity: 0.75; }
+    &.unknown { background: var(--text-tertiary); opacity: 0.2; }
+    &.up:hover, &.down:hover, &.degraded:hover { opacity: 1; }
+    &.unknown:hover { opacity: 0.4; }
   }
 }
 
@@ -282,6 +284,38 @@
 
   .material-icons-outlined { font-size: 32px; opacity: 0.5; }
   p { font-size: 13px; margin: 0; }
+}
+
+.sp-incident-day {
+  &:not(:last-child) {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+.sp-incident-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sp-incident-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+
+  .sp-incident-text {
+    font-size: 13px;
+    color: var(--text-primary);
+
+    strong { font-weight: 600; }
+    small { color: var(--text-tertiary); margin-left: 4px; }
+  }
 }
 
 // Empty / Error

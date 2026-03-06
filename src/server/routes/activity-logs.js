@@ -4,9 +4,9 @@ import { authenticateUser, requireAdmin } from '../utils/auth.js';
 
 const router = express.Router();
 
-router.get('/me', authenticateUser, (req, res) => {
+router.get('/me', authenticateUser, async (req, res) => {
   const { page = 1, per_page = 25 } = req.query;
-  const data = loadActivityLogs();
+  const data = await loadActivityLogs();
   
   const userLogs = data.activityLogs.filter(l => l.userId === req.user.id);
   
@@ -27,10 +27,10 @@ router.get('/me', authenticateUser, (req, res) => {
   });
 });
 
-router.get('/', authenticateUser, requireAdmin, (req, res) => {
+router.get('/', authenticateUser, requireAdmin, async (req, res) => {
   const { page = 1, per_page = 50, userId, action } = req.query;
-  const data = loadActivityLogs();
-  const users = loadUsers();
+  const data = await loadActivityLogs();
+  const users = await loadUsers();
   
   let logs = data.activityLogs;
   
@@ -66,9 +66,9 @@ router.get('/', authenticateUser, requireAdmin, (req, res) => {
   });
 });
 
-router.get('/user/:userId', authenticateUser, requireAdmin, (req, res) => {
+router.get('/user/:userId', authenticateUser, requireAdmin, async (req, res) => {
   const { page = 1, per_page = 25 } = req.query;
-  const data = loadActivityLogs();
+  const data = await loadActivityLogs();
   
   const userLogs = data.activityLogs.filter(l => l.userId === req.params.userId);
   

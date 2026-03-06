@@ -36,8 +36,8 @@ async function checkNodeOnline(node) {
 const router = express.Router();
 
 // Nodos disponibles para crear servidores
-router.get('/available-nodes', authenticateUser, (req, res) => {
-  const nodes = loadNodes();
+router.get('/available-nodes', authenticateUser, async (req, res) => {
+  const nodes = await loadNodes();
   const availableNodes = [];
   
   for (const node of nodes.nodes) {
@@ -61,9 +61,9 @@ router.get('/available-nodes', authenticateUser, (req, res) => {
 });
 
 // Ruta pública para obtener nests con eggs (para crear servidores)
-router.get('/nests', authenticateUser, (req, res) => {
-  const nests = loadNests();
-  const eggs = loadEggs();
+router.get('/nests', authenticateUser, async (req, res) => {
+  const nests = await loadNests();
+  const eggs = await loadEggs();
   const user = req.user;
   
   const result = nests.nests.map(nest => {
@@ -88,12 +88,12 @@ router.get('/nests', authenticateUser, (req, res) => {
 // Lista de servidores del usuario
 router.get('/', authenticateUser, async (req, res) => {
   const user = req.user;
-  const users = loadUsers();
+  const users = await loadUsers();
   const fullUser = users.users.find(u => u.id === user.id);
   if (!fullUser) return res.status(404).json({ error: 'User not found' });
   
-  const data = loadServers();
-  const nodes = loadNodes();
+  const data = await loadServers();
+  const nodes = await loadNodes();
   
   // Check node statuses in parallel
   const uniqueNodeIds = [...new Set(data.servers.map(s => s.node_id))];
@@ -144,7 +144,7 @@ router.post('/', authenticateUser, async (req, res) => {
   
   if (!name) return res.status(400).json({ error: 'Server name required' });
   
-  const users = loadUsers();
+  const users = await loadUsers();
   const user = users.users.find(u => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
@@ -155,7 +155,7 @@ router.post('/', authenticateUser, async (req, res) => {
   }
   
   const userLimits = user.limits || { servers: 2, memory: 2048, disk: 10240, cpu: 200, allocations: 5 };
-  const servers = loadServers();
+  const servers = await loadServers();
   const userServers = servers.servers.filter(s => s.user_id === user.id);
   
   const usedResources = userServers.reduce((acc, s) => ({
@@ -187,11 +187,11 @@ router.post('/', authenticateUser, async (req, res) => {
     return res.status(400).json({ error: 'Allocation limit exceeded' });
   }
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === egg_id);
   if (!egg) return res.status(400).json({ error: 'Invalid egg' });
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   let selectedNode = null;
   let selectedNodeResources = null;
 
@@ -371,27 +371,27 @@ router.post('/', authenticateUser, async (req, res) => {
     
     newServer.environment = { ...defaultEnv, ...newServer.environment };
     servers.servers.push(newServer);
-    saveServers(servers);
+    await saveServers(servers);
     
     await wingsRequest(node, 'POST', '/api/servers', wingsPayload);
     
-    const updatedServers = loadServers();
+    const updatedServers = await loadServers();
     const idx = updatedServers.servers.findIndex(s => s.id === newServer.id);
     if (idx !== -1) {
       updatedServers.servers[idx].status = 'installing';
-      saveServers(updatedServers);
+      await saveServers(updatedServers);
     }
     
     executeHook('server:onCreate', { server: newServer, user });
     res.json({ success: true, server: newServer });
   } catch (e) {
     logger.error(`Server create Wings error: ${e.message}`);
-    const updatedServers = loadServers();
+    const updatedServers = await loadServers();
     const idx = updatedServers.servers.findIndex(s => s.id === newServer.id);
     if (idx !== -1) {
       updatedServers.servers[idx].status = 'install_failed';
       updatedServers.servers[idx].install_error = e.message;
-      saveServers(updatedServers);
+      await saveServers(updatedServers);
     }
     res.json({ success: true, server: { ...newServer, status: 'install_failed', install_error: e.message } });
   }
@@ -399,7 +399,7 @@ router.post('/', authenticateUser, async (req, res) => {
 
 router.get('/:id', authenticateUser, async (req, res) => {
   const user = req.user;
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.id === req.params.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
@@ -411,7 +411,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden' });
   }
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
   const nodeOnline = node ? await checkNodeOnline(node) : false;
@@ -488,7 +488,7 @@ router.put('/:id/details', authenticateUser, async (req, res) => {
   const { name, description } = req.body;
   const user = req.user;
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
   if (serverIndex === -1) return res.status(404).json({ error: 'Server not found' });
   
@@ -511,14 +511,14 @@ router.put('/:id/details', authenticateUser, async (req, res) => {
   
   data.servers[serverIndex].name = sanitizeText(name.trim());
   data.servers[serverIndex].description = sanitizeText((description || '').slice(0, 200));
-  saveServers(data);
+  await saveServers(data);
   
   // Try to sync with Wings if node is available (non-blocking)
   try {
-    const nodes = loadNodes();
+    const nodes = await loadNodes();
     const node = nodes.nodes.find(n => n.id === server.node_id);
     if (node) {
-      const eggs = loadEggs();
+      const eggs = await loadEggs();
       const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
       await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/sync`, {
         uuid: server.uuid,
@@ -550,7 +550,7 @@ router.post('/:id/reinstall', authenticateUser, async (req, res) => {
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
   
   let startupConfig = { done: ['Done'] };
@@ -581,10 +581,10 @@ router.post('/:id/reinstall', authenticateUser, async (req, res) => {
     }
   }
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
   data.servers[serverIndex].status = 'installing';
-  saveServers(data);
+  await saveServers(data);
   
   try {
     const wingsPayload = {
@@ -634,11 +634,11 @@ router.post('/:id/reinstall', authenticateUser, async (req, res) => {
     res.json({ success: true });
   } catch (e) {
     logger.error(`Reinstall failed: ${e.message}`);
-    const updated = loadServers();
+    const updated = await loadServers();
     const idx = updated.servers.findIndex(s => s.id === req.params.id);
     if (idx !== -1) {
       updated.servers[idx].status = 'offline';
-      saveServers(updated);
+      await saveServers(updated);
     }
     res.status(500).json({ error: 'Failed to reinstall server: ' + e.message });
   }
@@ -654,9 +654,9 @@ router.delete('/:id', authenticateUser, async (req, res) => {
   } catch (e) {
     logger.warn(`Delete from Wings failed: ${e.message}`);
   }
-  const data = loadServers();
+  const data = await loadServers();
   data.servers = data.servers.filter(s => s.id !== req.params.id);
-  saveServers(data);
+  await saveServers(data);
   executeHook('server:onDelete', { server, user });
   res.json({ success: true });
 });
@@ -667,7 +667,7 @@ router.get('/:id/startup', authenticateUser, async (req, res) => {
   const result = await getServerAndNode(req.params.id, req.user);
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server } = result;
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
   res.json({
     startup: server.startup,
@@ -690,9 +690,9 @@ router.put('/:id/startup', authenticateUser, async (req, res) => {
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIndex = data.servers.findIndex(s => s.id === req.params.id);
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   
   // Handle egg change
   if (egg_id && egg_id !== server.egg_id) {
@@ -712,7 +712,7 @@ router.put('/:id/startup', authenticateUser, async (req, res) => {
     }
     data.servers[serverIndex].environment = newEnv;
     data.servers[serverIndex].status = 'installing';
-    saveServers(data);
+    await saveServers(data);
     
     let startupConfig = { done: ['Done'] };
     let stopConfig = { type: 'command', value: 'stop' };
@@ -796,11 +796,11 @@ router.put('/:id/startup', authenticateUser, async (req, res) => {
       await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/reinstall`, wingsPayload);
     } catch (e) {
       logger.error(`Egg change reinstall failed: ${e.message}`);
-      const updated = loadServers();
+      const updated = await loadServers();
       const idx = updated.servers.findIndex(s => s.id === req.params.id);
       if (idx !== -1) {
         updated.servers[idx].status = 'offline';
-        saveServers(updated);
+        await saveServers(updated);
       }
     }
     return res.json({ success: true, server: data.servers[serverIndex], egg_changed: true });
@@ -836,7 +836,7 @@ router.put('/:id/startup', authenticateUser, async (req, res) => {
       ...environment
     };
   }
-  saveServers(data);
+  await saveServers(data);
   
   try {
     await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/sync`, {
@@ -1222,7 +1222,7 @@ async function syncAllocationsWithWings(node, server) {
     mappings[a.ip].push(a.port);
   });
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id) || {};
   
   await wingsRequest(node, 'POST', `/api/servers/${server.uuid}/sync`, {
@@ -1260,7 +1260,7 @@ router.post('/:id/allocations', authenticateUser, async (req, res) => {
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node, user } = result;
   
-  const servers = loadServers();
+  const servers = await loadServers();
   const userServers = servers.servers.filter(s => s.user_id === user.id);
   // Count extra allocations (beyond the first one per server which is always included)
   const extraAllocations = userServers.reduce((sum, s) => {
@@ -1293,7 +1293,7 @@ router.post('/:id/allocations', authenticateUser, async (req, res) => {
     primary: false
   };
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   
   if (!data.servers[serverIdx].allocations) {
@@ -1307,7 +1307,7 @@ router.post('/:id/allocations', authenticateUser, async (req, res) => {
   }
   
   data.servers[serverIdx].allocations.push(newAllocation);
-  saveServers(data);
+  await saveServers(data);
   
   try {
     await syncAllocationsWithWings(node, data.servers[serverIdx]);
@@ -1323,7 +1323,7 @@ router.put('/:id/allocations/:allocId/primary', authenticateUser, async (req, re
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   const allocations = data.servers[serverIdx].allocations || [];
   
@@ -1338,7 +1338,7 @@ router.put('/:id/allocations/:allocId/primary', authenticateUser, async (req, re
     port: allocations[allocIdx].port
   };
   
-  saveServers(data);
+  await saveServers(data);
   
   try {
     await syncAllocationsWithWings(node, data.servers[serverIdx]);
@@ -1354,7 +1354,7 @@ router.delete('/:id/allocations/:allocId', authenticateUser, async (req, res) =>
   if (result.error) return res.status(result.status).json({ error: result.error });
   const { server, node } = result;
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   const allocations = data.servers[serverIdx].allocations || [];
   
@@ -1367,7 +1367,7 @@ router.delete('/:id/allocations/:allocId', authenticateUser, async (req, res) =>
   
   allocations.splice(allocIdx, 1);
   data.servers[serverIdx].allocations = allocations;
-  saveServers(data);
+  await saveServers(data);
   
   try {
     await syncAllocationsWithWings(node, data.servers[serverIdx]);
@@ -1387,7 +1387,7 @@ router.get('/:id/subusers', authenticateUser, async (req, res) => {
   
   const { server } = result;
   
-  const users = loadUsers();
+  const users = await loadUsers();
   const subusers = (server.subusers || []).map(s => {
     const u = users.users.find(user => user.id === s.user_id);
     return {
@@ -1418,7 +1418,7 @@ router.post('/:id/subusers', authenticateUser, async (req, res) => {
   }
   
   // Verify owner can use subusers
-  const users = loadUsers();
+  const users = await loadUsers();
   const owner = users.users.find(u => u.id === server.user_id);
   if (owner && owner.allowSubusers === false) {
     return res.status(400).json({ error: 'Subusers not allowed for this account' });
@@ -1432,7 +1432,7 @@ router.post('/:id/subusers', authenticateUser, async (req, res) => {
     return res.status(400).json({ error: 'Cannot add owner as subuser' });
   }
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   
   if (!data.servers[serverIdx].subusers) {
@@ -1452,7 +1452,7 @@ router.post('/:id/subusers', authenticateUser, async (req, res) => {
   };
   
   data.servers[serverIdx].subusers.push(newSubuser);
-  saveServers(data);
+  await saveServers(data);
   
   res.json({ 
     success: true, 
@@ -1469,7 +1469,7 @@ router.put('/:id/subusers/:subId', authenticateUser, async (req, res) => {
   const result = await getServerAndNode(req.params.id, req.user, 'user.update');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   const subusers = data.servers[serverIdx].subusers || [];
   
@@ -1477,7 +1477,7 @@ router.put('/:id/subusers/:subId', authenticateUser, async (req, res) => {
   if (subIdx === -1) return res.status(404).json({ error: 'Subuser not found' });
   
   data.servers[serverIdx].subusers[subIdx].permissions = permissions || [];
-  saveServers(data);
+  await saveServers(data);
   
   res.json({ success: true });
 });
@@ -1488,12 +1488,12 @@ router.delete('/:id/subusers/:subId', authenticateUser, async (req, res) => {
   const result = await getServerAndNode(req.params.id, req.user, 'user.delete');
   if (result.error) return res.status(result.status).json({ error: result.error });
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   
   data.servers[serverIdx].subusers = (data.servers[serverIdx].subusers || [])
     .filter(s => s.id !== req.params.subId);
-  saveServers(data);
+  await saveServers(data);
   
   res.json({ success: true });
 });
@@ -1508,15 +1508,15 @@ router.post('/:id/suspend', authenticateUser, async (req, res) => {
     return res.status(403).json({ error: 'Admin only' });
   }
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
   
   data.servers[serverIdx].suspended = true;
-  saveServers(data);
+  await saveServers(data);
   
   // Notify Wings
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === data.servers[serverIdx].node_id);
   if (node) {
     try {
@@ -1537,15 +1537,15 @@ router.post('/:id/unsuspend', authenticateUser, async (req, res) => {
     return res.status(403).json({ error: 'Admin only' });
   }
   
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
   
   data.servers[serverIdx].suspended = false;
-  saveServers(data);
+  await saveServers(data);
   
   // Notify Wings
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === data.servers[serverIdx].node_id);
   if (node) {
     try {

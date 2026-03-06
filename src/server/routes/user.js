@@ -1,14 +1,14 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { loadUsers, saveUsers, loadServers, loadConfig } from '../db.js';
+import { loadUsers, saveUsers, loadServers, loadConfig, loadSessions, saveSessions } from '../db.js';
 import { validateUsername, sanitizeText, sanitizeUrl, generateUUID } from '../utils/helpers.js';
 import { authenticateUser } from '../utils/auth.js';
 import { getTransporter } from '../utils/mail.js';
 
 const router = express.Router();
 
-router.get('/profile', authenticateUser, (req, res) => {
+router.get('/profile', authenticateUser, async (req, res) => {
   const { username, viewer } = req.query;
   
   if (!username) {
@@ -19,7 +19,7 @@ router.get('/profile', authenticateUser, (req, res) => {
     return res.status(400).json({ error: 'Invalid username format' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const user = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
   
   if (!user) {
@@ -45,10 +45,10 @@ router.get('/profile', authenticateUser, (req, res) => {
   res.json({ user: safeUser });
 });
 
-router.put('/profile', authenticateUser, (req, res) => {
+router.put('/profile', authenticateUser, async (req, res) => {
   const { displayName, bio, avatar } = req.body;
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const userIndex = data.users.findIndex(u => u.id === req.user.id);
   
   if (userIndex === -1) {
@@ -70,16 +70,16 @@ router.put('/profile', authenticateUser, (req, res) => {
   }
   
   data.users[userIndex] = user;
-  saveUsers(data);
+  await saveUsers(data);
   
   const { password: _, ...userWithoutPassword } = user;
   res.json({ success: true, user: userWithoutPassword });
 });
 
-router.put('/settings', authenticateUser, (req, res) => {
+router.put('/settings', authenticateUser, async (req, res) => {
   const { settings } = req.body;
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const userIndex = data.users.findIndex(u => u.id === req.user.id);
   
   if (userIndex === -1) {
@@ -90,14 +90,14 @@ router.put('/settings', authenticateUser, (req, res) => {
   
   user.settings = { ...user.settings, ...settings };
   data.users[userIndex] = user;
-  saveUsers(data);
+  await saveUsers(data);
   
   const { password: _, ...userWithoutPassword } = user;
   res.json({ success: true, user: userWithoutPassword });
 });
 
-router.get('/2fa', authenticateUser, (req, res) => {
-  const data = loadUsers();
+router.get('/2fa', authenticateUser, async (req, res) => {
+  const data = await loadUsers();
   const user = data.users.find(u => u.id === req.user.id);
   
   if (!user) {
@@ -116,10 +116,10 @@ router.get('/2fa', authenticateUser, (req, res) => {
   });
 });
 
-router.put('/2fa', authenticateUser, (req, res) => {
+router.put('/2fa', authenticateUser, async (req, res) => {
   const { enabled } = req.body;
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const userIndex = data.users.findIndex(u => u.id === req.user.id);
   
   if (userIndex === -1) {
@@ -138,7 +138,7 @@ router.put('/2fa', authenticateUser, (req, res) => {
   
   user.twoFactorEnabled = !!enabled;
   data.users[userIndex] = user;
-  saveUsers(data);
+  await saveUsers(data);
   
   res.json({ success: true, enabled: user.twoFactorEnabled });
 });
@@ -154,7 +154,7 @@ router.put('/password', authenticateUser, async (req, res) => {
     return res.status(400).json({ error: 'New password must be at least 6 characters' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const userIndex = data.users.findIndex(u => u.id === req.user.id);
   
   if (userIndex === -1) {
@@ -170,18 +170,18 @@ router.put('/password', authenticateUser, async (req, res) => {
   
   user.password = await bcrypt.hash(newPassword, 10);
   data.users[userIndex] = user;
-  saveUsers(data);
+  await saveUsers(data);
   
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-router.get('/limits', authenticateUser, (req, res) => {
+router.get('/limits', authenticateUser, async (req, res) => {
   const { username } = req.query;
-  const users = loadUsers();
+  const users = await loadUsers();
   const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
   if (!user) return res.status(404).json({ error: 'User not found' });
   
-  const servers = loadServers();
+  const servers = await loadServers();
   const userServers = servers.servers.filter(s => s.user_id === user.id);
   
   const used = userServers.reduce((acc, s) => ({
@@ -203,8 +203,8 @@ router.get('/limits', authenticateUser, (req, res) => {
 // ==================== SSH KEYS ====================
 
 // List user's SSH keys
-router.get('/ssh-keys', authenticateUser, (req, res) => {
-  const data = loadUsers();
+router.get('/ssh-keys', authenticateUser, async (req, res) => {
+  const data = await loadUsers();
   const user = data.users.find(u => u.id === req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
@@ -220,7 +220,7 @@ router.get('/ssh-keys', authenticateUser, (req, res) => {
 });
 
 // Add SSH key
-router.post('/ssh-keys', authenticateUser, (req, res) => {
+router.post('/ssh-keys', authenticateUser, async (req, res) => {
   const { name, public_key } = req.body;
   
   if (!name || !public_key) {
@@ -233,7 +233,7 @@ router.post('/ssh-keys', authenticateUser, (req, res) => {
     return res.status(400).json({ error: 'Invalid SSH public key format' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const userIdx = data.users.findIndex(u => u.id === req.user.id);
   if (userIdx === -1) return res.status(404).json({ error: 'User not found' });
   
@@ -262,7 +262,7 @@ router.post('/ssh-keys', authenticateUser, (req, res) => {
   };
   
   data.users[userIdx].ssh_keys.push(newKey);
-  saveUsers(data);
+  await saveUsers(data);
   
   res.json({ 
     success: true, 
@@ -276,8 +276,8 @@ router.post('/ssh-keys', authenticateUser, (req, res) => {
 });
 
 // Delete SSH key
-router.delete('/ssh-keys/:id', authenticateUser, (req, res) => {
-  const data = loadUsers();
+router.delete('/ssh-keys/:id', authenticateUser, async (req, res) => {
+  const data = await loadUsers();
   const userIdx = data.users.findIndex(u => u.id === req.user.id);
   if (userIdx === -1) return res.status(404).json({ error: 'User not found' });
   
@@ -289,17 +289,17 @@ router.delete('/ssh-keys/:id', authenticateUser, (req, res) => {
   }
   
   data.users[userIdx].ssh_keys.splice(keyIdx, 1);
-  saveUsers(data);
+  await saveUsers(data);
   
   res.json({ success: true });
 });
 
 // Rename SSH key
-router.put('/ssh-keys/:id', authenticateUser, (req, res) => {
+router.put('/ssh-keys/:id', authenticateUser, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const userIdx = data.users.findIndex(u => u.id === req.user.id);
   if (userIdx === -1) return res.status(404).json({ error: 'User not found' });
   
@@ -311,9 +311,60 @@ router.put('/ssh-keys/:id', authenticateUser, (req, res) => {
   }
   
   data.users[userIdx].ssh_keys[keyIdx].name = sanitizeText(name.slice(0, 50));
-  saveUsers(data);
+  await saveUsers(data);
   
   res.json({ success: true });
+});
+
+// ==================== SESSIONS ====================
+
+router.get('/sessions', authenticateUser, async (req, res) => {
+  const data = await loadSessions();
+  const userSessions = data.sessions
+    .filter(s => s.userId === req.user.id && !s.revoked)
+    .filter(s => new Date(s.expiresAt) > new Date())
+    .map(s => ({
+      id: s.id,
+      ip: s.ip,
+      userAgent: s.userAgent,
+      createdAt: s.createdAt,
+      expiresAt: s.expiresAt,
+      current: s.id === req.sessionId
+    }))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  
+  res.json({ sessions: userSessions });
+});
+
+router.delete('/sessions/:id', authenticateUser, async (req, res) => {
+  const data = await loadSessions();
+  const session = data.sessions.find(s => s.id === req.params.id && s.userId === req.user.id);
+  
+  if (!session) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+  
+  session.revoked = true;
+  session.revokedAt = new Date().toISOString();
+  await saveSessions(data);
+  
+  res.json({ success: true });
+});
+
+router.delete('/sessions', authenticateUser, async (req, res) => {
+  const data = await loadSessions();
+  let revokedCount = 0;
+  
+  for (const session of data.sessions) {
+    if (session.userId === req.user.id && !session.revoked && session.id !== req.sessionId) {
+      session.revoked = true;
+      session.revokedAt = new Date().toISOString();
+      revokedCount++;
+    }
+  }
+  
+  await saveSessions(data);
+  res.json({ success: true, revoked: revokedCount });
 });
 
 export default router;

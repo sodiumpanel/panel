@@ -6,10 +6,10 @@ const router = express.Router();
 
 router.use(authenticateUser, requireAdmin);
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { page = 1, per_page = 50, action, targetType, adminId } = req.query;
-  const data = loadAuditLogs();
-  const users = loadUsers();
+  const data = await loadAuditLogs();
+  const users = await loadUsers();
   
   let logs = data.auditLogs;
   
@@ -48,14 +48,14 @@ router.get('/', (req, res) => {
   });
 });
 
-router.get('/actions', (req, res) => {
-  const data = loadAuditLogs();
+router.get('/actions', async (req, res) => {
+  const data = await loadAuditLogs();
   const actions = [...new Set(data.auditLogs.map(l => l.action))];
   res.json({ actions });
 });
 
-router.get('/target-types', (req, res) => {
-  const data = loadAuditLogs();
+router.get('/target-types', async (req, res) => {
+  const data = await loadAuditLogs();
   const targetTypes = [...new Set(data.auditLogs.map(l => l.targetType))];
   res.json({ targetTypes });
 });

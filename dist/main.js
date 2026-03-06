@@ -44,12 +44,105 @@ async function api(endpoint, options = {}) {
     throw new Error('Session expired');
   }
   
+  if (response.status === 503) {
+    const data = await response.clone().json().catch(() => ({}));
+    if (data.maintenance) {
+      showMaintenancePage(data.message);
+      throw new Error('Maintenance mode');
+    }
+  }
+  
   return response;
+}
+
+function showMaintenancePage(message) {
+  const msg = message || 'The panel is currently under maintenance. Please try again later.';
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-primary, #0a0a0f);color:var(--text-primary, #e4e4e7);font-family:inherit;text-align:center;padding:2rem;">
+      <div>
+        <span class="material-icons-outlined" style="font-size:4rem;color:var(--accent, #6366f1);margin-bottom:1rem;display:block;">construction</span>
+        <h1 style="font-size:1.75rem;margin:0 0 0.75rem;">Under Maintenance</h1>
+        <p style="color:var(--text-secondary, #a1a1aa);max-width:28rem;margin:0 auto;line-height:1.6;">${msg.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+      </div>
+    </div>
+  `;
 }
 
 async function apiJson(endpoint, options = {}) {
   const response = await api(endpoint, options);
   return response.json();
+}
+
+let brandingCache = null;
+
+const DEFAULTS = {
+  name: 'Sodium',
+  logo: null,
+  favicon: null,
+  accentColor: '#d97339',
+  accentHover: '#e88a4d',
+  accentMuted: 'rgba(217, 115, 57, 0.1)',
+  ogTitle: '',
+  ogDescription: '',
+  ogImage: null
+};
+
+async function loadBranding() {
+  try {
+    const cached = localStorage.getItem('branding');
+    if (cached) {
+      brandingCache = JSON.parse(cached);
+      applyBranding(brandingCache);
+    }
+
+    const res = await fetch('/api/branding');
+    if (res.ok) {
+      brandingCache = await res.json();
+      localStorage.setItem('branding', JSON.stringify(brandingCache));
+      applyBranding(brandingCache);
+    }
+  } catch {
+    if (!brandingCache) brandingCache = DEFAULTS;
+  }
+  return brandingCache;
+}
+
+function getBranding() {
+  if (brandingCache) return brandingCache;
+
+  try {
+    const cached = localStorage.getItem('branding');
+    if (cached) {
+      brandingCache = JSON.parse(cached);
+      return brandingCache;
+    }
+  } catch {}
+
+  return DEFAULTS;
+}
+
+function applyBranding(branding) {
+  const isDefault = branding.accentColor === '#d97339' && !branding.accentHover && !branding.accentMuted;
+
+  if (!isDefault && branding.accentColor) {
+    document.documentElement.style.setProperty('--accent', branding.accentColor);
+    document.documentElement.style.setProperty('--accent-hover', branding.accentHover || branding.accentColor);
+    document.documentElement.style.setProperty('--accent-muted', branding.accentMuted || branding.accentColor + '1a');
+  } else {
+    document.documentElement.style.removeProperty('--accent');
+    document.documentElement.style.removeProperty('--accent-hover');
+    document.documentElement.style.removeProperty('--accent-muted');
+  }
+
+  if (branding.favicon) {
+    const link = document.querySelector('link[rel="icon"]');
+    if (link) link.href = branding.favicon;
+  }
+}
+
+function clearBrandingCache() {
+  brandingCache = null;
+  localStorage.removeItem('branding');
 }
 
 const OAUTH_ICONS = {
@@ -72,14 +165,15 @@ const OAUTH_ICONS = {
 function renderAuth() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
+  const branding = getBranding();
   
   app.innerHTML = `
     <div class="auth-container" id="auth-container">
       <div class="auth-card" id="auth-card">
         <div class="auth-header" id="auth-header">
           <div class="logo">
-            <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
-            <span class="logo-text">Sodium</span>
+            <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
+            <span class="logo-text">${branding.name}</span>
           </div>
           <p class="auth-subtitle">Welcome back</p>
         </div>
@@ -160,6 +254,8 @@ function renderAuth() {
               <input type="password" id="register-confirm" name="confirm" placeholder="Confirm your password" required>
             </div>
           </div>
+          
+          <div id="captcha-container" style="display: none; margin-bottom: 16px;"></div>
           
           <div class="error-message" id="register-error"></div>
           
@@ -253,10 +349,12 @@ function renderAuth() {
     btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
     
     try {
+      const captchaToken = window.turnstile ? window.turnstile.getResponse(turnstileWidgetId) : null;
+      
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({ username, email, password, captchaToken })
       });
       
       const data = await res.json();
@@ -266,6 +364,7 @@ function renderAuth() {
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.innerHTML = '<span>Create Account</span><span class="material-icons-outlined">arrow_forward</span>';
+        if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
         return;
       }
       
@@ -277,6 +376,7 @@ function renderAuth() {
       errorEl.style.display = 'block';
       btn.disabled = false;
       btn.innerHTML = '<span>Create Account</span><span class="material-icons-outlined">arrow_forward</span>';
+      if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
     }
   });
   
@@ -300,9 +400,33 @@ async function checkEmailVerificationRequired() {
         emailInput.required = true;
       }
     }
+    if (data.registration?.captcha && data.registration?.captchaSiteKey) {
+      loadCaptchaWidget(data.registration.captchaSiteKey);
+    }
   } catch (e) {
     // Ignore - email field will be optional
   }
+}
+
+let turnstileWidgetId = null;
+
+function loadCaptchaWidget(siteKey) {
+  const container = document.getElementById('captcha-container');
+  if (!container) return;
+  container.style.display = 'block';
+  
+  if (window.turnstile) {
+    turnstileWidgetId = window.turnstile.render(container, { sitekey: siteKey, theme: 'dark' });
+    return;
+  }
+  
+  const script = document.createElement('script');
+  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
+  script.async = true;
+  window.onTurnstileLoad = () => {
+    turnstileWidgetId = window.turnstile.render(container, { sitekey: siteKey, theme: 'dark' });
+  };
+  document.head.appendChild(script);
 }
 
 async function loadOAuthProviders$1() {
@@ -401,14 +525,15 @@ function getErrorMessage(error) {
 function render2FAScreen(username, password) {
   const app = document.getElementById('app');
   app.className = 'auth-page';
+  const branding = getBranding();
   
   app.innerHTML = `
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
           <div class="logo">
-            <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
-            <span class="logo-text">Sodium</span>
+            <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
+            <span class="logo-text">${branding.name}</span>
           </div>
           <p class="auth-subtitle">Two-Factor Authentication</p>
         </div>
@@ -630,6 +755,7 @@ async function renderVerifyEmail() {
 }
 
 function renderForgotPassword() {
+  const branding = getBranding();
   const app = document.getElementById('app');
   app.className = 'auth-page';
   
@@ -638,8 +764,8 @@ function renderForgotPassword() {
       <div class="auth-card">
         <div class="auth-header">
           <div class="logo">
-            <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
-            <span class="logo-text">Sodium</span>
+            <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
+            <span class="logo-text">${branding.name}</span>
           </div>
           <p class="auth-subtitle">Reset your password</p>
         </div>
@@ -722,6 +848,7 @@ function renderForgotPassword() {
 async function renderResetPassword() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
+  const branding = getBranding();
   
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
@@ -782,8 +909,8 @@ async function renderResetPassword() {
         <div class="auth-card">
           <div class="auth-header">
             <div class="logo">
-              <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="28" height="28">
-              <span class="logo-text">Sodium</span>
+              <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
+              <span class="logo-text">${branding.name}</span>
             </div>
             <p class="auth-subtitle">Reset password for <strong>${data.username}</strong></p>
           </div>
@@ -2034,6 +2161,26 @@ function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
+            <span class="material-icons-outlined">devices</span>
+            <h3>Active Sessions</h3>
+          </div>
+          
+          <div class="sessions-container">
+            <div class="sessions-header">
+              <p class="setting-description">Devices and browsers where you're currently logged in</p>
+              <button class="btn btn-danger btn-sm" id="revoke-all-sessions-btn">
+                <span class="material-icons-outlined">logout</span>
+                <span>Revoke All Others</span>
+              </button>
+            </div>
+            <div class="sessions-list" id="sessions-list">
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <div class="section-header">
             <span class="material-icons-outlined">key</span>
             <h3>SSH Keys</h3>
           </div>
@@ -2257,6 +2404,8 @@ function renderSettings() {
   
   loadSettings();
   load2FAStatus();
+  loadUserSessions();
+  setupSessionsHandlers();
   loadSshKeys();
   setupSshKeysHandlers();
   loadApiKeys();
@@ -2454,6 +2603,143 @@ async function load2FAStatus() {
     console.error('Failed to load 2FA status:', err);
     toggle.disabled = true;
     description.textContent = 'Failed to load 2FA status';
+  }
+}
+
+// ==================== SESSIONS ====================
+
+async function loadUserSessions() {
+  const container = document.getElementById('sessions-list');
+  if (!container) return;
+  
+  try {
+    const res = await api('/api/user/sessions');
+    const data = await res.json();
+    
+    if (!data.sessions || data.sessions.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state small">
+          <span class="material-icons-outlined">devices</span>
+          <p>No active sessions</p>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = data.sessions.map(session => `
+      <div class="list-item session-item" data-id="${session.id}">
+        <div class="item-icon">
+          <span class="material-icons-outlined">${getDeviceIcon(session.userAgent)}</span>
+        </div>
+        <div class="item-info">
+          <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
+          <span class="item-meta">${escapeHtml(session.ip)} • ${formatSessionDate(session.createdAt)}</span>
+        </div>
+        <div class="item-actions">
+          ${session.current 
+            ? '<span class="badge badge-success">Current</span>' 
+            : `<button class="btn btn-icon btn-sm btn-danger revoke-session-btn" title="Revoke">
+                <span class="material-icons-outlined">close</span>
+              </button>`
+          }
+        </div>
+      </div>
+    `).join('');
+    
+    container.querySelectorAll('.revoke-session-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.target.closest('.session-item');
+        const id = item.dataset.id;
+        
+        const confirmed = await confirm$1({ title: 'Revoke Session', message: 'This will sign out the device. Continue?', danger: true });
+        if (!confirmed) return;
+        
+        btn.disabled = true;
+        try {
+          await api(`/api/user/sessions/${id}`, { method: 'DELETE' });
+          loadUserSessions();
+        } catch (err) {
+          btn.disabled = false;
+        }
+      });
+    });
+    
+  } catch (err) {
+    container.innerHTML = '<div class="error">Failed to load sessions</div>';
+  }
+}
+
+function setupSessionsHandlers() {
+  const revokeAllBtn = document.getElementById('revoke-all-sessions-btn');
+  if (!revokeAllBtn) return;
+  
+  revokeAllBtn.addEventListener('click', async () => {
+    const confirmed = await confirm$1({ 
+      title: 'Revoke All Sessions', 
+      message: 'This will sign out all other devices. Your current session will remain active.', 
+      danger: true 
+    });
+    if (!confirmed) return;
+    
+    revokeAllBtn.disabled = true;
+    try {
+      const res = await api('/api/user/sessions', { method: 'DELETE' });
+      const data = await res.json();
+      loadUserSessions();
+    } catch (err) {
+      console.error('Failed to revoke sessions:', err);
+    }
+    revokeAllBtn.disabled = false;
+  });
+}
+
+function getDeviceIcon(ua) {
+  if (!ua) return 'devices';
+  const lower = ua.toLowerCase();
+  if (lower.includes('mobile') || lower.includes('android') || lower.includes('iphone')) return 'smartphone';
+  if (lower.includes('tablet') || lower.includes('ipad')) return 'tablet';
+  return 'computer';
+}
+
+function parseUserAgent(ua) {
+  if (!ua || ua === 'Unknown') return 'Unknown Device';
+  
+  let browser = 'Unknown Browser';
+  if (ua.includes('Firefox/')) browser = 'Firefox';
+  else if (ua.includes('Edg/')) browser = 'Edge';
+  else if (ua.includes('Chrome/')) browser = 'Chrome';
+  else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Safari';
+  else if (ua.includes('Opera') || ua.includes('OPR/')) browser = 'Opera';
+  
+  let os = '';
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  
+  return os ? `${browser} on ${os}` : browser;
+}
+
+function formatSessionDate(isoStr) {
+  try {
+    const date = new Date(isoStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+  } catch {
+    return 'Unknown';
   }
 }
 
@@ -46231,6 +46517,7 @@ function getServerId() {
 }
 
 let pollInterval = null;
+let uptimeData = {};
 
 function renderStatus() {
   const app = document.getElementById('app');
@@ -46283,50 +46570,66 @@ function renderStatus() {
   pollInterval = setInterval(loadStatus, 30000);
 }
 
-const uptimeCache = {};
-
-function getUptimeBars(nodeId, currentStatus) {
-  let history = uptimeCache[nodeId] || [];
-  
-  const today = new Date().toISOString().slice(0, 10);
-  
-  if (history.length === 0) {
-    for (let i = 89; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      history.push({ date: dateStr, status: i === 0 ? currentStatus : 'online' });
-    }
-  } else {
-    const lastDate = history[history.length - 1]?.date;
-    if (lastDate !== today) {
-      history.push({ date: today, status: currentStatus });
-    } else {
-      history[history.length - 1].status = currentStatus;
-    }
-    history = history.slice(-90);
-  }
-  
-  uptimeCache[nodeId] = history;
-  
-  return history;
-}
-
 function formatDate$1(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function formatDateFull(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case 'online': return 'Operational';
+    case 'degraded': return 'Degraded';
+    case 'offline': return 'Outage';
+    default: return 'No data';
+  }
+}
+
+function statusClass(status) {
+  switch (status) {
+    case 'online': return 'up';
+    case 'degraded': return 'degraded';
+    case 'offline': return 'down';
+    default: return 'unknown';
+  }
+}
+
 function renderUptimeBars(history) {
   return history.map(h => {
-    const cls = h.status === 'online' ? 'up' : 'down';
-    return `<div class="sp-bar ${cls}" title="${formatDate$1(h.date)}: ${h.status === 'online' ? 'Operational' : 'Outage'}"></div>`;
+    const cls = statusClass(h.status);
+    const label = statusLabel(h.status);
+    const detail = h.checks > 0
+      ? `${formatDateFull(h.date)}: ${label} (${h.online}/${h.checks} checks OK)`
+      : `${formatDateFull(h.date)}: No data`;
+    return `<div class="sp-bar ${cls}" title="${detail}"></div>`;
   }).join('');
 }
 
+function renderTimeScale(history) {
+  if (history.length === 0) return '';
+  // Show ~5 labels spread across 90 days
+  const indices = [0, 22, 44, 66, 89].filter(i => i < history.length);
+  const labels = indices.map(i => {
+    const h = history[i];
+    const d = new Date(h.date + 'T00:00:00');
+    return `<span>${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`;
+  });
+  return `
+    <div class="sp-bars-legend">
+      ${labels.join('')}
+    </div>
+  `;
+}
+
 function calcUptime(history) {
-  const up = history.filter(h => h.status === 'online').length;
-  return ((up / history.length) * 100).toFixed(2);
+  const withData = history.filter(h => h.status !== 'unknown');
+  if (withData.length === 0) return null;
+  const up = withData.filter(h => h.status === 'online' || h.status === 'degraded').length;
+  return ((up / withData.length) * 100).toFixed(2);
 }
 
 async function loadStatus() {
@@ -46336,8 +46639,16 @@ async function loadStatus() {
   if (syncIcon) syncIcon.style.display = 'inline-block';
   
   try {
-    const res = await fetch('/api/status/nodes');
-    const data = await res.json();
+    const [nodesRes, uptimeRes, incidentsRes] = await Promise.all([
+      fetch('/api/status/nodes'),
+      fetch('/api/status/uptime'),
+      fetch('/api/status/incidents')
+    ]);
+    const data = await nodesRes.json();
+    const uptimeJson = await uptimeRes.json();
+    uptimeData = uptimeJson.history || {};
+    const incidentsJson = await incidentsRes.json();
+    const realIncidents = incidentsJson.incidents || [];
     
     const online = data.nodes.filter(n => n.status === 'online').length;
     const total = data.nodes.length;
@@ -46414,8 +46725,9 @@ async function loadStatus() {
     }
     
     container.innerHTML = data.nodes.map(node => {
-      const history = getUptimeBars(node.id, node.status);
+      const history = uptimeData[node.id] || generateEmptyHistory();
       const uptime = calcUptime(history);
+      const uptimeDisplay = uptime !== null ? `${uptime}%` : '—';
       
       return `
         <div class="sp-service">
@@ -46426,16 +46738,13 @@ async function loadStatus() {
               <span class="sp-service-loc">${escapeHtml$1(node.location || 'Unknown')}</span>
             </div>
             <div class="sp-service-right">
-              <span class="sp-uptime-pct">${uptime}%</span>
+              <span class="sp-uptime-pct">${uptimeDisplay}</span>
               <span class="sp-status-tag ${node.status}">${node.status === 'online' ? 'Operational' : 'Down'}</span>
             </div>
           </div>
           <div class="sp-uptime-track">
             <div class="sp-bars">${renderUptimeBars(history)}</div>
-            <div class="sp-bars-legend">
-              <span>90 days ago</span>
-              <span>Today</span>
-            </div>
+            ${renderTimeScale(history)}
           </div>
           <div class="sp-service-resources">
             <div class="sp-res">
@@ -46454,6 +46763,9 @@ async function loadStatus() {
         </div>
       `;
     }).join('');
+    
+    // Render real incidents from DB
+    renderIncidents(realIncidents);
   } catch {
     container.innerHTML = `
       <div class="sp-empty error">
@@ -46466,6 +46778,84 @@ async function loadStatus() {
       setTimeout(() => { syncIcon.style.display = 'none'; }, 500);
     }
   }
+}
+
+function generateEmptyHistory() {
+  const history = [];
+  const now = new Date();
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    history.push({ date: ds, status: 'unknown', checks: 0, online: 0 });
+  }
+  return history;
+}
+
+function renderIncidents(incidents) {
+  const el = document.getElementById('sp-incidents');
+  if (!el) return;
+  
+  if (!incidents || incidents.length === 0) {
+    el.innerHTML = `
+      <div class="sp-no-incidents">
+        <span class="material-icons-outlined">check_circle</span>
+        <p>No incidents reported in the last 90 days.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const statusColors = {
+    investigating: 'var(--warning, #f59e0b)',
+    identified: '#f97316',
+    monitoring: 'var(--info, #3b82f6)',
+    resolved: 'var(--success)'
+  };
+
+  const impactIcons = {
+    none: 'info',
+    minor: 'warning',
+    major: 'error',
+    critical: 'dangerous'
+  };
+  
+  // Group by date (created_at)
+  const grouped = {};
+  for (const inc of incidents) {
+    const date = inc.created_at.slice(0, 10);
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(inc);
+  }
+  
+  el.innerHTML = Object.entries(grouped).map(([date, incs]) => `
+    <div class="sp-incident-day">
+      <div class="sp-incident-date">${formatDateFull(date)}</div>
+      ${incs.map(inc => {
+        const latestUpdate = (inc.updates || []).slice(-1)[0];
+        return `
+          <div class="sp-incident-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+              <span class="material-icons-outlined" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
+                ${impactIcons[inc.impact] || 'warning'}
+              </span>
+              <span class="sp-incident-text" style="flex: 1;">
+                <strong>${escapeHtml$1(inc.title)}</strong>
+                <small style="margin-left: 6px; text-transform: capitalize;">${inc.status}</small>
+              </span>
+              ${inc.resolved_at ? `<small style="color: var(--success); font-size: 11px;">Resolved</small>` : ''}
+            </div>
+            ${inc.description ? `<p style="margin: 0 0 0 26px; font-size: 12px; color: var(--text-secondary);">${escapeHtml$1(inc.description)}</p>` : ''}
+            ${latestUpdate && latestUpdate.message !== inc.description ? `
+              <p style="margin: 0 0 0 26px; font-size: 11px; color: var(--text-tertiary);">
+                Latest: ${escapeHtml$1(latestUpdate.message)} <small>(${new Date(latestUpdate.created_at).toLocaleString()})</small>
+              </p>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
 }
 
 function cleanupStatus() {
@@ -46668,19 +47058,22 @@ function setupSearchListeners(tab, loadViewCallback) {
   }
 }
 
-const navigateTo$9 = (...args) => window.adminNavigate(...args);
+const navigateTo$b = (...args) => window.adminNavigate(...args);
 
 async function renderNodesList(container, username, loadView) {
   try {
     const search = state.searchQuery.nodes ? `&search=${encodeURIComponent(state.searchQuery.nodes)}` : '';
-    const [res, statusRes] = await Promise.all([
+    const [res, statusRes, healthRes] = await Promise.all([
       api(`/api/admin/nodes?page=${state.currentPage.nodes}&per_page=${state.itemsPerPage.nodes}${search}`),
-      api('/api/status/nodes')
+      api('/api/status/nodes'),
+      api('/api/admin/nodes/health').catch(() => ({ json: () => ({ health: {} }) }))
     ]);
     const data = await res.json();
     const statusData = await statusRes.json();
     const nodeStatuses = {};
     (statusData.nodes || []).forEach(n => { nodeStatuses[n.id] = n.status; });
+    const healthData = await healthRes.json();
+    const nodeHealthMap = healthData.health || {};
     
     container.innerHTML = `
       <div class="admin-header">
@@ -46725,8 +47118,8 @@ async function renderNodesList(container, username, loadView) {
                     <span class="stat-value">${formatBytes(node.disk * 1024 * 1024)}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">Ports</span>
-                    <span class="stat-value">${node.allocation_start || 25565}-${node.allocation_end || 25665}</span>
+                    <span class="stat-label">Response</span>
+                    <span class="stat-value">${nodeHealthMap[node.id]?.response_time != null ? nodeHealthMap[node.id].response_time + 'ms' : '—'}</span>
                   </div>
                 </div>
                 <div class="list-card-footer">
@@ -46743,12 +47136,12 @@ async function renderNodesList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$9);
+    setupBreadcrumbListeners(navigateTo$b);
     setupPaginationListeners('nodes', loadView);
     setupSearchListeners('nodes', loadView);
     
     document.querySelectorAll('.list-card[data-id]').forEach(card => {
-      card.onclick = () => navigateTo$9('nodes', card.dataset.id);
+      card.onclick = () => navigateTo$b('nodes', card.dataset.id);
     });
     
     document.getElementById('create-node-btn').onclick = () => createNewNode();
@@ -46760,9 +47153,10 @@ async function renderNodesList(container, username, loadView) {
 
 async function renderNodeDetail(container, username, nodeId) {
   try {
-    const [res, statusRes] = await Promise.all([
+    const [res, statusRes, healthRes] = await Promise.all([
       api(`/api/admin/nodes`),
-      api('/api/status/nodes')
+      api('/api/status/nodes'),
+      api('/api/admin/nodes/health').catch(() => ({ json: () => ({ health: {} }) }))
     ]);
     const data = await res.json();
     const statusData = await statusRes.json();
@@ -46775,6 +47169,8 @@ async function renderNodeDetail(container, username, nodeId) {
     
     const nodeStatus = (statusData.nodes || []).find(n => n.id === nodeId);
     const isOnline = nodeStatus?.status === 'online';
+    const healthData = await healthRes.json();
+    const nodeHealthInfo = (healthData.health || {})[nodeId];
     
     const locRes = await api('/api/admin/locations');
     const locData = await locRes.json();
@@ -46803,14 +47199,14 @@ async function renderNodeDetail(container, username, nodeId) {
       <div class="detail-content" id="node-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$9);
+    setupBreadcrumbListeners(navigateTo$b);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
         state.currentView.subTab = tab.dataset.subtab;
         document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        renderNodeSubTab(node, locData.locations, username, isOnline);
+        renderNodeSubTab(node, locData.locations, username, isOnline, nodeHealthInfo);
       };
     });
     
@@ -46823,20 +47219,20 @@ async function renderNodeDetail(container, username, nodeId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$9('nodes');
+        navigateTo$b('nodes');
       } catch (e) {
         error('Failed to delete node');
       }
     };
     
-    renderNodeSubTab(node, locData.locations, username, isOnline);
+    renderNodeSubTab(node, locData.locations, username, isOnline, nodeHealthInfo);
     
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load node</div>`;
   }
 }
 
-function renderNodeSubTab(node, locations, username, isOnline) {
+function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
   const content = document.getElementById('node-detail-content');
   
   switch (state.currentView.subTab) {
@@ -46912,6 +47308,37 @@ function renderNodeSubTab(node, locations, username, isOnline) {
                 <span class="material-icons-outlined">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
                 <span>${node.behind_proxy ? 'Behind Proxy' : 'Direct Connection'}</span>
               </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Health Monitoring</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Status</span>
+                <span class="info-value">
+                  <span class="status-indicator ${healthInfo?.status === 'online' ? 'status-success' : healthInfo?.status === 'degraded' ? 'status-warning' : 'status-danger'}" style="display: inline-block; margin-right: 6px;"></span>
+                  ${healthInfo?.status ? healthInfo.status.charAt(0).toUpperCase() + healthInfo.status.slice(1) : 'Unknown'}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Response Time</span>
+                <span class="info-value">${healthInfo?.response_time != null ? healthInfo.response_time + 'ms' : '—'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Last Seen</span>
+                <span class="info-value">${healthInfo?.last_seen ? new Date(healthInfo.last_seen).toLocaleString() : 'Never'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Last Check</span>
+                <span class="info-value">${healthInfo?.checked_at ? new Date(healthInfo.checked_at).toLocaleString() : 'Never'}</span>
+              </div>
+              ${healthInfo?.last_error ? `
+              <div class="info-item">
+                <span class="info-label">Last Error</span>
+                <span class="info-value" style="color: var(--danger);">${escapeHtml$1(healthInfo.last_error)}</span>
+              </div>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -47044,7 +47471,7 @@ function renderNodeSubTab(node, locations, username, isOnline) {
             body: JSON.stringify({ node: nodeData })
           });
           success('Node updated successfully');
-          navigateTo$9('nodes', node.id, 'settings');
+          navigateTo$b('nodes', node.id, 'settings');
         } catch (e) {
           error('Failed to update node');
         }
@@ -47191,7 +47618,7 @@ async function createNewNode() {
     
     const data = await res.json();
     if (data.node?.id) {
-      navigateTo$9('nodes', data.node.id, 'about');
+      navigateTo$b('nodes', data.node.id, 'about');
       info('Configure your new node');
     } else {
       error('Failed to create node');
@@ -47201,7 +47628,7 @@ async function createNewNode() {
   }
 }
 
-const navigateTo$8 = (...args) => window.adminNavigate(...args);
+const navigateTo$a = (...args) => window.adminNavigate(...args);
 
 async function renderServersList(container, username, loadView) {
   try {
@@ -47315,12 +47742,12 @@ async function renderServersList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$8);
+    setupBreadcrumbListeners(navigateTo$a);
     setupPaginationListeners('servers', loadView);
     setupSearchListeners('servers', loadView);
     
     document.querySelectorAll('.clickable-row[data-id], .list-card[data-id]').forEach(el => {
-      el.onclick = () => navigateTo$8('servers', el.dataset.id);
+      el.onclick = () => navigateTo$a('servers', el.dataset.id);
     });
     
     document.getElementById('create-server-btn').onclick = () => createNewServer();
@@ -47369,7 +47796,7 @@ async function renderServerDetail(container, username, serverId) {
       <div class="detail-content" id="server-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$8);
+    setupBreadcrumbListeners(navigateTo$a);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -47389,7 +47816,7 @@ async function renderServerDetail(container, username, serverId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$8('servers');
+        navigateTo$a('servers');
       } catch (e) {
         error('Failed to delete server');
       }
@@ -47678,7 +48105,7 @@ function renderServerSubTab(server, username) {
             
             if (res.ok) {
               success('Server installation started');
-              navigateTo$8('servers', server.id, 'manage');
+              navigateTo$a('servers', server.id, 'manage');
             } else {
               const data = await res.json();
               error(data.error || 'Installation failed');
@@ -47725,7 +48152,7 @@ function renderServerSubTab(server, username) {
             body: JSON.stringify({})
           });
           success(`Server ${action}ed`);
-          navigateTo$8('servers', server.id, 'manage');
+          navigateTo$a('servers', server.id, 'manage');
         } catch (e) {
           error(`Failed to ${action} server`);
         }
@@ -47740,7 +48167,7 @@ function renderServerSubTab(server, username) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
           });
-          navigateTo$8('servers');
+          navigateTo$a('servers');
         } catch (e) {
           error('Failed to delete server');
         }
@@ -47979,7 +48406,7 @@ async function createNewServer() {
     
     const data = await res.json();
     if (data.server?.id) {
-      navigateTo$8('servers', data.server.id, 'details');
+      navigateTo$a('servers', data.server.id, 'details');
       info('Configure your server, then click "Install" when ready');
     } else {
       error(data.error || 'Failed to create server');
@@ -48001,7 +48428,7 @@ window.suspendServerAdmin = async function(serverId) {
       // But adminNavigate changes state. To reload current view we can just call the render function again
       // or re-navigate to same place.
       const currentTab = state.currentView.tab;
-      navigateTo$8(currentTab);
+      navigateTo$a(currentTab);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to suspend');
@@ -48020,7 +48447,7 @@ window.unsuspendServerAdmin = async function(serverId) {
     });
     if (res.ok) {
       const currentTab = state.currentView.tab;
-      navigateTo$8(currentTab);
+      navigateTo$a(currentTab);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to unsuspend');
@@ -48040,7 +48467,7 @@ window.deleteServerAdmin = async function(serverId) {
       body: JSON.stringify({})
     });
     const currentTab = state.currentView.tab;
-    navigateTo$8(currentTab);
+    navigateTo$a(currentTab);
   } catch (e) {
     error('Failed to delete server');
   }
@@ -48134,7 +48561,7 @@ async function showTransferModal(server) {
       } else {
         success('Server transfer completed');
         modal.remove();
-        navigateTo$8('servers', server.id, 'details');
+        navigateTo$a('servers', server.id, 'details');
       }
     } catch (e) {
       messageEl.textContent = 'Transfer failed';
@@ -48145,7 +48572,7 @@ async function showTransferModal(server) {
   };
 }
 
-const navigateTo$7 = (...args) => window.adminNavigate(...args);
+const navigateTo$9 = (...args) => window.adminNavigate(...args);
 
 async function renderUsersList(container, username, loadView) {
   try {
@@ -48258,12 +48685,12 @@ async function renderUsersList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$7);
+    setupBreadcrumbListeners(navigateTo$9);
     setupPaginationListeners('users', loadView);
     setupSearchListeners('users', loadView);
     
     document.querySelectorAll('.clickable-row[data-id], .list-card[data-id]').forEach(el => {
-      el.onclick = () => navigateTo$7('users', el.dataset.id);
+      el.onclick = () => navigateTo$9('users', el.dataset.id);
     });
     
     document.getElementById('create-user-btn')?.addEventListener('click', () => {
@@ -48399,7 +48826,7 @@ async function renderUserDetail(container, username, userId) {
       <div class="detail-content" id="user-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$7);
+    setupBreadcrumbListeners(navigateTo$9);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = async () => {
@@ -48515,7 +48942,7 @@ async function renderUserSubTab(user, username) {
           
           if (data.success) {
             success('User deleted. ' + data.deletedServers + ' server(s) removed.');
-            navigateTo$7('users');
+            navigateTo$9('users');
           } else {
             error(data.error || 'Failed to delete user');
             btn.disabled = false;
@@ -48570,7 +48997,7 @@ async function renderUserSubTab(user, username) {
         `;
         
         document.querySelectorAll('.user-server-item').forEach(el => {
-          el.onclick = () => navigateTo$7('servers', el.dataset.serverId);
+          el.onclick = () => navigateTo$9('servers', el.dataset.serverId);
         });
       } catch (e) {
         content.innerHTML = '<div class="error">Failed to load servers</div>';
@@ -48620,7 +49047,7 @@ async function renderUserSubTab(user, username) {
             body: JSON.stringify({ updates })
           });
           success('Permissions updated');
-          navigateTo$7('users', user.id, 'permissions');
+          navigateTo$9('users', user.id, 'permissions');
         } catch (e) {
           error('Failed to update permissions');
         }
@@ -48685,7 +49112,7 @@ async function renderUserSubTab(user, username) {
             body: JSON.stringify({ updates: { limits } })
           });
           success('Limits updated');
-          navigateTo$7('users', user.id, 'limits');
+          navigateTo$9('users', user.id, 'limits');
         } catch (e) {
           error('Failed to update limits');
         }
@@ -48694,7 +49121,7 @@ async function renderUserSubTab(user, username) {
   }
 }
 
-const navigateTo$6 = (...args) => window.adminNavigate(...args);
+const navigateTo$8 = (...args) => window.adminNavigate(...args);
 
 function renderAdminEggIcon(egg) {
   if (!egg.icon) {
@@ -48793,7 +49220,7 @@ async function renderNestsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$6);
+    setupBreadcrumbListeners(navigateTo$8);
     
     document.getElementById('create-nest-btn').onclick = () => showNestModal(username, null, loadView);
     
@@ -48809,7 +49236,7 @@ async function renderNestsList(container, username, loadView) {
     
     // Click on egg card to open detail view
     document.querySelectorAll('.egg-card.clickable').forEach(card => {
-      card.onclick = () => navigateTo$6('eggs', card.dataset.eggId);
+      card.onclick = () => navigateTo$8('eggs', card.dataset.eggId);
     });
     
   } catch (e) {
@@ -49064,7 +49491,7 @@ window.editNestAdmin = async function(nestId) {
   if (nest) {
     // We need to trigger showNestModal. Since we don't have loadView reference here easily,
     // we rely on the modal's save function using adminNavigate or we pass a dummy.
-    showNestModal(state$1.username, nest, () => navigateTo$6('nests'));
+    showNestModal(state$1.username, nest, () => navigateTo$8('nests'));
   }
 };
 
@@ -49078,7 +49505,7 @@ window.deleteNestAdmin = async function(nestId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
-    navigateTo$6('nests');
+    navigateTo$8('nests');
   } catch (e) {
     error('Failed to delete nest');
   }
@@ -49119,7 +49546,7 @@ async function createNewEgg(nestId = null) {
     
     const createData = await createRes.json();
     if (createData.egg?.id) {
-      navigateTo$6('eggs', createData.egg.id, 'about');
+      navigateTo$8('eggs', createData.egg.id, 'about');
       info('Configure your new egg');
     } else {
       error(createData.error || 'Failed to create egg');
@@ -49130,7 +49557,7 @@ async function createNewEgg(nestId = null) {
 }
 
 window.editEggAdmin = function(eggId) {
-  navigateTo$6('eggs', eggId);
+  navigateTo$8('eggs', eggId);
 };
 
 window.deleteEggAdmin = async function(eggId) {
@@ -49143,7 +49570,7 @@ window.deleteEggAdmin = async function(eggId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
-    navigateTo$6('nests');
+    navigateTo$8('nests');
   } catch (e) {
     error('Failed to delete egg');
   }
@@ -49192,7 +49619,7 @@ async function renderEggDetail(container, username, eggId) {
       <div class="detail-content" id="egg-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$6);
+    setupBreadcrumbListeners(navigateTo$8);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -49212,7 +49639,7 @@ async function renderEggDetail(container, username, eggId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$6('nests');
+        navigateTo$8('nests');
       } catch (e) {
         error('Failed to delete egg');
       }
@@ -49379,7 +49806,7 @@ function renderEggAboutTab(content, egg, nests, username) {
         })
       });
       success('Egg updated');
-      navigateTo$6('eggs', egg.id, 'about');
+      navigateTo$8('eggs', egg.id, 'about');
     } catch (e) {
       error('Failed to update egg');
     }
@@ -49454,7 +49881,7 @@ function renderEggConfigTab(content, egg, username) {
         })
       });
       success('Startup config updated');
-      navigateTo$6('eggs', egg.id, 'configuration');
+      navigateTo$8('eggs', egg.id, 'configuration');
     } catch (e) {
       error('Failed to update config');
     }
@@ -49490,7 +49917,7 @@ function renderEggConfigTab(content, egg, username) {
         })
       });
       success('Advanced config updated');
-      navigateTo$6('eggs', egg.id, 'configuration');
+      navigateTo$8('eggs', egg.id, 'configuration');
     } catch (e) {
       error('Failed to update config');
     }
@@ -49576,7 +50003,7 @@ function renderEggVariablesTab(content, egg, username) {
           body: JSON.stringify({ egg: { variables: newVars } })
         });
         success('Variable deleted');
-        navigateTo$6('eggs', egg.id, 'variables');
+        navigateTo$8('eggs', egg.id, 'variables');
       } catch (e) {
         error('Failed to delete variable');
       }
@@ -49678,7 +50105,7 @@ function showVariableModal(egg, editIndex, username) {
       });
       modal.remove();
       success(isEdit ? 'Variable updated' : 'Variable added');
-      navigateTo$6('eggs', egg.id, 'variables');
+      navigateTo$8('eggs', egg.id, 'variables');
     } catch (e) {
       error('Failed to save variable');
     }
@@ -49732,14 +50159,14 @@ function renderEggInstallTab(content, egg, username) {
         })
       });
       success('Install script updated');
-      navigateTo$6('eggs', egg.id, 'install');
+      navigateTo$8('eggs', egg.id, 'install');
     } catch (e) {
       error('Failed to update install script');
     }
   };
 }
 
-const navigateTo$5 = (...args) => window.adminNavigate(...args);
+const navigateTo$7 = (...args) => window.adminNavigate(...args);
 
 async function renderLocationsList(container, username, loadView) {
   try {
@@ -49786,7 +50213,7 @@ async function renderLocationsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$5);
+    setupBreadcrumbListeners(navigateTo$7);
     
     document.getElementById('create-location-btn').onclick = () => showLocationModal(username, loadView);
     
@@ -49867,17 +50294,20 @@ window.deleteLocationAdmin = async function(locationId) {
   }
 };
 
-const navigateTo$4 = (...args) => window.adminNavigate(...args);
+const navigateTo$6 = (...args) => window.adminNavigate(...args);
 
 let currentSettingsTab = 'general';
 
 const SETTINGS_TABS = [
   { id: 'general', label: 'General', icon: 'settings' },
+  { id: 'branding', label: 'Branding', icon: 'palette' },
   { id: 'registration', label: 'Registration', icon: 'person_add' },
   { id: 'defaults', label: 'User Defaults', icon: 'tune' },
+  { id: 'security', label: 'Security', icon: 'shield' },
   { id: 'oauth', label: 'OAuth Providers', icon: 'login' },
   { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },
   { id: 'mail', label: 'Mail', icon: 'email' },
+  { id: 'maintenance', label: 'Maintenance', icon: 'construction' },
   { id: 'advanced', label: 'Advanced', icon: 'code' }
 ];
 
@@ -49916,7 +50346,7 @@ async function renderSettingsPage(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$4);
+    setupBreadcrumbListeners(navigateTo$6);
     
     container.querySelectorAll('.settings-nav-item').forEach(btn => {
       btn.onclick = () => {
@@ -49943,11 +50373,17 @@ async function renderSettingsContent(config) {
     case 'general':
       renderGeneralSettings(content, config);
       break;
+    case 'branding':
+      renderBrandingSettings(content, config);
+      break;
     case 'registration':
       renderRegistrationSettings(content, config);
       break;
     case 'defaults':
       renderDefaultsSettings(content, config);
+      break;
+    case 'security':
+      renderSecuritySettings(content, config);
       break;
     case 'oauth':
       renderOAuthSettings(content, config);
@@ -49957,6 +50393,9 @@ async function renderSettingsContent(config) {
       break;
     case 'mail':
       renderMailSettings(content, config);
+      break;
+    case 'maintenance':
+      renderMaintenanceSettings(content, config);
       break;
     case 'advanced':
       renderAdvancedSettings(content, config);
@@ -50042,6 +50481,214 @@ function renderGeneralSettings(content, config) {
   };
 }
 
+// ==================== BRANDING SETTINGS ====================
+
+function renderBrandingSettings(content, config) {
+  const branding = config.branding || {};
+  const colorInputStyle = 'width: 48px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; padding: 2px;';
+  
+  content.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2>Branding</h2>
+        <p>Customize the look and feel of your panel.</p>
+      </div>
+      
+      <form id="branding-settings-form" class="settings-form">
+        <div class="detail-card">
+          <h3>Accent Colors</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Primary</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="color" data-sync="accent_color" value="${escapeHtml$1(branding.accentColor || '#d97339')}" style="${colorInputStyle}" />
+                <input type="text" name="accent_color" value="${escapeHtml$1(branding.accentColor || '#d97339')}" placeholder="#d97339" style="max-width: 140px;" />
+              </div>
+              <small class="form-hint">Buttons, links, and highlights</small>
+            </div>
+            <div class="form-group">
+              <label>Hover</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="color" data-sync="accent_hover" value="${escapeHtml$1(branding.accentHover || '#e88a4d')}" style="${colorInputStyle}" />
+                <input type="text" name="accent_hover" value="${escapeHtml$1(branding.accentHover || '#e88a4d')}" placeholder="#e88a4d" style="max-width: 140px;" />
+              </div>
+              <small class="form-hint">Hover state for accented elements</small>
+            </div>
+            <div class="form-group">
+              <label>Muted</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="text" name="accent_muted" value="${escapeHtml$1(branding.accentMuted || 'rgba(217, 115, 57, 0.1)')}" placeholder="rgba(217, 115, 57, 0.1)" />
+              </div>
+              <small class="form-hint">Subtle backgrounds (supports rgba)</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Logo</h3>
+          <p class="form-hint" style="margin-bottom: 12px;">Displayed in the navigation bar and sidebar. Recommended: square image, PNG or SVG.</p>
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+            <img id="logo-preview" src="${branding.logo || '/favicon.svg'}" alt="Logo" style="width: 48px; height: 48px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: contain; padding: 4px; background: var(--bg-secondary);" />
+            <div style="display: flex; gap: 8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
+                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                Upload Logo
+                <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display: none;" />
+              </label>
+              ${branding.logo ? `<button type="button" class="btn btn-danger btn-sm" id="remove-logo-btn">
+                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                Remove
+              </button>` : ''}
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Favicon</h3>
+          <p class="form-hint" style="margin-bottom: 12px;">Browser tab icon. Recommended: square image, ICO, PNG or SVG.</p>
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+            <img id="favicon-preview" src="${branding.favicon || '/favicon.svg'}" alt="Favicon" style="width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; padding: 2px; background: var(--bg-secondary);" />
+            <div style="display: flex; gap: 8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
+                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                Upload Favicon
+                <input type="file" id="favicon-upload" accept="image/png,image/svg+xml,image/x-icon,image/webp" style="display: none;" />
+              </label>
+              ${branding.favicon ? `<button type="button" class="btn btn-danger btn-sm" id="remove-favicon-btn">
+                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                Remove
+              </button>` : ''}
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Open Graph</h3>
+          <p class="form-hint" style="margin-bottom: 12px;">Controls how your panel appears when shared on social media and messaging apps.</p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>OG Title</label>
+              <input type="text" name="og_title" value="${escapeHtml$1(branding.ogTitle || '')}" placeholder="${escapeHtml$1(config.panel?.name || 'Sodium')}" />
+              <small class="form-hint">Defaults to panel name if empty</small>
+            </div>
+            <div class="form-group">
+              <label>OG Description</label>
+              <input type="text" name="og_description" value="${escapeHtml$1(branding.ogDescription || '')}" placeholder="Modern game server management panel." />
+              <small class="form-hint">Short description for link previews</small>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px; margin-top: 12px;">
+            <img id="ogImage-preview" src="${branding.ogImage || '/banner.png'}" alt="OG Image" style="width: 120px; height: 63px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: cover; background: var(--bg-secondary);" />
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
+                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                Upload OG Image
+                <input type="file" id="og-image-upload" accept="image/png,image/jpeg,image/webp" style="display: none;" />
+              </label>
+              ${branding.ogImage ? `<button type="button" class="btn btn-danger btn-sm" id="remove-ogImage-btn">
+                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                Remove
+              </button>` : ''}
+              <small class="form-hint">Recommended: 1200×630px</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  // Sync color pickers with text inputs
+  content.querySelectorAll('input[type="color"][data-sync]').forEach(picker => {
+    const textInput = content.querySelector(`input[name="${picker.dataset.sync}"]`);
+    if (!textInput) return;
+    picker.addEventListener('input', () => { textInput.value = picker.value; });
+    textInput.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(textInput.value)) picker.value = textInput.value;
+    });
+  });
+  
+  // File uploads
+  document.getElementById('logo-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await uploadBrandingFile(file, 'logo');
+  });
+  document.getElementById('favicon-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await uploadBrandingFile(file, 'favicon');
+  });
+  document.getElementById('og-image-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await uploadBrandingFile(file, 'ogImage');
+  });
+  
+  // Remove buttons
+  document.getElementById('remove-logo-btn')?.addEventListener('click', () => removeBrandingFile('logo'));
+  document.getElementById('remove-favicon-btn')?.addEventListener('click', () => removeBrandingFile('favicon'));
+  document.getElementById('remove-ogImage-btn')?.addEventListener('click', () => removeBrandingFile('ogImage'));
+  
+  // Save all branding settings
+  document.getElementById('branding-settings-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    await saveSettings({
+      branding: {
+        accentColor: form.accent_color.value,
+        accentHover: form.accent_hover.value,
+        accentMuted: form.accent_muted.value,
+        ogTitle: form.og_title.value,
+        ogDescription: form.og_description.value
+      }
+    });
+  };
+}
+
+async function uploadBrandingFile(file, type) {
+  try {
+    const res = await api(`/api/admin/branding/upload?type=${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type },
+      body: file
+    });
+    const data = await res.json();
+    if (data.success) {
+      const labels = { logo: 'Logo', favicon: 'Favicon', ogImage: 'OG Image' };
+      success(`${labels[type] || type} uploaded`);
+      const preview = document.getElementById(`${type}-preview`);
+      if (preview) preview.src = data.url + '?t=' + Date.now();
+      localStorage.removeItem('branding');
+    } else {
+      error(data.error || 'Upload failed');
+    }
+  } catch {
+    error('Failed to upload file');
+  }
+}
+
+async function removeBrandingFile(type) {
+  try {
+    const res = await api(`/api/admin/branding/${type}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      const labels = { logo: 'Logo', favicon: 'Favicon', ogImage: 'OG Image' };
+      success(`${labels[type] || type} removed`);
+      const preview = document.getElementById(`${type}-preview`);
+      if (preview) preview.src = type === 'ogImage' ? '/banner.png' : '/favicon.svg';
+      localStorage.removeItem('branding');
+    } else {
+      error(data.error || 'Failed to remove');
+    }
+  } catch {
+    error('Failed to remove file');
+  }
+}
+
 // ==================== REGISTRATION SETTINGS ====================
 
 function renderRegistrationSettings(content, config) {
@@ -50071,12 +50718,35 @@ function renderRegistrationSettings(content, config) {
               </span>
             </label>
             <label class="toggle-item">
-              <input type="checkbox" name="captcha_enabled" ${config.registration?.captcha ? 'checked' : ''} />
+              <input type="checkbox" name="captcha_enabled" id="captcha_enabled" ${config.registration?.captcha ? 'checked' : ''} />
               <span class="toggle-content">
                 <span class="toggle-title">Captcha Protection</span>
                 <span class="toggle-desc">Require captcha verification on registration</span>
               </span>
             </label>
+          </div>
+        </div>
+        
+        <div class="detail-card" id="captcha-config-card" style="display: ${config.registration?.captcha ? 'block' : 'none'};">
+          <h3>Captcha Configuration</h3>
+          <div class="form-group">
+            <label>Provider</label>
+            <select name="captcha_provider" disabled>
+              <option value="turnstile" selected>Cloudflare Turnstile</option>
+            </select>
+            <small class="form-hint">Captcha provider to use for verification</small>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Site Key</label>
+              <input type="text" name="captcha_site_key" value="${escapeHtml$1(config.registration?.captchaSiteKey || '')}" placeholder="0x..." />
+              <small class="form-hint">Public site key from Cloudflare Turnstile dashboard</small>
+            </div>
+            <div class="form-group">
+              <label>Secret Key</label>
+              <input type="password" name="captcha_secret_key" value="${escapeHtml$1(config.registration?.captchaSecretKey || '')}" placeholder="0x..." />
+              <small class="form-hint">Secret key for server-side verification</small>
+            </div>
           </div>
         </div>
         
@@ -50104,6 +50774,12 @@ function renderRegistrationSettings(content, config) {
     </div>
   `;
   
+  const captchaToggle = document.getElementById('captcha_enabled');
+  const captchaCard = document.getElementById('captcha-config-card');
+  captchaToggle.addEventListener('change', () => {
+    captchaCard.style.display = captchaToggle.checked ? 'block' : 'none';
+  });
+  
   document.getElementById('registration-settings-form').onsubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -50113,6 +50789,9 @@ function renderRegistrationSettings(content, config) {
         enabled: form.registration_enabled.checked,
         emailVerification: form.email_verification.checked,
         captcha: form.captcha_enabled.checked,
+        captchaProvider: form.captcha_provider.value,
+        captchaSiteKey: form.captcha_site_key.value,
+        captchaSecretKey: form.captcha_secret_key.value,
         allowedDomains: form.allowed_domains.value,
         blockedDomains: form.blocked_domains.value
       }
@@ -50191,6 +50870,65 @@ function renderDefaultsSettings(content, config) {
         cpu: parseInt(form.default_cpu.value) || 200,
         allocatipns: parseInt(form.default_allocations.value) || 5,
         backups: parseInt(form.default_backups.value) || 3
+      }
+    };
+    
+    await saveSettings(newConfig);
+  };
+}
+
+// ==================== SECURITY SETTINGS ====================
+
+function renderSecuritySettings(content, config) {
+  const ipBlocklist = (config.security?.ipBlocklist || []).join('\n');
+  const adminIpAllowlist = (config.security?.adminIpAllowlist || []).join('\n');
+  
+  content.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2>Security Settings</h2>
+        <p>Configure IP restrictions and access controls.</p>
+      </div>
+      
+      <form id="security-settings-form" class="settings-form">
+        <div class="detail-card">
+          <h3>IP Blocklist</h3>
+          <p class="form-hint" style="margin-bottom: 0.75rem;">Block specific IPs or CIDR ranges from accessing the panel entirely. One per line.</p>
+          <div class="form-group">
+            <textarea name="ip_blocklist" rows="5" placeholder="192.168.1.100&#10;10.0.0.0/8&#10;203.0.113.*">${escapeHtml$1(ipBlocklist)}</textarea>
+            <small class="form-hint">Supports exact IPs, CIDR notation (10.0.0.0/8), and wildcards (192.168.1.*)</small>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Admin IP Allowlist</h3>
+          <p class="form-hint" style="margin-bottom: 0.75rem;">Restrict admin panel access to specific IPs. Leave empty to allow all. One per line.</p>
+          <div class="form-group">
+            <textarea name="admin_ip_allowlist" rows="5" placeholder="Leave empty to allow all IPs&#10;192.168.1.0/24&#10;10.0.0.1">${escapeHtml$1(adminIpAllowlist)}</textarea>
+            <small class="form-hint">When set, only these IPs can access /admin routes. Be careful not to lock yourself out!</small>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.getElementById('security-settings-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    
+    const parseList = (str) => str.split('\n').map(s => s.trim()).filter(Boolean);
+    
+    const newConfig = {
+      security: {
+        ipBlocklist: parseList(form.ip_blocklist.value),
+        adminIpAllowlist: parseList(form.admin_ip_allowlist.value)
       }
     };
     
@@ -50858,6 +51596,77 @@ function renderMailSettings(content, config) {
   };
 }
 
+// ==================== MAINTENANCE SETTINGS ====================
+
+function renderMaintenanceSettings(content, config) {
+  const allowedIps = (config.maintenance?.allowedIps || []).join('\n');
+  
+  content.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2>Maintenance Mode</h2>
+        <p>Enable maintenance mode to temporarily restrict access to the panel.</p>
+      </div>
+      
+      <form id="maintenance-settings-form" class="settings-form">
+        <div class="detail-card">
+          <h3>Status</h3>
+          <div class="form-toggles">
+            <label class="toggle-item">
+              <input type="checkbox" name="maintenance_enabled" ${config.maintenance?.enabled ? 'checked' : ''} />
+              <span class="toggle-content">
+                <span class="toggle-title">Enable Maintenance Mode</span>
+                <span class="toggle-desc">When enabled, non-admin users will see a maintenance page and API requests will return 503</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Maintenance Message</h3>
+          <div class="form-group">
+            <textarea name="maintenance_message" rows="3" placeholder="The panel is currently under maintenance. Please try again later.">${escapeHtml$1(config.maintenance?.message || '')}</textarea>
+            <small class="form-hint">Custom message shown to users during maintenance</small>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Allowed IPs</h3>
+          <p class="form-hint" style="margin-bottom: 0.75rem;">These IPs can bypass maintenance mode. Admins always bypass. One per line.</p>
+          <div class="form-group">
+            <textarea name="maintenance_ips" rows="5" placeholder="192.168.1.100&#10;10.0.0.0/8">${escapeHtml$1(allowedIps)}</textarea>
+            <small class="form-hint">Supports exact IPs, CIDR notation, and wildcards</small>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.getElementById('maintenance-settings-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    
+    const parseList = (str) => str.split('\n').map(s => s.trim()).filter(Boolean);
+    
+    const newConfig = {
+      maintenance: {
+        enabled: form.maintenance_enabled.checked,
+        message: form.maintenance_message.value,
+        allowedIps: parseList(form.maintenance_ips.value)
+      }
+    };
+    
+    await saveSettings(newConfig);
+  };
+}
+
 // ==================== ADVANCED SETTINGS ====================
 
 function renderAdvancedSettings(content, config) {
@@ -51013,7 +51822,7 @@ async function saveSettings(newConfig) {
   }
 }
 
-const navigateTo$3 = (...args) => window.adminNavigate(...args);
+const navigateTo$5 = (...args) => window.adminNavigate(...args);
 
 async function renderAnnouncementsList(container, username, loadView) {
   try {
@@ -51162,7 +51971,7 @@ async function renderAnnouncementsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$3);
+    setupBreadcrumbListeners(navigateTo$5);
     
     let editingId = null;
     
@@ -51255,7 +52064,7 @@ async function renderAnnouncementsList(container, username, loadView) {
   }
 }
 
-const navigateTo$2 = (...args) => window.adminNavigate(...args);
+const navigateTo$4 = (...args) => window.adminNavigate(...args);
 
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
@@ -51366,7 +52175,7 @@ async function renderAuditLogPage(container, username) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$2);
+    setupBreadcrumbListeners(navigateTo$4);
     
   } catch (e) {
     container.innerHTML = '<div class="error">Failed to load audit log</div>';
@@ -51466,14 +52275,14 @@ async function renderActivityLogPage(container, username) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$2);
+    setupBreadcrumbListeners(navigateTo$4);
     
   } catch (e) {
     container.innerHTML = '<div class="error">Failed to load activity log</div>';
   }
 }
 
-const navigateTo$1 = (...args) => window.adminNavigate(...args);
+const navigateTo$3 = (...args) => window.adminNavigate(...args);
 
 const WEBHOOK_TYPES = [
   { id: 'discord', label: 'Discord', icon: 'smart_toy' },
@@ -51569,7 +52378,7 @@ async function renderWebhooksList(container, username, loadView) {
       ${renderWebhookModal()}
     `;
     
-    setupBreadcrumbListeners(navigateTo$1);
+    setupBreadcrumbListeners(navigateTo$3);
     setupWebhookListeners(webhooks, loadView);
     
   } catch (e) {
@@ -52030,6 +52839,778 @@ async function renderPluginsList(container) {
   }
 }
 
+const navigateTo$2 = (...args) => window.adminNavigate(...args);
+
+const AVAILABLE_PERMISSIONS = [
+  { id: 'server.create', label: 'Create Servers' },
+  { id: 'server.delete', label: 'Delete Servers' },
+  { id: 'server.update', label: 'Update Servers' },
+  { id: 'server.console', label: 'Access Console' },
+  { id: 'server.files', label: 'File Manager' },
+  { id: 'server.backup', label: 'Manage Backups' },
+  { id: 'schedule.create', label: 'Create Schedules' },
+  { id: 'schedule.update', label: 'Update Schedules' },
+  { id: 'schedule.delete', label: 'Delete Schedules' },
+  { id: '*', label: 'All Permissions (Wildcard)' }
+];
+
+async function renderGroupsList(container, username, loadView) {
+  try {
+    const res = await api('/api/admin/groups');
+    const data = await res.json();
+    const groups = data.groups || [];
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([{ label: 'Groups' }])}
+        <div class="admin-header-actions">
+          <button class="btn btn-primary" id="create-group-btn">
+            <span class="material-icons-outlined">add</span>
+            Create Group
+          </button>
+        </div>
+      </div>
+      
+      <div class="admin-list">
+        ${groups.length === 0 ? `
+          <div class="empty-state">
+            <span class="material-icons-outlined">group</span>
+            <h3>No Groups</h3>
+            <p>Create user groups to manage permissions and resource limits</p>
+          </div>
+        ` : `
+          <div class="list-grid">
+            ${groups.map(group => `
+              <div class="list-card" data-id="${group.id}">
+                <div class="list-card-header">
+                  <div class="list-card-icon">
+                    <span class="material-icons-outlined">group</span>
+                  </div>
+                  <div class="list-card-title">
+                    <h3>${escapeHtml$1(group.name)}</h3>
+                    <span class="list-card-subtitle">${escapeHtml$1(group.description || 'No description')}</span>
+                  </div>
+                </div>
+                <div class="list-card-stats">
+                  <div class="stat">
+                    <span class="stat-label">Members</span>
+                    <span class="stat-value">${(group.members || []).length}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Permissions</span>
+                    <span class="stat-value">${(group.permissions || []).length}</span>
+                  </div>
+                </div>
+                <div class="list-card-footer">
+                  <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('groups', '${group.id}')">
+                    <span class="material-icons-outlined">settings</span>
+                    Manage
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+    `;
+    
+    setupBreadcrumbListeners(navigateTo$2);
+    
+    document.getElementById('create-group-btn').onclick = () => showCreateGroupModal(loadView);
+    
+    document.querySelectorAll('.list-card[data-id]').forEach(card => {
+      card.onclick = () => navigateTo$2('groups', card.dataset.id);
+    });
+    
+  } catch (e) {
+    container.innerHTML = `<div class="error">Failed to load groups</div>`;
+  }
+}
+
+function showCreateGroupModal(loadView) {
+  const existing = document.getElementById('create-group-modal');
+  if (existing) existing.remove();
+  
+  const m = document.createElement('div');
+  m.id = 'create-group-modal';
+  m.className = 'modal-overlay';
+  m.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Create Group</h3>
+        <button class="modal-close" id="close-group-modal">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <form id="create-group-form" class="modal-body">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" name="name" required placeholder="e.g. Moderators" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" name="description" placeholder="Group description" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cancel-group-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Group</button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.body.appendChild(m);
+  
+  document.getElementById('close-group-modal').onclick = () => m.remove();
+  document.getElementById('cancel-group-modal').onclick = () => m.remove();
+  m.onclick = (e) => { if (e.target === m) m.remove(); };
+  
+  document.getElementById('create-group-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    
+    try {
+      const res = await api('/api/admin/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          group: {
+            name: form.name.value,
+            description: form.description.value || undefined
+          }
+        })
+      });
+      const data = await res.json();
+      
+      if (data.success || data.group) {
+        success('Group created');
+        m.remove();
+        loadView();
+      } else {
+        error(data.error || 'Failed to create group');
+        btn.disabled = false;
+        btn.textContent = 'Create Group';
+      }
+    } catch (err) {
+      error('Failed to create group');
+      btn.disabled = false;
+      btn.textContent = 'Create Group';
+    }
+  };
+}
+
+async function renderGroupDetail(container, username, groupId) {
+  try {
+    const [groupsRes, usersRes] = await Promise.all([
+      api('/api/admin/groups'),
+      api('/api/admin/users?per_page=1000')
+    ]);
+    const groupsData = await groupsRes.json();
+    const usersData = await usersRes.json();
+    const groups = groupsData.groups || [];
+    const users = usersData.users || [];
+    const group = groups.find(g => g.id === groupId);
+    
+    if (!group) {
+      container.innerHTML = `<div class="error">Group not found</div>`;
+      return;
+    }
+    
+    const memberUsers = users.filter(u => (group.members || []).includes(u.id));
+    
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([
+          { label: 'Groups', onClick: 'list-groups' },
+          { label: group.name }
+        ])}
+        <div class="admin-header-actions">
+          <button class="btn btn-danger" id="delete-group-btn">
+            <span class="material-icons-outlined">delete</span>
+            Delete
+          </button>
+        </div>
+      </div>
+      
+      <div class="detail-tabs">
+        <button class="detail-tab ${state.currentView.subTab === 'settings' ? 'active' : ''}" data-subtab="settings">Settings</button>
+        <button class="detail-tab ${state.currentView.subTab === 'members' ? 'active' : ''}" data-subtab="members">Members (${memberUsers.length})</button>
+      </div>
+      
+      <div class="detail-content" id="group-detail-content"></div>
+    `;
+    
+    setupBreadcrumbListeners(navigateTo$2);
+    
+    document.querySelectorAll('.detail-tab').forEach(tab => {
+      tab.onclick = () => {
+        state.currentView.subTab = tab.dataset.subtab;
+        document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderGroupSubTab(group, users, memberUsers);
+      };
+    });
+    
+    document.getElementById('delete-group-btn').onclick = async () => {
+      const confirmed = await confirm$1({ title: 'Delete Group', message: `Are you sure you want to delete "${group.name}"? This cannot be undone.`, danger: true });
+      if (!confirmed) return;
+      try {
+        await api(`/api/admin/groups/${groupId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        success('Group deleted');
+        navigateTo$2('groups');
+      } catch (e) {
+        error('Failed to delete group');
+      }
+    };
+    
+    renderGroupSubTab(group, users, memberUsers);
+    
+  } catch (e) {
+    container.innerHTML = `<div class="error">Failed to load group</div>`;
+  }
+}
+
+function renderGroupSubTab(group, users, memberUsers) {
+  const content = document.getElementById('group-detail-content');
+  
+  switch (state.currentView.subTab) {
+    case 'settings':
+      content.innerHTML = `
+        <div class="detail-card detail-card-wide">
+          <h3>Group Settings</h3>
+          <form id="group-settings-form" class="settings-form">
+            <div class="form-section">
+              <h4>General</h4>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Name</label>
+                  <input type="text" name="name" value="${escapeHtml$1(group.name)}" required />
+                </div>
+                <div class="form-group">
+                  <label>Description</label>
+                  <input type="text" name="description" value="${escapeHtml$1(group.description || '')}" />
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <h4>Permissions</h4>
+              <div class="form-toggles">
+                ${AVAILABLE_PERMISSIONS.map(perm => `
+                  <label class="toggle-item">
+                    <input type="checkbox" name="perm" value="${perm.id}" ${(group.permissions || []).includes(perm.id) ? 'checked' : ''} />
+                    <span class="toggle-content">
+                      <span class="toggle-title">${perm.label}</span>
+                      <span class="toggle-desc">${perm.id}</span>
+                    </span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <h4>Resource Limits</h4>
+              <p class="form-hint">Leave empty or 0 to use user defaults.</p>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Max Servers</label>
+                  <input type="number" name="limit_servers" value="${group.limits?.servers ?? ''}" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Max Memory (MB)</label>
+                  <input type="number" name="limit_memory" value="${group.limits?.memory ?? ''}" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Max Disk (MB)</label>
+                  <input type="number" name="limit_disk" value="${group.limits?.disk ?? ''}" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Max CPU (%)</label>
+                  <input type="number" name="limit_cpu" value="${group.limits?.cpu ?? ''}" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Max Backups</label>
+                  <input type="number" name="limit_backups" value="${group.limits?.backups ?? ''}" min="0" />
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.getElementById('group-settings-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        
+        const permissions = Array.from(
+          e.target.querySelectorAll('input[name="perm"]:checked')
+        ).map(cb => cb.value);
+        
+        const groupData = {
+          name: form.get('name'),
+          description: form.get('description'),
+          permissions,
+          limits: {
+            servers: parseInt(form.get('limit_servers')) || null,
+            memory: parseInt(form.get('limit_memory')) || null,
+            disk: parseInt(form.get('limit_disk')) || null,
+            cpu: parseInt(form.get('limit_cpu')) || null,
+            backups: parseInt(form.get('limit_backups')) || null
+          }
+        };
+        
+        try {
+          await api(`/api/admin/groups/${group.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ group: groupData })
+          });
+          success('Group updated successfully');
+          navigateTo$2('groups', group.id, 'settings');
+        } catch (e) {
+          error('Failed to update group');
+        }
+      };
+      break;
+      
+    case 'members':
+      content.innerHTML = `
+        <div class="detail-card detail-card-wide">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Members</h3>
+            <button class="btn btn-primary btn-sm" id="add-member-btn">
+              <span class="material-icons-outlined">person_add</span>
+              Add Member
+            </button>
+          </div>
+          ${memberUsers.length === 0 ? `
+            <div class="empty-state small">
+              <span class="material-icons-outlined">people</span>
+              <p>No members in this group</p>
+            </div>
+          ` : `
+            <div class="user-servers-list" style="margin-top: 1rem;">
+              ${memberUsers.map(u => `
+                <div class="user-server-item">
+                  <div class="user-server-info">
+                    <div class="user-avatar">${(u.username || 'U')[0].toUpperCase()}</div>
+                    <div class="user-server-details">
+                      <span class="user-server-name">${escapeHtml$1(u.displayName || u.username)}</span>
+                      <span class="user-server-meta">@${escapeHtml$1(u.username)}${u.email ? ' • ' + escapeHtml$1(u.email) : ''}</span>
+                    </div>
+                  </div>
+                  <div class="user-server-actions">
+                    <button class="btn btn-sm btn-danger-ghost remove-member-btn" data-user-id="${u.id}">
+                      <span class="material-icons-outlined">close</span>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+      
+      document.getElementById('add-member-btn').onclick = async () => {
+        const nonMembers = users.filter(u => !(group.members || []).includes(u.id));
+        if (nonMembers.length === 0) {
+          info('All users are already members');
+          return;
+        }
+        const username = await prompt('Enter username to add:', { title: 'Add Member' });
+        if (!username) return;
+        const user = nonMembers.find(u => u.username.toLowerCase() === username.toLowerCase());
+        if (!user) {
+          error('User not found or already a member');
+          return;
+        }
+        try {
+          await api(`/api/admin/groups/${group.id}/members`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.id })
+          });
+          success(`Added ${user.username}`);
+          navigateTo$2('groups', group.id, 'members');
+        } catch {
+          error('Failed to add member');
+        }
+      };
+      
+      document.querySelectorAll('.remove-member-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const confirmed = await confirm$1({ title: 'Remove Member', message: 'Remove this user from the group?', danger: true });
+          if (!confirmed) return;
+          try {
+            await api(`/api/admin/groups/${group.id}/members/${btn.dataset.userId}`, { method: 'DELETE' });
+            success('Member removed');
+            navigateTo$2('groups', group.id, 'members');
+          } catch {
+            error('Failed to remove member');
+          }
+        };
+      });
+      break;
+  }
+}
+
+const navigateTo$1 = (...args) => window.adminNavigate(...args);
+
+const STATUS_LABELS = {
+  investigating: 'Investigating',
+  identified: 'Identified',
+  monitoring: 'Monitoring',
+  resolved: 'Resolved'
+};
+
+const IMPACT_LABELS = {
+  none: 'None',
+  minor: 'Minor',
+  major: 'Major',
+  critical: 'Critical'
+};
+
+const IMPACT_COLORS = {
+  none: 'var(--text-tertiary)',
+  minor: 'var(--warning, #f59e0b)',
+  major: '#f97316',
+  critical: 'var(--danger)'
+};
+
+const STATUS_COLORS = {
+  investigating: 'var(--warning, #f59e0b)',
+  identified: '#f97316',
+  monitoring: 'var(--info, #3b82f6)',
+  resolved: 'var(--success)'
+};
+
+async function renderIncidentsList(container, username, loadView) {
+  try {
+    const [incRes, nodesRes] = await Promise.all([
+      api('/api/admin/incidents'),
+      api('/api/admin/nodes')
+    ]);
+    const incData = await incRes.json();
+    const nodesData = await nodesRes.json();
+    const incidents = incData.incidents || [];
+    const nodes = nodesData.nodes || [];
+
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([{ label: 'Incidents' }])}
+        <div class="admin-header-actions">
+          <button class="btn btn-primary" id="create-incident-btn">
+            <span class="material-icons-outlined">add</span>
+            Create Incident
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-list">
+        ${incidents.length === 0 ? `
+          <div class="empty-state">
+            <span class="material-icons-outlined">check_circle</span>
+            <h3>No Incidents</h3>
+            <p>No incidents have been reported. That's a good thing!</p>
+          </div>
+        ` : `
+          <div class="list-grid">
+            ${incidents.map(inc => `
+              <div class="list-card" data-id="${inc.id}" style="cursor:pointer;">
+                <div class="list-card-header">
+                  <div class="list-card-icon">
+                    <span class="material-icons-outlined" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
+                      ${inc.status === 'resolved' ? 'check_circle' : 'warning'}
+                    </span>
+                  </div>
+                  <div class="list-card-title">
+                    <h3>${escapeHtml$1(inc.title)}</h3>
+                    <span class="list-card-subtitle">${new Date(inc.created_at).toLocaleString()}${inc.created_by ? ' by ' + escapeHtml$1(inc.created_by) : ''}</span>
+                  </div>
+                  <span class="sp-status-tag" style="background: ${STATUS_COLORS[inc.status]}; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                    ${STATUS_LABELS[inc.status] || inc.status}
+                  </span>
+                </div>
+                <div class="list-card-stats">
+                  <div class="stat">
+                    <span class="stat-label">Impact</span>
+                    <span class="stat-value" style="color: ${IMPACT_COLORS[inc.impact]}">${IMPACT_LABELS[inc.impact] || inc.impact}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Updates</span>
+                    <span class="stat-value">${(inc.updates || []).length}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Nodes</span>
+                    <span class="stat-value">${(inc.affected_nodes || []).length || '—'}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+    `;
+
+    setupBreadcrumbListeners(navigateTo$1);
+
+    document.getElementById('create-incident-btn').onclick = () => showCreateModal(nodes, loadView);
+
+    container.querySelectorAll('.list-card[data-id]').forEach(card => {
+      card.onclick = () => navigateTo$1('incidents', card.dataset.id);
+    });
+
+  } catch (e) {
+    container.innerHTML = `<div class="error">Failed to load incidents</div>`;
+  }
+}
+
+async function showCreateModal(nodes, loadView) {
+  const nodesHtml = nodes.map(n => `<option value="${n.id}">${escapeHtml$1(n.name)}</option>`).join('');
+
+  const title = await prompt('Incident title:', { title: 'Create Incident', placeholder: 'e.g. Node outage in EU region' });
+  if (!title) return;
+
+  try {
+    const res = await api('/api/admin/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        incident: {
+          title,
+          status: 'investigating',
+          impact: 'minor'
+        }
+      })
+    });
+    const data = await res.json();
+    if (data.success && data.incident) {
+      success('Incident created');
+      navigateTo$1('incidents', data.incident.id);
+    } else {
+      error(data.error || 'Failed to create incident');
+    }
+  } catch {
+    error('Failed to create incident');
+  }
+}
+
+async function renderIncidentDetail(container, username, incidentId) {
+  try {
+    const [incRes, nodesRes] = await Promise.all([
+      api('/api/admin/incidents'),
+      api('/api/admin/nodes')
+    ]);
+    const incData = await incRes.json();
+    const nodesData = await nodesRes.json();
+    const incident = (incData.incidents || []).find(i => i.id === incidentId);
+    const nodes = nodesData.nodes || [];
+
+    if (!incident) {
+      container.innerHTML = `<div class="error">Incident not found</div>`;
+      return;
+    }
+
+    const updates = (incident.updates || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    const affectedNodeNames = (incident.affected_nodes || [])
+      .map(id => nodes.find(n => n.id === id)?.name || id.slice(0, 8))
+      .join(', ');
+
+    container.innerHTML = `
+      <div class="admin-header">
+        ${renderBreadcrumb([
+          { label: 'Incidents', onClick: 'list-incidents' },
+          { label: incident.title }
+        ])}
+        <div class="admin-header-actions">
+          <button class="btn btn-danger" id="delete-incident-btn">
+            <span class="material-icons-outlined">delete</span>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-grid" style="gap: 1.5rem;">
+        <div class="detail-card detail-card-wide">
+          <h3>Incident Details</h3>
+          <form id="incident-edit-form" class="settings-form" style="margin-top: 1rem;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" value="${escapeHtml$1(incident.title)}" required />
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="description" value="${escapeHtml$1(incident.description || '')}" />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                  ${Object.entries(STATUS_LABELS).map(([v, l]) =>
+                    `<option value="${v}" ${incident.status === v ? 'selected' : ''}>${l}</option>`
+                  ).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Impact</label>
+                <select name="impact">
+                  ${Object.entries(IMPACT_LABELS).map(([v, l]) =>
+                    `<option value="${v}" ${incident.impact === v ? 'selected' : ''}>${l}</option>`
+                  ).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Affected Nodes</label>
+              <div class="form-toggles">
+                ${nodes.map(n => `
+                  <label class="toggle-item">
+                    <input type="checkbox" name="node_${n.id}" value="${n.id}" ${(incident.affected_nodes || []).includes(n.id) ? 'checked' : ''} />
+                    <span class="toggle-content">
+                      <span class="toggle-title">${escapeHtml$1(n.name)}</span>
+                    </span>
+                  </label>
+                `).join('')}
+                ${nodes.length === 0 ? '<p class="form-hint">No nodes configured</p>' : ''}
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <span class="material-icons-outlined">save</span>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="detail-card detail-card-wide">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Updates Timeline</h3>
+            <button class="btn btn-sm btn-primary" id="add-update-btn">
+              <span class="material-icons-outlined">add</span>
+              Add Update
+            </button>
+          </div>
+
+          <div id="updates-timeline" style="margin-top: 1rem;">
+            ${updates.length === 0 ? '<p class="form-hint">No updates yet</p>' : updates.map(u => `
+              <div style="padding: 12px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="background: ${STATUS_COLORS[u.status]}; color: #fff; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase;">
+                    ${STATUS_LABELS[u.status] || u.status}
+                  </span>
+                  <span style="font-size: 12px; color: var(--text-tertiary);">
+                    ${new Date(u.created_at).toLocaleString()}${u.created_by ? ' — ' + escapeHtml$1(u.created_by) : ''}
+                  </span>
+                </div>
+                <p style="margin: 0; font-size: 13px; color: var(--text-primary);">${escapeHtml$1(u.message)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h3>Info</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Created</span>
+              <span class="info-value">${new Date(incident.created_at).toLocaleString()}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Created By</span>
+              <span class="info-value">${escapeHtml$1(incident.created_by || '—')}</span>
+            </div>
+            ${incident.resolved_at ? `
+            <div class="info-item">
+              <span class="info-label">Resolved</span>
+              <span class="info-value">${new Date(incident.resolved_at).toLocaleString()}</span>
+            </div>
+            ` : ''}
+            <div class="info-item">
+              <span class="info-label">Affected Nodes</span>
+              <span class="info-value">${affectedNodeNames || '—'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    setupBreadcrumbListeners(navigateTo$1);
+
+    document.getElementById('delete-incident-btn').onclick = async () => {
+      const confirmed = await confirm$1({ title: 'Delete Incident', message: 'Delete this incident? This cannot be undone.', danger: true });
+      if (!confirmed) return;
+      try {
+        await api(`/api/admin/incidents/${incidentId}`, { method: 'DELETE' });
+        success('Incident deleted');
+        navigateTo$1('incidents');
+      } catch {
+        error('Failed to delete');
+      }
+    };
+
+    document.getElementById('incident-edit-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const affected = nodes.filter(n => form.querySelector(`[name="node_${n.id}"]`)?.checked).map(n => n.id);
+
+      try {
+        await api(`/api/admin/incidents/${incidentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            incident: {
+              title: form.title.value,
+              description: form.description.value,
+              status: form.status.value,
+              impact: form.impact.value,
+              affected_nodes: affected
+            }
+          })
+        });
+        success('Incident updated');
+        navigateTo$1('incidents', incidentId);
+      } catch {
+        error('Failed to update');
+      }
+    };
+
+    document.getElementById('add-update-btn').onclick = async () => {
+      const message = await prompt('Update message:', { title: 'Add Incident Update', placeholder: 'Describe the current situation...' });
+      if (!message) return;
+
+      try {
+        await api(`/api/admin/incidents/${incidentId}/updates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, status: incident.status })
+        });
+        success('Update added');
+        navigateTo$1('incidents', incidentId);
+      } catch {
+        error('Failed to add update');
+      }
+    };
+
+  } catch (e) {
+    container.innerHTML = `<div class="error">Failed to load incident</div>`;
+  }
+}
+
 let loadViewGeneration = 0;
 
 function navigateTo(tab, id = null, subTab = null) {
@@ -52048,6 +53629,7 @@ function getDefaultSubTab(tab) {
     case 'servers': return 'details';
     case 'users': return 'overview';
     case 'eggs': return 'about';
+    case 'groups': return 'settings';
     default: return null;
   }
 }
@@ -52123,6 +53705,12 @@ async function loadView() {
       case 'eggs':
         await renderEggDetail(container, username, state.currentView.id);
         break;
+      case 'groups':
+        await renderGroupDetail(container, username, state.currentView.id);
+        break;
+      case 'incidents':
+        await renderIncidentDetail(container, username, state.currentView.id);
+        break;
     }
   } else {
     switch (state.currentView.tab) {
@@ -52158,6 +53746,12 @@ async function loadView() {
         break;
       case 'plugins':
         await renderPluginsList(container);
+        break;
+      case 'groups':
+        await renderGroupsList(container, username, loadView);
+        break;
+      case 'incidents':
+        await renderIncidentsList(container, username, loadView);
         break;
       default:
         // Check for plugin admin pages (format: "plugin:pluginId:pageId")
@@ -52879,6 +54473,16 @@ const routes = {
     cleanup: cleanupAdmin,
     options: { title: 'Plugins', auth: true, sidebar: true }
   },
+  '/admin/groups': {
+    render: (params) => renderAdmin('groups', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Groups', auth: true, sidebar: true }
+  },
+  '/admin/incidents': {
+    render: (params) => renderAdmin('incidents', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Incidents', auth: true, sidebar: true }
+  },
   '/profile': {
     render: renderProfile,
     options: {
@@ -52954,6 +54558,7 @@ function renderNav() {
   const user = state$1.user;
   const displayName = escapeHtml$1(user?.displayName || user?.username || 'User');
   const isLoggedIn = state$1.isLoggedIn;
+  const branding = getBranding();
   
   nav.innerHTML = `
     <div class="nav-content">
@@ -52962,8 +54567,8 @@ function renderNav() {
           <span class="material-icons-outlined">menu</span>
         </button>
         <a href="/dashboard" class="nav-brand">
-          <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="22" height="22">
-          <span class="brand-text">Sodium</span>
+          <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${escapeHtml$1(branding.name)}" width="22" height="22">
+          <span class="brand-text">${escapeHtml$1(branding.name)}</span>
         </a>
       </div>
       
@@ -53071,6 +54676,7 @@ function renderSidebar() {
   
   const currentPath = window.location.pathname;
   const user = state$1.user;
+  const branding = getBranding();
   
   const sections = [
     {
@@ -53102,8 +54708,10 @@ function renderSidebar() {
       { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
       { path: '/admin/servers', icon: 'dns', label: 'Servers' },
       { path: '/admin/users', icon: 'people', label: 'Users' },
+      { path: '/admin/groups', icon: 'group', label: 'Groups' },
       { path: '/admin/nests', icon: 'egg', label: 'Nests' },
       { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
+      { path: '/admin/incidents', icon: 'warning', label: 'Incidents' },
       { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
       { path: '/admin/webhooks', icon: 'webhook', label: 'Webhooks' },
       { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
@@ -53169,8 +54777,8 @@ function renderSidebar() {
   sidebar.innerHTML = `
     <div class="sidebar-header">
       <a href="/dashboard" class="sidebar-brand">
-        <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="22" height="22">
-        <span class="brand-text">Sodium</span>
+        <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="22" height="22">
+        <span class="brand-text">${branding.name}</span>
       </a>
     </div>
     
@@ -53372,7 +54980,7 @@ function router() {
     return router();
   }
   
-  document.title = 'Sodium - ' + (route.options?.title || 'App');
+  document.title = getBranding().name + ' - ' + (route.options?.title || 'App');
   
   if (routerTimeout) {
     clearTimeout(routerTimeout);
@@ -53440,7 +55048,7 @@ async function checkSetup() {
 window.addEventListener('DOMContentLoaded', async () => {
   const loading = document.getElementById('loading');
   
-  const installed = await checkSetup();
+  const [installed] = await Promise.all([checkSetup(), loadBranding()]);
   
   if (!installed && window.location.pathname !== '/setup') {
     window.location.href = '/setup';
@@ -53449,6 +55057,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   if (isLoggedIn()) {
     await Promise.all([loadUserTheme(), loadPluginData()]);
+    
+    try {
+      const mRes = await fetch('/api/maintenance');
+      if (mRes.status === 503) {
+        const mData = await mRes.json().catch(() => ({}));
+        if (mData.maintenance) {
+          loading.classList.add('hidden');
+          showMaintenancePage(mData.message);
+          return;
+        }
+      }
+    } catch {}
   }
 
   setTimeout(() => {

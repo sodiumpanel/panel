@@ -2,8 +2,9 @@ import './styles/main.scss';
 import '@xterm/xterm/css/xterm.css';
 import { router } from './router.js';
 import { initTheme, loadUserTheme } from './utils/theme.js';
-import { isLoggedIn } from './utils/api.js';
+import { isLoggedIn, showMaintenancePage } from './utils/api.js';
 import { loadPluginData } from './utils/plugins.js';
+import { loadBranding } from './utils/branding.js';
 
 initTheme();
 
@@ -20,7 +21,7 @@ async function checkSetup() {
 window.addEventListener('DOMContentLoaded', async () => {
   const loading = document.getElementById('loading');
   
-  const installed = await checkSetup();
+  const [installed] = await Promise.all([checkSetup(), loadBranding()]);
   
   if (!installed && window.location.pathname !== '/setup') {
     window.location.href = '/setup';
@@ -29,6 +30,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   if (isLoggedIn()) {
     await Promise.all([loadUserTheme(), loadPluginData()]);
+    
+    try {
+      const mRes = await fetch('/api/maintenance');
+      if (mRes.status === 503) {
+        const mData = await mRes.json().catch(() => ({}));
+        if (mData.maintenance) {
+          loading.classList.add('hidden');
+          showMaintenancePage(mData.message);
+          return;
+        }
+      }
+    } catch {}
   }
 
   setTimeout(() => {

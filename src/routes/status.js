@@ -1,6 +1,7 @@
 import { escapeHtml } from '../utils/security.js';
 
 let pollInterval = null;
+let uptimeData = {};
 
 export function renderStatus() {
   const app = document.getElementById('app');
@@ -53,50 +54,66 @@ export function renderStatus() {
   pollInterval = setInterval(loadStatus, 30000);
 }
 
-const uptimeCache = {};
-
-function getUptimeBars(nodeId, currentStatus) {
-  let history = uptimeCache[nodeId] || [];
-  
-  const today = new Date().toISOString().slice(0, 10);
-  
-  if (history.length === 0) {
-    for (let i = 89; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      history.push({ date: dateStr, status: i === 0 ? currentStatus : 'online' });
-    }
-  } else {
-    const lastDate = history[history.length - 1]?.date;
-    if (lastDate !== today) {
-      history.push({ date: today, status: currentStatus });
-    } else {
-      history[history.length - 1].status = currentStatus;
-    }
-    history = history.slice(-90);
-  }
-  
-  uptimeCache[nodeId] = history;
-  
-  return history;
-}
-
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function formatDateFull(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case 'online': return 'Operational';
+    case 'degraded': return 'Degraded';
+    case 'offline': return 'Outage';
+    default: return 'No data';
+  }
+}
+
+function statusClass(status) {
+  switch (status) {
+    case 'online': return 'up';
+    case 'degraded': return 'degraded';
+    case 'offline': return 'down';
+    default: return 'unknown';
+  }
+}
+
 function renderUptimeBars(history) {
   return history.map(h => {
-    const cls = h.status === 'online' ? 'up' : 'down';
-    return `<div class="sp-bar ${cls}" title="${formatDate(h.date)}: ${h.status === 'online' ? 'Operational' : 'Outage'}"></div>`;
+    const cls = statusClass(h.status);
+    const label = statusLabel(h.status);
+    const detail = h.checks > 0
+      ? `${formatDateFull(h.date)}: ${label} (${h.online}/${h.checks} checks OK)`
+      : `${formatDateFull(h.date)}: No data`;
+    return `<div class="sp-bar ${cls}" title="${detail}"></div>`;
   }).join('');
 }
 
+function renderTimeScale(history) {
+  if (history.length === 0) return '';
+  // Show ~5 labels spread across 90 days
+  const indices = [0, 22, 44, 66, 89].filter(i => i < history.length);
+  const labels = indices.map(i => {
+    const h = history[i];
+    const d = new Date(h.date + 'T00:00:00');
+    return `<span>${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`;
+  });
+  return `
+    <div class="sp-bars-legend">
+      ${labels.join('')}
+    </div>
+  `;
+}
+
 function calcUptime(history) {
-  const up = history.filter(h => h.status === 'online').length;
-  return ((up / history.length) * 100).toFixed(2);
+  const withData = history.filter(h => h.status !== 'unknown');
+  if (withData.length === 0) return null;
+  const up = withData.filter(h => h.status === 'online' || h.status === 'degraded').length;
+  return ((up / withData.length) * 100).toFixed(2);
 }
 
 async function loadStatus() {
@@ -106,8 +123,16 @@ async function loadStatus() {
   if (syncIcon) syncIcon.style.display = 'inline-block';
   
   try {
-    const res = await fetch('/api/status/nodes');
-    const data = await res.json();
+    const [nodesRes, uptimeRes, incidentsRes] = await Promise.all([
+      fetch('/api/status/nodes'),
+      fetch('/api/status/uptime'),
+      fetch('/api/status/incidents')
+    ]);
+    const data = await nodesRes.json();
+    const uptimeJson = await uptimeRes.json();
+    uptimeData = uptimeJson.history || {};
+    const incidentsJson = await incidentsRes.json();
+    const realIncidents = incidentsJson.incidents || [];
     
     const online = data.nodes.filter(n => n.status === 'online').length;
     const total = data.nodes.length;
@@ -184,8 +209,9 @@ async function loadStatus() {
     }
     
     container.innerHTML = data.nodes.map(node => {
-      const history = getUptimeBars(node.id, node.status);
+      const history = uptimeData[node.id] || generateEmptyHistory();
       const uptime = calcUptime(history);
+      const uptimeDisplay = uptime !== null ? `${uptime}%` : '—';
       
       return `
         <div class="sp-service">
@@ -196,16 +222,13 @@ async function loadStatus() {
               <span class="sp-service-loc">${escapeHtml(node.location || 'Unknown')}</span>
             </div>
             <div class="sp-service-right">
-              <span class="sp-uptime-pct">${uptime}%</span>
+              <span class="sp-uptime-pct">${uptimeDisplay}</span>
               <span class="sp-status-tag ${node.status}">${node.status === 'online' ? 'Operational' : 'Down'}</span>
             </div>
           </div>
           <div class="sp-uptime-track">
             <div class="sp-bars">${renderUptimeBars(history)}</div>
-            <div class="sp-bars-legend">
-              <span>90 days ago</span>
-              <span>Today</span>
-            </div>
+            ${renderTimeScale(history)}
           </div>
           <div class="sp-service-resources">
             <div class="sp-res">
@@ -224,6 +247,9 @@ async function loadStatus() {
         </div>
       `;
     }).join('');
+    
+    // Render real incidents from DB
+    renderIncidents(realIncidents);
   } catch {
     container.innerHTML = `
       <div class="sp-empty error">
@@ -236,6 +262,84 @@ async function loadStatus() {
       setTimeout(() => { syncIcon.style.display = 'none'; }, 500);
     }
   }
+}
+
+function generateEmptyHistory() {
+  const history = [];
+  const now = new Date();
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    history.push({ date: ds, status: 'unknown', checks: 0, online: 0 });
+  }
+  return history;
+}
+
+function renderIncidents(incidents) {
+  const el = document.getElementById('sp-incidents');
+  if (!el) return;
+  
+  if (!incidents || incidents.length === 0) {
+    el.innerHTML = `
+      <div class="sp-no-incidents">
+        <span class="material-icons-outlined">check_circle</span>
+        <p>No incidents reported in the last 90 days.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const statusColors = {
+    investigating: 'var(--warning, #f59e0b)',
+    identified: '#f97316',
+    monitoring: 'var(--info, #3b82f6)',
+    resolved: 'var(--success)'
+  };
+
+  const impactIcons = {
+    none: 'info',
+    minor: 'warning',
+    major: 'error',
+    critical: 'dangerous'
+  };
+  
+  // Group by date (created_at)
+  const grouped = {};
+  for (const inc of incidents) {
+    const date = inc.created_at.slice(0, 10);
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(inc);
+  }
+  
+  el.innerHTML = Object.entries(grouped).map(([date, incs]) => `
+    <div class="sp-incident-day">
+      <div class="sp-incident-date">${formatDateFull(date)}</div>
+      ${incs.map(inc => {
+        const latestUpdate = (inc.updates || []).slice(-1)[0];
+        return `
+          <div class="sp-incident-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+              <span class="material-icons-outlined" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
+                ${impactIcons[inc.impact] || 'warning'}
+              </span>
+              <span class="sp-incident-text" style="flex: 1;">
+                <strong>${escapeHtml(inc.title)}</strong>
+                <small style="margin-left: 6px; text-transform: capitalize;">${inc.status}</small>
+              </span>
+              ${inc.resolved_at ? `<small style="color: var(--success); font-size: 11px;">Resolved</small>` : ''}
+            </div>
+            ${inc.description ? `<p style="margin: 0 0 0 26px; font-size: 12px; color: var(--text-secondary);">${escapeHtml(inc.description)}</p>` : ''}
+            ${latestUpdate && latestUpdate.message !== inc.description ? `
+              <p style="margin: 0 0 0 26px; font-size: 11px; color: var(--text-tertiary);">
+                Latest: ${escapeHtml(latestUpdate.message)} <small>(${new Date(latestUpdate.created_at).toLocaleString()})</small>
+              </p>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
 }
 
 export function cleanupStatus() {

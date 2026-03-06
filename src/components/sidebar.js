@@ -1,5 +1,6 @@
 import { state } from '../utils/state.js';
 import { getPluginSidebarItems, getPluginAdminPages } from '../utils/plugins.js';
+import { getBranding } from '../utils/branding.js';
 
 export function renderSidebar() {
   const overlay = document.createElement('div');
@@ -12,6 +13,7 @@ export function renderSidebar() {
   
   const currentPath = window.location.pathname;
   const user = state.user;
+  const branding = getBranding();
   
   const sections = [
     {
@@ -43,8 +45,10 @@ export function renderSidebar() {
       { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
       { path: '/admin/servers', icon: 'dns', label: 'Servers' },
       { path: '/admin/users', icon: 'people', label: 'Users' },
+      { path: '/admin/groups', icon: 'group', label: 'Groups' },
       { path: '/admin/nests', icon: 'egg', label: 'Nests' },
       { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
+      { path: '/admin/incidents', icon: 'warning', label: 'Incidents' },
       { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
       { path: '/admin/webhooks', icon: 'webhook', label: 'Webhooks' },
       { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
@@ -110,8 +114,8 @@ export function renderSidebar() {
   sidebar.innerHTML = `
     <div class="sidebar-header">
       <a href="/dashboard" class="sidebar-brand">
-        <img class="brand-icon" src="/favicon.svg" alt="Sodium" width="22" height="22">
-        <span class="brand-text">Sodium</span>
+        <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="22" height="22">
+        <span class="brand-text">${branding.name}</span>
       </a>
     </div>
     

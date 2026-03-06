@@ -139,6 +139,16 @@ export const routes = {
     cleanup: cleanupAdmin,
     options: { title: 'Plugins', auth: true, sidebar: true }
   },
+  '/admin/groups': {
+    render: (params) => renderAdmin('groups', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Groups', auth: true, sidebar: true }
+  },
+  '/admin/incidents': {
+    render: (params) => renderAdmin('incidents', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Incidents', auth: true, sidebar: true }
+  },
   '/profile': {
     render: renderProfile,
     options: {

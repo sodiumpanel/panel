@@ -68,6 +68,16 @@ const logger = {
     console.log(`${badge} ${colors.gray}${getTime()}${colors.reset} ${colors.dim}→${colors.reset} ${path} ${statusColor}${status}${colors.reset}`);
   },
 
+  withId(requestId) {
+    const prefix = requestId ? `[${requestId.slice(0, 8)}]` : '';
+    return {
+      info: (msg) => logger.info(`${prefix} ${msg}`),
+      warn: (msg) => logger.warn(`${prefix} ${msg}`),
+      error: (msg) => logger.error(`${prefix} ${msg}`),
+      debug: (msg) => logger.debug(`${prefix} ${msg}`),
+    };
+  },
+
   startup(portOrMode, needsSetup = false) {
     console.log('');
     if (typeof portOrMode === 'number') {

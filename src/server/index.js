@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import crypto from 'crypto';
 import logger from './utils/logger.js';
 
 // Rutas
@@ -31,6 +32,42 @@ import { initRedis } from './redis.js';
 import { loadPlugins, getPluginRouters, getPluginClientData, getPlugin, getPluginMiddlewares } from './plugins/manager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function matchIp(clientIp, pattern) {
+  // Normalize IPv6-mapped IPv4
+  const normalize = (ip) => ip.replace(/^::ffff:/, '');
+  const normalizedClient = normalize(clientIp);
+  const normalizedPattern = normalize(pattern);
+  
+  // Exact match
+  if (normalizedClient === normalizedPattern) return true;
+  
+  // CIDR match
+  if (normalizedPattern.includes('/')) {
+    const [subnet, bits] = normalizedPattern.split('/');
+    const mask = parseInt(bits);
+    if (isNaN(mask)) return false;
+    
+    const ipParts = subnet.split('.').map(Number);
+    const clientParts = normalizedClient.split('.').map(Number);
+    if (ipParts.length !== 4 || clientParts.length !== 4) return false;
+    
+    const ipNum = (ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3];
+    const clientNum = (clientParts[0] << 24) | (clientParts[1] << 16) | (clientParts[2] << 8) | clientParts[3];
+    const maskNum = mask === 0 ? 0 : (~0 << (32 - mask));
+    
+    return (ipNum & maskNum) === (clientNum & maskNum);
+  }
+  
+  // Wildcard match (e.g., 192.168.1.*)
+  if (normalizedPattern.includes('*')) {
+    const regex = new RegExp('^' + normalizedPattern.replace(/\./g, '\\.').replace(/\*/g, '\\d+') + '$');
+    return regex.test(normalizedClient);
+  }
+  
+  return false;
+}
+
 const app = express();
 const server = createServer(app);
 const config = loadFullConfig();
@@ -46,6 +83,66 @@ app.use(helmet({
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Request tracing
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || crypto.randomUUID();
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
+
+// IP security
+app.use((req, res, next) => {
+  const config = loadFullConfig();
+  const clientIp = req.ip;
+  
+  // Check IP blocklist
+  const blocklist = config.security?.ipBlocklist || [];
+  if (blocklist.length > 0 && blocklist.some(ip => matchIp(clientIp, ip))) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  next();
+});
+
+// Maintenance mode
+app.use(async (req, res, next) => {
+  const config = loadFullConfig();
+  if (!config.maintenance?.enabled) return next();
+  
+  // Allow health, setup, and auth endpoints
+  if (req.path.startsWith('/api/health') || req.path.startsWith('/api/setup') || req.path.startsWith('/api/auth')) return next();
+  
+  // Allow non-API requests (frontend will handle maintenance page)
+  if (!req.path.startsWith('/api/')) return next();
+  
+  // Check allowed IPs
+  const allowedIps = config.maintenance?.allowedIps || [];
+  if (allowedIps.length > 0 && allowedIps.some(ip => matchIp(req.ip, ip))) {
+    return next();
+  }
+  
+  // Check if admin via JWT
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ') && !authHeader.substring(7).startsWith('sodium_')) {
+    try {
+      const { default: jwt } = await import('jsonwebtoken');
+      const { JWT_SECRET } = await import('./utils/auth.js');
+      const { loadUsers } = await import('./db.js');
+      const token = authHeader.substring(7);
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const data = loadUsers();
+      const user = (data.users || []).find(u => u.id === decoded.id);
+      if (user?.isAdmin) return next();
+    } catch {}
+  }
+  
+  return res.status(503).json({ 
+    error: 'Panel is under maintenance',
+    message: config.maintenance?.message || 'The panel is currently under maintenance. Please try again later.',
+    maintenance: true
+  });
+});
 
 // Metrics middleware
 app.use((req, res, next) => {
@@ -81,6 +178,32 @@ app.get('/api/plugins/:id/client.js', (req, res) => {
   res.type('application/javascript').sendFile(plugin._clientModule);
 });
 
+// Branding (public - frontend needs this before auth)
+app.use('/branding', express.static(path.join(__dirname, '../../data/branding')));
+app.get('/api/branding', (req, res) => {
+  const config = loadFullConfig();
+  res.json({
+    name: config.panel?.name || 'Sodium',
+    logo: config.branding?.logo || null,
+    favicon: config.branding?.favicon || null,
+    accentColor: config.branding?.accentColor || '#d97339',
+    accentHover: config.branding?.accentHover || '#e88a4d',
+    accentMuted: config.branding?.accentMuted || 'rgba(217, 115, 57, 0.1)',
+    ogTitle: config.branding?.ogTitle || '',
+    ogDescription: config.branding?.ogDescription || '',
+    ogImage: config.branding?.ogImage || null
+  });
+});
+
+// Maintenance status (public - frontend needs this)
+app.get('/api/maintenance', (req, res) => {
+  const config = loadFullConfig();
+  res.json({
+    enabled: !!config.maintenance?.enabled,
+    message: config.maintenance?.message || ''
+  });
+});
+
 // Middleware to check if installed
 app.use('/api', (req, res, next) => {
   if (!isInstalled() && !req.path.startsWith('/setup')) {
@@ -93,6 +216,15 @@ app.use('/api', (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api', statusRoutes);
+// Admin IP allowlist
+app.use('/api/admin', (req, res, next) => {
+  const config = loadFullConfig();
+  const allowlist = config.security?.adminIpAllowlist || [];
+  if (allowlist.length > 0 && !allowlist.some(ip => matchIp(req.ip, ip))) {
+    return res.status(403).json({ error: 'Admin access denied from this IP' });
+  }
+  next();
+});
 app.use('/api/admin', adminRoutes);
 app.use('/api/servers', serverRoutes);
 app.use('/api/remote', remoteRoutes);
@@ -134,9 +266,33 @@ app.use('/api/plugins', (req, res, next) => {
 app.use('/api', schedulesRoutes);
 app.use('/api/application', applicationApiRoutes);
 
-// Fallback para SPA
+// Fallback para SPA — inject dynamic OG meta tags
+import fs from 'fs';
+let cachedHtml = null;
+
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../../dist', 'index.html'));
+  const htmlPath = path.join(__dirname, '../../dist', 'index.html');
+  
+  if (!cachedHtml) {
+    try { cachedHtml = fs.readFileSync(htmlPath, 'utf-8'); } catch { return res.sendFile(htmlPath); }
+  }
+  
+  const config = loadFullConfig();
+  const b = config.branding || {};
+  const panelName = config.panel?.name || 'Sodium';
+  
+  const ogTitle = b.ogTitle || panelName;
+  const ogDesc = b.ogDescription || config.panel?.description || 'Modern game server management panel.';
+  const ogImage = b.ogImage || '/banner.png';
+  const favicon = b.favicon || '/favicon.svg';
+  
+  let html = cachedHtml
+    .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${ogImage}">`)
+    .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${ogDesc}"><meta property="og:title" content="${ogTitle}"><meta property="og:description" content="${ogDesc}">`)
+    .replace(/<link rel="icon"[^>]*>/, `<link rel="icon" href="${favicon}">`)
+    .replace(/<title>[^<]*<\/title>/, `<title>${panelName}</title>`);
+  
+  res.type('html').send(html);
 });
 
 async function startServer() {
@@ -146,6 +302,8 @@ async function startServer() {
   if (isInstalled()) {
     await initRedis();
     startScheduler();
+    const { startNodeHealthMonitor } = await import('./utils/node-health.js');
+    startNodeHealthMonitor();
     await loadPlugins();
   }
   
@@ -169,6 +327,11 @@ async function shutdown(signal) {
   try {
     const { closeRedis } = await import('./redis.js');
     await closeRedis();
+  } catch {}
+  
+  try {
+    const { stopNodeHealthMonitor } = await import('./utils/node-health.js');
+    stopNodeHealthMonitor();
   } catch {}
   
   setTimeout(() => {

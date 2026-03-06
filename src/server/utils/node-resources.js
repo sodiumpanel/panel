@@ -1,11 +1,11 @@
 import { loadNodes, loadServers } from '../db.js';
 
-export function getNodeAvailableResources(nodeId) {
-  const nodes = loadNodes();
+export async function getNodeAvailableResources(nodeId) {
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === nodeId);
   if (!node) return null;
   
-  const servers = loadServers();
+  const servers = await loadServers();
   const nodeServers = servers.servers.filter(s => s.node_id === nodeId);
   
   const usedMemory = nodeServers.reduce((sum, s) => sum + (s.limits?.memory || 0), 0);

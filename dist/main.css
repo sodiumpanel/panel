@@ -5745,11 +5745,19 @@ a {
   background: var(--danger);
   opacity: 0.85;
 }
-.sp-bars .sp-bar.up:hover {
+.sp-bars .sp-bar.degraded {
+  background: var(--warning, #f59e0b);
+  opacity: 0.75;
+}
+.sp-bars .sp-bar.unknown {
+  background: var(--text-tertiary);
+  opacity: 0.2;
+}
+.sp-bars .sp-bar.up:hover, .sp-bars .sp-bar.down:hover, .sp-bars .sp-bar.degraded:hover {
   opacity: 1;
 }
-.sp-bars .sp-bar.down:hover {
-  opacity: 1;
+.sp-bars .sp-bar.unknown:hover {
+  opacity: 0.4;
 }
 
 .sp-bars-legend {
@@ -5805,6 +5813,39 @@ a {
 .sp-no-incidents p {
   font-size: 13px;
   margin: 0;
+}
+
+.sp-incident-day:not(:last-child) {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sp-incident-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sp-incident-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.sp-incident-item .sp-incident-text {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.sp-incident-item .sp-incident-text strong {
+  font-weight: 600;
+}
+.sp-incident-item .sp-incident-text small {
+  color: var(--text-tertiary);
+  margin-left: 4px;
 }
 
 .sp-empty {

@@ -11,11 +11,14 @@ let currentSettingsTab = 'general';
 
 const SETTINGS_TABS = [
   { id: 'general', label: 'General', icon: 'settings' },
+  { id: 'branding', label: 'Branding', icon: 'palette' },
   { id: 'registration', label: 'Registration', icon: 'person_add' },
   { id: 'defaults', label: 'User Defaults', icon: 'tune' },
+  { id: 'security', label: 'Security', icon: 'shield' },
   { id: 'oauth', label: 'OAuth Providers', icon: 'login' },
   { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },
   { id: 'mail', label: 'Mail', icon: 'email' },
+  { id: 'maintenance', label: 'Maintenance', icon: 'construction' },
   { id: 'advanced', label: 'Advanced', icon: 'code' }
 ];
 
@@ -81,11 +84,17 @@ async function renderSettingsContent(config) {
     case 'general':
       renderGeneralSettings(content, config);
       break;
+    case 'branding':
+      renderBrandingSettings(content, config);
+      break;
     case 'registration':
       renderRegistrationSettings(content, config);
       break;
     case 'defaults':
       renderDefaultsSettings(content, config);
+      break;
+    case 'security':
+      renderSecuritySettings(content, config);
       break;
     case 'oauth':
       renderOAuthSettings(content, config);
@@ -95,6 +104,9 @@ async function renderSettingsContent(config) {
       break;
     case 'mail':
       renderMailSettings(content, config);
+      break;
+    case 'maintenance':
+      renderMaintenanceSettings(content, config);
       break;
     case 'advanced':
       renderAdvancedSettings(content, config);
@@ -180,6 +192,214 @@ function renderGeneralSettings(content, config) {
   };
 }
 
+// ==================== BRANDING SETTINGS ====================
+
+function renderBrandingSettings(content, config) {
+  const branding = config.branding || {};
+  const colorInputStyle = 'width: 48px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; padding: 2px;';
+  
+  content.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2>Branding</h2>
+        <p>Customize the look and feel of your panel.</p>
+      </div>
+      
+      <form id="branding-settings-form" class="settings-form">
+        <div class="detail-card">
+          <h3>Accent Colors</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Primary</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="color" data-sync="accent_color" value="${escapeHtml(branding.accentColor || '#d97339')}" style="${colorInputStyle}" />
+                <input type="text" name="accent_color" value="${escapeHtml(branding.accentColor || '#d97339')}" placeholder="#d97339" style="max-width: 140px;" />
+              </div>
+              <small class="form-hint">Buttons, links, and highlights</small>
+            </div>
+            <div class="form-group">
+              <label>Hover</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="color" data-sync="accent_hover" value="${escapeHtml(branding.accentHover || '#e88a4d')}" style="${colorInputStyle}" />
+                <input type="text" name="accent_hover" value="${escapeHtml(branding.accentHover || '#e88a4d')}" placeholder="#e88a4d" style="max-width: 140px;" />
+              </div>
+              <small class="form-hint">Hover state for accented elements</small>
+            </div>
+            <div class="form-group">
+              <label>Muted</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="text" name="accent_muted" value="${escapeHtml(branding.accentMuted || 'rgba(217, 115, 57, 0.1)')}" placeholder="rgba(217, 115, 57, 0.1)" />
+              </div>
+              <small class="form-hint">Subtle backgrounds (supports rgba)</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Logo</h3>
+          <p class="form-hint" style="margin-bottom: 12px;">Displayed in the navigation bar and sidebar. Recommended: square image, PNG or SVG.</p>
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+            <img id="logo-preview" src="${branding.logo || '/favicon.svg'}" alt="Logo" style="width: 48px; height: 48px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: contain; padding: 4px; background: var(--bg-secondary);" />
+            <div style="display: flex; gap: 8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
+                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                Upload Logo
+                <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display: none;" />
+              </label>
+              ${branding.logo ? `<button type="button" class="btn btn-danger btn-sm" id="remove-logo-btn">
+                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                Remove
+              </button>` : ''}
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Favicon</h3>
+          <p class="form-hint" style="margin-bottom: 12px;">Browser tab icon. Recommended: square image, ICO, PNG or SVG.</p>
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+            <img id="favicon-preview" src="${branding.favicon || '/favicon.svg'}" alt="Favicon" style="width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; padding: 2px; background: var(--bg-secondary);" />
+            <div style="display: flex; gap: 8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
+                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                Upload Favicon
+                <input type="file" id="favicon-upload" accept="image/png,image/svg+xml,image/x-icon,image/webp" style="display: none;" />
+              </label>
+              ${branding.favicon ? `<button type="button" class="btn btn-danger btn-sm" id="remove-favicon-btn">
+                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                Remove
+              </button>` : ''}
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Open Graph</h3>
+          <p class="form-hint" style="margin-bottom: 12px;">Controls how your panel appears when shared on social media and messaging apps.</p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>OG Title</label>
+              <input type="text" name="og_title" value="${escapeHtml(branding.ogTitle || '')}" placeholder="${escapeHtml(config.panel?.name || 'Sodium')}" />
+              <small class="form-hint">Defaults to panel name if empty</small>
+            </div>
+            <div class="form-group">
+              <label>OG Description</label>
+              <input type="text" name="og_description" value="${escapeHtml(branding.ogDescription || '')}" placeholder="Modern game server management panel." />
+              <small class="form-hint">Short description for link previews</small>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px; margin-top: 12px;">
+            <img id="ogImage-preview" src="${branding.ogImage || '/banner.png'}" alt="OG Image" style="width: 120px; height: 63px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: cover; background: var(--bg-secondary);" />
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
+                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                Upload OG Image
+                <input type="file" id="og-image-upload" accept="image/png,image/jpeg,image/webp" style="display: none;" />
+              </label>
+              ${branding.ogImage ? `<button type="button" class="btn btn-danger btn-sm" id="remove-ogImage-btn">
+                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                Remove
+              </button>` : ''}
+              <small class="form-hint">Recommended: 1200×630px</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  // Sync color pickers with text inputs
+  content.querySelectorAll('input[type="color"][data-sync]').forEach(picker => {
+    const textInput = content.querySelector(`input[name="${picker.dataset.sync}"]`);
+    if (!textInput) return;
+    picker.addEventListener('input', () => { textInput.value = picker.value; });
+    textInput.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(textInput.value)) picker.value = textInput.value;
+    });
+  });
+  
+  // File uploads
+  document.getElementById('logo-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await uploadBrandingFile(file, 'logo');
+  });
+  document.getElementById('favicon-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await uploadBrandingFile(file, 'favicon');
+  });
+  document.getElementById('og-image-upload').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) await uploadBrandingFile(file, 'ogImage');
+  });
+  
+  // Remove buttons
+  document.getElementById('remove-logo-btn')?.addEventListener('click', () => removeBrandingFile('logo'));
+  document.getElementById('remove-favicon-btn')?.addEventListener('click', () => removeBrandingFile('favicon'));
+  document.getElementById('remove-ogImage-btn')?.addEventListener('click', () => removeBrandingFile('ogImage'));
+  
+  // Save all branding settings
+  document.getElementById('branding-settings-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    await saveSettings({
+      branding: {
+        accentColor: form.accent_color.value,
+        accentHover: form.accent_hover.value,
+        accentMuted: form.accent_muted.value,
+        ogTitle: form.og_title.value,
+        ogDescription: form.og_description.value
+      }
+    });
+  };
+}
+
+async function uploadBrandingFile(file, type) {
+  try {
+    const res = await api(`/api/admin/branding/upload?type=${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type },
+      body: file
+    });
+    const data = await res.json();
+    if (data.success) {
+      const labels = { logo: 'Logo', favicon: 'Favicon', ogImage: 'OG Image' };
+      toast.success(`${labels[type] || type} uploaded`);
+      const preview = document.getElementById(`${type}-preview`);
+      if (preview) preview.src = data.url + '?t=' + Date.now();
+      localStorage.removeItem('branding');
+    } else {
+      toast.error(data.error || 'Upload failed');
+    }
+  } catch {
+    toast.error('Failed to upload file');
+  }
+}
+
+async function removeBrandingFile(type) {
+  try {
+    const res = await api(`/api/admin/branding/${type}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      const labels = { logo: 'Logo', favicon: 'Favicon', ogImage: 'OG Image' };
+      toast.success(`${labels[type] || type} removed`);
+      const preview = document.getElementById(`${type}-preview`);
+      if (preview) preview.src = type === 'ogImage' ? '/banner.png' : '/favicon.svg';
+      localStorage.removeItem('branding');
+    } else {
+      toast.error(data.error || 'Failed to remove');
+    }
+  } catch {
+    toast.error('Failed to remove file');
+  }
+}
+
 // ==================== REGISTRATION SETTINGS ====================
 
 function renderRegistrationSettings(content, config) {
@@ -209,12 +429,35 @@ function renderRegistrationSettings(content, config) {
               </span>
             </label>
             <label class="toggle-item">
-              <input type="checkbox" name="captcha_enabled" ${config.registration?.captcha ? 'checked' : ''} />
+              <input type="checkbox" name="captcha_enabled" id="captcha_enabled" ${config.registration?.captcha ? 'checked' : ''} />
               <span class="toggle-content">
                 <span class="toggle-title">Captcha Protection</span>
                 <span class="toggle-desc">Require captcha verification on registration</span>
               </span>
             </label>
+          </div>
+        </div>
+        
+        <div class="detail-card" id="captcha-config-card" style="display: ${config.registration?.captcha ? 'block' : 'none'};">
+          <h3>Captcha Configuration</h3>
+          <div class="form-group">
+            <label>Provider</label>
+            <select name="captcha_provider" disabled>
+              <option value="turnstile" selected>Cloudflare Turnstile</option>
+            </select>
+            <small class="form-hint">Captcha provider to use for verification</small>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Site Key</label>
+              <input type="text" name="captcha_site_key" value="${escapeHtml(config.registration?.captchaSiteKey || '')}" placeholder="0x..." />
+              <small class="form-hint">Public site key from Cloudflare Turnstile dashboard</small>
+            </div>
+            <div class="form-group">
+              <label>Secret Key</label>
+              <input type="password" name="captcha_secret_key" value="${escapeHtml(config.registration?.captchaSecretKey || '')}" placeholder="0x..." />
+              <small class="form-hint">Secret key for server-side verification</small>
+            </div>
           </div>
         </div>
         
@@ -242,6 +485,12 @@ function renderRegistrationSettings(content, config) {
     </div>
   `;
   
+  const captchaToggle = document.getElementById('captcha_enabled');
+  const captchaCard = document.getElementById('captcha-config-card');
+  captchaToggle.addEventListener('change', () => {
+    captchaCard.style.display = captchaToggle.checked ? 'block' : 'none';
+  });
+  
   document.getElementById('registration-settings-form').onsubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -251,6 +500,9 @@ function renderRegistrationSettings(content, config) {
         enabled: form.registration_enabled.checked,
         emailVerification: form.email_verification.checked,
         captcha: form.captcha_enabled.checked,
+        captchaProvider: form.captcha_provider.value,
+        captchaSiteKey: form.captcha_site_key.value,
+        captchaSecretKey: form.captcha_secret_key.value,
         allowedDomains: form.allowed_domains.value,
         blockedDomains: form.blocked_domains.value
       }
@@ -329,6 +581,65 @@ function renderDefaultsSettings(content, config) {
         cpu: parseInt(form.default_cpu.value) || 200,
         allocatipns: parseInt(form.default_allocations.value) || 5,
         backups: parseInt(form.default_backups.value) || 3
+      }
+    };
+    
+    await saveSettings(newConfig);
+  };
+}
+
+// ==================== SECURITY SETTINGS ====================
+
+function renderSecuritySettings(content, config) {
+  const ipBlocklist = (config.security?.ipBlocklist || []).join('\n');
+  const adminIpAllowlist = (config.security?.adminIpAllowlist || []).join('\n');
+  
+  content.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2>Security Settings</h2>
+        <p>Configure IP restrictions and access controls.</p>
+      </div>
+      
+      <form id="security-settings-form" class="settings-form">
+        <div class="detail-card">
+          <h3>IP Blocklist</h3>
+          <p class="form-hint" style="margin-bottom: 0.75rem;">Block specific IPs or CIDR ranges from accessing the panel entirely. One per line.</p>
+          <div class="form-group">
+            <textarea name="ip_blocklist" rows="5" placeholder="192.168.1.100&#10;10.0.0.0/8&#10;203.0.113.*">${escapeHtml(ipBlocklist)}</textarea>
+            <small class="form-hint">Supports exact IPs, CIDR notation (10.0.0.0/8), and wildcards (192.168.1.*)</small>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Admin IP Allowlist</h3>
+          <p class="form-hint" style="margin-bottom: 0.75rem;">Restrict admin panel access to specific IPs. Leave empty to allow all. One per line.</p>
+          <div class="form-group">
+            <textarea name="admin_ip_allowlist" rows="5" placeholder="Leave empty to allow all IPs&#10;192.168.1.0/24&#10;10.0.0.1">${escapeHtml(adminIpAllowlist)}</textarea>
+            <small class="form-hint">When set, only these IPs can access /admin routes. Be careful not to lock yourself out!</small>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.getElementById('security-settings-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    
+    const parseList = (str) => str.split('\n').map(s => s.trim()).filter(Boolean);
+    
+    const newConfig = {
+      security: {
+        ipBlocklist: parseList(form.ip_blocklist.value),
+        adminIpAllowlist: parseList(form.admin_ip_allowlist.value)
       }
     };
     
@@ -993,6 +1304,77 @@ function renderMailSettings(content, config) {
     
     btn.disabled = false;
     btn.innerHTML = '<span class="material-icons-outlined">send</span> Send Test Email';
+  };
+}
+
+// ==================== MAINTENANCE SETTINGS ====================
+
+function renderMaintenanceSettings(content, config) {
+  const allowedIps = (config.maintenance?.allowedIps || []).join('\n');
+  
+  content.innerHTML = `
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <h2>Maintenance Mode</h2>
+        <p>Enable maintenance mode to temporarily restrict access to the panel.</p>
+      </div>
+      
+      <form id="maintenance-settings-form" class="settings-form">
+        <div class="detail-card">
+          <h3>Status</h3>
+          <div class="form-toggles">
+            <label class="toggle-item">
+              <input type="checkbox" name="maintenance_enabled" ${config.maintenance?.enabled ? 'checked' : ''} />
+              <span class="toggle-content">
+                <span class="toggle-title">Enable Maintenance Mode</span>
+                <span class="toggle-desc">When enabled, non-admin users will see a maintenance page and API requests will return 503</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Maintenance Message</h3>
+          <div class="form-group">
+            <textarea name="maintenance_message" rows="3" placeholder="The panel is currently under maintenance. Please try again later.">${escapeHtml(config.maintenance?.message || '')}</textarea>
+            <small class="form-hint">Custom message shown to users during maintenance</small>
+          </div>
+        </div>
+        
+        <div class="detail-card">
+          <h3>Allowed IPs</h3>
+          <p class="form-hint" style="margin-bottom: 0.75rem;">These IPs can bypass maintenance mode. Admins always bypass. One per line.</p>
+          <div class="form-group">
+            <textarea name="maintenance_ips" rows="5" placeholder="192.168.1.100&#10;10.0.0.0/8">${escapeHtml(allowedIps)}</textarea>
+            <small class="form-hint">Supports exact IPs, CIDR notation, and wildcards</small>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">save</span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  
+  document.getElementById('maintenance-settings-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    
+    const parseList = (str) => str.split('\n').map(s => s.trim()).filter(Boolean);
+    
+    const newConfig = {
+      maintenance: {
+        enabled: form.maintenance_enabled.checked,
+        message: form.maintenance_message.value,
+        allowedIps: parseList(form.maintenance_ips.value)
+      }
+    };
+    
+    await saveSettings(newConfig);
   };
 }
 

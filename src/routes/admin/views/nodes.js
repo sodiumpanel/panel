@@ -10,14 +10,17 @@ const navigateTo = (...args) => window.adminNavigate(...args);
 export async function renderNodesList(container, username, loadView) {
   try {
     const search = state.searchQuery.nodes ? `&search=${encodeURIComponent(state.searchQuery.nodes)}` : '';
-    const [res, statusRes] = await Promise.all([
+    const [res, statusRes, healthRes] = await Promise.all([
       api(`/api/admin/nodes?page=${state.currentPage.nodes}&per_page=${state.itemsPerPage.nodes}${search}`),
-      api('/api/status/nodes')
+      api('/api/status/nodes'),
+      api('/api/admin/nodes/health').catch(() => ({ json: () => ({ health: {} }) }))
     ]);
     const data = await res.json();
     const statusData = await statusRes.json();
     const nodeStatuses = {};
     (statusData.nodes || []).forEach(n => { nodeStatuses[n.id] = n.status; });
+    const healthData = await healthRes.json();
+    const nodeHealthMap = healthData.health || {};
     
     container.innerHTML = `
       <div class="admin-header">
@@ -62,8 +65,8 @@ export async function renderNodesList(container, username, loadView) {
                     <span class="stat-value">${formatBytes(node.disk * 1024 * 1024)}</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-label">Ports</span>
-                    <span class="stat-value">${node.allocation_start || 25565}-${node.allocation_end || 25665}</span>
+                    <span class="stat-label">Response</span>
+                    <span class="stat-value">${nodeHealthMap[node.id]?.response_time != null ? nodeHealthMap[node.id].response_time + 'ms' : '—'}</span>
                   </div>
                 </div>
                 <div class="list-card-footer">
@@ -97,9 +100,10 @@ export async function renderNodesList(container, username, loadView) {
 
 export async function renderNodeDetail(container, username, nodeId) {
   try {
-    const [res, statusRes] = await Promise.all([
+    const [res, statusRes, healthRes] = await Promise.all([
       api(`/api/admin/nodes`),
-      api('/api/status/nodes')
+      api('/api/status/nodes'),
+      api('/api/admin/nodes/health').catch(() => ({ json: () => ({ health: {} }) }))
     ]);
     const data = await res.json();
     const statusData = await statusRes.json();
@@ -112,6 +116,8 @@ export async function renderNodeDetail(container, username, nodeId) {
     
     const nodeStatus = (statusData.nodes || []).find(n => n.id === nodeId);
     const isOnline = nodeStatus?.status === 'online';
+    const healthData = await healthRes.json();
+    const nodeHealthInfo = (healthData.health || {})[nodeId];
     
     const locRes = await api('/api/admin/locations');
     const locData = await locRes.json();
@@ -147,7 +153,7 @@ export async function renderNodeDetail(container, username, nodeId) {
         state.currentView.subTab = tab.dataset.subtab;
         document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        renderNodeSubTab(node, locData.locations, username, isOnline);
+        renderNodeSubTab(node, locData.locations, username, isOnline, nodeHealthInfo);
       };
     });
     
@@ -166,14 +172,14 @@ export async function renderNodeDetail(container, username, nodeId) {
       }
     };
     
-    renderNodeSubTab(node, locData.locations, username, isOnline);
+    renderNodeSubTab(node, locData.locations, username, isOnline, nodeHealthInfo);
     
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load node</div>`;
   }
 }
 
-function renderNodeSubTab(node, locations, username, isOnline) {
+function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
   const content = document.getElementById('node-detail-content');
   
   switch (state.currentView.subTab) {
@@ -249,6 +255,37 @@ function renderNodeSubTab(node, locations, username, isOnline) {
                 <span class="material-icons-outlined">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
                 <span>${node.behind_proxy ? 'Behind Proxy' : 'Direct Connection'}</span>
               </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Health Monitoring</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Status</span>
+                <span class="info-value">
+                  <span class="status-indicator ${healthInfo?.status === 'online' ? 'status-success' : healthInfo?.status === 'degraded' ? 'status-warning' : 'status-danger'}" style="display: inline-block; margin-right: 6px;"></span>
+                  ${healthInfo?.status ? healthInfo.status.charAt(0).toUpperCase() + healthInfo.status.slice(1) : 'Unknown'}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Response Time</span>
+                <span class="info-value">${healthInfo?.response_time != null ? healthInfo.response_time + 'ms' : '—'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Last Seen</span>
+                <span class="info-value">${healthInfo?.last_seen ? new Date(healthInfo.last_seen).toLocaleString() : 'Never'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Last Check</span>
+                <span class="info-value">${healthInfo?.checked_at ? new Date(healthInfo.checked_at).toLocaleString() : 'Never'}</span>
+              </div>
+              ${healthInfo?.last_error ? `
+              <div class="info-item">
+                <span class="info-label">Last Error</span>
+                <span class="info-value" style="color: var(--danger);">${escapeHtml(healthInfo.last_error)}</span>
+              </div>
+              ` : ''}
             </div>
           </div>
         </div>

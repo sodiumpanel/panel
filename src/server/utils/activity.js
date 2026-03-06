@@ -1,8 +1,8 @@
 import { loadActivityLogs, saveActivityLogs, loadAuditLogs, saveAuditLogs } from '../db.js';
 import { generateUUID } from './helpers.js';
 
-export function logActivity(userId, action, details = {}, ip = null) {
-  const data = loadActivityLogs();
+export async function logActivity(userId, action, details = {}, ip = null) {
+  const data = await loadActivityLogs();
   const log = {
     id: generateUUID(),
     userId,
@@ -15,12 +15,12 @@ export function logActivity(userId, action, details = {}, ip = null) {
   if (data.activityLogs.length > 10000) {
     data.activityLogs = data.activityLogs.slice(0, 10000);
   }
-  saveActivityLogs(data);
+  await saveActivityLogs(data);
   return log;
 }
 
-export function logAudit(adminId, action, targetType, targetId, details = {}, ip = null) {
-  const data = loadAuditLogs();
+export async function logAudit(adminId, action, targetType, targetId, details = {}, ip = null) {
+  const data = await loadAuditLogs();
   const log = {
     id: generateUUID(),
     adminId,
@@ -35,19 +35,19 @@ export function logAudit(adminId, action, targetType, targetId, details = {}, ip
   if (data.auditLogs.length > 10000) {
     data.auditLogs = data.auditLogs.slice(0, 10000);
   }
-  saveAuditLogs(data);
+  await saveAuditLogs(data);
   return log;
 }
 
-export function getUserActivity(userId, limit = 50) {
-  const data = loadActivityLogs();
+export async function getUserActivity(userId, limit = 50) {
+  const data = await loadActivityLogs();
   return data.activityLogs
     .filter(log => log.userId === userId)
     .slice(0, limit);
 }
 
-export function getAuditLogs(limit = 100, page = 1) {
-  const data = loadAuditLogs();
+export async function getAuditLogs(limit = 100, page = 1) {
+  const data = await loadAuditLogs();
   const start = (page - 1) * limit;
   return {
     logs: data.auditLogs.slice(start, start + limit),

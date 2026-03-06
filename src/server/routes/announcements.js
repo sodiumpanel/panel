@@ -6,8 +6,8 @@ import { logAudit, AUDIT_TYPES } from '../utils/activity.js';
 
 const router = express.Router();
 
-router.get('/', authenticateUser, (req, res) => {
-  const data = loadAnnouncements();
+router.get('/', authenticateUser, async (req, res) => {
+  const data = await loadAnnouncements();
   const now = new Date();
   
   let announcements = data.announcements || [];
@@ -23,8 +23,8 @@ router.get('/', authenticateUser, (req, res) => {
   res.json({ announcements });
 });
 
-router.get('/active', authenticateUser, (req, res) => {
-  const data = loadAnnouncements();
+router.get('/active', authenticateUser, async (req, res) => {
+  const data = await loadAnnouncements();
   const now = new Date();
   
   const announcements = data.announcements.filter(a => {
@@ -36,14 +36,14 @@ router.get('/active', authenticateUser, (req, res) => {
   res.json({ announcements });
 });
 
-router.post('/', authenticateUser, requireAdmin, (req, res) => {
+router.post('/', authenticateUser, requireAdmin, async (req, res) => {
   const { title, content, type = 'info', active = true, expiresAt } = req.body;
   
   if (!title || !content) {
     return res.status(400).json({ error: 'Title and content are required' });
   }
   
-  const data = loadAnnouncements();
+  const data = await loadAnnouncements();
   const announcement = {
     id: generateUUID(),
     title: sanitizeText(title),
@@ -57,7 +57,7 @@ router.post('/', authenticateUser, requireAdmin, (req, res) => {
   };
   
   data.announcements.unshift(announcement);
-  saveAnnouncements(data);
+  await saveAnnouncements(data);
   
   logAudit(req.user.id, AUDIT_TYPES.ANNOUNCEMENT_CREATE, 'announcement', announcement.id, {
     title: announcement.title
@@ -66,9 +66,9 @@ router.post('/', authenticateUser, requireAdmin, (req, res) => {
   res.json({ success: true, announcement });
 });
 
-router.put('/:id', authenticateUser, requireAdmin, (req, res) => {
+router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
   const { title, content, type, active, expiresAt } = req.body;
-  const data = loadAnnouncements();
+  const data = await loadAnnouncements();
   const idx = data.announcements.findIndex(a => a.id === req.params.id);
   
   if (idx === -1) {
@@ -85,7 +85,7 @@ router.put('/:id', authenticateUser, requireAdmin, (req, res) => {
   if (expiresAt !== undefined) announcement.expiresAt = expiresAt;
   announcement.updatedAt = new Date().toISOString();
   
-  saveAnnouncements(data);
+  await saveAnnouncements(data);
   
   logAudit(req.user.id, AUDIT_TYPES.ANNOUNCEMENT_UPDATE, 'announcement', announcement.id, {
     oldTitle,
@@ -95,8 +95,8 @@ router.put('/:id', authenticateUser, requireAdmin, (req, res) => {
   res.json({ success: true, announcement });
 });
 
-router.delete('/:id', authenticateUser, requireAdmin, (req, res) => {
-  const data = loadAnnouncements();
+router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+  const data = await loadAnnouncements();
   const announcement = data.announcements.find(a => a.id === req.params.id);
   
   if (!announcement) {
@@ -104,7 +104,7 @@ router.delete('/:id', authenticateUser, requireAdmin, (req, res) => {
   }
   
   data.announcements = data.announcements.filter(a => a.id !== req.params.id);
-  saveAnnouncements(data);
+  await saveAnnouncements(data);
   
   logAudit(req.user.id, AUDIT_TYPES.ANNOUNCEMENT_DELETE, 'announcement', req.params.id, {
     title: announcement.title

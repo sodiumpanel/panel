@@ -54,15 +54,15 @@ function generateApiToken() {
   return 'sodium_' + crypto.randomBytes(32).toString('base64url');
 }
 
-router.get('/permissions', authenticateUser, (req, res) => {
+router.get('/permissions', authenticateUser, async (req, res) => {
   res.json({
     user: USER_PERMISSIONS,
     application: req.user.isAdmin ? APPLICATION_PERMISSIONS : []
   });
 });
 
-router.get('/', authenticateUser, (req, res) => {
-  const data = loadApiKeys();
+router.get('/', authenticateUser, async (req, res) => {
+  const data = await loadApiKeys();
   const userKeys = data.apiKeys
     .filter(k => k.userId === req.user.id && k.type === API_KEY_TYPES.USER)
     .map(k => ({
@@ -77,7 +77,7 @@ router.get('/', authenticateUser, (req, res) => {
   res.json({ keys: userKeys });
 });
 
-router.post('/', authenticateUser, (req, res) => {
+router.post('/', authenticateUser, async (req, res) => {
   const { name, permissions, expiresAt } = req.body;
   
   if (!name || typeof name !== 'string' || name.length < 1 || name.length > 50) {
@@ -93,7 +93,7 @@ router.post('/', authenticateUser, (req, res) => {
     return res.status(400).json({ error: `Invalid permissions: ${invalidPerms.join(', ')}` });
   }
   
-  const data = loadApiKeys();
+  const data = await loadApiKeys();
   const userKeyCount = data.apiKeys.filter(k => k.userId === req.user.id && k.type === API_KEY_TYPES.USER).length;
   
   if (userKeyCount >= 10) {
@@ -116,7 +116,7 @@ router.post('/', authenticateUser, (req, res) => {
   };
   
   data.apiKeys.push(apiKey);
-  saveApiKeys(data);
+  await saveApiKeys(data);
   
   res.json({
     id: apiKey.id,
@@ -128,9 +128,9 @@ router.post('/', authenticateUser, (req, res) => {
   });
 });
 
-router.delete('/:id', authenticateUser, (req, res) => {
+router.delete('/:id', authenticateUser, async (req, res) => {
   const { id } = req.params;
-  const data = loadApiKeys();
+  const data = await loadApiKeys();
   
   const keyIndex = data.apiKeys.findIndex(k => k.id === id && k.userId === req.user.id && k.type === API_KEY_TYPES.USER);
   
@@ -139,13 +139,13 @@ router.delete('/:id', authenticateUser, (req, res) => {
   }
   
   data.apiKeys.splice(keyIndex, 1);
-  saveApiKeys(data);
+  await saveApiKeys(data);
   
   res.json({ message: 'API key deleted' });
 });
 
-router.get('/application', authenticateUser, requireAdmin, (req, res) => {
-  const data = loadApiKeys();
+router.get('/application', authenticateUser, requireAdmin, async (req, res) => {
+  const data = await loadApiKeys();
   const appKeys = data.apiKeys
     .filter(k => k.type === API_KEY_TYPES.APPLICATION)
     .map(k => ({
@@ -161,7 +161,7 @@ router.get('/application', authenticateUser, requireAdmin, (req, res) => {
   res.json({ keys: appKeys });
 });
 
-router.post('/application', authenticateUser, requireAdmin, (req, res) => {
+router.post('/application', authenticateUser, requireAdmin, async (req, res) => {
   const { name, permissions, expiresAt } = req.body;
   
   if (!name || typeof name !== 'string' || name.length < 1 || name.length > 50) {
@@ -177,7 +177,7 @@ router.post('/application', authenticateUser, requireAdmin, (req, res) => {
     return res.status(400).json({ error: `Invalid permissions: ${invalidPerms.join(', ')}` });
   }
   
-  const data = loadApiKeys();
+  const data = await loadApiKeys();
   const token = generateApiToken();
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
   
@@ -196,7 +196,7 @@ router.post('/application', authenticateUser, requireAdmin, (req, res) => {
   };
   
   data.apiKeys.push(apiKey);
-  saveApiKeys(data);
+  await saveApiKeys(data);
   
   res.json({
     id: apiKey.id,
@@ -208,9 +208,9 @@ router.post('/application', authenticateUser, requireAdmin, (req, res) => {
   });
 });
 
-router.delete('/application/:id', authenticateUser, requireAdmin, (req, res) => {
+router.delete('/application/:id', authenticateUser, requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const data = loadApiKeys();
+  const data = await loadApiKeys();
   
   const keyIndex = data.apiKeys.findIndex(k => k.id === id && k.type === API_KEY_TYPES.APPLICATION);
   
@@ -219,7 +219,7 @@ router.delete('/application/:id', authenticateUser, requireAdmin, (req, res) => 
   }
   
   data.apiKeys.splice(keyIndex, 1);
-  saveApiKeys(data);
+  await saveApiKeys(data);
   
   res.json({ message: 'Application key deleted' });
 });

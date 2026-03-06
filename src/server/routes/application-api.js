@@ -16,9 +16,9 @@ router.use(authenticateApiKey);
 
 // ==================== USERS ====================
 
-router.get('/users', requireApiPermission('users.read'), (req, res) => {
+router.get('/users', requireApiPermission('users.read'), async (req, res) => {
   const { page = 1, per_page = 50 } = req.query;
-  const data = loadUsers();
+  const data = await loadUsers();
   
   const total = data.users.length;
   const totalPages = Math.ceil(total / per_page);
@@ -34,8 +34,8 @@ router.get('/users', requireApiPermission('users.read'), (req, res) => {
   });
 });
 
-router.get('/users/:id', requireApiPermission('users.read'), (req, res) => {
-  const data = loadUsers();
+router.get('/users/:id', requireApiPermission('users.read'), async (req, res) => {
+  const data = await loadUsers();
   const user = data.users.find(u => u.id === req.params.id);
   
   if (!user) return res.status(404).json({ error: 'User not found' });
@@ -55,7 +55,7 @@ router.post('/users', requireApiPermission('users.create'), async (req, res) => 
     return res.status(400).json({ error: 'Invalid username format' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   
   if (data.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
     return res.status(400).json({ error: 'Username already exists' });
@@ -91,7 +91,7 @@ router.post('/users', requireApiPermission('users.create'), async (req, res) => 
   };
   
   data.users.push(newUser);
-  saveUsers(data);
+  await saveUsers(data);
   
   const { password: _, ...safeUser } = newUser;
   res.status(201).json({ data: safeUser });
@@ -99,7 +99,7 @@ router.post('/users', requireApiPermission('users.create'), async (req, res) => 
 
 router.patch('/users/:id', requireApiPermission('users.update'), async (req, res) => {
   const { email, password, isAdmin, limits } = req.body;
-  const data = loadUsers();
+  const data = await loadUsers();
   const idx = data.users.findIndex(u => u.id === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'User not found' });
@@ -111,29 +111,29 @@ router.patch('/users/:id', requireApiPermission('users.update'), async (req, res
   if (password) user.password = await bcrypt.hash(password, 10);
   if (limits) user.limits = { ...user.limits, ...limits };
   
-  saveUsers(data);
+  await saveUsers(data);
   
   const { password: _, ...safeUser } = user;
   res.json({ data: safeUser });
 });
 
-router.delete('/users/:id', requireApiPermission('users.delete'), (req, res) => {
-  const data = loadUsers();
+router.delete('/users/:id', requireApiPermission('users.delete'), async (req, res) => {
+  const data = await loadUsers();
   const idx = data.users.findIndex(u => u.id === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'User not found' });
   
   data.users.splice(idx, 1);
-  saveUsers(data);
+  await saveUsers(data);
   
   res.status(204).send();
 });
 
 // ==================== SERVERS ====================
 
-router.get('/servers', requireApiPermission('servers.read'), (req, res) => {
+router.get('/servers', requireApiPermission('servers.read'), async (req, res) => {
   const { page = 1, per_page = 50 } = req.query;
-  const data = loadServers();
+  const data = await loadServers();
   
   const total = data.servers.length;
   const totalPages = Math.ceil(total / per_page);
@@ -147,8 +147,8 @@ router.get('/servers', requireApiPermission('servers.read'), (req, res) => {
   });
 });
 
-router.get('/servers/:id', requireApiPermission('servers.read'), (req, res) => {
-  const data = loadServers();
+router.get('/servers/:id', requireApiPermission('servers.read'), async (req, res) => {
+  const data = await loadServers();
   const server = data.servers.find(s => s.id === req.params.id || s.uuid === req.params.id);
   
   if (!server) return res.status(404).json({ error: 'Server not found' });
@@ -158,7 +158,7 @@ router.get('/servers/:id', requireApiPermission('servers.read'), (req, res) => {
 
 router.patch('/servers/:id/build', requireApiPermission('servers.update'), async (req, res) => {
   const { memory, disk, cpu, swap, io } = req.body;
-  const data = loadServers();
+  const data = await loadServers();
   const idx = data.servers.findIndex(s => s.id === req.params.id || s.uuid === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Server not found' });
@@ -171,9 +171,9 @@ router.patch('/servers/:id/build', requireApiPermission('servers.update'), async
   if (swap !== undefined) server.limits.swap = parseInt(swap);
   if (io !== undefined) server.limits.io = parseInt(io);
   
-  saveServers(data);
+  await saveServers(data);
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
   if (node) {
@@ -188,37 +188,37 @@ router.patch('/servers/:id/build', requireApiPermission('servers.update'), async
 });
 
 router.post('/servers/:id/suspend', requireApiPermission('servers.update'), async (req, res) => {
-  const data = loadServers();
+  const data = await loadServers();
   const idx = data.servers.findIndex(s => s.id === req.params.id || s.uuid === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Server not found' });
   
   data.servers[idx].suspended = true;
-  saveServers(data);
+  await saveServers(data);
   
   res.status(204).send();
 });
 
 router.post('/servers/:id/unsuspend', requireApiPermission('servers.update'), async (req, res) => {
-  const data = loadServers();
+  const data = await loadServers();
   const idx = data.servers.findIndex(s => s.id === req.params.id || s.uuid === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Server not found' });
   
   data.servers[idx].suspended = false;
-  saveServers(data);
+  await saveServers(data);
   
   res.status(204).send();
 });
 
 router.delete('/servers/:id', requireApiPermission('servers.delete'), async (req, res) => {
-  const data = loadServers();
+  const data = await loadServers();
   const idx = data.servers.findIndex(s => s.id === req.params.id || s.uuid === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Server not found' });
   
   const server = data.servers[idx];
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
   if (node) {
@@ -230,20 +230,20 @@ router.delete('/servers/:id', requireApiPermission('servers.delete'), async (req
   }
   
   data.servers.splice(idx, 1);
-  saveServers(data);
+  await saveServers(data);
   
   res.status(204).send();
 });
 
 // ==================== NODES ====================
 
-router.get('/nodes', requireApiPermission('nodes.read'), (req, res) => {
-  const data = loadNodes();
+router.get('/nodes', requireApiPermission('nodes.read'), async (req, res) => {
+  const data = await loadNodes();
   res.json({ data: data.nodes });
 });
 
-router.get('/nodes/:id', requireApiPermission('nodes.read'), (req, res) => {
-  const data = loadNodes();
+router.get('/nodes/:id', requireApiPermission('nodes.read'), async (req, res) => {
+  const data = await loadNodes();
   const node = data.nodes.find(n => n.id === req.params.id);
   
   if (!node) return res.status(404).json({ error: 'Node not found' });
@@ -251,8 +251,8 @@ router.get('/nodes/:id', requireApiPermission('nodes.read'), (req, res) => {
   res.json({ data: node });
 });
 
-router.get('/nodes/:id/configuration', requireApiPermission('nodes.read'), (req, res) => {
-  const data = loadNodes();
+router.get('/nodes/:id/configuration', requireApiPermission('nodes.read'), async (req, res) => {
+  const data = await loadNodes();
   const node = data.nodes.find(n => n.id === req.params.id);
   
   if (!node) return res.status(404).json({ error: 'Node not found' });
@@ -262,17 +262,17 @@ router.get('/nodes/:id/configuration', requireApiPermission('nodes.read'), (req,
 
 // ==================== LOCATIONS ====================
 
-router.get('/locations', requireApiPermission('locations.read'), (req, res) => {
-  const data = loadLocations();
+router.get('/locations', requireApiPermission('locations.read'), async (req, res) => {
+  const data = await loadLocations();
   res.json({ data: data.locations });
 });
 
-router.post('/locations', requireApiPermission('locations.create'), (req, res) => {
+router.post('/locations', requireApiPermission('locations.create'), async (req, res) => {
   const { short, long } = req.body;
   
   if (!short) return res.status(400).json({ error: 'Short name required' });
   
-  const data = loadLocations();
+  const data = await loadLocations();
   
   const newLocation = {
     id: generateUUID(),
@@ -281,38 +281,38 @@ router.post('/locations', requireApiPermission('locations.create'), (req, res) =
   };
   
   data.locations.push(newLocation);
-  saveLocations(data);
+  await saveLocations(data);
   
   res.status(201).json({ data: newLocation });
 });
 
-router.delete('/locations/:id', requireApiPermission('locations.delete'), (req, res) => {
-  const data = loadLocations();
+router.delete('/locations/:id', requireApiPermission('locations.delete'), async (req, res) => {
+  const data = await loadLocations();
   const idx = data.locations.findIndex(l => l.id === req.params.id);
   
   if (idx === -1) return res.status(404).json({ error: 'Location not found' });
   
   data.locations.splice(idx, 1);
-  saveLocations(data);
+  await saveLocations(data);
   
   res.status(204).send();
 });
 
 // ==================== NESTS & EGGS ====================
 
-router.get('/nests', requireApiPermission('nests.read'), (req, res) => {
-  const data = loadNests();
+router.get('/nests', requireApiPermission('nests.read'), async (req, res) => {
+  const data = await loadNests();
   res.json({ data: data.nests });
 });
 
-router.get('/nests/:id/eggs', requireApiPermission('eggs.read'), (req, res) => {
-  const eggs = loadEggs();
+router.get('/nests/:id/eggs', requireApiPermission('eggs.read'), async (req, res) => {
+  const eggs = await loadEggs();
   const nestEggs = eggs.eggs.filter(e => e.nest_id === req.params.id);
   res.json({ data: nestEggs });
 });
 
-router.get('/eggs/:id', requireApiPermission('eggs.read'), (req, res) => {
-  const data = loadEggs();
+router.get('/eggs/:id', requireApiPermission('eggs.read'), async (req, res) => {
+  const data = await loadEggs();
   const egg = data.eggs.find(e => e.id === req.params.id);
   
   if (!egg) return res.status(404).json({ error: 'Egg not found' });

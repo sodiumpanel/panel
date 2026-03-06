@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { DATA_DIR, loadFullConfig, saveFullConfig, CONFIG_FILE } from './config.js';
 import logger from './utils/logger.js';
-import { isRedisConnected, redisGet, redisSet, redisDel } from './redis.js';
+import { isRedisConnected, redisGet, redisSet, redisDel, redisInvalidate } from './redis.js';
 
 const DB_FILE = path.join(DATA_DIR, 'sodium.db');
 const MAGIC = Buffer.from('SODIUM01');
@@ -31,7 +31,11 @@ const COLLECTIONS = {
   auditLogs: 9,
   activityLogs: 10,
   webhooks: 11,
-  schedules: 12
+  schedules: 12,
+  sessions: 13,
+  groups: 14,
+  nodeHealthHistory: 15,
+  incidents: 16
 };
 
 let cache = {
@@ -46,7 +50,11 @@ let cache = {
   auditLogs: [],
   activityLogs: [],
   webhooks: [],
-  schedules: []
+  schedules: [],
+  sessions: [],
+  groups: [],
+  nodeHealthHistory: [],
+  incidents: []
 };
 
 let dbConnection = null;
@@ -232,6 +240,93 @@ async function syncCollectionToExternalDb(collection) {
   }
 }
 
+async function loadCollectionFromExternalDb(collection) {
+  const safe = sanitizeTableName(collection);
+  let rows;
+  if (dbDriver === 'mysql') {
+    [rows] = await dbConnection.execute(`SELECT id, data FROM ${safe}`);
+  } else if (dbDriver === 'postgres') {
+    const result = await dbConnection.query(`SELECT id, data FROM "${safe}"`);
+    rows = result.rows;
+  } else if (dbDriver === 'sqlite') {
+    rows = dbConnection.prepare(`SELECT id, data FROM "${safe}"`).all();
+  }
+  return (rows || []).map(r => {
+    const data = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+    return { id: r.id, ...data };
+  });
+}
+
+async function getAllIdsFromExternalDb(collection) {
+  const safe = sanitizeTableName(collection);
+  let rows;
+  if (dbDriver === 'mysql') {
+    [rows] = await dbConnection.execute(`SELECT id FROM ${safe}`);
+  } else if (dbDriver === 'postgres') {
+    const result = await dbConnection.query(`SELECT id FROM "${safe}"`);
+    rows = result.rows;
+  } else if (dbDriver === 'sqlite') {
+    rows = dbConnection.prepare(`SELECT id FROM "${safe}"`).all();
+  }
+  return new Set((rows || []).map(r => r.id));
+}
+
+async function getRecordFromExternalDb(collection, id) {
+  const safe = sanitizeTableName(collection);
+  let rows;
+  if (dbDriver === 'mysql') {
+    [rows] = await dbConnection.execute(`SELECT id, data FROM ${safe} WHERE id = ?`, [id]);
+  } else if (dbDriver === 'postgres') {
+    const result = await dbConnection.query(`SELECT id, data FROM "${safe}" WHERE id = $1`, [id]);
+    rows = result.rows;
+  } else if (dbDriver === 'sqlite') {
+    rows = [dbConnection.prepare(`SELECT id, data FROM "${safe}" WHERE id = ?`).get(id)].filter(Boolean);
+  }
+  if (!rows || rows.length === 0) return null;
+  const r = rows[0];
+  const data = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+  return { id: r.id, ...data };
+}
+
+async function smartSyncToExternalDb(collection, newRecords) {
+  if (!dbConnection) return;
+  
+  const existingIds = await getAllIdsFromExternalDb(collection);
+  const newIds = new Set(newRecords.map(r => r.id));
+  
+  for (const record of newRecords) {
+    await saveToExternalDb(collection, record);
+    if (isRedisConnected()) await redisInvalidate(`${collection}:${record.id}`);
+  }
+  
+  for (const existingId of existingIds) {
+    if (!newIds.has(existingId)) {
+      await deleteFromExternalDb(collection, existingId);
+      if (isRedisConnected()) await redisInvalidate(`${collection}:${existingId}`);
+    }
+  }
+}
+
+async function countFromExternalDb(collection) {
+  const safe = sanitizeTableName(collection);
+  if (dbDriver === 'mysql') {
+    const [rows] = await dbConnection.execute(`SELECT COUNT(*) as cnt FROM ${safe}`);
+    return rows[0].cnt;
+  } else if (dbDriver === 'postgres') {
+    const result = await dbConnection.query(`SELECT COUNT(*) as cnt FROM "${safe}"`);
+    return parseInt(result.rows[0].cnt, 10);
+  } else if (dbDriver === 'sqlite') {
+    const row = dbConnection.prepare(`SELECT COUNT(*) as cnt FROM "${safe}"`).get();
+    return row.cnt;
+  }
+  return 0;
+}
+
+async function findByFieldFromExternalDb(collection, field, value) {
+  const records = await loadCollectionFromExternalDb(collection);
+  return records.filter(r => r[field] === value);
+}
+
 function encodeRecord(record) {
   const json = JSON.stringify(record);
   const data = Buffer.from(json, 'utf8');
@@ -368,11 +463,22 @@ export async function waitForDb() {
 
 function createCollectionAccessors(name) {
   return {
-    load: () => ({ [name]: cache[name] }),
+    load: () => {
+      if (dbConnection) {
+        return loadCollectionFromExternalDb(name).then(records => {
+          cache[name] = records;
+          return { [name]: records };
+        });
+      }
+      return { [name]: cache[name] };
+    },
     save: (data) => {
-      cache[name] = data[name] || [];
-      if (dbConnection) syncCollectionToExternalDb(name);
-      else saveDatabase();
+      const records = data[name] || [];
+      cache[name] = records;
+      if (dbConnection) {
+        return smartSyncToExternalDb(name, records);
+      }
+      saveDatabase();
     }
   };
 }
@@ -389,6 +495,10 @@ const auditLogsAccessors = createCollectionAccessors('auditLogs');
 const activityLogsAccessors = createCollectionAccessors('activityLogs');
 const webhooksAccessors = createCollectionAccessors('webhooks');
 const schedulesAccessors = createCollectionAccessors('schedules');
+const sessionsAccessors = createCollectionAccessors('sessions');
+const groupsAccessors = createCollectionAccessors('groups');
+const nodeHealthHistoryAccessors = createCollectionAccessors('nodeHealthHistory');
+const incidentsAccessors = createCollectionAccessors('incidents');
 
 export const loadUsers = usersAccessors.load;
 export const saveUsers = usersAccessors.save;
@@ -414,6 +524,14 @@ export const loadWebhooks = webhooksAccessors.load;
 export const saveWebhooks = webhooksAccessors.save;
 export const loadSchedules = schedulesAccessors.load;
 export const saveSchedules = schedulesAccessors.save;
+export const loadSessions = sessionsAccessors.load;
+export const saveSessions = sessionsAccessors.save;
+export const loadGroups = groupsAccessors.load;
+export const saveGroups = groupsAccessors.save;
+export const loadNodeHealthHistory = nodeHealthHistoryAccessors.load;
+export const saveNodeHealthHistory = nodeHealthHistoryAccessors.save;
+export const loadIncidents = incidentsAccessors.load;
+export const saveIncidents = incidentsAccessors.save;
 
 export function loadConfig() {
   return loadFullConfig();
@@ -428,21 +546,29 @@ export async function findById(collection, id) {
     const cached = await redisGet(`${collection}:${id}`);
     if (cached) return cached;
   }
-  const record = cache[collection]?.find(r => r.id === id);
+  let record;
+  if (dbConnection) {
+    record = await getRecordFromExternalDb(collection, id);
+  } else {
+    record = cache[collection]?.find(r => r.id === id);
+  }
   if (record && isRedisConnected()) {
     await redisSet(`${collection}:${id}`, record);
   }
   return record;
 }
 
-export function findByField(collection, field, value) {
+export async function findByField(collection, field, value) {
+  if (dbConnection) {
+    return findByFieldFromExternalDb(collection, field, value);
+  }
   return cache[collection]?.filter(r => r[field] === value) || [];
 }
 
 export function insert(collection, record) {
   if (!cache[collection]) cache[collection] = [];
   cache[collection].push(record);
-  if (isRedisConnected()) redisSet(`${collection}:${record.id}`, record);
+  if (isRedisConnected()) redisInvalidate(`${collection}:${record.id}`);
   if (dbConnection) saveToExternalDb(collection, record);
   else saveDatabase();
   return record;
@@ -452,7 +578,7 @@ export function updateById(collection, id, updates) {
   const idx = cache[collection]?.findIndex(r => r.id === id);
   if (idx === -1 || idx === undefined) return null;
   cache[collection][idx] = { ...cache[collection][idx], ...updates };
-  if (isRedisConnected()) redisSet(`${collection}:${id}`, cache[collection][idx]);
+  if (isRedisConnected()) redisInvalidate(`${collection}:${id}`);
   if (dbConnection) saveToExternalDb(collection, cache[collection][idx]);
   else saveDatabase();
   return cache[collection][idx];
@@ -463,18 +589,28 @@ export function deleteById(collection, id) {
   const idx = cache[collection].findIndex(r => r.id === id);
   if (idx === -1) return false;
   cache[collection].splice(idx, 1);
-  if (isRedisConnected()) redisDel(`${collection}:${id}`);
+  if (isRedisConnected()) redisInvalidate(`${collection}:${id}`);
   if (dbConnection) deleteFromExternalDb(collection, id);
   else saveDatabase();
   return true;
 }
 
-export function count(collection) {
+export async function count(collection) {
+  if (dbConnection) {
+    return countFromExternalDb(collection);
+  }
   return cache[collection]?.length || 0;
 }
 
-export function getAll(collection) {
+export async function getAll(collection) {
+  if (dbConnection) {
+    return loadCollectionFromExternalDb(collection);
+  }
   return cache[collection] || [];
+}
+
+export function isExternalDb() {
+  return !!dbConnection;
 }
 
 export function getDbInfo() {

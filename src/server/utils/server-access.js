@@ -2,7 +2,7 @@ import { loadServers, loadNodes } from '../db.js';
 import { hasPermission } from './permissions.js';
 
 export async function getServerAndNode(serverId, user, requiredPermission = null) {
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.id === serverId);
   if (!server) return { error: 'Server not found', status: 404 };
   
@@ -12,7 +12,7 @@ export async function getServerAndNode(serverId, user, requiredPermission = null
   
   if (!user) return { error: 'User not found', status: 404 };
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
   if (user.isAdmin || server.user_id === user.id) {

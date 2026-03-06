@@ -1,10 +1,14 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import { 
   loadNodes, saveNodes, loadLocations, saveLocations, 
   loadUsers, saveUsers, loadNests, saveNests, 
   loadEggs, saveEggs, loadServers, saveServers,
-  loadConfig, saveConfig
+  loadConfig, saveConfig, loadSessions, saveSessions,
+  loadGroups, saveGroups, loadIncidents, saveIncidents
 } from '../db.js';
 import { 
   isAdmin, sanitizeText, generateUUID, generateToken, 
@@ -18,10 +22,10 @@ const router = express.Router();
 
 router.use(authenticateUser, requireAdmin);
 
-router.get('/nodes', (req, res) => {
+router.get('/nodes', async (req, res) => {
   const { page = 1, per_page: rawPerPage = 10 } = req.query;
   const per_page = parseInt(rawPerPage) || 10;
-  const data = loadNodes();
+  const data = await loadNodes();
   const total = data.nodes.length;
   const totalPages = Math.ceil(total / per_page);
   const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
@@ -39,9 +43,14 @@ router.get('/nodes', (req, res) => {
   });
 });
 
-router.post('/nodes', (req, res) => {
+router.get('/nodes/health', async (req, res) => {
+  const { getAllNodeHealth } = await import('../utils/node-health.js');
+  res.json({ health: getAllNodeHealth() });
+});
+
+router.post('/nodes', async (req, res) => {
   const { node } = req.body;
-  const data = loadNodes();
+  const data = await loadNodes();
   const newNode = {
     id: generateUUID(),
     name: sanitizeText(node.name),
@@ -66,20 +75,20 @@ router.post('/nodes', (req, res) => {
   };
   
   data.nodes.push(newNode);
-  saveNodes(data);
+  await saveNodes(data);
   res.json({ success: true, node: newNode });
 });
 
-router.get('/nodes/:id/config', (req, res) => {
-  const data = loadNodes();
+router.get('/nodes/:id/config', async (req, res) => {
+  const data = await loadNodes();
   const node = data.nodes.find(n => n.id === req.params.id);
   if (!node) return res.status(404).json({ error: 'Node not found' });
   
   res.json({ config: generateNodeConfig(node) });
 });
 
-router.get('/nodes/:id/deploy', (req, res) => {
-  const data = loadNodes();
+router.get('/nodes/:id/deploy', async (req, res) => {
+  const data = await loadNodes();
   const node = data.nodes.find(n => n.id === req.params.id);
   if (!node) return res.status(404).json({ error: 'Node not found' });
   
@@ -92,9 +101,9 @@ router.get('/nodes/:id/deploy', (req, res) => {
   res.json({ command });
 });
 
-router.put('/nodes/:id', (req, res) => {
+router.put('/nodes/:id', async (req, res) => {
   const { node } = req.body;
-  const data = loadNodes();
+  const data = await loadNodes();
   const idx = data.nodes.findIndex(n => n.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Node not found' });
   
@@ -118,53 +127,53 @@ router.put('/nodes/:id', (req, res) => {
     disk_overallocation: node.disk_overallocation !== undefined ? parseInt(node.disk_overallocation) : current.disk_overallocation || 0
   });
   
-  saveNodes(data);
+  await saveNodes(data);
   res.json({ success: true, node: current });
 });
 
-router.delete('/nodes/:id', (req, res) => {
-  const data = loadNodes();
-  const servers = loadServers();
+router.delete('/nodes/:id', async (req, res) => {
+  const data = await loadNodes();
+  const servers = await loadServers();
   
   if (servers.servers.some(s => s.node_id === req.params.id)) {
     return res.status(400).json({ error: 'Node has servers, delete them first' });
   }
   
   data.nodes = data.nodes.filter(n => n.id !== req.params.id);
-  saveNodes(data);
+  await saveNodes(data);
   res.json({ success: true });
 });
 
 // ==================== LOCATIONS ====================
-router.get('/locations', (req, res) => {
-  res.json(loadLocations());
+router.get('/locations', async (req, res) => {
+  res.json(await loadLocations());
 });
 
-router.post('/locations', (req, res) => {
+router.post('/locations', async (req, res) => {
   const { location } = req.body;
-  const data = loadLocations();
+  const data = await loadLocations();
   const newLocation = {
     id: generateUUID(),
     short: sanitizeText(location.short),
     long: sanitizeText(location.long)
   };
   data.locations.push(newLocation);
-  saveLocations(data);
+  await saveLocations(data);
   res.json({ success: true, location: newLocation });
 });
 
-router.delete('/locations/:id', (req, res) => {
-  const data = loadLocations();
+router.delete('/locations/:id', async (req, res) => {
+  const data = await loadLocations();
   data.locations = data.locations.filter(l => l.id !== req.params.id);
-  saveLocations(data);
+  await saveLocations(data);
   res.json({ success: true });
 });
 
 // ==================== USERS ====================
-router.get('/users', (req, res) => {
+router.get('/users', async (req, res) => {
   const { page = 1, per_page: rawPerPage = 10, search = '' } = req.query;
   const per_page = parseInt(rawPerPage) || 10;
-  const data = loadUsers();
+  const data = await loadUsers();
   let allUsers = data.users.map(({ password, ...u }) => u);
   
   // Filter by search term if provided
@@ -209,7 +218,7 @@ router.post('/users', async (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
   
-  const data = loadUsers();
+  const data = await loadUsers();
   const existingUser = data.users.find(u => u.username.toLowerCase() === user.username.toLowerCase());
   if (existingUser) {
     return res.status(400).json({ error: 'Username already exists' });
@@ -253,7 +262,7 @@ router.post('/users', async (req, res) => {
   };
   
   data.users.push(newUser);
-  saveUsers(data);
+  await saveUsers(data);
   
   logger.info(`User ${newUser.username} created by admin ${req.user.username}`);
   
@@ -261,9 +270,9 @@ router.post('/users', async (req, res) => {
   res.json({ success: true, user: userWithoutPassword });
 });
 
-router.put('/users/:id', (req, res) => {
+router.put('/users/:id', async (req, res) => {
   const { updates } = req.body;
-  const data = loadUsers();
+  const data = await loadUsers();
   const idx = data.users.findIndex(u => u.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'User not found' });
   
@@ -278,13 +287,13 @@ router.put('/users/:id', (req, res) => {
   if (updates.limits) data.users[idx].limits = { ...data.users[idx].limits, ...updates.limits };
   if (updates.allowSubusers !== undefined) data.users[idx].allowSubusers = updates.allowSubusers;
   
-  saveUsers(data);
+  await saveUsers(data);
   const { password, ...user } = data.users[idx];
   res.json({ success: true, user });
 });
 
 router.delete('/users/:id', async (req, res) => {
-  const usersData = loadUsers();
+  const usersData = await loadUsers();
   const user = usersData.users.find(u => u.id === req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   
@@ -294,9 +303,9 @@ router.delete('/users/:id', async (req, res) => {
   }
   
   // Find and delete all user's servers
-  const serversData = loadServers();
+  const serversData = await loadServers();
   const userServers = serversData.servers.filter(s => s.user_id === user.id);
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   
   const deletionResults = [];
   for (const server of userServers) {
@@ -315,11 +324,11 @@ router.delete('/users/:id', async (req, res) => {
   
   // Remove servers from database
   serversData.servers = serversData.servers.filter(s => s.user_id !== user.id);
-  saveServers(serversData);
+  await saveServers(serversData);
   
   // Remove user from database
   usersData.users = usersData.users.filter(u => u.id !== req.params.id);
-  saveUsers(usersData);
+  await saveUsers(usersData);
   
   logger.info(`User ${user.username} deleted by admin ${req.user.username}. Servers deleted: ${userServers.length}`);
   
@@ -330,10 +339,26 @@ router.delete('/users/:id', async (req, res) => {
   });
 });
 
+router.delete('/users/:id/sessions', async (req, res) => {
+  const data = await loadSessions();
+  let revokedCount = 0;
+  
+  for (const session of data.sessions) {
+    if (session.userId === req.params.id && !session.revoked) {
+      session.revoked = true;
+      session.revokedAt = new Date().toISOString();
+      revokedCount++;
+    }
+  }
+  
+  await saveSessions(data);
+  res.json({ success: true, revoked: revokedCount });
+});
+
 // ==================== NESTS & EGGS ====================
-router.get('/nests', (req, res) => {
-  const nests = loadNests();
-  const eggs = loadEggs();
+router.get('/nests', async (req, res) => {
+  const nests = await loadNests();
+  const eggs = await loadEggs();
   const result = nests.nests.map(nest => ({
     ...nest,
     eggs: eggs.eggs.filter(e => e.nest_id === nest.id)
@@ -341,22 +366,22 @@ router.get('/nests', (req, res) => {
   res.json({ nests: result });
 });
 
-router.post('/nests', (req, res) => {
+router.post('/nests', async (req, res) => {
   const { nest } = req.body;
-  const data = loadNests();
+  const data = await loadNests();
   const newNest = {
     id: generateUUID(),
     name: sanitizeText(nest.name),
     description: sanitizeText(nest.description || '')
   };
   data.nests.push(newNest);
-  saveNests(data);
+  await saveNests(data);
   res.json({ success: true, nest: newNest });
 });
 
-router.get('/eggs', (req, res) => {
+router.get('/eggs', async (req, res) => {
   const { search = '' } = req.query;
-  const data = loadEggs();
+  const data = await loadEggs();
   let eggs = data.eggs;
   
   if (search.trim()) {
@@ -371,16 +396,16 @@ router.get('/eggs', (req, res) => {
   res.json({ eggs });
 });
 
-router.get('/eggs/:id', (req, res) => {
-  const data = loadEggs();
+router.get('/eggs/:id', async (req, res) => {
+  const data = await loadEggs();
   const egg = data.eggs.find(e => e.id === req.params.id);
   if (!egg) return res.status(404).json({ error: 'Egg not found' });
   res.json({ egg });
 });
 
-router.post('/eggs', (req, res) => {
+router.post('/eggs', async (req, res) => {
   const { egg } = req.body;
-  const data = loadEggs();
+  const data = await loadEggs();
   const newEgg = {
     id: generateUUID(),
     nest_id: egg.nest_id,
@@ -399,15 +424,15 @@ router.post('/eggs', (req, res) => {
     variables: egg.variables || []
   };
   data.eggs.push(newEgg);
-  saveEggs(data);
+  await saveEggs(data);
   res.json({ success: true, egg: newEgg });
 });
 
-router.post('/eggs/import', (req, res) => {
+router.post('/eggs/import', async (req, res) => {
   const { nest_id, eggJson } = req.body;
   try {
     const imported = typeof eggJson === 'string' ? JSON.parse(eggJson) : eggJson;
-    const data = loadEggs();
+    const data = await loadEggs();
     
     let docker_images = {};
     let docker_image = '';
@@ -462,7 +487,7 @@ router.post('/eggs/import', (req, res) => {
       }))
     };
     data.eggs.push(newEgg);
-    saveEggs(data);
+    await saveEggs(data);
     res.json({ success: true, egg: newEgg });
   } catch (e) {
     logger.error(`Egg import failed: ${e.message}`);
@@ -470,34 +495,34 @@ router.post('/eggs/import', (req, res) => {
   }
 });
 
-router.put('/nests/:id', (req, res) => {
+router.put('/nests/:id', async (req, res) => {
   const { nest } = req.body;
-  const data = loadNests();
+  const data = await loadNests();
   const idx = data.nests.findIndex(n => n.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Nest not found' });
   
   data.nests[idx].name = sanitizeText(nest.name);
   data.nests[idx].description = sanitizeText(nest.description || '');
-  saveNests(data);
+  await saveNests(data);
   
   res.json({ success: true, nest: data.nests[idx] });
 });
 
-router.delete('/nests/:id', (req, res) => {
-  const nestsData = loadNests();
+router.delete('/nests/:id', async (req, res) => {
+  const nestsData = await loadNests();
   nestsData.nests = nestsData.nests.filter(n => n.id !== req.params.id);
-  saveNests(nestsData);
+  await saveNests(nestsData);
   
-  const eggsData = loadEggs();
+  const eggsData = await loadEggs();
   eggsData.eggs = eggsData.eggs.filter(e => e.nest_id !== req.params.id);
-  saveEggs(eggsData);
+  await saveEggs(eggsData);
   
   res.json({ success: true });
 });
 
-router.put('/eggs/:id', (req, res) => {
+router.put('/eggs/:id', async (req, res) => {
   const { egg } = req.body;
-  const data = loadEggs();
+  const data = await loadEggs();
   const idx = data.eggs.findIndex(e => e.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Egg not found' });
   
@@ -519,24 +544,24 @@ router.put('/eggs/:id', (req, res) => {
     variables: egg.variables !== undefined ? egg.variables : data.eggs[idx].variables
   };
   
-  saveEggs(data);
+  await saveEggs(data);
   res.json({ success: true, egg: data.eggs[idx] });
 });
 
-router.delete('/eggs/:id', (req, res) => {
-  const data = loadEggs();
+router.delete('/eggs/:id', async (req, res) => {
+  const data = await loadEggs();
   data.eggs = data.eggs.filter(e => e.id !== req.params.id);
-  saveEggs(data);
+  await saveEggs(data);
   
   res.json({ success: true });
 });
 
 // ==================== SERVERS ====================
-router.get('/servers', (req, res) => {
+router.get('/servers', async (req, res) => {
   const { page = 1, per_page = 10 } = req.query;
-  const data = loadServers();
-  const users = loadUsers();
-  const nodes = loadNodes();
+  const data = await loadServers();
+  const users = await loadUsers();
+  const nodes = await loadNodes();
   const total = data.servers.length;
   const totalPages = Math.ceil(total / per_page);
   const currentPage = Math.max(1, Math.min(parseInt(page), totalPages || 1));
@@ -565,15 +590,15 @@ router.get('/servers', (req, res) => {
 router.post('/servers', async (req, res) => {
   const { server, skipInstall } = req.body;
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   if (!node) return res.status(400).json({ error: 'Invalid node' });
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id);
   if (!egg) return res.status(400).json({ error: 'Invalid egg' });
   
-  const data = loadServers();
+  const data = await loadServers();
   const uuid = generateUUID();
   const newServer = {
     id: uuid,
@@ -607,7 +632,7 @@ router.post('/servers', async (req, res) => {
   // If skipInstall, just save as draft without installing on Wings
   if (skipInstall) {
     data.servers.push(newServer);
-    saveServers(data);
+    await saveServers(data);
     return res.json({ success: true, server: newServer });
   }
   
@@ -639,13 +664,13 @@ router.post('/servers', async (req, res) => {
   }
   
   data.servers.push(newServer);
-  saveServers(data);
+  await saveServers(data);
   res.json({ success: true, server: newServer });
 });
 
 // Install a draft server
 router.post('/servers/:id/install', async (req, res) => {
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
   
@@ -655,11 +680,11 @@ router.post('/servers/:id/install', async (req, res) => {
     return res.status(400).json({ error: 'Server is already installed or installing' });
   }
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   if (!node) return res.status(400).json({ error: 'Node not found' });
   
-  const eggs = loadEggs();
+  const eggs = await loadEggs();
   const egg = eggs.eggs.find(e => e.id === server.egg_id);
   if (!egg) return res.status(400).json({ error: 'Egg not found. Please select a valid egg.' });
   
@@ -669,7 +694,7 @@ router.post('/servers/:id/install', async (req, res) => {
   
   server.status = 'installing';
   delete server.install_error;
-  saveServers(data);
+  await saveServers(data);
   
   try {
     await wingsRequest(node, 'POST', '/api/servers', {
@@ -693,33 +718,33 @@ router.post('/servers/:id/install', async (req, res) => {
       }
     });
     server.status = 'offline';
-    saveServers(data);
+    await saveServers(data);
     res.json({ success: true, server });
   } catch (e) {
     server.status = 'install_failed';
     server.install_error = e.message;
-    saveServers(data);
+    await saveServers(data);
     res.status(500).json({ error: e.message });
   }
 });
 
-router.put('/servers/:id', (req, res) => {
+router.put('/servers/:id', async (req, res) => {
   const { updates } = req.body;
-  const data = loadServers();
+  const data = await loadServers();
   const idx = data.servers.findIndex(s => s.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Server not found' });
   
   const server = data.servers[idx];
   
   if (updates.user_id) {
-    const users = loadUsers();
+    const users = await loadUsers();
     const user = users.users.find(u => u.id === updates.user_id);
     if (!user) return res.status(400).json({ error: 'User not found' });
     server.user_id = updates.user_id;
   }
   
   if (updates.egg_id) {
-    const eggs = loadEggs();
+    const eggs = await loadEggs();
     const egg = eggs.eggs.find(e => e.id === updates.egg_id);
     if (!egg) return res.status(400).json({ error: 'Egg not found' });
     server.egg_id = updates.egg_id;
@@ -734,16 +759,16 @@ router.put('/servers/:id', (req, res) => {
     server.limits = { ...server.limits, ...updates.limits };
   }
   
-  saveServers(data);
+  await saveServers(data);
   res.json({ success: true, server });
 });
 
 router.delete('/servers/:id', async (req, res) => {
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.id === req.params.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.id === server.node_id);
   
   if (node) {
@@ -755,7 +780,7 @@ router.delete('/servers/:id', async (req, res) => {
   }
   
   data.servers = data.servers.filter(s => s.id !== req.params.id);
-  saveServers(data);
+  await saveServers(data);
   res.json({ success: true });
 });
 
@@ -764,7 +789,7 @@ router.post('/servers/:id/transfer', async (req, res) => {
   const { target_node_id } = req.body;
   if (!target_node_id) return res.status(400).json({ error: 'Target node required' });
   
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.id === req.params.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
   
@@ -772,7 +797,7 @@ router.post('/servers/:id/transfer', async (req, res) => {
     return res.status(400).json({ error: 'Server is already on this node' });
   }
   
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const sourceNode = nodes.nodes.find(n => n.id === server.node_id);
   const targetNode = nodes.nodes.find(n => n.id === target_node_id);
   
@@ -805,7 +830,7 @@ router.post('/servers/:id/transfer', async (req, res) => {
     target_node: target_node_id,
     started_at: new Date().toISOString()
   };
-  saveServers(data);
+  await saveServers(data);
   
   try {
     // Create server on target node
@@ -857,7 +882,7 @@ router.post('/servers/:id/transfer', async (req, res) => {
       target_node: target_node_id,
       completed_at: new Date().toISOString()
     };
-    saveServers(data);
+    await saveServers(data);
     
     // Delete from source node
     if (sourceNode) {
@@ -877,7 +902,7 @@ router.post('/servers/:id/transfer', async (req, res) => {
       error: e.message,
       failed_at: new Date().toISOString()
     };
-    saveServers(data);
+    await saveServers(data);
     res.status(500).json({ error: `Transfer failed: ${e.message}` });
   }
 });
@@ -982,6 +1007,202 @@ router.delete('/oauth/providers/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ==================== GROUPS ====================
+router.get('/groups', async (req, res) => {
+  const data = await loadGroups();
+  res.json({ groups: data.groups || [] });
+});
+
+router.post('/groups', async (req, res) => {
+  const { group } = req.body;
+  if (!group?.name) {
+    return res.status(400).json({ error: 'Group name is required' });
+  }
+  
+  const data = await loadGroups();
+  const newGroup = {
+    id: generateUUID(),
+    name: sanitizeText(group.name),
+    description: sanitizeText(group.description || ''),
+    permissions: group.permissions || [],
+    members: group.members || [],
+    limits: {
+      servers: group.limits?.servers ?? null,
+      memory: group.limits?.memory ?? null,
+      disk: group.limits?.disk ?? null,
+      cpu: group.limits?.cpu ?? null,
+      backups: group.limits?.backups ?? null
+    },
+    created_at: new Date().toISOString()
+  };
+  
+  data.groups.push(newGroup);
+  await saveGroups(data);
+  res.json({ success: true, group: newGroup });
+});
+
+router.put('/groups/:id', async (req, res) => {
+  const { group } = req.body;
+  const data = await loadGroups();
+  const idx = data.groups.findIndex(g => g.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Group not found' });
+  
+  if (group.name !== undefined) data.groups[idx].name = sanitizeText(group.name);
+  if (group.description !== undefined) data.groups[idx].description = sanitizeText(group.description);
+  if (group.permissions !== undefined) data.groups[idx].permissions = group.permissions;
+  if (group.members !== undefined) data.groups[idx].members = group.members;
+  if (group.limits !== undefined) {
+    data.groups[idx].limits = { ...data.groups[idx].limits, ...group.limits };
+  }
+  
+  await saveGroups(data);
+  res.json({ success: true, group: data.groups[idx] });
+});
+
+router.delete('/groups/:id', async (req, res) => {
+  const data = await loadGroups();
+  data.groups = data.groups.filter(g => g.id !== req.params.id);
+  await saveGroups(data);
+  res.json({ success: true });
+});
+
+router.post('/groups/:id/members', async (req, res) => {
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'User ID required' });
+  
+  const data = await loadGroups();
+  const idx = data.groups.findIndex(g => g.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Group not found' });
+  
+  const users = await loadUsers();
+  if (!users.users.find(u => u.id === user_id)) {
+    return res.status(400).json({ error: 'User not found' });
+  }
+  
+  if (!data.groups[idx].members.includes(user_id)) {
+    data.groups[idx].members.push(user_id);
+    await saveGroups(data);
+  }
+  
+  res.json({ success: true, group: data.groups[idx] });
+});
+
+router.delete('/groups/:id/members/:userId', async (req, res) => {
+  const data = await loadGroups();
+  const idx = data.groups.findIndex(g => g.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Group not found' });
+  
+  data.groups[idx].members = data.groups[idx].members.filter(m => m !== req.params.userId);
+  await saveGroups(data);
+  res.json({ success: true, group: data.groups[idx] });
+});
+
+// ==================== INCIDENTS ====================
+router.get('/incidents', async (req, res) => {
+  const data = await loadIncidents();
+  const incidents = (data.incidents || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  res.json({ incidents });
+});
+
+router.post('/incidents', async (req, res) => {
+  const { incident } = req.body;
+  if (!incident?.title) return res.status(400).json({ error: 'Title is required' });
+
+  const validStatuses = ['investigating', 'identified', 'monitoring', 'resolved'];
+  const validImpacts = ['none', 'minor', 'major', 'critical'];
+
+  const data = await loadIncidents();
+  const newIncident = {
+    id: generateUUID(),
+    title: sanitizeText(incident.title),
+    description: sanitizeText(incident.description || ''),
+    status: validStatuses.includes(incident.status) ? incident.status : 'investigating',
+    impact: validImpacts.includes(incident.impact) ? incident.impact : 'minor',
+    affected_nodes: incident.affected_nodes || [],
+    updates: [{
+      id: generateUUID(),
+      status: validStatuses.includes(incident.status) ? incident.status : 'investigating',
+      message: sanitizeText(incident.description || 'Incident created'),
+      created_at: new Date().toISOString()
+    }],
+    resolved_at: null,
+    created_at: new Date().toISOString(),
+    created_by: req.user.username
+  };
+
+  data.incidents.push(newIncident);
+  await saveIncidents(data);
+  res.json({ success: true, incident: newIncident });
+});
+
+router.put('/incidents/:id', async (req, res) => {
+  const { incident } = req.body;
+  const data = await loadIncidents();
+  const idx = data.incidents.findIndex(i => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Incident not found' });
+
+  const validStatuses = ['investigating', 'identified', 'monitoring', 'resolved'];
+  const validImpacts = ['none', 'minor', 'major', 'critical'];
+
+  if (incident.title !== undefined) data.incidents[idx].title = sanitizeText(incident.title);
+  if (incident.description !== undefined) data.incidents[idx].description = sanitizeText(incident.description);
+  if (incident.impact && validImpacts.includes(incident.impact)) data.incidents[idx].impact = incident.impact;
+  if (incident.affected_nodes) data.incidents[idx].affected_nodes = incident.affected_nodes;
+
+  if (incident.status && validStatuses.includes(incident.status)) {
+    const prevStatus = data.incidents[idx].status;
+    data.incidents[idx].status = incident.status;
+    if (incident.status === 'resolved' && prevStatus !== 'resolved') {
+      data.incidents[idx].resolved_at = new Date().toISOString();
+    }
+    if (incident.status !== 'resolved' && prevStatus === 'resolved') {
+      data.incidents[idx].resolved_at = null;
+    }
+  }
+
+  await saveIncidents(data);
+  res.json({ success: true, incident: data.incidents[idx] });
+});
+
+router.post('/incidents/:id/updates', async (req, res) => {
+  const { message, status } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message is required' });
+
+  const validStatuses = ['investigating', 'identified', 'monitoring', 'resolved'];
+  const data = await loadIncidents();
+  const idx = data.incidents.findIndex(i => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Incident not found' });
+
+  const update = {
+    id: generateUUID(),
+    status: validStatuses.includes(status) ? status : data.incidents[idx].status,
+    message: sanitizeText(message),
+    created_at: new Date().toISOString(),
+    created_by: req.user.username
+  };
+
+  if (!data.incidents[idx].updates) data.incidents[idx].updates = [];
+  data.incidents[idx].updates.push(update);
+
+  if (validStatuses.includes(status)) {
+    const prevStatus = data.incidents[idx].status;
+    data.incidents[idx].status = status;
+    if (status === 'resolved' && prevStatus !== 'resolved') {
+      data.incidents[idx].resolved_at = new Date().toISOString();
+    }
+  }
+
+  await saveIncidents(data);
+  res.json({ success: true, incident: data.incidents[idx] });
+});
+
+router.delete('/incidents/:id', async (req, res) => {
+  const data = await loadIncidents();
+  data.incidents = data.incidents.filter(i => i.id !== req.params.id);
+  await saveIncidents(data);
+  res.json({ success: true });
+});
+
 // ==================== SETTINGS ====================
 router.get('/settings', async (req, res) => {
   const config = loadConfig();
@@ -1010,6 +1231,9 @@ router.put('/settings', async (req, res) => {
       enabled: newConfig.registration.enabled !== undefined ? Boolean(newConfig.registration.enabled) : config.registration?.enabled,
       emailVerification: newConfig.registration.emailVerification !== undefined ? Boolean(newConfig.registration.emailVerification) : config.registration?.emailVerification,
       captcha: newConfig.registration.captcha !== undefined ? Boolean(newConfig.registration.captcha) : config.registration?.captcha,
+      captchaProvider: newConfig.registration.captchaProvider !== undefined ? newConfig.registration.captchaProvider : config.registration?.captchaProvider || 'turnstile',
+      captchaSiteKey: newConfig.registration.captchaSiteKey !== undefined ? newConfig.registration.captchaSiteKey : config.registration?.captchaSiteKey || '',
+      captchaSecretKey: newConfig.registration.captchaSecretKey !== undefined ? newConfig.registration.captchaSecretKey : config.registration?.captchaSecretKey || '',
       allowedDomains: newConfig.registration.allowedDomains !== undefined ? newConfig.registration.allowedDomains : config.registration?.allowedDomains,
       blockedDomains: newConfig.registration.blockedDomains !== undefined ? newConfig.registration.blockedDomains : config.registration?.blockedDomains
     };
@@ -1065,7 +1289,32 @@ router.put('/settings', async (req, res) => {
     config.security = {
       ...config.security,
       require2fa: newConfig.security.require2fa !== undefined ? Boolean(newConfig.security.require2fa) : config.security?.require2fa,
-      require2faAdmin: newConfig.security.require2faAdmin !== undefined ? Boolean(newConfig.security.require2faAdmin) : config.security?.require2faAdmin
+      require2faAdmin: newConfig.security.require2faAdmin !== undefined ? Boolean(newConfig.security.require2faAdmin) : config.security?.require2faAdmin,
+      ipBlocklist: newConfig.security.ipBlocklist !== undefined ? (Array.isArray(newConfig.security.ipBlocklist) ? newConfig.security.ipBlocklist : []) : config.security?.ipBlocklist || [],
+      adminIpAllowlist: newConfig.security.adminIpAllowlist !== undefined ? (Array.isArray(newConfig.security.adminIpAllowlist) ? newConfig.security.adminIpAllowlist : []) : config.security?.adminIpAllowlist || []
+    };
+  }
+  
+  if (newConfig.branding !== undefined) {
+    config.branding = {
+      ...config.branding,
+      logo: newConfig.branding.logo !== undefined ? newConfig.branding.logo : config.branding?.logo || null,
+      favicon: newConfig.branding.favicon !== undefined ? newConfig.branding.favicon : config.branding?.favicon || null,
+      accentColor: newConfig.branding.accentColor !== undefined ? newConfig.branding.accentColor : config.branding?.accentColor || '#d97339',
+      accentHover: newConfig.branding.accentHover !== undefined ? newConfig.branding.accentHover : config.branding?.accentHover || '#e88a4d',
+      accentMuted: newConfig.branding.accentMuted !== undefined ? newConfig.branding.accentMuted : config.branding?.accentMuted || 'rgba(217, 115, 57, 0.1)',
+      ogTitle: newConfig.branding.ogTitle !== undefined ? newConfig.branding.ogTitle : config.branding?.ogTitle || '',
+      ogDescription: newConfig.branding.ogDescription !== undefined ? newConfig.branding.ogDescription : config.branding?.ogDescription || '',
+      ogImage: newConfig.branding.ogImage !== undefined ? newConfig.branding.ogImage : config.branding?.ogImage || null
+    };
+  }
+  
+  if (newConfig.maintenance !== undefined) {
+    config.maintenance = {
+      ...config.maintenance,
+      enabled: newConfig.maintenance.enabled !== undefined ? Boolean(newConfig.maintenance.enabled) : config.maintenance?.enabled || false,
+      message: newConfig.maintenance.message !== undefined ? newConfig.maintenance.message : config.maintenance?.message || '',
+      allowedIps: newConfig.maintenance.allowedIps !== undefined ? (Array.isArray(newConfig.maintenance.allowedIps) ? newConfig.maintenance.allowedIps : []) : config.maintenance?.allowedIps || []
     };
   }
   
@@ -1107,6 +1356,62 @@ router.get('/mail/status', async (req, res) => {
   }
 });
 
+// ==================== BRANDING UPLOAD ====================
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const BRANDING_DIR = path.resolve(__dirname, '../../../data/branding');
+
+router.post('/branding/upload', express.raw({ type: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/x-icon', 'image/webp'], limit: '5mb' }), (req, res) => {
+  const type = req.query.type;
+  if (!['logo', 'favicon', 'ogImage'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid type. Must be "logo", "favicon", or "ogImage"' });
+  }
+
+  if (!req.body || req.body.length === 0) {
+    return res.status(400).json({ error: 'No file data received' });
+  }
+
+  const contentType = req.headers['content-type'] || '';
+  const extMap = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/svg+xml': '.svg', 'image/x-icon': '.ico', 'image/webp': '.webp' };
+  const ext = extMap[contentType] || '.png';
+
+  if (!fs.existsSync(BRANDING_DIR)) {
+    fs.mkdirSync(BRANDING_DIR, { recursive: true });
+  }
+
+  const filename = `${type}${ext}`;
+  fs.writeFileSync(path.join(BRANDING_DIR, filename), req.body);
+
+  const url = `/branding/${filename}`;
+
+  const config = loadConfig();
+  if (!config.branding) config.branding = {};
+  config.branding[type] = url;
+  saveConfig(config);
+
+  res.json({ success: true, url });
+});
+
+router.delete('/branding/:type', (req, res) => {
+  const type = req.params.type;
+  if (!['logo', 'favicon', 'ogImage'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid type' });
+  }
+
+  const config = loadConfig();
+  const currentUrl = config.branding?.[type];
+  if (currentUrl) {
+    const filePath = path.join(BRANDING_DIR, path.basename(currentUrl));
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+
+  if (!config.branding) config.branding = {};
+  config.branding[type] = null;
+  saveConfig(config);
+
+  res.json({ success: true });
+});
+
 // ==================== CACHE & DATABASE ====================
 
 router.post('/cache/clear', async (req, res) => {
@@ -1127,23 +1432,23 @@ router.post('/database/rebuild', async (req, res) => {
   try {
     const { waitForDb } = await import('../db.js');
     
-    const users = loadUsers();
-    saveUsers(users);
+    const users = await loadUsers();
+    await saveUsers(users);
     
-    const nodes = loadNodes();
-    saveNodes(nodes);
+    const nodes = await loadNodes();
+    await saveNodes(nodes);
     
-    const servers = loadServers();
-    saveServers(servers);
+    const servers = await loadServers();
+    await saveServers(servers);
     
-    const nests = loadNests();
-    saveNests(nests);
+    const nests = await loadNests();
+    await saveNests(nests);
     
-    const eggs = loadEggs();
-    saveEggs(eggs);
+    const eggs = await loadEggs();
+    await saveEggs(eggs);
     
-    const locations = loadLocations();
-    saveLocations(locations);
+    const locations = await loadLocations();
+    await saveLocations(locations);
     
     logger.info(`Database rebuilt by admin ${req.user.username}`);
     res.json({ 

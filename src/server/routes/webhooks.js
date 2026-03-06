@@ -14,8 +14,8 @@ router.get('/events', (req, res) => {
 });
 
 // Get user's webhooks
-router.get('/', (req, res) => {
-  const data = loadWebhooks();
+router.get('/', async (req, res) => {
+  const data = await loadWebhooks();
   const userWebhooks = (data.webhooks || [])
     .filter(w => w.user_id === req.user.id)
     .map(w => ({
@@ -28,7 +28,7 @@ router.get('/', (req, res) => {
 });
 
 // Create webhook
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { name, url, type, events, secret } = req.body;
   
   if (!name || !url) {
@@ -50,7 +50,7 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'At least one event is required' });
   }
   
-  const data = loadWebhooks();
+  const data = await loadWebhooks();
   if (!data.webhooks) data.webhooks = [];
   
   // Limit webhooks per user
@@ -72,7 +72,7 @@ router.post('/', (req, res) => {
   };
   
   data.webhooks.push(newWebhook);
-  saveWebhooks(data);
+  await saveWebhooks(data);
   
   res.json({ 
     success: true, 
@@ -85,10 +85,10 @@ router.post('/', (req, res) => {
 });
 
 // Update webhook
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const { name, url, type, events, secret, enabled } = req.body;
   
-  const data = loadWebhooks();
+  const data = await loadWebhooks();
   const idx = (data.webhooks || []).findIndex(w => w.id === req.params.id && w.user_id === req.user.id);
   
   if (idx === -1) {
@@ -117,7 +117,7 @@ router.put('/:id', (req, res) => {
   if (enabled !== undefined) webhook.enabled = Boolean(enabled);
   
   webhook.updated_at = new Date().toISOString();
-  saveWebhooks(data);
+  await saveWebhooks(data);
   
   res.json({ 
     success: true,
@@ -130,8 +130,8 @@ router.put('/:id', (req, res) => {
 });
 
 // Delete webhook
-router.delete('/:id', (req, res) => {
-  const data = loadWebhooks();
+router.delete('/:id', async (req, res) => {
+  const data = await loadWebhooks();
   const idx = (data.webhooks || []).findIndex(w => w.id === req.params.id && w.user_id === req.user.id);
   
   if (idx === -1) {
@@ -139,14 +139,14 @@ router.delete('/:id', (req, res) => {
   }
   
   data.webhooks.splice(idx, 1);
-  saveWebhooks(data);
+  await saveWebhooks(data);
   
   res.json({ success: true });
 });
 
 // Test webhook
 router.post('/:id/test', async (req, res) => {
-  const data = loadWebhooks();
+  const data = await loadWebhooks();
   const webhook = (data.webhooks || []).find(w => w.id === req.params.id && w.user_id === req.user.id);
   
   if (!webhook) {
@@ -170,8 +170,8 @@ router.post('/:id/test', async (req, res) => {
 // ==================== ADMIN WEBHOOKS ====================
 
 // Get all webhooks (admin)
-router.get('/admin/all', requireAdmin, (req, res) => {
-  const data = loadWebhooks();
+router.get('/admin/all', requireAdmin, async (req, res) => {
+  const data = await loadWebhooks();
   const webhooks = (data.webhooks || []).map(w => ({
     ...w,
     url: maskUrl(w.url),
@@ -182,7 +182,7 @@ router.get('/admin/all', requireAdmin, (req, res) => {
 });
 
 // Create global webhook (admin)
-router.post('/admin', requireAdmin, (req, res) => {
+router.post('/admin', requireAdmin, async (req, res) => {
   const { name, url, type, events, secret } = req.body;
   
   if (!name || !url) {
@@ -200,7 +200,7 @@ router.post('/admin', requireAdmin, (req, res) => {
   const validEvents = Object.values(WEBHOOK_EVENTS);
   const selectedEvents = (events || []).filter(e => validEvents.includes(e) || e === '*');
   
-  const data = loadWebhooks();
+  const data = await loadWebhooks();
   if (!data.webhooks) data.webhooks = [];
   
   const newWebhook = {
@@ -217,7 +217,7 @@ router.post('/admin', requireAdmin, (req, res) => {
   };
   
   data.webhooks.push(newWebhook);
-  saveWebhooks(data);
+  await saveWebhooks(data);
   
   res.json({ 
     success: true, 
@@ -230,8 +230,8 @@ router.post('/admin', requireAdmin, (req, res) => {
 });
 
 // Delete any webhook (admin)
-router.delete('/admin/:id', requireAdmin, (req, res) => {
-  const data = loadWebhooks();
+router.delete('/admin/:id', requireAdmin, async (req, res) => {
+  const data = await loadWebhooks();
   const idx = (data.webhooks || []).findIndex(w => w.id === req.params.id);
   
   if (idx === -1) {
@@ -239,7 +239,7 @@ router.delete('/admin/:id', requireAdmin, (req, res) => {
   }
   
   data.webhooks.splice(idx, 1);
-  saveWebhooks(data);
+  await saveWebhooks(data);
   
   res.json({ success: true });
 });

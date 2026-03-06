@@ -47,6 +47,16 @@ export const DEFAULT_CONFIG = {
     subusers: true,
     disableUserServerCreation: false
   },
+  branding: {
+    logo: null,
+    favicon: null,
+    accentColor: '#d97339',
+    accentHover: '#e88a4d',
+    accentMuted: 'rgba(217, 115, 57, 0.1)',
+    ogTitle: '',
+    ogDescription: '',
+    ogImage: null
+  },
   plugins: {
     enabled: true,
     directory: 'data/plugins',

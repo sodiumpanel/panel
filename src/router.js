@@ -2,6 +2,7 @@ import { routes, getUserRoute, getServerRoute, getAdminPluginRoute } from './rou
 import { renderNav, updateNav } from './components/nav.js';
 import { renderSidebar } from './components/sidebar.js';
 import { getPluginPages, renderPluginPage } from './utils/plugins.js';
+import { getBranding } from './utils/branding.js';
 
 let mounted = false;
 let currentCleanup = null;
@@ -166,7 +167,7 @@ export function router() {
     return router();
   }
   
-  document.title = 'Sodium - ' + (route.options?.title || 'App');
+  document.title = getBranding().name + ' - ' + (route.options?.title || 'App');
   
   if (routerTimeout) {
     clearTimeout(routerTimeout);

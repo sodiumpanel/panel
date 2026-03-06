@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { loadUsers, loadApiKeys, saveApiKeys } from '../db.js';
+import { loadUsers, loadApiKeys, saveApiKeys, loadSessions, loadGroups } from '../db.js';
 import { loadFullConfig, saveFullConfig } from '../config.js';
 
 export const ROLES = {
@@ -52,6 +52,15 @@ export function authenticateUser(req, res, next) {
       return res.status(401).json({ error: 'User not found' });
     }
     
+    // Check session validity if token has a session ID
+    if (decoded.jti) {
+      const sessions = loadSessions();
+      const session = sessions.sessions.find(s => s.id === decoded.jti);
+      if (!session || session.revoked) {
+        return res.status(401).json({ error: 'Session revoked' });
+      }
+    }
+    
     const role = getUserRole(user);
     
     req.user = {
@@ -61,6 +70,7 @@ export function authenticateUser(req, res, next) {
       isModerator: role === ROLES.MODERATOR || role === ROLES.ADMIN,
       role: role
     };
+    req.sessionId = decoded.jti || null;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });
@@ -197,6 +207,26 @@ export function requireEmailVerified(req, res, next) {
   }
   
   next();
+}
+
+export function requireGroupPermission(permission) {
+  return async (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (req.user.isAdmin) return next();
+    
+    const data = await loadGroups();
+    const userGroups = (data.groups || []).filter(g => 
+      g.members?.includes(req.user.id)
+    );
+    
+    const hasPermission = userGroups.some(g => 
+      g.permissions?.includes('*') || g.permissions?.includes(permission)
+    );
+    
+    if (hasPermission) return next();
+    
+    return res.status(403).json({ error: `Missing permission: ${permission}` });
+  };
 }
 
 

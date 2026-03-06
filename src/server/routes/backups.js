@@ -9,7 +9,7 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-function authenticateNode(req) {
+async function authenticateNode(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const credentials = authHeader.slice(7);
@@ -17,7 +17,7 @@ function authenticateNode(req) {
   if (dotIndex === -1) return null;
   const tokenId = credentials.substring(0, dotIndex);
   const token = credentials.substring(dotIndex + 1);
-  const nodes = loadNodes();
+  const nodes = await loadNodes();
   const node = nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
   return node;
 }
@@ -82,14 +82,14 @@ router.post('/:serverId/backups', authenticateUser, async (req, res) => {
   };
   
   // Save backup to database first
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.serverId);
   
   if (!data.servers[serverIdx].backups) {
     data.servers[serverIdx].backups = [];
   }
   data.servers[serverIdx].backups.push(newBackup);
-  saveServers(data);
+  await saveServers(data);
   
   logger.info(`Backup "${backupName}" initiated for server ${server.name}`);
   
@@ -149,11 +149,11 @@ router.delete('/:serverId/backups/:backupId', authenticateUser, async (req, res)
   }
   
   // Remove from database
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.serverId);
   data.servers[serverIdx].backups = (data.servers[serverIdx].backups || [])
     .filter(b => b.id !== req.params.backupId);
-  saveServers(data);
+  await saveServers(data);
   
   logger.info(`Backup "${backup.name}" deleted from server ${server.name}`);
   res.json({ success: true });
@@ -227,7 +227,7 @@ router.post('/:serverId/backups/:backupId/lock', authenticateUser, async (req, r
   if (result.error) return res.status(result.status).json({ error: result.error });
   
   const { server } = result;
-  const data = loadServers();
+  const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.serverId);
   const backupIdx = (data.servers[serverIdx].backups || []).findIndex(b => b.id === req.params.backupId);
   
@@ -237,7 +237,7 @@ router.post('/:serverId/backups/:backupId/lock', authenticateUser, async (req, r
   
   const backup = data.servers[serverIdx].backups[backupIdx];
   backup.is_locked = !backup.is_locked;
-  saveServers(data);
+  await saveServers(data);
   
   logger.debug(`Backup "${backup.name}" ${backup.is_locked ? 'locked' : 'unlocked'} for server ${server.name}`);
   res.json({ 
@@ -247,8 +247,8 @@ router.post('/:serverId/backups/:backupId/lock', authenticateUser, async (req, r
 });
 
 // POST /:serverId/backups/webhook - Wings webhook for backup completion
-router.post('/:serverId/backups/webhook', (req, res) => {
-  const node = authenticateNode(req);
+router.post('/:serverId/backups/webhook', async (req, res) => {
+  const node = await authenticateNode(req);
   if (!node) return res.status(401).json({ error: 'Invalid token' });
   const { backup_id, is_successful, bytes, checksum } = req.body;
   
@@ -256,7 +256,7 @@ router.post('/:serverId/backups/webhook', (req, res) => {
     return res.status(400).json({ error: 'Missing backup_id' });
   }
   
-  const data = loadServers();
+  const data = await loadServers();
   const server = data.servers.find(s => s.id === req.params.serverId);
   
   if (!server) {
@@ -277,7 +277,7 @@ router.post('/:serverId/backups/webhook', (req, res) => {
   backup.checksum = typeof checksum === 'string' ? checksum : backup.checksum;
   backup.completed_at = new Date().toISOString();
   
-  saveServers(data);
+  await saveServers(data);
   
   if (backup.is_successful) {
     logger.info(`Backup "${backup.name}" completed for server ${server.name} (${backup.bytes} bytes)`);

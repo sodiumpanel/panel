@@ -21,6 +21,8 @@ export const WEBHOOK_EVENTS = {
   // Admin events
   NODE_CREATED: 'node.created',
   NODE_DELETED: 'node.deleted',
+  NODE_ONLINE: 'node.online',
+  NODE_OFFLINE: 'node.offline',
   ANNOUNCEMENT_CREATED: 'announcement.created'
 };
 
@@ -139,6 +141,8 @@ function buildDiscordPayload(event, data, timestamp) {
     'user.login': 0x3498db,
     'node.created': 0x1abc9c,
     'node.deleted': 0xe74c3c,
+    'node.online': 0x2ecc71,
+    'node.offline': 0xe74c3c,
     'announcement.created': 0xf1c40f
   };
   
@@ -156,6 +160,8 @@ function buildDiscordPayload(event, data, timestamp) {
     'user.login': '🔑 User Login',
     'node.created': '🖧 Node Created',
     'node.deleted': '🖧 Node Deleted',
+    'node.online': '🖧 Node Online',
+    'node.offline': '🖧 Node Offline',
     'announcement.created': '📢 New Announcement'
   };
   

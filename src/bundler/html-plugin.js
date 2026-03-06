@@ -1,6 +1,4 @@
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { dirname } from 'path';
-import pkg from '../../package.json' with { type: 'json' };
+import { readFile } from 'fs/promises';
 
 export default function htmlPlugin(options = {}) {
   const {
@@ -36,11 +34,7 @@ export default function htmlPlugin(options = {}) {
         this.emitFile({
           type: 'asset',
           fileName: filename,
-          source: processedHtml
-                  .replaceAll("\n", "")
-                  .replaceAll("APP_DESCRIPTION", pkg.manifest.description)
-                  .replaceAll("APP_TITLE", pkg.manifest.name)
-                  .replaceAll("APP_URL", pkg.manifest.url)
+          source: processedHtml.replaceAll("\n", "")
         });
       } catch (error) {
         this.error(`Failed to process HTML template: ${error.message}`);

@@ -92,6 +92,26 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
+            <span class="material-icons-outlined">devices</span>
+            <h3>Active Sessions</h3>
+          </div>
+          
+          <div class="sessions-container">
+            <div class="sessions-header">
+              <p class="setting-description">Devices and browsers where you're currently logged in</p>
+              <button class="btn btn-danger btn-sm" id="revoke-all-sessions-btn">
+                <span class="material-icons-outlined">logout</span>
+                <span>Revoke All Others</span>
+              </button>
+            </div>
+            <div class="sessions-list" id="sessions-list">
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <div class="section-header">
             <span class="material-icons-outlined">key</span>
             <h3>SSH Keys</h3>
           </div>
@@ -315,6 +335,8 @@ export function renderSettings() {
   
   loadSettings();
   load2FAStatus();
+  loadUserSessions();
+  setupSessionsHandlers();
   loadSshKeys();
   setupSshKeysHandlers();
   loadApiKeys();
@@ -512,6 +534,143 @@ async function load2FAStatus() {
     console.error('Failed to load 2FA status:', err);
     toggle.disabled = true;
     description.textContent = 'Failed to load 2FA status';
+  }
+}
+
+// ==================== SESSIONS ====================
+
+async function loadUserSessions() {
+  const container = document.getElementById('sessions-list');
+  if (!container) return;
+  
+  try {
+    const res = await api('/api/user/sessions');
+    const data = await res.json();
+    
+    if (!data.sessions || data.sessions.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state small">
+          <span class="material-icons-outlined">devices</span>
+          <p>No active sessions</p>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = data.sessions.map(session => `
+      <div class="list-item session-item" data-id="${session.id}">
+        <div class="item-icon">
+          <span class="material-icons-outlined">${getDeviceIcon(session.userAgent)}</span>
+        </div>
+        <div class="item-info">
+          <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
+          <span class="item-meta">${escapeHtml(session.ip)} • ${formatSessionDate(session.createdAt)}</span>
+        </div>
+        <div class="item-actions">
+          ${session.current 
+            ? '<span class="badge badge-success">Current</span>' 
+            : `<button class="btn btn-icon btn-sm btn-danger revoke-session-btn" title="Revoke">
+                <span class="material-icons-outlined">close</span>
+              </button>`
+          }
+        </div>
+      </div>
+    `).join('');
+    
+    container.querySelectorAll('.revoke-session-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.target.closest('.session-item');
+        const id = item.dataset.id;
+        
+        const confirmed = await modal.confirm({ title: 'Revoke Session', message: 'This will sign out the device. Continue?', danger: true });
+        if (!confirmed) return;
+        
+        btn.disabled = true;
+        try {
+          await api(`/api/user/sessions/${id}`, { method: 'DELETE' });
+          loadUserSessions();
+        } catch (err) {
+          btn.disabled = false;
+        }
+      });
+    });
+    
+  } catch (err) {
+    container.innerHTML = '<div class="error">Failed to load sessions</div>';
+  }
+}
+
+function setupSessionsHandlers() {
+  const revokeAllBtn = document.getElementById('revoke-all-sessions-btn');
+  if (!revokeAllBtn) return;
+  
+  revokeAllBtn.addEventListener('click', async () => {
+    const confirmed = await modal.confirm({ 
+      title: 'Revoke All Sessions', 
+      message: 'This will sign out all other devices. Your current session will remain active.', 
+      danger: true 
+    });
+    if (!confirmed) return;
+    
+    revokeAllBtn.disabled = true;
+    try {
+      const res = await api('/api/user/sessions', { method: 'DELETE' });
+      const data = await res.json();
+      loadUserSessions();
+    } catch (err) {
+      console.error('Failed to revoke sessions:', err);
+    }
+    revokeAllBtn.disabled = false;
+  });
+}
+
+function getDeviceIcon(ua) {
+  if (!ua) return 'devices';
+  const lower = ua.toLowerCase();
+  if (lower.includes('mobile') || lower.includes('android') || lower.includes('iphone')) return 'smartphone';
+  if (lower.includes('tablet') || lower.includes('ipad')) return 'tablet';
+  return 'computer';
+}
+
+function parseUserAgent(ua) {
+  if (!ua || ua === 'Unknown') return 'Unknown Device';
+  
+  let browser = 'Unknown Browser';
+  if (ua.includes('Firefox/')) browser = 'Firefox';
+  else if (ua.includes('Edg/')) browser = 'Edge';
+  else if (ua.includes('Chrome/')) browser = 'Chrome';
+  else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Safari';
+  else if (ua.includes('Opera') || ua.includes('OPR/')) browser = 'Opera';
+  
+  let os = '';
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  
+  return os ? `${browser} on ${os}` : browser;
+}
+
+function formatSessionDate(isoStr) {
+  try {
+    const date = new Date(isoStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+  } catch {
+    return 'Unknown';
   }
 }
 

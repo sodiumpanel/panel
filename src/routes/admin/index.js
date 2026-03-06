@@ -11,6 +11,8 @@ import { renderAnnouncementsList } from './views/announcements.js';
 import { renderAuditLogPage, renderActivityLogPage } from './views/logs.js';
 import { renderWebhooksList } from './views/webhooks.js';
 import { renderPluginsList } from './views/plugins.js';
+import { renderGroupsList, renderGroupDetail } from './views/groups.js';
+import { renderIncidentsList, renderIncidentDetail } from './views/incidents.js';
 import { getPluginAdminPages, renderPluginAdminPage } from '../../utils/plugins.js';
 
 let loadViewGeneration = 0;
@@ -31,6 +33,7 @@ function getDefaultSubTab(tab) {
     case 'servers': return 'details';
     case 'users': return 'overview';
     case 'eggs': return 'about';
+    case 'groups': return 'settings';
     default: return null;
   }
 }
@@ -106,6 +109,12 @@ export async function loadView() {
       case 'eggs':
         await renderEggDetail(container, username, state.currentView.id);
         break;
+      case 'groups':
+        await renderGroupDetail(container, username, state.currentView.id);
+        break;
+      case 'incidents':
+        await renderIncidentDetail(container, username, state.currentView.id);
+        break;
     }
   } else {
     switch (state.currentView.tab) {
@@ -141,6 +150,12 @@ export async function loadView() {
         break;
       case 'plugins':
         await renderPluginsList(container);
+        break;
+      case 'groups':
+        await renderGroupsList(container, username, loadView);
+        break;
+      case 'incidents':
+        await renderIncidentsList(container, username, loadView);
         break;
       default:
         // Check for plugin admin pages (format: "plugin:pluginId:pageId")
