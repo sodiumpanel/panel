@@ -43,7 +43,7 @@ router.get('/available-nodes', authenticateUser, async (req, res) => {
   for (const node of nodes.nodes) {
     if (node.maintenance_mode) continue;
     
-    const resources = getNodeAvailableResources(node.id);
+    const resources = await getNodeAvailableResources(node.id);
     if (!resources) continue;
     if (resources.available_ports.length === 0) continue;
     
