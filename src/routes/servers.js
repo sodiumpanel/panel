@@ -24,7 +24,7 @@ export async function renderServers() {
         </div>
         ${canCreate ? `
           <a href="/servers/create" class="btn btn-primary" id="create-server-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Server
           </a>
         ` : ''}
@@ -52,9 +52,6 @@ async function loadServers() {
     if (data.servers.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">
-            <span class="material-icons-outlined">dns</span>
-          </div>
           <h3>No servers yet</h3>
           <p>Create your first server to get started</p>
         </div>
@@ -67,7 +64,7 @@ async function loadServers() {
         <div class="server-card-header">
           <div class="server-card-title">
             <div class="server-icon">
-              <span class="material-icons-outlined">dns</span>
+              <span class="round-icon">dns</span>
             </div>
             <div class="server-name-wrap">
               <h3>${escapeHtml(server.name)}</h3>
@@ -79,15 +76,15 @@ async function loadServers() {
         <div class="server-card-body">
           <div class="server-resources">
             <div class="resource-chip">
-              <span class="material-icons-outlined">memory</span>
+              <span class="round-icon">memory</span>
               <span>${server.limits?.memory || 0} MB</span>
             </div>
             <div class="resource-chip">
-              <span class="material-icons-outlined">storage</span>
+              <span class="round-icon">storage</span>
               <span>${server.limits?.disk || 0} MB</span>
             </div>
             <div class="resource-chip">
-              <span class="material-icons-outlined">speed</span>
+              <span class="round-icon">speed</span>
               <span>${server.limits?.cpu || 0}%</span>
             </div>
           </div>
@@ -95,17 +92,17 @@ async function loadServers() {
         <div class="server-card-footer">
           <div class="power-actions">
             <button class="power-btn start" onclick="serverPower('${server.id}', 'start')" title="Start">
-              <span class="material-icons-outlined">play_arrow</span>
+              <span class="round-icon">play_arrow</span>
             </button>
             <button class="power-btn restart" onclick="serverPower('${server.id}', 'restart')" title="Restart">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
             </button>
             <button class="power-btn stop" onclick="serverPower('${server.id}', 'stop')" title="Stop">
-              <span class="material-icons-outlined">stop</span>
+              <span class="round-icon">stop</span>
             </button>
           </div>
           <a href="/server/${server.id}" class="btn btn-primary btn-sm">
-            <span class="material-icons-outlined">terminal</span>
+            <span class="round-icon">terminal</span>
             Console
           </a>
         </div>

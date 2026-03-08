@@ -185,7 +185,7 @@ export function renderPluginPage(pluginId, pageId, container) {
   }
   container.innerHTML = `
     <div class="empty-state">
-      <span class="material-icons-outlined">extension_off</span>
+      <span class="round-icon">extension_off</span>
       <p>Plugin page not available</p>
     </div>
   `;

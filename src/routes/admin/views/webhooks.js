@@ -56,7 +56,7 @@ export async function renderWebhooksList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Webhooks' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-webhook-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Global Webhook
           </button>
         </div>
@@ -65,12 +65,12 @@ export async function renderWebhooksList(container, username, loadView) {
       <div class="admin-list">
         <div class="webhooks-section">
           <h3 class="section-title">
-            <span class="material-icons-outlined">public</span>
+            <span class="round-icon">public</span>
             Global Webhooks
           </h3>
           ${globalWebhooks.length === 0 ? `
             <div class="empty-state small">
-              <span class="material-icons-outlined">webhook</span>
+              <span class="round-icon">webhook</span>
               <p>No global webhooks configured</p>
             </div>
           ` : `
@@ -82,12 +82,12 @@ export async function renderWebhooksList(container, username, loadView) {
         
         <div class="webhooks-section">
           <h3 class="section-title">
-            <span class="material-icons-outlined">person</span>
+            <span class="round-icon">person</span>
             User Webhooks
           </h3>
           ${userWebhooks.length === 0 ? `
             <div class="empty-state small">
-              <span class="material-icons-outlined">webhook</span>
+              <span class="round-icon">webhook</span>
               <p>No user webhooks</p>
             </div>
           ` : `
@@ -119,7 +119,7 @@ function renderWebhookCard(webhook, isGlobal) {
     <div class="webhook-card ${!webhook.enabled ? 'disabled' : ''}">
       <div class="webhook-card-header">
         <div class="webhook-info">
-          <span class="webhook-type-icon material-icons-outlined">${typeInfo.icon}</span>
+          <span class="webhook-type-icon round-icon">${typeInfo.icon}</span>
           <div class="webhook-details">
             <span class="webhook-name">${escapeHtml(webhook.name)}</span>
             <span class="webhook-url">${escapeHtml(webhook.url)}</span>
@@ -134,16 +134,16 @@ function renderWebhookCard(webhook, isGlobal) {
       <div class="webhook-card-body">
         <div class="webhook-meta">
           <span class="meta-item">
-            <span class="material-icons-outlined">category</span>
+            <span class="round-icon">category</span>
             ${typeInfo.label}
           </span>
           <span class="meta-item">
-            <span class="material-icons-outlined">notifications</span>
+            <span class="round-icon">notifications</span>
             ${eventsDisplay}
           </span>
           ${!isGlobal && webhook.user_id ? `
             <span class="meta-item">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               User: ${escapeHtml(webhook.user_id.substring(0, 8))}
             </span>
           ` : ''}
@@ -151,17 +151,17 @@ function renderWebhookCard(webhook, isGlobal) {
       </div>
       <div class="webhook-card-footer">
         <button class="btn btn-xs btn-ghost" onclick="testWebhook('${webhook.id}')">
-          <span class="material-icons-outlined">send</span>
+          <span class="round-icon">send</span>
           Test
         </button>
         ${isGlobal ? `
           <button class="btn btn-xs btn-ghost" onclick="editWebhook('${webhook.id}')">
-            <span class="material-icons-outlined">edit</span>
+            <span class="round-icon">edit</span>
             Edit
           </button>
         ` : ''}
         <button class="btn btn-xs btn-danger-ghost" onclick="deleteWebhook('${webhook.id}')">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
           Delete
         </button>
       </div>

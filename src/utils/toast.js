@@ -25,10 +25,10 @@ export function toast(message, type = 'info', duration = 3000) {
   };
   
   el.innerHTML = `
-    <span class="material-icons-outlined">${icons[type] || 'info'}</span>
+    <span class="round-icon">${icons[type] || 'info'}</span>
     <span class="toast-message">${escapeHtml(message)}</span>
     <button class="toast-close">
-      <span class="material-icons-outlined">close</span>
+      <span class="round-icon">close</span>
     </button>
   `;
   

@@ -16,10 +16,10 @@ export function renderBackupsTab() {
         <h3>Backups</h3>
         <div>
           <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
-            <span class="material-icons-outlined">refresh</span>
+            <span class="round-icon">refresh</span>
           </button>
           <button class="btn btn-primary btn-sm" id="btn-create-backup">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Backup
           </button>
         </div>
@@ -63,14 +63,14 @@ async function refreshBackups() {
   const btn = document.getElementById('btn-refresh-backups');
   if (btn) {
     btn.disabled = true;
-    btn.querySelector('.material-icons-outlined').classList.add('spinning');
+    btn.querySelector('.round-icon').classList.add('spinning');
   }
   
   await loadBackups(currentServerId);
   
   if (btn) {
     btn.disabled = false;
-    btn.querySelector('.material-icons-outlined').classList.remove('spinning');
+    btn.querySelector('.round-icon').classList.remove('spinning');
   }
 }
 
@@ -91,7 +91,7 @@ async function loadBackups(serverId) {
     if (backups.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">cloud_off</span>
+          <span class="round-icon">cloud_off</span>
           <p>No backups yet</p>
           <p class="hint">Create a backup to save your server files</p>
         </div>
@@ -102,14 +102,14 @@ async function loadBackups(serverId) {
     container.innerHTML = backups.map(backup => `
       <div class="backup-item ${backup.is_successful ? '' : 'pending'}" data-id="${backup.id}">
         <div class="backup-icon">
-          <span class="material-icons-outlined ${backup.is_successful ? '' : 'spinning'}">
+          <span class="round-icon ${backup.is_successful ? '' : 'spinning'}">
             ${backup.is_successful ? 'cloud_done' : 'cloud_sync'}
           </span>
         </div>
         <div class="backup-info">
           <div class="backup-name">
             ${backup.name}
-            ${backup.is_locked ? '<span class="material-icons-outlined locked-icon">lock</span>' : ''}
+            ${backup.is_locked ? '<span class="round-icon locked-icon">lock</span>' : ''}
           </div>
           <div class="backup-meta">
             ${backup.is_successful ? formatBytes(backup.bytes || 0) : '<span class="backup-progress">Creating backup...</span>'}
@@ -121,10 +121,10 @@ async function loadBackups(serverId) {
         <div class="backup-actions">
           ${backup.is_successful ? `
             <button class="btn btn-xs btn-ghost" title="Download" data-action="download">
-              <span class="material-icons-outlined">download</span>
+              <span class="round-icon">download</span>
             </button>
             <button class="btn btn-xs btn-ghost" title="Restore" data-action="restore">
-              <span class="material-icons-outlined">restore</span>
+              <span class="round-icon">restore</span>
             </button>
           ` : `
             <div class="backup-pending-indicator">
@@ -134,10 +134,10 @@ async function loadBackups(serverId) {
             </div>
           `}
           <button class="btn btn-xs btn-ghost" title="${backup.is_locked ? 'Unlock' : 'Lock'}" data-action="lock">
-            <span class="material-icons-outlined">${backup.is_locked ? 'lock_open' : 'lock'}</span>
+            <span class="round-icon">${backup.is_locked ? 'lock_open' : 'lock'}</span>
           </button>
           <button class="btn btn-xs btn-ghost btn-danger" title="Delete" data-action="delete" ${backup.is_locked ? 'disabled' : ''}>
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
           </button>
         </div>
       </div>

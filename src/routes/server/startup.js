@@ -165,7 +165,7 @@ export function renderStartupTab() {
       <div class="settings-content">
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">terminal</span>
+            <span class="round-icon">terminal</span>
             <h3>Startup Configuration</h3>
           </div>
           <div id="startup-card-content">
@@ -236,7 +236,7 @@ function renderStartupForm(server, egg) {
     <div class="form-group" style="margin-top: 20px;">
       <label>Server Egg</label>
       <div class="input-wrapper">
-        <span class="material-icons-outlined">egg</span>
+        <span class="round-icon">egg</span>
         <select name="egg_id" id="egg-select" class="select-input">
           ${getEggOptions(server)}
         </select>
@@ -246,7 +246,7 @@ function renderStartupForm(server, egg) {
     <div class="form-group" style="margin-top: 12px;">
       <label>Docker Image</label>
       <div class="input-wrapper">
-        <span class="material-icons-outlined">inventory_2</span>
+        <span class="round-icon">inventory_2</span>
         <select name="docker_image" class="select-input">
           ${getDockerImagesOptions(server, egg)}
         </select>
@@ -289,11 +289,11 @@ function renderStartupForm(server, egg) {
       
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" id="save-startup">
-          <span class="material-icons-outlined">save</span>
+          <span class="round-icon">save</span>
           Save Changes
         </button>
         <button type="button" class="btn btn-ghost" id="reset-startup">
-          <span class="material-icons-outlined">restart_alt</span>
+          <span class="round-icon">restart_alt</span>
           Reset to Defaults
         </button>
       </div>
@@ -487,7 +487,7 @@ async function saveStartup() {
   const environment = getEnvironmentFromForm();
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
   
   try {
     const res = await api(`/api/servers/${currentServerId}/startup`, {
@@ -504,21 +504,21 @@ async function saveStartup() {
     const data = await res.json();
     
     if (res.ok) {
-      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+        saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
       }, 1500);
     } else {
       toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+      saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save startup:', e);
     toast.error('Failed to save startup');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+    saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
   }
 }
 

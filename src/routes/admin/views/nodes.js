@@ -28,7 +28,7 @@ export async function renderNodesList(container, username, loadView) {
         ${renderSearchBox('nodes', 'Search by name, IP, or ID...')}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-node-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Node
           </button>
         </div>
@@ -37,7 +37,7 @@ export async function renderNodesList(container, username, loadView) {
       <div class="admin-list">
         ${data.nodes.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <h3>No Nodes</h3>
             <p>Create your first node to get started</p>
           </div>
@@ -47,7 +47,7 @@ export async function renderNodesList(container, username, loadView) {
               <div class="list-card" data-id="${node.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined">dns</span>
+                    <span class="round-icon">dns</span>
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml(node.name)}</h3>
@@ -71,7 +71,7 @@ export async function renderNodesList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('nodes', '${node.id}')">
-                    <span class="material-icons-outlined">settings</span>
+                    <span class="round-icon">settings</span>
                     Manage
                   </button>
                 </div>
@@ -130,7 +130,7 @@ export async function renderNodeDetail(container, username, nodeId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-node-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -244,15 +244,15 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
             <h3>Status</h3>
             <div class="status-grid">
               <div class="status-item ${isOnline ? 'success' : 'danger'}">
-                <span class="material-icons-outlined">${isOnline ? 'check_circle' : 'cancel'}</span>
+                <span class="round-icon">${isOnline ? 'check_circle' : 'cancel'}</span>
                 <span>${isOnline ? 'Online' : 'Offline'}</span>
               </div>
               <div class="status-item ${node.maintenance_mode ? 'warning' : 'success'}">
-                <span class="material-icons-outlined">${node.maintenance_mode ? 'construction' : 'check_circle'}</span>
+                <span class="round-icon">${node.maintenance_mode ? 'construction' : 'check_circle'}</span>
                 <span>${node.maintenance_mode ? 'Maintenance Mode' : 'Operational'}</span>
               </div>
               <div class="status-item ${node.behind_proxy ? 'info' : ''}">
-                <span class="material-icons-outlined">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
+                <span class="round-icon">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
                 <span>${node.behind_proxy ? 'Behind Proxy' : 'Direct Connection'}</span>
               </div>
             </div>
@@ -433,11 +433,11 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
           
           <div class="config-actions">
             <button class="btn btn-ghost" id="show-config-btn">
-              <span class="material-icons-outlined">description</span>
+              <span class="round-icon">description</span>
               View Configuration
             </button>
             <button class="btn btn-ghost" id="show-deploy-btn">
-              <span class="material-icons-outlined">terminal</span>
+              <span class="round-icon">terminal</span>
               Deploy Command
             </button>
           </div>

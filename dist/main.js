@@ -60,7 +60,7 @@ function showMaintenancePage(message) {
   document.body.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-primary, #0a0a0f);color:var(--text-primary, #e4e4e7);font-family:inherit;text-align:center;padding:2rem;">
       <div>
-        <span class="material-icons-outlined" style="font-size:4rem;color:var(--accent, #6366f1);margin-bottom:1rem;display:block;">construction</span>
+        <span class="round-icon" style="font-size:4rem;color:var(--accent, #6366f1);margin-bottom:1rem;display:block;">construction</span>
         <h1 style="font-size:1.75rem;margin:0 0 0.75rem;">Under Maintenance</h1>
         <p style="color:var(--text-secondary, #a1a1aa);max-width:28rem;margin:0 auto;line-height:1.6;">${msg.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
       </div>
@@ -187,7 +187,7 @@ function renderAuth() {
           <div class="form-group">
             <label for="login-username">Username</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
             </div>
           </div>
@@ -195,7 +195,7 @@ function renderAuth() {
           <div class="form-group">
             <label for="login-password">Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
             </div>
           </div>
@@ -204,7 +204,7 @@ function renderAuth() {
           
           <button type="submit" class="btn btn-primary btn-full" id="login-submit-btn">
             <span>Sign In</span>
-            <span class="material-icons-outlined">arrow_forward</span>
+            <span class="round-icon">arrow_forward</span>
           </button>
           
           <div class="auth-links">
@@ -223,7 +223,7 @@ function renderAuth() {
           <div class="form-group">
             <label for="register-username">Username</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               <input type="text" id="register-username" name="username" placeholder="Choose a username" required minlength="3" maxlength="20">
             </div>
             <small class="form-hint">3-20 characters</small>
@@ -232,7 +232,7 @@ function renderAuth() {
           <div class="form-group" id="email-field-group" style="display: none;">
             <label for="register-email">Email</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">email</span>
+              <span class="round-icon">email</span>
               <input type="email" id="register-email" name="email" placeholder="Enter your email">
             </div>
             <small class="form-hint">Required for email verification</small>
@@ -241,7 +241,7 @@ function renderAuth() {
           <div class="form-group">
             <label for="register-password">Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="register-password" name="password" placeholder="Create a password" required minlength="6">
             </div>
             <small class="form-hint">Minimum 6 characters</small>
@@ -250,7 +250,7 @@ function renderAuth() {
           <div class="form-group">
             <label for="register-confirm">Confirm Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="register-confirm" name="confirm" placeholder="Confirm your password" required>
             </div>
           </div>
@@ -261,7 +261,7 @@ function renderAuth() {
           
           <button type="submit" class="btn btn-primary btn-full" id="register-submit-btn">
             <span>Create Account</span>
-            <span class="material-icons-outlined">arrow_forward</span>
+            <span class="round-icon">arrow_forward</span>
           </button>
         </form>
       </div>
@@ -295,7 +295,7 @@ function renderAuth() {
     const btn = loginForm.querySelector('button[type="submit"]');
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await fetch('/api/auth/login', {
@@ -310,7 +310,7 @@ function renderAuth() {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Sign In</span><span class="material-icons-outlined">arrow_forward</span>';
+        btn.innerHTML = '<span>Sign In</span><span class="round-icon">arrow_forward</span>';
         return;
       }
       
@@ -326,7 +326,7 @@ function renderAuth() {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Sign In</span><span class="material-icons-outlined">arrow_forward</span>';
+      btn.innerHTML = '<span>Sign In</span><span class="round-icon">arrow_forward</span>';
     }
   });
   
@@ -346,7 +346,7 @@ function renderAuth() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const captchaToken = window.turnstile ? window.turnstile.getResponse(turnstileWidgetId) : null;
@@ -363,7 +363,7 @@ function renderAuth() {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Create Account</span><span class="material-icons-outlined">arrow_forward</span>';
+        btn.innerHTML = '<span>Create Account</span><span class="round-icon">arrow_forward</span>';
         if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
         return;
       }
@@ -375,7 +375,7 @@ function renderAuth() {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Create Account</span><span class="material-icons-outlined">arrow_forward</span>';
+      btn.innerHTML = '<span>Create Account</span><span class="round-icon">arrow_forward</span>';
       if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
     }
   });
@@ -442,7 +442,7 @@ async function loadOAuthProviders$1() {
         section.style.display = 'block';
         container.innerHTML = data.providers.map(p => `
           <button type="button" class="oauth-btn oauth-${p.type}" data-provider="${p.id}">
-            ${OAUTH_ICONS[p.type] || '<span class="material-icons-outlined">login</span>'}
+            ${OAUTH_ICONS[p.type] || '<span class="round-icon">login</span>'}
             <span>${p.name}</span>
           </button>
         `).join('');
@@ -472,7 +472,7 @@ function renderAuthCallback() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Authentication Failed</h2>
             <p class="auth-subtitle">${getErrorMessage(error)}</p>
           </div>
@@ -490,7 +490,7 @@ function renderAuthCallback() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+            <span class="round-icon spinning" style="font-size: 48px;">sync</span>
             <h2>Signing in...</h2>
           </div>
         </div>
@@ -540,14 +540,14 @@ function render2FAScreen(username, password) {
         
         <form id="2fa-form" class="auth-form active">
           <p class="form-info">
-            <span class="material-icons-outlined">email</span>
+            <span class="round-icon">email</span>
             A verification code has been sent to your email.
           </p>
           
           <div class="form-group">
             <label for="2fa-code">Verification Code</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">pin</span>
+              <span class="round-icon">pin</span>
               <input type="text" id="2fa-code" name="code" placeholder="Enter 6-digit code" 
                      required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code">
             </div>
@@ -557,7 +557,7 @@ function render2FAScreen(username, password) {
           
           <button type="submit" class="btn btn-primary btn-full" id="2fa-submit-btn">
             <span>Verify</span>
-            <span class="material-icons-outlined">check</span>
+            <span class="round-icon">check</span>
           </button>
           
           <div class="auth-links">
@@ -586,7 +586,7 @@ function render2FAScreen(username, password) {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await fetch('/api/auth/login', {
@@ -601,7 +601,7 @@ function render2FAScreen(username, password) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+        btn.innerHTML = '<span>Verify</span><span class="round-icon">check</span>';
         
         if (data.codeExpired) {
           codeInput.value = '';
@@ -616,7 +616,7 @@ function render2FAScreen(username, password) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+      btn.innerHTML = '<span>Verify</span><span class="round-icon">check</span>';
     }
   });
   
@@ -645,7 +645,7 @@ function render2FAScreen(username, password) {
         
         const info = document.querySelector('.form-info');
         if (info) {
-          info.innerHTML = '<span class="material-icons-outlined">check_circle</span> New code sent to your email.';
+          info.innerHTML = '<span class="round-icon">check_circle</span> New code sent to your email.';
           info.classList.add('success');
         }
       }
@@ -677,7 +677,7 @@ async function renderVerifyEmail() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Invalid Link</h2>
             <p class="auth-subtitle">No verification token provided.</p>
           </div>
@@ -694,7 +694,7 @@ async function renderVerifyEmail() {
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <span class="round-icon spinning" style="font-size: 48px;">sync</span>
           <h2>Verifying email...</h2>
         </div>
       </div>
@@ -710,7 +710,7 @@ async function renderVerifyEmail() {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+              <span class="round-icon" style="font-size: 48px; color: var(--success);">check_circle</span>
               <h2>Email Verified!</h2>
               <p class="auth-subtitle">${data.message || 'Your email has been verified successfully.'}</p>
             </div>
@@ -725,7 +725,7 @@ async function renderVerifyEmail() {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
               <h2>Verification Failed</h2>
               <p class="auth-subtitle">${data.error || 'Unable to verify your email.'}</p>
             </div>
@@ -741,7 +741,7 @@ async function renderVerifyEmail() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Connection Error</h2>
             <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
           </div>
@@ -772,14 +772,14 @@ function renderForgotPassword() {
         
         <form id="forgot-form" class="auth-form active">
           <p class="form-info">
-            <span class="material-icons-outlined">info</span>
+            <span class="round-icon">info</span>
             Enter your email address and we'll send you a link to reset your password.
           </p>
           
           <div class="form-group">
             <label for="forgot-email">Email</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">email</span>
+              <span class="round-icon">email</span>
               <input type="email" id="forgot-email" name="email" placeholder="Enter your email" required>
             </div>
           </div>
@@ -789,7 +789,7 @@ function renderForgotPassword() {
           
           <button type="submit" class="btn btn-primary btn-full" id="forgot-submit-btn">
             <span>Send Reset Link</span>
-            <span class="material-icons-outlined">send</span>
+            <span class="round-icon">send</span>
           </button>
           
           <div class="auth-links">
@@ -810,7 +810,7 @@ function renderForgotPassword() {
     const btn = document.getElementById('forgot-submit-btn');
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     errorEl.style.display = 'none';
     successEl.style.display = 'none';
     
@@ -837,7 +837,7 @@ function renderForgotPassword() {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span>Send Reset Link</span><span class="material-icons-outlined">send</span>';
+    btn.innerHTML = '<span>Send Reset Link</span><span class="round-icon">send</span>';
   });
   
   document.getElementById('back-to-login-btn').addEventListener('click', () => {
@@ -858,7 +858,7 @@ async function renderResetPassword() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Invalid Link</h2>
             <p class="auth-subtitle">No reset token provided.</p>
           </div>
@@ -875,7 +875,7 @@ async function renderResetPassword() {
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <span class="round-icon spinning" style="font-size: 48px;">sync</span>
           <h2>Validating...</h2>
         </div>
       </div>
@@ -891,7 +891,7 @@ async function renderResetPassword() {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
               <h2>Invalid Link</h2>
               <p class="auth-subtitle">${data.error || 'This reset link is invalid or has expired.'}</p>
             </div>
@@ -919,7 +919,7 @@ async function renderResetPassword() {
             <div class="form-group">
               <label for="new-password">New Password</label>
               <div class="input-wrapper">
-                <span class="material-icons-outlined">lock</span>
+                <span class="round-icon">lock</span>
                 <input type="password" id="new-password" name="password" placeholder="Enter new password" required minlength="6">
               </div>
               <small class="form-hint">Minimum 6 characters</small>
@@ -928,7 +928,7 @@ async function renderResetPassword() {
             <div class="form-group">
               <label for="confirm-password">Confirm Password</label>
               <div class="input-wrapper">
-                <span class="material-icons-outlined">lock</span>
+                <span class="round-icon">lock</span>
                 <input type="password" id="confirm-password" name="confirm" placeholder="Confirm new password" required>
               </div>
             </div>
@@ -937,7 +937,7 @@ async function renderResetPassword() {
             
             <button type="submit" class="btn btn-primary btn-full" id="reset-submit-btn">
               <span>Reset Password</span>
-              <span class="material-icons-outlined">check</span>
+              <span class="round-icon">check</span>
             </button>
           </form>
         </div>
@@ -960,7 +960,7 @@ async function renderResetPassword() {
       }
       
       btn.disabled = true;
-      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      btn.innerHTML = '<span class="round-icon spinning">sync</span>';
       errorEl.style.display = 'none';
       
       try {
@@ -976,13 +976,13 @@ async function renderResetPassword() {
           errorEl.textContent = data.error;
           errorEl.style.display = 'block';
           btn.disabled = false;
-          btn.innerHTML = '<span>Reset Password</span><span class="material-icons-outlined">check</span>';
+          btn.innerHTML = '<span>Reset Password</span><span class="round-icon">check</span>';
         } else {
           app.innerHTML = `
             <div class="auth-container">
               <div class="auth-card">
                 <div class="auth-header">
-                  <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+                  <span class="round-icon" style="font-size: 48px; color: var(--success);">check_circle</span>
                   <h2>Password Reset!</h2>
                   <p class="auth-subtitle">Your password has been reset successfully.</p>
                 </div>
@@ -997,7 +997,7 @@ async function renderResetPassword() {
         errorEl.textContent = 'Connection error. Please try again.';
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Reset Password</span><span class="material-icons-outlined">check</span>';
+        btn.innerHTML = '<span>Reset Password</span><span class="round-icon">check</span>';
       }
     });
     
@@ -1006,7 +1006,7 @@ async function renderResetPassword() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Connection Error</h2>
             <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
           </div>
@@ -1176,31 +1176,6 @@ function renderDashboard() {
   
   const displayName = state$1.user?.displayName || state$1.username;
   
-  const hour = new Date().getHours();
-  let greeting, icon, subtitle;
-  
-  if (hour < 6) {
-    greeting = 'Late night';
-    icon = 'dark_mode';
-    subtitle = "Burning the midnight oil?";
-  } else if (hour < 12) {
-    greeting = 'Good morning';
-    icon = 'wb_twilight';
-    subtitle = "Ready to conquer the day";
-  } else if (hour < 18) {
-    greeting = 'Good afternoon';
-    icon = 'wb_sunny';
-    subtitle = "Hope your day is going well";
-  } else if (hour < 22) {
-    greeting = 'Good evening';
-    icon = 'nights_stay';
-    subtitle = "Winding down for the night?";
-  } else {
-    greeting = 'Good night';
-    icon = 'bedtime';
-    subtitle = "Don't stay up too late";
-  }
-  
   app.innerHTML = `
     <div class="dashboard-container">
       <div id="node-alerts-container"></div>
@@ -1210,20 +1185,20 @@ function renderDashboard() {
       <header class="dashboard-header">
         <div class="greeting">
           <div class="greeting-icon">
-            <span class="material-icons-outlined">${icon}</span>
+            <span class="round-icon">home</span>
           </div>
           <div class="greeting-text">
-            <h1>${greeting}, <span class="highlight">${escapeHtml$1(displayName)}</span></h1>
-            <p>${subtitle}</p>
+            <h1>Welcome, <span class="highlight">${escapeHtml$1(displayName)}!</span></h1>
+            <p>Manage your servers and resources with ease.</p>
           </div>
         </div>
-        <div class="quick-stats" id="quick-stats"></div>
       </header>
       
       <div class="dashboard-grid">
         <div class="dashboard-section resources-section">
+          <span class="round-icon corner-icon">data_usage</span>
           <div class="section-header">
-            <span class="material-icons-outlined">analytics</span>
+            <span class="round-icon">data_usage</span>
             <h2>Resource Usage</h2>
           </div>
           <div class="limits-grid" id="limits-display">
@@ -1232,8 +1207,9 @@ function renderDashboard() {
         </div>
         
         <div class="dashboard-section servers-section">
+          <span class="round-icon corner-icon">dns</span>
           <div class="section-header">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <h2>Servers</h2>
             <a href="/servers" class="muted">View All</a>
           </div>
@@ -1248,7 +1224,6 @@ function renderDashboard() {
   loadLimits();
   loadServers$1();
   loadAnnouncements();
-  loadQuickStats();
   checkEmailVerification();
   
   pollInterval$2 = setInterval(() => {
@@ -1270,7 +1245,7 @@ async function checkEmailVerification() {
       banner.innerHTML = `
         <div class="verification-banner">
           <div class="verification-content">
-            <span class="material-icons-outlined">mail</span>
+            <span class="round-icon">mail</span>
             <div class="verification-text">
               <strong>Email Verification Required</strong>
               <p>Please verify your email address (${data.email || 'not set'}) to unlock all features.</p>
@@ -1303,42 +1278,6 @@ async function checkEmailVerification() {
     }
   } catch (e) {
     // Ignore verification check errors
-  }
-}
-
-async function loadQuickStats() {
-  const container = document.getElementById('quick-stats');
-  if (!container) return;
-  
-  try {
-    const res = await api('/api/servers');
-    const data = await res.json();
-    
-    const online = data.servers.filter(s => s.status === 'running').length;
-    const starting = data.servers.filter(s => s.status === 'starting').length;
-    const stopping = data.servers.filter(s => s.status === 'stopping').length;
-    const offline = data.servers.filter(s => s.status === 'offline' || !s.status).length;
-    
-    container.innerHTML = `
-      <div class="stat-chip online">
-        <span class="material-icons-outlined">check_circle</span>
-        <span>${online} online</span>
-      </div>
-      <div class="stat-chip starting">
-        <span class="material-icons-outlined">hourglass_top</span>
-        <span>${starting} starting</span>
-      </div>
-      <div class="stat-chip stopping">
-        <span class="material-icons-outlined">pending</span>
-        <span>${stopping} stopping</span>
-      </div>
-      <div class="stat-chip offline">
-        <span class="material-icons-outlined">cancel</span>
-        <span>${offline} offline</span>
-      </div>
-    `;
-  } catch (e) {
-    container.innerHTML = '';
   }
 }
 
@@ -1417,7 +1356,7 @@ async function loadServers$1() {
     if (data.servers.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">dns</span>
+          <span class="round-icon">dns</span>
           <p>No servers yet</p>
         </div>
       `;
@@ -1430,7 +1369,7 @@ async function loadServers$1() {
     if (alertsContainer) {
       alertsContainer.innerHTML = downNodes.length > 0 ? downNodes.map(name => `
         <div class="node-alert-banner">
-          <span class="material-icons-outlined">warning</span>
+          <span class="round-icon">warning</span>
           <div>
             <strong>Node "${escapeHtml$1(name)}" is offline</strong>
             <p>Servers on this node may be unreachable. <a href="/status">View status</a></p>
@@ -1446,9 +1385,9 @@ async function loadServers$1() {
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
-          ${server.node_online === false ? '<span class="node-down-badge"><span class="material-icons-outlined">cloud_off</span>Node Down</span>' : ''}
-          <span class="server-status" data-status-id="${server.id}">--</span>
-          <span class="material-icons-outlined">chevron_right</span>
+          ${server.node_online === false ? '<span class="node-down-badge"><span class="round-icon">cloud_off</span>Node Down</span>' : ''}
+          <span class="server-status" data-status-id="${server.id}"></span>
+          <span class="round-icon">chevron_right</span>
         </div>
       </a>
     `).join('');
@@ -1511,19 +1450,19 @@ function updateQuickStats() {
   
   container.innerHTML = `
     <div class="stat-chip online">
-      <span class="material-icons-outlined">check_circle</span>
+      <span class="round-icon">check_circle</span>
       <span>${online} online</span>
     </div>
     <div class="stat-chip starting">
-      <span class="material-icons-outlined">hourglass_top</span>
+      <span class="round-icon">hourglass_top</span>
       <span>${starting} starting</span>
     </div>
     <div class="stat-chip stopping">
-      <span class="material-icons-outlined">pending</span>
+      <span class="round-icon">pending</span>
       <span>${stopping} stopping</span>
     </div>
     <div class="stat-chip offline">
-      <span class="material-icons-outlined">cancel</span>
+      <span class="round-icon">cancel</span>
       <span>${offline} offline</span>
     </div>
   `;
@@ -1556,14 +1495,14 @@ async function loadAnnouncements() {
     container.innerHTML = activeAnnouncements.map(a => `
       <div class="announcement-banner type-${a.type}" data-id="${a.id}">
         <div class="announcement-icon">
-          <span class="material-icons-outlined">campaign</span>
+          <span class="round-icon">campaign</span>
         </div>
         <div class="announcement-content">
           <div class="announcement-title">${escapeHtml$1(a.title)}</div>
           <div class="announcement-text">${escapeHtml$1(a.content)}</div>
         </div>
         <button class="announcement-close" onclick="dismissAnnouncement('${a.id}')">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     `).join('');
@@ -1625,7 +1564,7 @@ function renderProfile() {
             <div class="form-group">
               <label for="avatar-url">Profile Picture URL</label>
               <div class="input-wrapper">
-                <span class="material-icons-outlined">image</span>
+                <span class="round-icon">image</span>
                 <input type="url" id="avatar-url" name="avatar" placeholder="https://example.com/avatar.png">
               </div>
               <small class="form-hint">Use a direct image URL (https only)</small>
@@ -1634,7 +1573,7 @@ function renderProfile() {
             <div class="form-group">
               <label for="display-name">Display Name</label>
               <div class="input-wrapper">
-                <span class="material-icons-outlined">badge</span>
+                <span class="round-icon">badge</span>
                 <input type="text" id="display-name" name="displayName" value="${escapeHtml$1(displayName)}" maxlength="50" placeholder="Your display name">
               </div>
               <small class="form-hint">This is how others will see you</small>
@@ -1652,7 +1591,7 @@ function renderProfile() {
           <div class="form-actions">
             <div class="message" id="profile-message"></div>
             <button type="submit" class="btn btn-primary">
-              <span class="material-icons-outlined">save</span>
+              <span class="round-icon">save</span>
               <span>Save Changes</span>
             </button>
           </div>
@@ -1695,7 +1634,7 @@ function renderProfile() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/user/profile', {
@@ -1730,7 +1669,7 @@ function renderProfile() {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span class="material-icons-outlined">save</span><span>Save Changes</span>';
+    btn.innerHTML = '<span class="round-icon">save</span><span>Save Changes</span>';
     
     setTimeout(() => {
       messageEl.textContent = '';
@@ -1812,7 +1751,7 @@ async function loadProfile() {
   }
 }
 
-const THEMES = ['dark', 'light', 'amoled'];
+const THEMES = ['dark', 'light'];
 
 let _currentTheme = 'dark';
 
@@ -1856,8 +1795,7 @@ function applyTheme(theme) {
 function getAvailableThemes() {
   return [
     { id: 'dark', name: 'Dark' },
-    { id: 'light', name: 'Light' },
-    { id: 'amoled', name: 'AMOLED' }
+    { id: 'light', name: 'Light' }
   ];
 }
 
@@ -2088,7 +2026,7 @@ function renderSettings() {
       <div class="settings-content">
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">palette</span>
+            <span class="round-icon">palette</span>
             <h3>Appearance</h3>
           </div>
           
@@ -2113,7 +2051,7 @@ function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">notifications</span>
+            <span class="round-icon">notifications</span>
             <h3>Notifications</h3>
           </div>
           
@@ -2133,7 +2071,7 @@ function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">security</span>
+            <span class="round-icon">security</span>
             <h3>Security</h3>
           </div>
           
@@ -2155,13 +2093,13 @@ function renderSettings() {
               <span class="setting-title">Change Password</span>
               <span class="setting-description">Update your account password</span>
             </div>
-            <span class="material-icons-outlined">chevron_right</span>
+            <span class="round-icon">chevron_right</span>
           </div>
         </div>
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">devices</span>
+            <span class="round-icon">devices</span>
             <h3>Active Sessions</h3>
           </div>
           
@@ -2169,7 +2107,7 @@ function renderSettings() {
             <div class="sessions-header">
               <p class="setting-description">Devices and browsers where you're currently logged in</p>
               <button class="btn btn-danger btn-sm" id="revoke-all-sessions-btn">
-                <span class="material-icons-outlined">logout</span>
+                <span class="round-icon">logout</span>
                 <span>Revoke All Others</span>
               </button>
             </div>
@@ -2181,7 +2119,7 @@ function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">key</span>
+            <span class="round-icon">key</span>
             <h3>SSH Keys</h3>
           </div>
           
@@ -2189,7 +2127,7 @@ function renderSettings() {
             <div class="api-keys-header">
               <p class="setting-description">SSH keys for SFTP authentication</p>
               <button class="btn btn-primary btn-sm" id="add-ssh-key-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 <span>Add Key</span>
               </button>
             </div>
@@ -2201,7 +2139,7 @@ function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">vpn_key</span>
+            <span class="round-icon">vpn_key</span>
             <h3>API Keys</h3>
           </div>
           
@@ -2209,7 +2147,7 @@ function renderSettings() {
             <div class="api-keys-header">
               <p class="setting-description">Manage API keys to access the Sodium API programmatically</p>
               <button class="btn btn-primary btn-sm" id="create-api-key-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 <span>Create Key</span>
               </button>
             </div>
@@ -2221,7 +2159,7 @@ function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">webhook</span>
+            <span class="round-icon">webhook</span>
             <h3>Webhooks</h3>
           </div>
           
@@ -2229,7 +2167,7 @@ function renderSettings() {
             <div class="webhooks-header">
               <p class="setting-description">Send notifications to Discord, Slack, or custom URLs when events occur</p>
               <button class="btn btn-primary btn-sm" id="create-webhook-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 <span>Add Webhook</span>
               </button>
             </div>
@@ -2241,7 +2179,7 @@ function renderSettings() {
         
         <div class="settings-section danger-section">
           <div class="section-header">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <h3>Danger Zone</h3>
           </div>
           
@@ -2251,7 +2189,7 @@ function renderSettings() {
               <span class="setting-description">Sign out of your account on this device</span>
             </div>
             <button class="btn btn-danger" id="logout-btn">
-              <span class="material-icons-outlined">logout</span>
+              <span class="round-icon">logout</span>
               <span>Sign Out</span>
             </button>
           </div>
@@ -2265,14 +2203,14 @@ function renderSettings() {
         <div class="modal-header">
           <h3>Create API Key</h3>
           <button class="modal-close" id="close-api-key-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="api-key-form">
           <div class="form-group">
             <label for="api-key-name">Key Name</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">label</span>
+              <span class="round-icon">label</span>
               <input type="text" id="api-key-name" required maxlength="50" placeholder="My API Key">
             </div>
           </div>
@@ -2295,18 +2233,18 @@ function renderSettings() {
         <div class="modal-header">
           <h3>API Key Created</h3>
           <button class="modal-close" id="close-api-key-created-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <div class="api-key-created-content">
           <div class="warning-box">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <p>Make sure to copy your API key now. You won't be able to see it again!</p>
           </div>
           <div class="api-key-display">
             <code id="created-api-key-token"></code>
             <button type="button" class="btn btn-icon" id="copy-api-key-btn">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
           </div>
         </div>
@@ -2322,28 +2260,28 @@ function renderSettings() {
         <div class="modal-header">
           <h3>Change Password</h3>
           <button class="modal-close" id="close-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="password-form">
           <div class="form-group">
             <label for="current-password">Current Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="current-password" required>
             </div>
           </div>
           <div class="form-group">
             <label for="new-password">New Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="new-password" required minlength="6">
             </div>
           </div>
           <div class="form-group">
             <label for="confirm-password">Confirm New Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="confirm-password" required>
             </div>
           </div>
@@ -2362,21 +2300,21 @@ function renderSettings() {
         <div class="modal-header">
           <h3>Add Webhook</h3>
           <button class="modal-close" id="close-webhook-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="webhook-form">
           <div class="form-group">
             <label for="webhook-name">Name</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">label</span>
+              <span class="round-icon">label</span>
               <input type="text" id="webhook-name" required maxlength="50" placeholder="My Webhook">
             </div>
           </div>
           <div class="form-group">
             <label for="webhook-url">Webhook URL</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">link</span>
+              <span class="round-icon">link</span>
               <input type="url" id="webhook-url" required placeholder="https://discord.com/api/webhooks/...">
             </div>
           </div>
@@ -2471,7 +2409,7 @@ function renderSettings() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/user/password', {
@@ -2619,7 +2557,7 @@ async function loadUserSessions() {
     if (!data.sessions || data.sessions.length === 0) {
       container.innerHTML = `
         <div class="empty-state small">
-          <span class="material-icons-outlined">devices</span>
+          <span class="round-icon">devices</span>
           <p>No active sessions</p>
         </div>
       `;
@@ -2628,18 +2566,20 @@ async function loadUserSessions() {
     
     container.innerHTML = data.sessions.map(session => `
       <div class="list-item session-item" data-id="${session.id}">
-        <div class="item-icon">
-          <span class="material-icons-outlined">${getDeviceIcon(session.userAgent)}</span>
-        </div>
-        <div class="item-info">
-          <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
-          <span class="item-meta">${escapeHtml(session.ip)} • ${formatSessionDate(session.createdAt)}</span>
+        <div class="item-header">
+          <div class="item-icon">
+            <span class="round-icon">${getDeviceIcon(session.userAgent)}</span>
+          </div>
+          <div class="item-info">
+            <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
+            <span class="item-meta">${escapeHtml(session.ip)} • ${formatSessionDate(session.createdAt)}</span>
+          </div>
         </div>
         <div class="item-actions">
           ${session.current 
             ? '<span class="badge badge-success">Current</span>' 
             : `<button class="btn btn-icon btn-sm btn-danger revoke-session-btn" title="Revoke">
-                <span class="material-icons-outlined">close</span>
+                <span class="round-icon">close</span>
               </button>`
           }
         </div>
@@ -2757,7 +2697,7 @@ async function loadSshKeys() {
     if (keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">key</span>
+          <span class="round-icon">key</span>
           <p>No SSH keys added</p>
         </div>
       `;
@@ -2775,7 +2715,7 @@ async function loadSshKeys() {
           </span>
         </div>
         <button class="btn btn-icon btn-danger delete-ssh-key-btn" data-id="${key.id}">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     `).join('');
@@ -2796,7 +2736,7 @@ async function loadSshKeys() {
   } catch (e) {
     list.innerHTML = `
       <div class="empty-state error">
-        <span class="material-icons-outlined">error</span>
+        <span class="round-icon">error</span>
         <p>Failed to load SSH keys</p>
       </div>
     `;
@@ -2817,14 +2757,14 @@ function setupSshKeysHandlers() {
         <div class="modal-header">
           <h3>Add SSH Key</h3>
           <button class="modal-close" onclick="this.closest('.modal').remove()">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="ssh-key-form">
           <div class="form-group">
             <label for="ssh-key-name-input">Key Name</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">label</span>
+              <span class="round-icon">label</span>
               <input type="text" id="ssh-key-name-input" name="name" required placeholder="My Laptop" maxlength="50">
             </div>
           </div>
@@ -2850,7 +2790,7 @@ function setupSshKeysHandlers() {
       const btn = e.target.querySelector('button[type="submit"]');
       
       btn.disabled = true;
-      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      btn.innerHTML = '<span class="round-icon spinning">sync</span>';
       
       try {
         const res = await api('/api/user/ssh-keys', {
@@ -2901,7 +2841,7 @@ async function loadApiKeys() {
     if (!keysData.keys || keysData.keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">vpn_key</span>
+          <span class="round-icon">vpn_key</span>
           <p>No API keys yet</p>
         </div>
       `;
@@ -2922,7 +2862,7 @@ async function loadApiKeys() {
           ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
         </div>
         <button class="btn btn-icon btn-danger delete-api-key-btn" data-id="${key.id}">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     `).join('');
@@ -2946,7 +2886,7 @@ async function loadApiKeys() {
     console.error('Failed to load API keys:', err);
     list.innerHTML = `
       <div class="empty-state error">
-        <span class="material-icons-outlined">error</span>
+        <span class="round-icon">error</span>
         <p>Failed to load API keys</p>
       </div>
     `;
@@ -2993,9 +2933,9 @@ function setupApiKeysHandlers() {
     const token = document.getElementById('created-api-key-token').textContent;
     navigator.clipboard.writeText(token);
     const btn = createdModal.querySelector('#copy-api-key-btn');
-    btn.innerHTML = '<span class="material-icons-outlined">check</span>';
+    btn.innerHTML = '<span class="round-icon">check</span>';
     setTimeout(() => {
-      btn.innerHTML = '<span class="material-icons-outlined">content_copy</span>';
+      btn.innerHTML = '<span class="round-icon">content_copy</span>';
     }, 2000);
   });
   
@@ -3015,7 +2955,7 @@ function setupApiKeysHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/api-keys', {
@@ -3066,7 +3006,7 @@ async function loadWebhooks() {
     if (!data.webhooks || data.webhooks.length === 0) {
       container.innerHTML = `
         <div class="empty-state small">
-          <span class="material-icons-outlined">webhook</span>
+          <span class="round-icon">webhook</span>
           <p>No webhooks configured</p>
         </div>
       `;
@@ -3076,7 +3016,7 @@ async function loadWebhooks() {
     container.innerHTML = data.webhooks.map(webhook => `
       <div class="list-item webhook-item" data-id="${webhook.id}">
         <div class="item-icon">
-          <span class="material-icons-outlined">${getWebhookIcon(webhook.type)}</span>
+          <span class="round-icon">${getWebhookIcon(webhook.type)}</span>
         </div>
         <div class="item-info">
           <span class="item-name">${escapeHtml(webhook.name)}</span>
@@ -3084,14 +3024,14 @@ async function loadWebhooks() {
         </div>
         <div class="item-actions">
           <button class="btn btn-icon btn-sm test-webhook-btn" title="Test">
-            <span class="material-icons-outlined">send</span>
+            <span class="round-icon">send</span>
           </button>
           <label class="toggle small">
             <input type="checkbox" class="toggle-webhook-btn" ${webhook.enabled ? 'checked' : ''}>
             <span class="toggle-slider"></span>
           </label>
           <button class="btn btn-icon btn-sm btn-danger delete-webhook-btn" title="Delete">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
           </button>
         </div>
       </div>
@@ -3118,20 +3058,20 @@ async function loadWebhooks() {
         const item = e.target.closest('.webhook-item');
         const id = item.dataset.id;
         btn.disabled = true;
-        btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+        btn.innerHTML = '<span class="round-icon spinning">sync</span>';
         
         try {
           const res = await api(`/api/webhooks/${id}/test`, { method: 'POST' });
           const data = await res.json();
-          btn.innerHTML = '<span class="material-icons-outlined">check</span>';
+          btn.innerHTML = '<span class="round-icon">check</span>';
           setTimeout(() => {
-            btn.innerHTML = '<span class="material-icons-outlined">send</span>';
+            btn.innerHTML = '<span class="round-icon">send</span>';
             btn.disabled = false;
           }, 2000);
         } catch (err) {
-          btn.innerHTML = '<span class="material-icons-outlined">error</span>';
+          btn.innerHTML = '<span class="round-icon">error</span>';
           setTimeout(() => {
-            btn.innerHTML = '<span class="material-icons-outlined">send</span>';
+            btn.innerHTML = '<span class="round-icon">send</span>';
             btn.disabled = false;
           }, 2000);
         }
@@ -3217,7 +3157,7 @@ function setupWebhooksHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/webhooks', {
@@ -3255,7 +3195,7 @@ function renderNotFound() {
         <h1>Page Not Found</h1>
         <p>The page you're looking for doesn't exist or has been moved.</p>
         <a href="/dashboard" class="btn btn-primary">
-          <span class="material-icons-outlined">home</span>
+          <span class="round-icon">home</span>
           <span>Back to Dashboard</span>
         </a>
       </div>
@@ -3270,7 +3210,7 @@ function renderUser(targetUsername) {
   app.innerHTML = `
     <div class="user-container">
       <div class="loading-state">
-        <span class="material-icons-outlined spinning">sync</span>
+        <span class="round-icon spinning">sync</span>
         <span>Loading profile...</span>
       </div>
     </div>
@@ -3290,7 +3230,7 @@ async function loadUserProfile(targetUsername) {
     if (data.error) {
       container.innerHTML = `
         <div class="error-state">
-          <span class="material-icons-outlined">error</span>
+          <span class="round-icon">error</span>
           <p>User not found</p>
           <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
         </div>
@@ -3314,7 +3254,7 @@ async function loadUserProfile(targetUsername) {
           <div class="user-info">
             <h1>${escapeHtml$1(user.displayName || user.username)}</h1>
             <span class="user-username">@${escapeHtml$1(user.username)}</span>
-            ${isPrivate ? '<span class="private-badge"><span class="material-icons-outlined">lock</span> Private Profile</span>' : ''}
+            ${isPrivate ? '<span class="private-badge"><span class="round-icon">lock</span> Private Profile</span>' : ''}
           </div>
         </div>
         
@@ -3327,14 +3267,14 @@ async function loadUserProfile(targetUsername) {
         
         ${isPrivate ? `
           <div class="private-notice">
-            <span class="material-icons-outlined">visibility_off</span>
+            <span class="round-icon">visibility_off</span>
             <p>This profile is private</p>
           </div>
         ` : ''}
         
         ${!isPrivate && user.createdAt ? `
           <div class="user-meta">
-            <span class="material-icons-outlined">calendar_today</span>
+            <span class="round-icon">calendar_today</span>
             <span>Joined ${new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
           </div>
         ` : ''}
@@ -3343,7 +3283,7 @@ async function loadUserProfile(targetUsername) {
   } catch (err) {
     container.innerHTML = `
       <div class="error-state">
-        <span class="material-icons-outlined">wifi_off</span>
+        <span class="round-icon">wifi_off</span>
         <p>Connection error. Please try again.</p>
         <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
       </div>
@@ -3376,10 +3316,10 @@ function toast(message, type = 'info', duration = 3000) {
   };
   
   el.innerHTML = `
-    <span class="material-icons-outlined">${icons[type] || 'info'}</span>
+    <span class="round-icon">${icons[type] || 'info'}</span>
     <span class="toast-message">${escapeHtml$1(message)}</span>
     <button class="toast-close">
-      <span class="material-icons-outlined">close</span>
+      <span class="round-icon">close</span>
     </button>
   `;
   
@@ -3438,7 +3378,7 @@ async function renderServers() {
         </div>
         ${canCreate ? `
           <a href="/servers/create" class="btn btn-primary" id="create-server-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Server
           </a>
         ` : ''}
@@ -3466,9 +3406,6 @@ async function loadServers() {
     if (data.servers.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">
-            <span class="material-icons-outlined">dns</span>
-          </div>
           <h3>No servers yet</h3>
           <p>Create your first server to get started</p>
         </div>
@@ -3481,7 +3418,7 @@ async function loadServers() {
         <div class="server-card-header">
           <div class="server-card-title">
             <div class="server-icon">
-              <span class="material-icons-outlined">dns</span>
+              <span class="round-icon">dns</span>
             </div>
             <div class="server-name-wrap">
               <h3>${escapeHtml$1(server.name)}</h3>
@@ -3493,15 +3430,15 @@ async function loadServers() {
         <div class="server-card-body">
           <div class="server-resources">
             <div class="resource-chip">
-              <span class="material-icons-outlined">memory</span>
+              <span class="round-icon">memory</span>
               <span>${server.limits?.memory || 0} MB</span>
             </div>
             <div class="resource-chip">
-              <span class="material-icons-outlined">storage</span>
+              <span class="round-icon">storage</span>
               <span>${server.limits?.disk || 0} MB</span>
             </div>
             <div class="resource-chip">
-              <span class="material-icons-outlined">speed</span>
+              <span class="round-icon">speed</span>
               <span>${server.limits?.cpu || 0}%</span>
             </div>
           </div>
@@ -3509,17 +3446,17 @@ async function loadServers() {
         <div class="server-card-footer">
           <div class="power-actions">
             <button class="power-btn start" onclick="serverPower('${server.id}', 'start')" title="Start">
-              <span class="material-icons-outlined">play_arrow</span>
+              <span class="round-icon">play_arrow</span>
             </button>
             <button class="power-btn restart" onclick="serverPower('${server.id}', 'restart')" title="Restart">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
             </button>
             <button class="power-btn stop" onclick="serverPower('${server.id}', 'stop')" title="Stop">
-              <span class="material-icons-outlined">stop</span>
+              <span class="round-icon">stop</span>
             </button>
           </div>
           <a href="/server/${server.id}" class="btn btn-primary btn-sm">
-            <span class="material-icons-outlined">terminal</span>
+            <span class="round-icon">terminal</span>
             Console
           </a>
         </div>
@@ -3602,7 +3539,7 @@ async function renderCreateServer() {
     <div class="create-server-page">
       <div class="page-header">
         <a href="/servers" class="back-link">
-          <span class="material-icons-outlined">arrow_back</span>
+          <span class="round-icon">arrow_back</span>
           <span>Back to Servers</span>
         </a>
         <h1>Create Server</h1>
@@ -3627,7 +3564,7 @@ async function renderCreateServer() {
     if (limitsData.canCreateServers === false) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">block</span>
+          <span class="round-icon">block</span>
           <p>Server creation is disabled</p>
           <p class="hint">Contact an administrator to create servers for you.</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
@@ -3639,7 +3576,7 @@ async function renderCreateServer() {
     if (!nestsData$1.nests || nestsData$1.nests.length === 0) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">egg_alt</span>
+          <span class="round-icon">egg_alt</span>
           <p>No eggs configured. Contact an administrator.</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
         </div>
@@ -3650,7 +3587,7 @@ async function renderCreateServer() {
     if (!nodesData.nodes || nodesData.nodes.length === 0) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">dns</span>
+          <span class="round-icon">dns</span>
           <p>No nodes available. Contact an administrator.</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
         </div>
@@ -3669,7 +3606,7 @@ async function renderCreateServer() {
     if (remaining.servers <= 0) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">block</span>
+          <span class="round-icon">block</span>
           <p>Server limit reached (${limitsData.limits.servers} max)</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
         </div>
@@ -3747,7 +3684,7 @@ function renderCreateForm(remaining) {
               <div class="resources-grid">
                 <div class="resource-input">
                   <label>
-                    <span class="material-icons-outlined">memory</span>
+                    <span class="round-icon">memory</span>
                     Memory (MB)
                   </label>
                   <input type="number" name="memory" value="${Math.min(512, remaining.memory)}" min="${Math.min(8, remaining.memory)}" max="${remaining.memory}" required />
@@ -3755,7 +3692,7 @@ function renderCreateForm(remaining) {
                 </div>
                 <div class="resource-input">
                   <label>
-                    <span class="material-icons-outlined">storage</span>
+                    <span class="round-icon">storage</span>
                     Disk (MB)
                   </label>
                   <input type="number" name="disk" value="${Math.min(1024, remaining.disk)}" min="${Math.min(8, remaining.disk)}" max="${remaining.disk}" required />
@@ -3763,7 +3700,7 @@ function renderCreateForm(remaining) {
                 </div>
                 <div class="resource-input">
                   <label>
-                    <span class="material-icons-outlined">speed</span>
+                    <span class="round-icon">speed</span>
                     CPU (%)
                   </label>
                   <input type="number" name="cpu" value="${Math.min(100, remaining.cpu)}" min="${Math.min(5, remaining.cpu)}" max="${remaining.cpu}" required />
@@ -3771,7 +3708,7 @@ function renderCreateForm(remaining) {
                 </div>
                 <div class="resource-input">
                   <label>
-                    <span class="material-icons-outlined">lan</span>
+                    <span class="round-icon">lan</span>
                     Allocations
                   </label>
                   <input type="number" name="allocations" value="${Math.min(1, remaining.allocations)}" min="1" max="${remaining.allocations}" required />
@@ -3792,7 +3729,7 @@ function renderCreateForm(remaining) {
             <div class="form-actions">
               <a href="/servers" class="btn btn-ghost">Cancel</a>
               <button type="submit" class="btn btn-primary btn-large" id="submit-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 Create Server
               </button>
             </div>
@@ -3855,27 +3792,27 @@ function renderEggsGrid(nest) {
         <h4>${escapeHtml$1(egg.name)}</h4>
         <p>${escapeHtml$1(egg.description || 'No description')}</p>
       </div>
-      <span class="egg-select-check material-icons-outlined">check_circle</span>
+      <span class="egg-select-check round-icon">check_circle</span>
     </div>
   `).join('');
 }
 
 function renderEggIcon(egg) {
   if (!egg.icon) {
-    return '<span class="material-icons-outlined">egg_alt</span>';
+    return '<span class="round-icon">egg_alt</span>';
   }
   
   // Check if it's a Material Icon name
   if (!egg.icon.includes('/') && !egg.icon.includes('.')) {
-    return `<span class="material-icons-outlined">${escapeHtml$1(egg.icon)}</span>`;
+    return `<span class="round-icon">${escapeHtml$1(egg.icon)}</span>`;
   }
   
   // Check if it's a URL (image)
   if (egg.icon.startsWith('http') || egg.icon.startsWith('/') || egg.icon.includes('.')) {
-    return `<img src="${escapeHtml$1(egg.icon)}" alt="${escapeHtml$1(egg.name)}" onerror="this.outerHTML='<span class=\\'material-icons-outlined\\'>egg_alt</span>'" />`;
+    return `<img src="${escapeHtml$1(egg.icon)}" alt="${escapeHtml$1(egg.name)}" onerror="this.outerHTML='<span class=\\'round-icon\\'>egg_alt</span>'" />`;
   }
   
-  return '<span class="material-icons-outlined">egg_alt</span>';
+  return '<span class="round-icon">egg_alt</span>';
 }
 
 function renderEggPreview(egg) {
@@ -3913,7 +3850,7 @@ function renderNodesGrid(requestedMemory, requestedDisk) {
            data-node-id="${node.id}" 
            ${!canFit ? 'title="Insufficient resources"' : ''}>
         <div class="node-select-icon">
-          <span class="material-icons-outlined">${canFit ? 'dns' : 'block'}</span>
+          <span class="round-icon">${canFit ? 'dns' : 'block'}</span>
         </div>
         <div class="node-select-info">
           <h4>${escapeHtml$1(node.name)}</h4>
@@ -3934,7 +3871,7 @@ function renderNodesGrid(requestedMemory, requestedDisk) {
             </div>
           </div>
         </div>
-        <span class="node-select-check material-icons-outlined">check_circle</span>
+        <span class="node-select-check round-icon">check_circle</span>
       </div>
     `;
   }).join('');
@@ -4074,7 +4011,7 @@ async function submitCreateServer(remaining) {
   }
   
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="material-icons-outlined spinning">sync</span> Creating...';
+  submitBtn.innerHTML = '<span class="round-icon spinning">sync</span> Creating...';
   errorEl.style.display = 'none';
   
   try {
@@ -4102,13 +4039,13 @@ async function submitCreateServer(remaining) {
       errorEl.textContent = data.error || 'Failed to create server';
       errorEl.style.display = 'block';
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<span class="material-icons-outlined">add</span> Create Server';
+      submitBtn.innerHTML = '<span class="round-icon">add</span> Create Server';
     }
   } catch (err) {
     errorEl.textContent = 'Network error. Please try again.';
     errorEl.style.display = 'block';
     submitBtn.disabled = false;
-    submitBtn.innerHTML = '<span class="material-icons-outlined">add</span> Create Server';
+    submitBtn.innerHTML = '<span class="round-icon">add</span> Create Server';
   }
 }
 
@@ -4255,10 +4192,7 @@ function renderConsoleTab() {
       <div class="card console-card">
         <div class="console-terminal" id="console-terminal"></div>
         <div class="console-input">
-          <input type="text" id="command-input" placeholder="Type a command..." />
-          <button class="btn btn-primary" id="send-command">
-            <span class="material-icons-outlined">send</span>
-          </button>
+          <input type="text" id="command-input" placeholder="> Type a command..." />
         </div>
       </div>
     </div>
@@ -4276,7 +4210,6 @@ function initConsoleTab(serverId) {
   initTerminal();
   connectWebSocket(serverId);
   
-  document.getElementById('send-command').onclick = () => sendCommand(serverId);
   document.getElementById('command-input').onkeypress = (e) => {
     if (e.key === 'Enter') sendCommand(serverId);
   };
@@ -41563,7 +41496,7 @@ function showCompressIndicator() {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="material-icons-outlined rotating">archive</span>
+      <span class="round-icon rotating">archive</span>
     </div>
     <div class="file-info">
       <span class="file-name">Compressing files...</span>
@@ -41605,7 +41538,7 @@ function showDecompressIndicator(filename) {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="material-icons-outlined rotating">unarchive</span>
+      <span class="round-icon rotating">unarchive</span>
     </div>
     <div class="file-info">
       <span class="file-name">Extracting ${filename}...</span>
@@ -41738,27 +41671,27 @@ function renderFilesTab() {
           <div class="files-actions">
             <div class="files-search-wrapper" id="files-search-wrapper">
               <button class="btn btn-xs btn-ghost" id="btn-search-toggle" title="Search">
-                <span class="material-icons-outlined">search</span>
+                <span class="round-icon">search</span>
               </button>
               <input type="text" class="files-search-input" id="files-search-input" placeholder="Search files..." style="display:none;">
             </div>
             <button class="btn btn-xs btn-ghost" id="btn-sort" title="Sort">
-              <span class="material-icons-outlined">sort</span>
+              <span class="round-icon">sort</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-view-toggle" title="Toggle view">
-              <span class="material-icons-outlined">grid_view</span>
+              <span class="round-icon">grid_view</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
-              <span class="material-icons-outlined">create_new_folder</span>
+              <span class="round-icon">create_new_folder</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
-              <span class="material-icons-outlined">note_add</span>
+              <span class="round-icon">note_add</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
-              <span class="material-icons-outlined">upload</span>
+              <span class="round-icon">upload</span>
             </button>
           </div>
         </div>
@@ -41768,22 +41701,22 @@ function renderFilesTab() {
           </div>
           <div class="selection-actions">
             <button class="btn btn-xs btn-ghost" id="btn-copy-clipboard" title="Copy">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-cut-clipboard" title="Cut">
-              <span class="material-icons-outlined">content_cut</span>
+              <span class="round-icon">content_cut</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
-              <span class="material-icons-outlined">drive_file_move</span>
+              <span class="round-icon">drive_file_move</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
-              <span class="material-icons-outlined">archive</span>
+              <span class="round-icon">archive</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
-              <span class="material-icons-outlined">delete</span>
+              <span class="round-icon">delete</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
-              <span class="material-icons-outlined">close</span>
+              <span class="round-icon">close</span>
             </button>
           </div>
         </div>
@@ -41793,11 +41726,11 @@ function renderFilesTab() {
           </div>
           <div class="selection-actions">
             <button class="btn btn-xs btn-ghost" id="btn-paste" title="Paste here">
-              <span class="material-icons-outlined">content_paste</span>
+              <span class="round-icon">content_paste</span>
               Paste
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-cancel-paste" title="Cancel">
-              <span class="material-icons-outlined">close</span>
+              <span class="round-icon">close</span>
             </button>
           </div>
         </div>
@@ -42165,7 +42098,7 @@ function showSortMenu(serverId) {
 function toggleViewMode(serverId) {
   viewMode = viewMode === 'list' ? 'grid' : 'list';
   const btn = document.getElementById('btn-view-toggle');
-  const icon = btn.querySelector('.material-icons-outlined');
+  const icon = btn.querySelector('.round-icon');
   icon.textContent = viewMode === 'list' ? 'grid_view' : 'view_list';
   loadFiles(serverId, currentPath);
 }
@@ -42264,7 +42197,7 @@ async function loadFiles(serverId, path) {
     console.error('Failed to load files:', e);
     const isNodeError = e.message?.includes('node') || e.message?.includes('connect') || e.message?.includes('offline');
     const msg = isNodeError 
-      ? '<span class="material-icons-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
+      ? '<span class="round-icon" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
       : 'Failed to load files';
     filesList.innerHTML = `<div class="files-error">${msg}</div>`;
   }
@@ -42274,7 +42207,7 @@ function updateBreadcrumb(path, serverId) {
   const breadcrumb = document.getElementById('files-breadcrumb');
   const parts = path.split('/').filter(p => p);
   
-  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">home</span></span>`;
+  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="round-icon" style="font-size: 16px; vertical-align: middle;">home</span></span>`;
   
   if (parts.length === 0) {
   } else if (parts.length === 1) {
@@ -42326,7 +42259,7 @@ function renderFilesList(files, serverId) {
   
   if (files.length === 0) {
     filesList.innerHTML = `<div class="files-empty">
-      <span class="material-icons-outlined" style="font-size: 2rem; margin-bottom: .5rem;">folder_open</span>
+      <span class="round-icon" style="font-size: 2rem; margin-bottom: .5rem;">folder_open</span>
       <p>This directory is empty</p>
       <p style="font-size: .7rem; margin-top: .25rem;">Drag files here or use the upload button</p>
     </div>`;
@@ -42348,7 +42281,7 @@ function renderFilesList(files, serverId) {
       return `
       <div class="file-item-grid ${isDir ? 'directory' : 'file'}" data-name="${file.name}" data-is-dir="${isDir}" data-editable="${canEdit}" data-preview="${previewType || ''}" ${file._searchResult ? `data-path="${file.path}"` : ''}>
         <div class="file-grid-icon">
-          <span class="material-icons-outlined">${isDir ? 'folder' : getFileIcon(file)}</span>
+          <span class="round-icon">${isDir ? 'folder' : getFileIcon(file)}</span>
         </div>
         <div class="file-grid-name">${file.name}</div>
         <div class="file-grid-meta">${isDir ? '' : formatBytes(file.size)}</div>
@@ -42361,7 +42294,7 @@ function renderFilesList(files, serverId) {
         <input type="checkbox" class="file-checkbox" data-name="${file.name}">
       </div>
       <div class="file-icon">
-        <span class="material-icons-outlined">${isDir ? 'folder' : getFileIcon(file)}</span>
+        <span class="round-icon">${isDir ? 'folder' : getFileIcon(file)}</span>
       </div>
       <div class="file-info">
         <span class="file-name">${file.name}</span>
@@ -42370,25 +42303,25 @@ function renderFilesList(files, serverId) {
       <div class="file-actions">
         ${!isDir && isArchive(file) ? `
           <button class="btn btn-sm btn-ghost btn-decompress" title="Extract">
-            <span class="material-icons-outlined">unarchive</span>
+            <span class="round-icon">unarchive</span>
           </button>
         ` : ''}
         ${!isDir ? `
           <button class="btn btn-sm btn-ghost btn-download" title="Download">
-            <span class="material-icons-outlined">download</span>
+            <span class="round-icon">download</span>
           </button>
           <button class="btn btn-sm btn-ghost btn-copy" title="Copy">
-            <span class="material-icons-outlined">content_copy</span>
+            <span class="round-icon">content_copy</span>
           </button>
         ` : ''}
         <button class="btn btn-sm btn-ghost btn-chmod" title="Permissions">
-          <span class="material-icons-outlined">lock</span>
+          <span class="round-icon">lock</span>
         </button>
         <button class="btn btn-sm btn-ghost btn-rename" title="Rename">
-          <span class="material-icons-outlined">drive_file_rename_outline</span>
+          <span class="round-icon">drive_file_rename_outline</span>
         </button>
         <button class="btn btn-sm btn-ghost btn-delete" title="Delete">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     </div>
@@ -42552,7 +42485,7 @@ async function openPreview(serverId, name, type, filePath) {
     } else if (type === 'video') {
       content = `<div class="preview-container"><video src="${data.url}" controls class="file-preview-video"></video></div>`;
     } else if (type === 'audio') {
-      content = `<div class="preview-container preview-audio"><span class="material-icons-outlined" style="font-size:3rem;color:var(--accent)">audio_file</span><p>${name}</p><audio src="${data.url}" controls class="file-preview-audio"></audio></div>`;
+      content = `<div class="preview-container preview-audio"><span class="round-icon" style="font-size:3rem;color:var(--accent)">audio_file</span><p>${name}</p><audio src="${data.url}" controls class="file-preview-audio"></audio></div>`;
     } else if (type === 'pdf') {
       content = `<div class="preview-container"><iframe src="${data.url}" class="file-preview-pdf"></iframe></div>`;
     }
@@ -42917,13 +42850,13 @@ async function editFile(serverId, path) {
         <div class="editor-header">
           <div class="editor-title">
             <button class="btn btn-ghost btn-sm" id="btn-back">
-              <span class="material-icons-outlined">arrow_back</span>
+              <span class="round-icon">arrow_back</span>
             </button>
             <span class="editor-filename">${filename}</span>
           </div>
           <div class="editor-actions">
             <button class="btn btn-primary btn-sm" id="btn-save">
-              <span class="material-icons-outlined">save</span>
+              <span class="round-icon">save</span>
               Save
             </button>
           </div>
@@ -42968,7 +42901,7 @@ async function saveFile(serverId, path) {
   const saveBtn = document.getElementById('btn-save');
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
   
   try {
     const res = await api(`/api/servers/${serverId}/files/write`, {
@@ -42977,21 +42910,21 @@ async function saveFile(serverId, path) {
     });
     
     if (res.ok) {
-      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+        saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
       }, 1500);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+      saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
     }
   } catch (e) {
     error('Failed to save file');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+    saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
   }
 }
 
@@ -43075,7 +43008,7 @@ function showUploadIndicator(filename) {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="material-icons-outlined rotating">sync</span>
+      <span class="round-icon rotating">sync</span>
     </div>
     <div class="file-info">
       <span class="file-name">${filename}</span>
@@ -43109,27 +43042,27 @@ function restoreFilesList(serverId) {
       <div class="files-actions">
         <div class="files-search-wrapper" id="files-search-wrapper">
           <button class="btn btn-xs btn-ghost" id="btn-search-toggle" title="Search">
-            <span class="material-icons-outlined">search</span>
+            <span class="round-icon">search</span>
           </button>
           <input type="text" class="files-search-input" id="files-search-input" placeholder="Search files..." style="display:none;">
         </div>
         <button class="btn btn-xs btn-ghost" id="btn-sort" title="Sort">
-          <span class="material-icons-outlined">sort</span>
+          <span class="round-icon">sort</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-view-toggle" title="Toggle view">
-          <span class="material-icons-outlined">${viewMode === 'list' ? 'grid_view' : 'view_list'}</span>
+          <span class="round-icon">${viewMode === 'list' ? 'grid_view' : 'view_list'}</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
-          <span class="material-icons-outlined">refresh</span>
+          <span class="round-icon">refresh</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
-          <span class="material-icons-outlined">create_new_folder</span>
+          <span class="round-icon">create_new_folder</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
-          <span class="material-icons-outlined">note_add</span>
+          <span class="round-icon">note_add</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
-          <span class="material-icons-outlined">upload</span>
+          <span class="round-icon">upload</span>
         </button>
       </div>
     </div>
@@ -43139,22 +43072,22 @@ function restoreFilesList(serverId) {
       </div>
       <div class="selection-actions">
         <button class="btn btn-xs btn-ghost" id="btn-copy-clipboard" title="Copy">
-          <span class="material-icons-outlined">content_copy</span>
+          <span class="round-icon">content_copy</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-cut-clipboard" title="Cut">
-          <span class="material-icons-outlined">content_cut</span>
+          <span class="round-icon">content_cut</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
-          <span class="material-icons-outlined">drive_file_move</span>
+          <span class="round-icon">drive_file_move</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
-          <span class="material-icons-outlined">archive</span>
+          <span class="round-icon">archive</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     </div>
@@ -43164,11 +43097,11 @@ function restoreFilesList(serverId) {
       </div>
       <div class="selection-actions">
         <button class="btn btn-xs btn-ghost" id="btn-paste" title="Paste here">
-          <span class="material-icons-outlined">content_paste</span>
+          <span class="round-icon">content_paste</span>
           Paste
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-cancel-paste" title="Cancel">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     </div>
@@ -43198,6 +43131,7 @@ function restoreFilesList(serverId) {
     if (!visible) searchInput.focus();
     else { searchInput.value = ''; searchQuery = ''; loadFiles(currentServerId$7, currentPath); }
   };
+  
   searchInput.oninput = () => {
     clearTimeout(searchTimeout$1);
     searchTimeout$1 = setTimeout(() => {
@@ -43395,7 +43329,7 @@ function renderStartupTab() {
       <div class="settings-content">
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">terminal</span>
+            <span class="round-icon">terminal</span>
             <h3>Startup Configuration</h3>
           </div>
           <div id="startup-card-content">
@@ -43466,7 +43400,7 @@ function renderStartupForm(server, egg) {
     <div class="form-group" style="margin-top: 20px;">
       <label>Server Egg</label>
       <div class="input-wrapper">
-        <span class="material-icons-outlined">egg</span>
+        <span class="round-icon">egg</span>
         <select name="egg_id" id="egg-select" class="select-input">
           ${getEggOptions(server)}
         </select>
@@ -43476,7 +43410,7 @@ function renderStartupForm(server, egg) {
     <div class="form-group" style="margin-top: 12px;">
       <label>Docker Image</label>
       <div class="input-wrapper">
-        <span class="material-icons-outlined">inventory_2</span>
+        <span class="round-icon">inventory_2</span>
         <select name="docker_image" class="select-input">
           ${getDockerImagesOptions(server, egg)}
         </select>
@@ -43519,11 +43453,11 @@ function renderStartupForm(server, egg) {
       
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" id="save-startup">
-          <span class="material-icons-outlined">save</span>
+          <span class="round-icon">save</span>
           Save Changes
         </button>
         <button type="button" class="btn btn-ghost" id="reset-startup">
-          <span class="material-icons-outlined">restart_alt</span>
+          <span class="round-icon">restart_alt</span>
           Reset to Defaults
         </button>
       </div>
@@ -43717,7 +43651,7 @@ async function saveStartup() {
   const environment = getEnvironmentFromForm();
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
   
   try {
     const res = await api(`/api/servers/${currentServerId$6}/startup`, {
@@ -43734,21 +43668,21 @@ async function saveStartup() {
     const data = await res.json();
     
     if (res.ok) {
-      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+        saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
       }, 1500);
     } else {
       error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+      saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save startup:', e);
     error('Failed to save startup');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+    saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
   }
 }
 
@@ -43790,7 +43724,7 @@ function renderNetworkTab() {
       <div class="network-header">
         <h3>Network Allocations</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-allocation">
-          <span class="material-icons-outlined">add</span>
+          <span class="round-icon">add</span>
           Add Allocation
         </button>
       </div>
@@ -43834,7 +43768,7 @@ function renderAllocations() {
   if (allocations.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="material-icons-outlined">lan</span>
+        <span class="round-icon">lan</span>
         <p>No allocations configured</p>
       </div>
     `;
@@ -43850,10 +43784,10 @@ function renderAllocations() {
       <div class="allocation-actions">
         ${!alloc.primary ? `
           <button class="btn btn-ghost btn-sm" data-primary="${alloc.id}" title="Make Primary">
-            <span class="material-icons-outlined">star</span>
+            <span class="round-icon">star</span>
           </button>
           <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${alloc.id}" title="Delete">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
           </button>
         ` : ''}
       </div>
@@ -43874,7 +43808,7 @@ async function addAllocation() {
   const btn = document.getElementById('btn-add-allocation');
   
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+  btn.innerHTML = '<span class="round-icon spinning">sync</span>';
   
   try {
     const res = await api(`/api/servers/${currentServerId$5}/allocations`, {
@@ -43896,7 +43830,7 @@ async function addAllocation() {
   }
   
   btn.disabled = false;
-  btn.innerHTML = '<span class="material-icons-outlined">add</span> Add Allocation';
+  btn.innerHTML = '<span class="round-icon">add</span> Add Allocation';
 }
 
 async function setAllocationPrimary(allocId) {
@@ -44016,7 +43950,7 @@ function renderUsersTab() {
       <div class="users-header">
         <h3>Subusers</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-subuser">
-          <span class="material-icons-outlined">person_add</span>
+          <span class="round-icon">person_add</span>
           Add User
         </button>
       </div>
@@ -44031,14 +43965,14 @@ function renderUsersTab() {
         <div class="modal-header">
           <h3 id="modal-title">Add Subuser</h3>
           <button class="modal-close">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <div class="modal-body">
           <div class="form-group" id="username-group">
             <label>Username</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               <input type="text" id="subuser-username" placeholder="Enter username" />
             </div>
           </div>
@@ -44094,7 +44028,7 @@ function renderSubusers() {
   if (subusers.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="material-icons-outlined">group</span>
+        <span class="round-icon">group</span>
         <p>No subusers added yet</p>
       </div>
     `;
@@ -44109,10 +44043,10 @@ function renderSubusers() {
       </div>
       <div class="subuser-actions">
         <button class="btn btn-ghost btn-sm" data-edit="${sub.id}" title="Edit">
-          <span class="material-icons-outlined">edit</span>
+          <span class="round-icon">edit</span>
         </button>
         <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${sub.id}" title="Remove">
-          <span class="material-icons-outlined">person_remove</span>
+          <span class="round-icon">person_remove</span>
         </button>
       </div>
     </div>
@@ -44221,7 +44155,7 @@ async function saveSubuser(editId) {
   const saveBtn = document.getElementById('save-subuser');
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+  saveBtn.innerHTML = '<span class="round-icon spinning">sync</span>';
   
   try {
     if (editId) {
@@ -44295,7 +44229,7 @@ function renderSchedulesTab(serverId) {
       <div class="tab-header">
         <h2>Schedules</h2>
         <button class="btn btn-primary" id="create-schedule-btn">
-          <span class="material-icons-outlined">add</span>
+          <span class="round-icon">add</span>
           New Schedule
         </button>
       </div>
@@ -44327,7 +44261,7 @@ async function loadSchedules() {
     if (data.schedules.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">schedule</span>
+          <span class="round-icon">schedule</span>
           <p>No schedules configured</p>
           <span class="text-muted">Create automated tasks for your server</span>
         </div>
@@ -44347,33 +44281,33 @@ async function loadSchedules() {
           </div>
           <div class="schedule-actions">
             <button class="btn btn-sm btn-ghost" title="Run Now" data-action="execute" data-id="${schedule.id}">
-              <span class="material-icons-outlined">play_arrow</span>
+              <span class="round-icon">play_arrow</span>
             </button>
             <button class="btn btn-sm btn-ghost" title="Duplicate" data-action="duplicate" data-id="${schedule.id}">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
             <button class="btn btn-sm btn-ghost" title="Edit" data-action="edit" data-id="${schedule.id}">
-              <span class="material-icons-outlined">edit</span>
+              <span class="round-icon">edit</span>
             </button>
             <button class="btn btn-sm btn-ghost btn-danger" title="Delete" data-action="delete" data-id="${schedule.id}">
-              <span class="material-icons-outlined">delete</span>
+              <span class="round-icon">delete</span>
             </button>
           </div>
         </div>
         <div class="schedule-meta">
           <span class="meta-item">
-            <span class="material-icons-outlined">task</span>
+            <span class="round-icon">task</span>
             ${schedule.tasks?.length || 0} task${schedule.tasks?.length !== 1 ? 's' : ''}
           </span>
           ${schedule.last_run_at ? `
             <span class="meta-item">
-              <span class="material-icons-outlined">history</span>
+              <span class="round-icon">history</span>
               Last: ${formatRelativeTime(schedule.last_run_at)}
             </span>
           ` : ''}
           ${schedule.next_run_at ? `
             <span class="meta-item">
-              <span class="material-icons-outlined">schedule</span>
+              <span class="round-icon">schedule</span>
               Next: ${formatRelativeTime(schedule.next_run_at)}
             </span>
           ` : ''}
@@ -44382,7 +44316,7 @@ async function loadSchedules() {
           ${renderTasks(schedule.tasks || [], schedule.id)}
         </div>
         <button class="btn btn-sm btn-ghost add-task-btn" data-schedule="${schedule.id}">
-          <span class="material-icons-outlined">add</span>
+          <span class="round-icon">add</span>
           Add Task
         </button>
       </div>
@@ -44409,10 +44343,10 @@ function renderTasks(tasks, scheduleId) {
       </div>
       <div class="task-actions">
         <button class="btn btn-xs btn-ghost" data-action="edit-task" data-task="${task.id}" data-schedule="${scheduleId}">
-          <span class="material-icons-outlined">edit</span>
+          <span class="round-icon">edit</span>
         </button>
         <button class="btn btn-xs btn-ghost btn-danger" data-action="delete-task" data-task="${task.id}" data-schedule="${scheduleId}">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     </div>
@@ -44427,7 +44361,7 @@ function attachScheduleListeners() {
       
       const id = btn.dataset.id;
       const card = btn.closest('.schedule-card');
-      const icon = btn.querySelector('.material-icons-outlined');
+      const icon = btn.querySelector('.round-icon');
       
       btn.disabled = true;
       card?.classList.add('executing');
@@ -44541,7 +44475,7 @@ function showScheduleModal(schedule, isDuplicate = false) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit Schedule' : isDuplicate ? 'Duplicate Schedule' : 'Create Schedule'}</h3>
         <button class="modal-close" id="close-schedule-modal">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="schedule-form" class="modal-body">
@@ -44701,7 +44635,7 @@ function showTaskModal(scheduleId, task) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit Task' : 'Add Task'}</h3>
         <button class="modal-close" id="close-task-modal">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="task-form" class="modal-body">
@@ -44977,7 +44911,7 @@ function renderSettingsTab() {
       <div class="settings-content">
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <h3>Server Details</h3>
           </div>
           <div id="settings-details">
@@ -44987,7 +44921,7 @@ function renderSettingsTab() {
         
         <div class="settings-section danger-section">
           <div class="section-header">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <h3>Danger Zone</h3>
           </div>
           
@@ -44997,7 +44931,7 @@ function renderSettingsTab() {
               <span class="setting-description">Delete all server files and reinstall from scratch</span>
             </div>
             <button class="btn btn-warning" id="btn-reinstall">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
               <span>Reinstall</span>
             </button>
           </div>
@@ -45008,7 +44942,7 @@ function renderSettingsTab() {
               <span class="setting-description">Permanently delete this server and all its data</span>
             </div>
             <button class="btn btn-danger" id="btn-delete">
-              <span class="material-icons-outlined">delete_forever</span>
+              <span class="round-icon">delete_forever</span>
               <span>Delete</span>
             </button>
           </div>
@@ -45073,7 +45007,7 @@ function renderDetailsForm(server) {
       <div class="form-group">
         <label for="server-name-input">Server Name</label>
         <div class="input-wrapper">
-          <span class="material-icons-outlined">badge</span>
+          <span class="round-icon">badge</span>
           <input type="text" id="server-name-input" name="name" value="${escapeHtml$1(server.name)}" maxlength="50" required />
         </div>
       </div>
@@ -45102,7 +45036,7 @@ function renderDetailsForm(server) {
       
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" id="save-details">
-          <span class="material-icons-outlined">save</span>
+          <span class="round-icon">save</span>
           Save Changes
         </button>
       </div>
@@ -45135,7 +45069,7 @@ async function saveDetails() {
   }
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
   
   try {
     const res = await api(`/api/servers/${currentServerId$2}/details`, {
@@ -45148,7 +45082,7 @@ async function saveDetails() {
     
     if (res.ok) {
       success('Server details saved');
-      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
       
       // Update server data cache
       if (serverData$1) {
@@ -45168,18 +45102,18 @@ async function saveDetails() {
       
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+        saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
       }, 1500);
     } else {
       error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+      saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save details:', e);
     error('Failed to save server details');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+    saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
   }
 }
 
@@ -45192,11 +45126,11 @@ function confirmReinstall() {
       <div class="modal-header">
         <h3>Reinstall Server</h3>
         <button class="modal-close">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <div class="warning-box">
-        <span class="material-icons-outlined">warning</span>
+        <span class="round-icon">warning</span>
         <p>This will delete all server files and reinstall the server from scratch. This action cannot be undone!</p>
       </div>
       <p style="margin-bottom: 12px; color: var(--text-secondary);">Type <strong style="color: var(--text-primary);">REINSTALL</strong> to confirm:</p>
@@ -45229,7 +45163,7 @@ function confirmReinstall() {
   
   doBtn.onclick = async () => {
     doBtn.disabled = true;
-    doBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Reinstalling...';
+    doBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Reinstalling...';
     await reinstallServer();
     closeModal();
   };
@@ -45266,11 +45200,11 @@ function confirmDelete() {
       <div class="modal-header">
         <h3>Delete Server</h3>
         <button class="modal-close">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <div class="warning-box danger">
-        <span class="material-icons-outlined">error</span>
+        <span class="round-icon">error</span>
         <p>This will permanently delete the server and all its data. This action cannot be undone!</p>
       </div>
       <p style="margin-bottom: 12px; color: var(--text-secondary);">Type <strong style="color: var(--text-primary);">DELETE</strong> to confirm:</p>
@@ -45303,7 +45237,7 @@ function confirmDelete() {
   
   doBtn.onclick = async () => {
     doBtn.disabled = true;
-    doBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Deleting...';
+    doBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Deleting...';
     await deleteServer();
     closeModal();
   };
@@ -45361,10 +45295,10 @@ function renderBackupsTab() {
         <h3>Backups</h3>
         <div>
           <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
-            <span class="material-icons-outlined">refresh</span>
+            <span class="round-icon">refresh</span>
           </button>
           <button class="btn btn-primary btn-sm" id="btn-create-backup">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Backup
           </button>
         </div>
@@ -45408,14 +45342,14 @@ async function refreshBackups() {
   const btn = document.getElementById('btn-refresh-backups');
   if (btn) {
     btn.disabled = true;
-    btn.querySelector('.material-icons-outlined').classList.add('spinning');
+    btn.querySelector('.round-icon').classList.add('spinning');
   }
   
   await loadBackups(currentServerId$1);
   
   if (btn) {
     btn.disabled = false;
-    btn.querySelector('.material-icons-outlined').classList.remove('spinning');
+    btn.querySelector('.round-icon').classList.remove('spinning');
   }
 }
 
@@ -45436,7 +45370,7 @@ async function loadBackups(serverId) {
     if (backups.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">cloud_off</span>
+          <span class="round-icon">cloud_off</span>
           <p>No backups yet</p>
           <p class="hint">Create a backup to save your server files</p>
         </div>
@@ -45447,14 +45381,14 @@ async function loadBackups(serverId) {
     container.innerHTML = backups.map(backup => `
       <div class="backup-item ${backup.is_successful ? '' : 'pending'}" data-id="${backup.id}">
         <div class="backup-icon">
-          <span class="material-icons-outlined ${backup.is_successful ? '' : 'spinning'}">
+          <span class="round-icon ${backup.is_successful ? '' : 'spinning'}">
             ${backup.is_successful ? 'cloud_done' : 'cloud_sync'}
           </span>
         </div>
         <div class="backup-info">
           <div class="backup-name">
             ${backup.name}
-            ${backup.is_locked ? '<span class="material-icons-outlined locked-icon">lock</span>' : ''}
+            ${backup.is_locked ? '<span class="round-icon locked-icon">lock</span>' : ''}
           </div>
           <div class="backup-meta">
             ${backup.is_successful ? formatBytes(backup.bytes || 0) : '<span class="backup-progress">Creating backup...</span>'}
@@ -45466,10 +45400,10 @@ async function loadBackups(serverId) {
         <div class="backup-actions">
           ${backup.is_successful ? `
             <button class="btn btn-xs btn-ghost" title="Download" data-action="download">
-              <span class="material-icons-outlined">download</span>
+              <span class="round-icon">download</span>
             </button>
             <button class="btn btn-xs btn-ghost" title="Restore" data-action="restore">
-              <span class="material-icons-outlined">restore</span>
+              <span class="round-icon">restore</span>
             </button>
           ` : `
             <div class="backup-pending-indicator">
@@ -45479,10 +45413,10 @@ async function loadBackups(serverId) {
             </div>
           `}
           <button class="btn btn-xs btn-ghost" title="${backup.is_locked ? 'Unlock' : 'Lock'}" data-action="lock">
-            <span class="material-icons-outlined">${backup.is_locked ? 'lock_open' : 'lock'}</span>
+            <span class="round-icon">${backup.is_locked ? 'lock_open' : 'lock'}</span>
           </button>
           <button class="btn btn-xs btn-ghost btn-danger" title="Delete" data-action="delete" ${backup.is_locked ? 'disabled' : ''}>
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
           </button>
         </div>
       </div>
@@ -45870,7 +45804,7 @@ function renderPluginPage(pluginId, pageId, container) {
   }
   container.innerHTML = `
     <div class="empty-state">
-      <span class="material-icons-outlined">extension_off</span>
+      <span class="round-icon">extension_off</span>
       <p>Plugin page not available</p>
     </div>
   `;
@@ -45977,7 +45911,7 @@ let currentTab = 'console';
 let serverData = null;
 let installCheckInterval = null;
 
-const SPARK_POINTS = 30;
+const SPARK_POINTS = 10;
 const sparkHistory = {
   cpu: [],
   mem: [],
@@ -46002,7 +45936,7 @@ function renderServerPage(serverId) {
   app.innerHTML = `
     <div class="server-page">
       <div class="node-down-banner" id="node-down-banner" style="display:none">
-        <span class="material-icons-outlined">warning</span>
+        <span class="round-icon">warning</span>
         <div class="node-down-text">
           <strong>Node Offline</strong>
           <p>The node hosting this server is currently unreachable. Actions like start, stop, and file management may not work until the node is back online.</p>
@@ -46018,16 +45952,19 @@ function renderServerPage(serverId) {
         <div class="server-header-right">
           <div class="power-buttons">
             <button class="power-action start" id="btn-start" title="Start">
-              <span class="material-icons-outlined">play_arrow</span>
+              <span class="round-icon">play_arrow</span>
+              Start
             </button>
             <button class="power-action restart" id="btn-restart" title="Restart">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
+              Restart
             </button>
             <button class="power-action stop" id="btn-stop" title="Stop">
-              <span class="material-icons-outlined">stop</span>
+              <span class="round-icon">stop</span>
+              Stop
             </button>
-            <button class="power-action kill" id="btn-kill" title="Kill">
-              <span class="material-icons-outlined">power_settings_new</span>
+            <button class="power-action kill" id="btn-kill" title="Kill" style="display: none">
+              Kill
             </button>
           </div>
         </div>
@@ -46037,13 +45974,13 @@ function renderServerPage(serverId) {
         ${tabs.map(tab => `
           <button class="server-tab ${tab.id === currentTab ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}" 
                   data-tab="${tab.id}" ${tab.disabled ? 'disabled' : ''}>
-            <span class="material-icons-outlined">${tab.icon}</span>
+            <span class="round-icon">${tab.icon}</span>
             <span>${tab.label}</span>
           </button>
         `).join('')}
         ${getPluginServerTabs().map(tab => `
           <button class="server-tab" data-tab="plugin:${tab.pluginId}:${tab.id}">
-            <span class="material-icons-outlined">${tab.icon || 'extension'}</span>
+            <span class="round-icon">${tab.icon || 'extension'}</span>
             <span>${tab.label || tab.id}</span>
           </button>
         `).join('')}
@@ -46054,26 +45991,27 @@ function renderServerPage(serverId) {
         <div class="server-sidebar">
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">info</span>
+              <span class="round-icon">info</span>
               <h3>Server Info</h3>
             </div>
             <div class="sidebar-card">
+              <span class="round-icon corner-icon">info</span>
               <div class="info-row">
-                <span class="material-icons-outlined">language</span>
+                <span class="round-icon">language</span>
                 <div class="info-content">
                   <span class="info-label">Address</span>
                   <span class="info-value" id="server-address">--</span>
                 </div>
               </div>
               <div class="info-row">
-                <span class="material-icons-outlined">dns</span>
+                <span class="round-icon">dns</span>
                 <div class="info-content">
                   <span class="info-label">Node</span>
                   <span class="info-value" id="server-node">--</span>
                 </div>
               </div>
               <div class="info-row">
-                <span class="material-icons-outlined">schedule</span>
+                <span class="round-icon">schedule</span>
                 <div class="info-content">
                   <span class="info-label">Uptime</span>
                   <span class="info-value" id="server-uptime">--</span>
@@ -46084,49 +46022,69 @@ function renderServerPage(serverId) {
           
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">monitor</span>
+              <span class="round-icon">data_usage</span>
               <h3>Resources</h3>
             </div>
             <div class="sidebar-card">
+              <span class="round-icon corner-icon">data_usage</span>
+              <svg style="width:0; height:0; position:absolute;" aria-hidden="true">
+                <defs>
+                  <linearGradient id="grad-cpu" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="grad-mem" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="var(--success)" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="var(--success)" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="grad-disk" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="var(--warning)" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="var(--warning)" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+              </svg>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
                   <div class="resource-spark-label">
-                    <span class="material-icons-outlined">memory</span>
+                    <span class="round-icon">memory</span>
                     <span>CPU</span>
                   </div>
                   <span class="resource-spark-value" id="res-cpu-text">0%</span>
                 </div>
                 <div class="resource-spark-chart">
                   <svg id="spark-cpu" viewBox="0 0 100 24" preserveAspectRatio="none">
-                    <polyline class="spark-line cpu" points="0,24 100,24" />
+                    <path class="spark-area" fill="url(#grad-cpu)" d="" />
+                    <path class="spark-line cpu" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
                   <div class="resource-spark-label">
-                    <span class="material-icons-outlined">storage</span>
+                    <span class="round-icon">storage</span>
                     <span>Memory</span>
                   </div>
                   <span class="resource-spark-value" id="res-mem-text">0 MB</span>
                 </div>
                 <div class="resource-spark-chart">
                   <svg id="spark-mem" viewBox="0 0 100 24" preserveAspectRatio="none">
-                    <polyline class="spark-line memory" points="0,24 100,24" />
+                    <path class="spark-area" fill="url(#grad-mem)" d="" />
+                    <path class="spark-line memory" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
                   <div class="resource-spark-label">
-                    <span class="material-icons-outlined">save</span>
+                    <span class="round-icon">save</span>
                     <span>Disk</span>
                   </div>
                   <span class="resource-spark-value" id="res-disk-text">0 MB</span>
                 </div>
                 <div class="resource-spark-chart">
                   <svg id="spark-disk" viewBox="0 0 100 24" preserveAspectRatio="none">
-                    <polyline class="spark-line disk" points="0,24 100,24" />
+                    <path class="spark-area" fill="url(#grad-disk)" d="" />
+                    <path class="spark-line disk" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
@@ -46135,19 +46093,21 @@ function renderServerPage(serverId) {
           
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">swap_vert</span>
+              <span class="round-icon">swap_vert</span>
               <h3>Network</h3>
             </div>
             <div class="sidebar-card network-stats">
+              <span class="round-icon corner-icon">swap_vert</span>
+              <span class="round-icon corner-icon corner-icon-left">swap_vert</span>
               <div class="network-stat">
-                <span class="material-icons-outlined tx">arrow_upward</span>
+                <span class="round-icon tx">arrow_upward</span>
                 <div class="stat-content">
                   <span class="stat-label">Outbound</span>
                   <span class="stat-value" id="res-net-tx">0 B</span>
                 </div>
               </div>
               <div class="network-stat">
-                <span class="material-icons-outlined rx">arrow_downward</span>
+                <span class="round-icon rx">arrow_downward</span>
                 <div class="stat-content">
                   <span class="stat-label">Inbound</span>
                   <span class="stat-value" id="res-net-rx">0 B</span>
@@ -46170,7 +46130,17 @@ function renderServerPage(serverId) {
   
   document.getElementById('btn-start').onclick = () => powerAction(serverId, 'start');
   document.getElementById('btn-restart').onclick = () => powerAction(serverId, 'restart');
-  document.getElementById('btn-stop').onclick = () => powerAction(serverId, 'stop');
+  
+  document.getElementById('btn-stop').onclick = () => {
+    powerAction(serverId, 'stop');
+    const btnStop = document.getElementById('btn-stop');
+    const btnKill = document.getElementById('btn-kill');
+    if (btnStop && btnKill) {
+        btnStop.style.display = 'none';
+        btnKill.style.display = 'inline-flex';
+    }
+  };
+  
   document.getElementById('btn-kill').onclick = () => powerAction(serverId, 'kill');
 }
 
@@ -46290,7 +46260,7 @@ async function loadServerDetails(serverId) {
     if (nodeEl) nodeEl.textContent = serverData.node_name || 'Unknown';
     
     // Show node down banner and disable controls
-    const nodeDown = serverData.node_online === false;
+    const nodeDown = false; //serverData.node_online === false;
     const nodeBanner = document.getElementById('node-down-banner');
     if (nodeBanner) {
       nodeBanner.style.display = nodeDown ? 'flex' : 'none';
@@ -46321,12 +46291,9 @@ function disableServerControls() {
   
   // Disable tabs that need the node
   document.querySelectorAll('.server-tab').forEach(tab => {
-    const tabId = tab.dataset.tab;
-    if (['console', 'files', 'backups', 'startup', 'schedules'].includes(tabId)) {
-      tab.disabled = true;
-      tab.classList.add('disabled');
-      tab.title = 'Node is offline';
-    }
+    tab.disabled = true;
+    tab.classList.add('disabled');
+    tab.title = 'Node is offline';
   });
   
   // Show message in tab content
@@ -46334,7 +46301,7 @@ function disableServerControls() {
   if (content) {
     content.innerHTML = `
       <div class="node-offline-tab">
-        <span class="material-icons-outlined">cloud_off</span>
+        <span class="round-icon">cloud_off</span>
         <h3>Node Unreachable</h3>
         <p>The node hosting this server is currently offline. Server management is unavailable until the node comes back online.</p>
         <a href="/status" class="btn btn-sm">View System Status</a>
@@ -46357,7 +46324,7 @@ function showInstallingScreen() {
     <div class="installing-screen">
       <div class="installing-content">
         <div class="installing-icon">
-          <span class="material-icons-outlined spinning">settings</span>
+          <span class="round-icon spinning">settings</span>
         </div>
         <h2>Server Installing</h2>
         <p>Your server is being set up. This may take a few minutes...</p>
@@ -46427,6 +46394,15 @@ function updateServerStatus(status) {
     statusEl.textContent = status;
     statusEl.className = `server-status status-${status}`;
   }
+
+  if (status === 'offline' || status === 'running' || status === 'starting') {
+    const btnStop = document.getElementById('btn-stop');
+    const btnKill = document.getElementById('btn-kill');
+    if (btnStop && btnKill) {
+        btnStop.style.display = '';
+        btnKill.style.display = 'none';
+    }
+  }
 }
 
 function updateServerResources(stats) {
@@ -46481,22 +46457,29 @@ function updateSparkline(svgId, data) {
   const svg = document.getElementById(svgId);
   if (!svg) return;
   
-  const polyline = svg.querySelector('polyline');
-  if (!polyline) return;
-  
+  const linePath = svg.querySelector('.spark-line');
+  const areaPath = svg.querySelector('.spark-area');
+  if (!linePath || !areaPath) return;
+
   if (data.length < 2) {
-    polyline.setAttribute('points', '0,24 100,24');
+    const defaultPath = "M0,12 L100,12";
+    linePath.setAttribute('d', defaultPath);
+    areaPath.setAttribute('d', "");
     return;
   }
-  
-  const points = data.map((value, index) => {
-    const x = (index / (SPARK_POINTS - 1)) * 100;
+
+  const linePoints = data.map((value, index) => {
+    const x = (index / (data.length - 1)) * 100;
     const y = 24 - (value / 100) * 22;
-    return `${x},${y}`;
+    return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
   }).join(' ');
-  
-  polyline.setAttribute('points', points);
+
+  linePath.setAttribute('d', linePoints);
+
+  const areaPoints = `${linePoints} L100,24 L0,24 Z`;
+  areaPath.setAttribute('d', areaPoints);
 }
+
 
 function cleanupServerPage() {
   cleanupCurrentTab();
@@ -46539,7 +46522,7 @@ function renderStatus() {
         <div class="sp-section-head">
           <h2>Services</h2>
           <div class="sp-updated">
-            <span class="material-icons-outlined spinning" id="sp-sync" style="display:none;font-size:14px">sync</span>
+            <span class="round-icon spinning" id="sp-sync" style="display:none;font-size:14px">sync</span>
             <span id="sp-time">--</span>
           </div>
         </div>
@@ -46554,7 +46537,7 @@ function renderStatus() {
         </div>
         <div class="sp-incidents" id="sp-incidents">
           <div class="sp-no-incidents">
-            <span class="material-icons-outlined">check_circle</span>
+            <span class="round-icon">check_circle</span>
             <p>No incidents reported in the last 90 days.</p>
           </div>
         </div>
@@ -46717,7 +46700,7 @@ async function loadStatus() {
     if (data.nodes.length === 0) {
       container.innerHTML = `
         <div class="sp-empty">
-          <span class="material-icons-outlined">cloud_off</span>
+          <span class="round-icon">cloud_off</span>
           <p>No services to display</p>
         </div>
       `;
@@ -46769,7 +46752,7 @@ async function loadStatus() {
   } catch {
     container.innerHTML = `
       <div class="sp-empty error">
-        <span class="material-icons-outlined">error_outline</span>
+        <span class="round-icon">error_outline</span>
         <p>Unable to reach monitoring services. Retrying...</p>
       </div>
     `;
@@ -46799,7 +46782,7 @@ function renderIncidents(incidents) {
   if (!incidents || incidents.length === 0) {
     el.innerHTML = `
       <div class="sp-no-incidents">
-        <span class="material-icons-outlined">check_circle</span>
+        <span class="round-icon">check_circle</span>
         <p>No incidents reported in the last 90 days.</p>
       </div>
     `;
@@ -46836,7 +46819,7 @@ function renderIncidents(incidents) {
         return `
           <div class="sp-incident-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-              <span class="material-icons-outlined" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
+              <span class="round-icon" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
                 ${impactIcons[inc.impact] || 'warning'}
               </span>
               <span class="sp-incident-text" style="flex: 1;">
@@ -46938,11 +46921,11 @@ function renderPagination(meta, tab) {
       
       <div class="pagination-center">
         <button class="page-btn" data-page="${meta.current_page - 1}" ${meta.current_page <= 1 ? 'disabled' : ''}>
-          <span class="material-icons-outlined">chevron_left</span>
+          <span class="round-icon">chevron_left</span>
         </button>
         <div class="page-numbers">${pageNumbers}</div>
         <button class="page-btn" data-page="${meta.current_page + 1}" ${meta.current_page >= meta.total_pages ? 'disabled' : ''}>
-          <span class="material-icons-outlined">chevron_right</span>
+          <span class="round-icon">chevron_right</span>
         </button>
       </div>
       
@@ -47001,7 +46984,7 @@ function renderBreadcrumb(items) {
   return `
     <nav class="admin-breadcrumb">
       ${items.map((item, idx) => `
-        ${idx > 0 ? '<span class="material-icons-outlined">chevron_right</span>' : ''}
+        ${idx > 0 ? '<span class="round-icon">chevron_right</span>' : ''}
         ${item.onClick ? `<a href="#" class="breadcrumb-item" data-action="${item.onClick}">${escapeHtml$1(item.label)}</a>` : `<span class="breadcrumb-item current">${escapeHtml$1(item.label)}</span>`}
       `).join('')}
     </nav>
@@ -47025,9 +47008,9 @@ function setupBreadcrumbListeners(navigateToCallback) {
 function renderSearchBox(tab, placeholder) {
   return `
     <div class="admin-search">
-      <span class="material-icons-outlined">search</span>
+      <span class="round-icon">search</span>
       <input type="text" id="admin-search-input" placeholder="${placeholder}" value="${escapeHtml$1(state.searchQuery[tab] || '')}" />
-      ${state.searchQuery[tab] ? `<button class="search-clear" id="admin-search-clear"><span class="material-icons-outlined">close</span></button>` : ''}
+      ${state.searchQuery[tab] ? `<button class="search-clear" id="admin-search-clear"><span class="round-icon">close</span></button>` : ''}
     </div>
   `;
 }
@@ -47058,7 +47041,7 @@ function setupSearchListeners(tab, loadViewCallback) {
   }
 }
 
-const navigateTo$b = (...args) => window.adminNavigate(...args);
+const navigateTo$c = (...args) => window.adminNavigate(...args);
 
 async function renderNodesList(container, username, loadView) {
   try {
@@ -47081,7 +47064,7 @@ async function renderNodesList(container, username, loadView) {
         ${renderSearchBox('nodes', 'Search by name, IP, or ID...')}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-node-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Node
           </button>
         </div>
@@ -47090,7 +47073,7 @@ async function renderNodesList(container, username, loadView) {
       <div class="admin-list">
         ${data.nodes.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <h3>No Nodes</h3>
             <p>Create your first node to get started</p>
           </div>
@@ -47100,7 +47083,7 @@ async function renderNodesList(container, username, loadView) {
               <div class="list-card" data-id="${node.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined">dns</span>
+                    <span class="round-icon">dns</span>
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml$1(node.name)}</h3>
@@ -47124,7 +47107,7 @@ async function renderNodesList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('nodes', '${node.id}')">
-                    <span class="material-icons-outlined">settings</span>
+                    <span class="round-icon">settings</span>
                     Manage
                   </button>
                 </div>
@@ -47136,12 +47119,12 @@ async function renderNodesList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$b);
+    setupBreadcrumbListeners(navigateTo$c);
     setupPaginationListeners('nodes', loadView);
     setupSearchListeners('nodes', loadView);
     
     document.querySelectorAll('.list-card[data-id]').forEach(card => {
-      card.onclick = () => navigateTo$b('nodes', card.dataset.id);
+      card.onclick = () => navigateTo$c('nodes', card.dataset.id);
     });
     
     document.getElementById('create-node-btn').onclick = () => createNewNode();
@@ -47183,7 +47166,7 @@ async function renderNodeDetail(container, username, nodeId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-node-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -47199,7 +47182,7 @@ async function renderNodeDetail(container, username, nodeId) {
       <div class="detail-content" id="node-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$b);
+    setupBreadcrumbListeners(navigateTo$c);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -47219,7 +47202,7 @@ async function renderNodeDetail(container, username, nodeId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$b('nodes');
+        navigateTo$c('nodes');
       } catch (e) {
         error('Failed to delete node');
       }
@@ -47297,15 +47280,15 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
             <h3>Status</h3>
             <div class="status-grid">
               <div class="status-item ${isOnline ? 'success' : 'danger'}">
-                <span class="material-icons-outlined">${isOnline ? 'check_circle' : 'cancel'}</span>
+                <span class="round-icon">${isOnline ? 'check_circle' : 'cancel'}</span>
                 <span>${isOnline ? 'Online' : 'Offline'}</span>
               </div>
               <div class="status-item ${node.maintenance_mode ? 'warning' : 'success'}">
-                <span class="material-icons-outlined">${node.maintenance_mode ? 'construction' : 'check_circle'}</span>
+                <span class="round-icon">${node.maintenance_mode ? 'construction' : 'check_circle'}</span>
                 <span>${node.maintenance_mode ? 'Maintenance Mode' : 'Operational'}</span>
               </div>
               <div class="status-item ${node.behind_proxy ? 'info' : ''}">
-                <span class="material-icons-outlined">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
+                <span class="round-icon">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
                 <span>${node.behind_proxy ? 'Behind Proxy' : 'Direct Connection'}</span>
               </div>
             </div>
@@ -47471,7 +47454,7 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
             body: JSON.stringify({ node: nodeData })
           });
           success('Node updated successfully');
-          navigateTo$b('nodes', node.id, 'settings');
+          navigateTo$c('nodes', node.id, 'settings');
         } catch (e) {
           error('Failed to update node');
         }
@@ -47486,11 +47469,11 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
           
           <div class="config-actions">
             <button class="btn btn-ghost" id="show-config-btn">
-              <span class="material-icons-outlined">description</span>
+              <span class="round-icon">description</span>
               View Configuration
             </button>
             <button class="btn btn-ghost" id="show-deploy-btn">
-              <span class="material-icons-outlined">terminal</span>
+              <span class="round-icon">terminal</span>
               Deploy Command
             </button>
           </div>
@@ -47618,7 +47601,7 @@ async function createNewNode() {
     
     const data = await res.json();
     if (data.node?.id) {
-      navigateTo$b('nodes', data.node.id, 'about');
+      navigateTo$c('nodes', data.node.id, 'about');
       info('Configure your new node');
     } else {
       error('Failed to create node');
@@ -47628,7 +47611,7 @@ async function createNewNode() {
   }
 }
 
-const navigateTo$a = (...args) => window.adminNavigate(...args);
+const navigateTo$b = (...args) => window.adminNavigate(...args);
 
 async function renderServersList(container, username, loadView) {
   try {
@@ -47642,7 +47625,7 @@ async function renderServersList(container, username, loadView) {
         ${renderSearchBox('servers', 'Search by name or ID...')}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-server-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Server
           </button>
         </div>
@@ -47651,7 +47634,7 @@ async function renderServersList(container, username, loadView) {
       <div class="admin-list">
         ${data.servers.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <p>No servers yet</p>
           </div>
         ` : `
@@ -47706,7 +47689,7 @@ async function renderServersList(container, username, loadView) {
               <div class="list-card" data-id="${s.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined">dns</span>
+                    <span class="round-icon">dns</span>
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml$1(s.name)}</h3>
@@ -47742,12 +47725,12 @@ async function renderServersList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$a);
+    setupBreadcrumbListeners(navigateTo$b);
     setupPaginationListeners('servers', loadView);
     setupSearchListeners('servers', loadView);
     
     document.querySelectorAll('.clickable-row[data-id], .list-card[data-id]').forEach(el => {
-      el.onclick = () => navigateTo$a('servers', el.dataset.id);
+      el.onclick = () => navigateTo$b('servers', el.dataset.id);
     });
     
     document.getElementById('create-server-btn').onclick = () => createNewServer();
@@ -47776,11 +47759,11 @@ async function renderServerDetail(container, username, serverId) {
         ])}
         <div class="admin-header-actions">
           <a href="/server/${serverId}" class="btn btn-ghost">
-            <span class="material-icons-outlined">open_in_new</span>
+            <span class="round-icon">open_in_new</span>
             View Console
           </a>
           <button class="btn btn-danger" id="delete-server-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -47796,7 +47779,7 @@ async function renderServerDetail(container, username, serverId) {
       <div class="detail-content" id="server-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$a);
+    setupBreadcrumbListeners(navigateTo$b);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -47816,7 +47799,7 @@ async function renderServerDetail(container, username, serverId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$a('servers');
+        navigateTo$b('servers');
       } catch (e) {
         error('Failed to delete server');
       }
@@ -48031,7 +48014,7 @@ function renderServerSubTab(server, username) {
                     : 'This server is configured but not yet installed. Click to install it on the node.'}</p>
                 </div>
                 <button class="btn btn-success" id="install-btn">
-                  <span class="material-icons-outlined">play_arrow</span>
+                  <span class="round-icon">play_arrow</span>
                   Install Now
                 </button>
               </div>
@@ -48042,7 +48025,7 @@ function renderServerSubTab(server, username) {
                   <p>Access the server console, files, and settings as an administrator.</p>
                 </div>
                 <a href="/server/${server.id}" class="btn btn-primary">
-                  <span class="material-icons-outlined">open_in_new</span>
+                  <span class="round-icon">open_in_new</span>
                   Open Server
                 </a>
               </div>
@@ -48055,7 +48038,7 @@ function renderServerSubTab(server, username) {
                   <p>Move this server to a different node. The server will be stopped during transfer.</p>
                 </div>
                 <button class="btn btn-primary" id="transfer-btn">
-                  <span class="material-icons-outlined">swap_horiz</span>
+                  <span class="round-icon">swap_horiz</span>
                   Transfer
                 </button>
               </div>
@@ -48094,7 +48077,7 @@ function renderServerSubTab(server, username) {
         document.getElementById('install-btn').onclick = async () => {
           const btn = document.getElementById('install-btn');
           btn.disabled = true;
-          btn.innerHTML = '<span class="material-icons-outlined rotating">sync</span> Installing...';
+          btn.innerHTML = '<span class="round-icon rotating">sync</span> Installing...';
           
           try {
             const res = await api(`/api/admin/servers/${server.id}/install`, {
@@ -48105,17 +48088,17 @@ function renderServerSubTab(server, username) {
             
             if (res.ok) {
               success('Server installation started');
-              navigateTo$a('servers', server.id, 'manage');
+              navigateTo$b('servers', server.id, 'manage');
             } else {
               const data = await res.json();
               error(data.error || 'Installation failed');
               btn.disabled = false;
-              btn.innerHTML = '<span class="material-icons-outlined">play_arrow</span> Install Now';
+              btn.innerHTML = '<span class="round-icon">play_arrow</span> Install Now';
             }
           } catch (e) {
             error('Failed to install server');
             btn.disabled = false;
-            btn.innerHTML = '<span class="material-icons-outlined">play_arrow</span> Install Now';
+            btn.innerHTML = '<span class="round-icon">play_arrow</span> Install Now';
           }
         };
       }
@@ -48152,7 +48135,7 @@ function renderServerSubTab(server, username) {
             body: JSON.stringify({})
           });
           success(`Server ${action}ed`);
-          navigateTo$a('servers', server.id, 'manage');
+          navigateTo$b('servers', server.id, 'manage');
         } catch (e) {
           error(`Failed to ${action} server`);
         }
@@ -48167,7 +48150,7 @@ function renderServerSubTab(server, username) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
           });
-          navigateTo$a('servers');
+          navigateTo$b('servers');
         } catch (e) {
           error('Failed to delete server');
         }
@@ -48300,7 +48283,7 @@ function setupEggSearch(server) {
           resultsContainer.innerHTML = data.eggs.map(e => `
             <div class="search-result-item" data-egg-id="${e.id}" data-egg-name="${escapeHtml$1(e.name)}">
               <div class="egg-icon small">
-                <span class="material-icons-outlined">${e.icon || 'egg'}</span>
+                <span class="round-icon">${e.icon || 'egg'}</span>
               </div>
               <div class="search-result-info">
                 <span class="search-result-name">${escapeHtml$1(e.name)}</span>
@@ -48406,7 +48389,7 @@ async function createNewServer() {
     
     const data = await res.json();
     if (data.server?.id) {
-      navigateTo$a('servers', data.server.id, 'details');
+      navigateTo$b('servers', data.server.id, 'details');
       info('Configure your server, then click "Install" when ready');
     } else {
       error(data.error || 'Failed to create server');
@@ -48428,7 +48411,7 @@ window.suspendServerAdmin = async function(serverId) {
       // But adminNavigate changes state. To reload current view we can just call the render function again
       // or re-navigate to same place.
       const currentTab = state.currentView.tab;
-      navigateTo$a(currentTab);
+      navigateTo$b(currentTab);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to suspend');
@@ -48447,7 +48430,7 @@ window.unsuspendServerAdmin = async function(serverId) {
     });
     if (res.ok) {
       const currentTab = state.currentView.tab;
-      navigateTo$a(currentTab);
+      navigateTo$b(currentTab);
     } else {
       const data = await res.json();
       error(data.error || 'Failed to unsuspend');
@@ -48467,7 +48450,7 @@ window.deleteServerAdmin = async function(serverId) {
       body: JSON.stringify({})
     });
     const currentTab = state.currentView.tab;
-    navigateTo$a(currentTab);
+    navigateTo$b(currentTab);
   } catch (e) {
     error('Failed to delete server');
   }
@@ -48498,7 +48481,7 @@ async function showTransferModal(server) {
       <div class="modal-header">
         <h3>Transfer Server</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="transfer-form" class="modal-form">
@@ -48514,7 +48497,7 @@ async function showTransferModal(server) {
           </select>
         </div>
         <div class="warning-box">
-          <span class="material-icons-outlined">warning</span>
+          <span class="round-icon">warning</span>
           <p>The server will be stopped during the transfer. All files will be copied to the new node.</p>
         </div>
         <div class="message" id="transfer-message"></div>
@@ -48542,7 +48525,7 @@ async function showTransferModal(server) {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined rotating">sync</span> Transferring...';
+    btn.innerHTML = '<span class="round-icon rotating">sync</span> Transferring...';
     
     try {
       const res = await api(`/api/admin/servers/${server.id}/transfer`, {
@@ -48561,7 +48544,7 @@ async function showTransferModal(server) {
       } else {
         success('Server transfer completed');
         modal.remove();
-        navigateTo$a('servers', server.id, 'details');
+        navigateTo$b('servers', server.id, 'details');
       }
     } catch (e) {
       messageEl.textContent = 'Transfer failed';
@@ -48572,7 +48555,7 @@ async function showTransferModal(server) {
   };
 }
 
-const navigateTo$9 = (...args) => window.adminNavigate(...args);
+const navigateTo$a = (...args) => window.adminNavigate(...args);
 
 async function renderUsersList(container, username, loadView) {
   try {
@@ -48586,7 +48569,7 @@ async function renderUsersList(container, username, loadView) {
         <div class="admin-header-actions">
           ${renderSearchBox('users', 'Search by username, ID, or display name...')}
           <button class="btn btn-primary" id="create-user-btn">
-            <span class="material-icons-outlined">person_add</span>
+            <span class="round-icon">person_add</span>
             Create User
           </button>
         </div>
@@ -48595,7 +48578,7 @@ async function renderUsersList(container, username, loadView) {
       <div class="admin-list">
         ${data.users.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">people</span>
+            <span class="round-icon">people</span>
             <p>No users yet</p>
           </div>
         ` : `
@@ -48673,7 +48656,7 @@ async function renderUsersList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('users', '${u.id}')">
-                    <span class="material-icons-outlined">settings</span>
+                    <span class="round-icon">settings</span>
                     Manage
                   </button>
                 </div>
@@ -48685,12 +48668,12 @@ async function renderUsersList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$9);
+    setupBreadcrumbListeners(navigateTo$a);
     setupPaginationListeners('users', loadView);
     setupSearchListeners('users', loadView);
     
     document.querySelectorAll('.clickable-row[data-id], .list-card[data-id]').forEach(el => {
-      el.onclick = () => navigateTo$9('users', el.dataset.id);
+      el.onclick = () => navigateTo$a('users', el.dataset.id);
     });
     
     document.getElementById('create-user-btn')?.addEventListener('click', () => {
@@ -48714,7 +48697,7 @@ function showCreateUserModal(loadView) {
       <div class="modal-header">
         <h3>Create User</h3>
         <button class="modal-close" id="close-user-modal">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="create-user-form" class="modal-body">
@@ -48762,7 +48745,7 @@ function showCreateUserModal(loadView) {
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     const user = {
       username: form.username.value,
@@ -48826,7 +48809,7 @@ async function renderUserDetail(container, username, userId) {
       <div class="detail-content" id="user-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$9);
+    setupBreadcrumbListeners(navigateTo$a);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = async () => {
@@ -48934,7 +48917,7 @@ async function renderUserSubTab(user, username) {
         
         const btn = document.getElementById('delete-user-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span> Deleting...';
+        btn.innerHTML = '<span class="round-icon spinning">sync</span> Deleting...';
         
         try {
           const res = await api('/api/admin/users/' + user.id, { method: 'DELETE' });
@@ -48942,7 +48925,7 @@ async function renderUserSubTab(user, username) {
           
           if (data.success) {
             success('User deleted. ' + data.deletedServers + ' server(s) removed.');
-            navigateTo$9('users');
+            navigateTo$a('users');
           } else {
             error(data.error || 'Failed to delete user');
             btn.disabled = false;
@@ -48968,7 +48951,7 @@ async function renderUserSubTab(user, username) {
             <h3>User Servers</h3>
             ${userServers.length === 0 ? `
               <div class="empty-state small">
-                <span class="material-icons-outlined">storage</span>
+                <span class="round-icon">storage</span>
                 <p>This user has no servers</p>
               </div>
             ` : `
@@ -48976,7 +48959,7 @@ async function renderUserSubTab(user, username) {
                 ${userServers.map(s => `
                   <div class="user-server-item" data-server-id="${s.id}">
                     <div class="user-server-info">
-                      <span class="material-icons-outlined">dns</span>
+                      <span class="round-icon">dns</span>
                       <div class="user-server-details">
                         <span class="user-server-name">${escapeHtml$1(s.name)}</span>
                         <span class="user-server-meta">${s.node_name || 'Unknown Node'} • ${formatBytes((s.limits?.memory || 0) * 1024 * 1024)} RAM</span>
@@ -48985,7 +48968,7 @@ async function renderUserSubTab(user, username) {
                     <div class="user-server-actions">
                       <span class="server-status-badge ${s.suspended ? 'suspended' : ''}">${s.suspended ? 'Suspended' : 'Active'}</span>
                       <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('servers', '${s.id}')">
-                        <span class="material-icons-outlined">settings</span>
+                        <span class="round-icon">settings</span>
                         Manage
                       </button>
                     </div>
@@ -48997,7 +48980,7 @@ async function renderUserSubTab(user, username) {
         `;
         
         document.querySelectorAll('.user-server-item').forEach(el => {
-          el.onclick = () => navigateTo$9('servers', el.dataset.serverId);
+          el.onclick = () => navigateTo$a('servers', el.dataset.serverId);
         });
       } catch (e) {
         content.innerHTML = '<div class="error">Failed to load servers</div>';
@@ -49047,7 +49030,7 @@ async function renderUserSubTab(user, username) {
             body: JSON.stringify({ updates })
           });
           success('Permissions updated');
-          navigateTo$9('users', user.id, 'permissions');
+          navigateTo$a('users', user.id, 'permissions');
         } catch (e) {
           error('Failed to update permissions');
         }
@@ -49112,7 +49095,7 @@ async function renderUserSubTab(user, username) {
             body: JSON.stringify({ updates: { limits } })
           });
           success('Limits updated');
-          navigateTo$9('users', user.id, 'limits');
+          navigateTo$a('users', user.id, 'limits');
         } catch (e) {
           error('Failed to update limits');
         }
@@ -49121,24 +49104,24 @@ async function renderUserSubTab(user, username) {
   }
 }
 
-const navigateTo$8 = (...args) => window.adminNavigate(...args);
+const navigateTo$9 = (...args) => window.adminNavigate(...args);
 
 function renderAdminEggIcon(egg) {
   if (!egg.icon) {
-    return '<span class="material-icons-outlined">egg_alt</span>';
+    return '<span class="round-icon">egg_alt</span>';
   }
   
   // Check if it's a Material Icon name (no slashes, no dots)
   if (!egg.icon.includes('/') && !egg.icon.includes('.')) {
-    return `<span class="material-icons-outlined">${escapeHtml$1(egg.icon)}</span>`;
+    return `<span class="round-icon">${escapeHtml$1(egg.icon)}</span>`;
   }
   
   // It's a URL (image)
   if (egg.icon.startsWith('http') || egg.icon.startsWith('/') || egg.icon.includes('.')) {
-    return `<img src="${escapeHtml$1(egg.icon)}" alt="${escapeHtml$1(egg.name)}" onerror="this.outerHTML='<span class=\\'material-icons-outlined\\'>egg_alt</span>'" />`;
+    return `<img src="${escapeHtml$1(egg.icon)}" alt="${escapeHtml$1(egg.name)}" onerror="this.outerHTML='<span class=\\'round-icon\\'>egg_alt</span>'" />`;
   }
   
-  return '<span class="material-icons-outlined">egg_alt</span>';
+  return '<span class="round-icon">egg_alt</span>';
 }
 
 async function renderNestsList(container, username, loadView) {
@@ -49152,16 +49135,16 @@ async function renderNestsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Nests & Eggs' }])}
         <div class="admin-header-actions">
           <button class="btn btn-ghost" id="create-nest-btn">
-            <span class="material-icons-outlined">create_new_folder</span>
+            <span class="round-icon">create_new_folder</span>
             Create Nest
           </button>
           ${nests.length > 0 ? `
             <button class="btn btn-ghost" id="create-egg-btn">
-              <span class="material-icons-outlined">add</span>
+              <span class="round-icon">add</span>
               New Egg
             </button>
             <button class="btn btn-primary" id="import-egg-btn">
-              <span class="material-icons-outlined">upload</span>
+              <span class="round-icon">upload</span>
               Import Egg
             </button>
           ` : ''}
@@ -49171,7 +49154,7 @@ async function renderNestsList(container, username, loadView) {
       <div class="admin-list">
         ${nests.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">egg</span>
+            <span class="round-icon">egg</span>
             <p>No nests yet. Create one to organize your eggs.</p>
           </div>
         ` : `
@@ -49185,13 +49168,13 @@ async function renderNestsList(container, username, loadView) {
                   </div>
                   <div class="nest-actions">
                     <button class="btn btn-sm btn-ghost" onclick="editNestAdmin('${nest.id}')" title="Edit Nest">
-                      <span class="material-icons-outlined">edit</span>
+                      <span class="round-icon">edit</span>
                     </button>
                     <button class="btn btn-sm btn-ghost" onclick="addEggToNestAdmin('${nest.id}')" title="Add Egg">
-                      <span class="material-icons-outlined">add</span>
+                      <span class="round-icon">add</span>
                     </button>
                     <button class="btn btn-sm btn-danger" onclick="deleteNestAdmin('${nest.id}')" title="Delete Nest">
-                      <span class="material-icons-outlined">delete</span>
+                      <span class="round-icon">delete</span>
                     </button>
                   </div>
                 </div>
@@ -49220,7 +49203,7 @@ async function renderNestsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$8);
+    setupBreadcrumbListeners(navigateTo$9);
     
     document.getElementById('create-nest-btn').onclick = () => showNestModal(username, null, loadView);
     
@@ -49236,7 +49219,7 @@ async function renderNestsList(container, username, loadView) {
     
     // Click on egg card to open detail view
     document.querySelectorAll('.egg-card.clickable').forEach(card => {
-      card.onclick = () => navigateTo$8('eggs', card.dataset.eggId);
+      card.onclick = () => navigateTo$9('eggs', card.dataset.eggId);
     });
     
   } catch (e) {
@@ -49253,7 +49236,7 @@ function showNestModal(username, nest = null, loadView) {
       <div class="modal-header">
         <h2>${nest ? 'Edit Nest' : 'Create Nest'}</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="nest-form" class="modal-form">
@@ -49315,7 +49298,7 @@ function showImportEggModal(username, nests, loadView) {
       <div class="modal-header">
         <h2>Import Egg</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="import-egg-form" class="modal-form">
@@ -49330,11 +49313,11 @@ function showImportEggModal(username, nests, loadView) {
           <label>Import Method</label>
           <div class="import-method-tabs">
             <button type="button" class="import-tab active" data-method="file">
-              <span class="material-icons-outlined">upload_file</span>
+              <span class="round-icon">upload_file</span>
               Upload File
             </button>
             <button type="button" class="import-tab" data-method="paste">
-              <span class="material-icons-outlined">content_paste</span>
+              <span class="round-icon">content_paste</span>
               Paste JSON
             </button>
           </div>
@@ -49344,7 +49327,7 @@ function showImportEggModal(username, nests, loadView) {
           <label>Egg File (.json)</label>
           <div class="file-upload-area" id="file-upload-area">
             <input type="file" name="eggFile" id="egg-file-input" accept=".json" hidden />
-            <span class="material-icons-outlined">cloud_upload</span>
+            <span class="round-icon">cloud_upload</span>
             <p>Click to select or drag & drop egg file</p>
             <span class="file-name" id="selected-file-name"></span>
           </div>
@@ -49491,7 +49474,7 @@ window.editNestAdmin = async function(nestId) {
   if (nest) {
     // We need to trigger showNestModal. Since we don't have loadView reference here easily,
     // we rely on the modal's save function using adminNavigate or we pass a dummy.
-    showNestModal(state$1.username, nest, () => navigateTo$8('nests'));
+    showNestModal(state$1.username, nest, () => navigateTo$9('nests'));
   }
 };
 
@@ -49505,7 +49488,7 @@ window.deleteNestAdmin = async function(nestId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
-    navigateTo$8('nests');
+    navigateTo$9('nests');
   } catch (e) {
     error('Failed to delete nest');
   }
@@ -49546,7 +49529,7 @@ async function createNewEgg(nestId = null) {
     
     const createData = await createRes.json();
     if (createData.egg?.id) {
-      navigateTo$8('eggs', createData.egg.id, 'about');
+      navigateTo$9('eggs', createData.egg.id, 'about');
       info('Configure your new egg');
     } else {
       error(createData.error || 'Failed to create egg');
@@ -49557,7 +49540,7 @@ async function createNewEgg(nestId = null) {
 }
 
 window.editEggAdmin = function(eggId) {
-  navigateTo$8('eggs', eggId);
+  navigateTo$9('eggs', eggId);
 };
 
 window.deleteEggAdmin = async function(eggId) {
@@ -49570,7 +49553,7 @@ window.deleteEggAdmin = async function(eggId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
-    navigateTo$8('nests');
+    navigateTo$9('nests');
   } catch (e) {
     error('Failed to delete egg');
   }
@@ -49599,11 +49582,11 @@ async function renderEggDetail(container, username, eggId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-ghost" id="export-egg-btn">
-            <span class="material-icons-outlined">download</span>
+            <span class="round-icon">download</span>
             Export
           </button>
           <button class="btn btn-danger" id="delete-egg-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -49619,7 +49602,7 @@ async function renderEggDetail(container, username, eggId) {
       <div class="detail-content" id="egg-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$8);
+    setupBreadcrumbListeners(navigateTo$9);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -49639,7 +49622,7 @@ async function renderEggDetail(container, username, eggId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
-        navigateTo$8('nests');
+        navigateTo$9('nests');
       } catch (e) {
         error('Failed to delete egg');
       }
@@ -49806,7 +49789,7 @@ function renderEggAboutTab(content, egg, nests, username) {
         })
       });
       success('Egg updated');
-      navigateTo$8('eggs', egg.id, 'about');
+      navigateTo$9('eggs', egg.id, 'about');
     } catch (e) {
       error('Failed to update egg');
     }
@@ -49881,7 +49864,7 @@ function renderEggConfigTab(content, egg, username) {
         })
       });
       success('Startup config updated');
-      navigateTo$8('eggs', egg.id, 'configuration');
+      navigateTo$9('eggs', egg.id, 'configuration');
     } catch (e) {
       error('Failed to update config');
     }
@@ -49917,7 +49900,7 @@ function renderEggConfigTab(content, egg, username) {
         })
       });
       success('Advanced config updated');
-      navigateTo$8('eggs', egg.id, 'configuration');
+      navigateTo$9('eggs', egg.id, 'configuration');
     } catch (e) {
       error('Failed to update config');
     }
@@ -49932,7 +49915,7 @@ function renderEggVariablesTab(content, egg, username) {
       <div class="card-header-flex">
         <h3>Environment Variables</h3>
         <button class="btn btn-primary btn-sm" id="add-variable-btn">
-          <span class="material-icons-outlined">add</span>
+          <span class="round-icon">add</span>
           Add Variable
         </button>
       </div>
@@ -49941,7 +49924,7 @@ function renderEggVariablesTab(content, egg, username) {
       <div class="variables-list" id="variables-list">
         ${variables.length === 0 ? `
           <div class="empty-state small">
-            <span class="material-icons-outlined">code</span>
+            <span class="round-icon">code</span>
             <p>No variables defined</p>
           </div>
         ` : variables.map((v, idx) => `
@@ -49953,10 +49936,10 @@ function renderEggVariablesTab(content, egg, username) {
               </div>
               <div class="variable-actions">
                 <button class="btn btn-xs btn-ghost edit-var-btn" data-index="${idx}">
-                  <span class="material-icons-outlined">edit</span>
+                  <span class="round-icon">edit</span>
                 </button>
                 <button class="btn btn-xs btn-danger delete-var-btn" data-index="${idx}">
-                  <span class="material-icons-outlined">delete</span>
+                  <span class="round-icon">delete</span>
                 </button>
               </div>
             </div>
@@ -50003,7 +49986,7 @@ function renderEggVariablesTab(content, egg, username) {
           body: JSON.stringify({ egg: { variables: newVars } })
         });
         success('Variable deleted');
-        navigateTo$8('eggs', egg.id, 'variables');
+        navigateTo$9('eggs', egg.id, 'variables');
       } catch (e) {
         error('Failed to delete variable');
       }
@@ -50023,7 +50006,7 @@ function showVariableModal(egg, editIndex, username) {
       <div class="modal-header">
         <h2>${isEdit ? 'Edit Variable' : 'Add Variable'}</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="variable-form" class="modal-form">
@@ -50105,7 +50088,7 @@ function showVariableModal(egg, editIndex, username) {
       });
       modal.remove();
       success(isEdit ? 'Variable updated' : 'Variable added');
-      navigateTo$8('eggs', egg.id, 'variables');
+      navigateTo$9('eggs', egg.id, 'variables');
     } catch (e) {
       error('Failed to save variable');
     }
@@ -50159,14 +50142,14 @@ function renderEggInstallTab(content, egg, username) {
         })
       });
       success('Install script updated');
-      navigateTo$8('eggs', egg.id, 'install');
+      navigateTo$9('eggs', egg.id, 'install');
     } catch (e) {
       error('Failed to update install script');
     }
   };
 }
 
-const navigateTo$7 = (...args) => window.adminNavigate(...args);
+const navigateTo$8 = (...args) => window.adminNavigate(...args);
 
 async function renderLocationsList(container, username, loadView) {
   try {
@@ -50178,7 +50161,7 @@ async function renderLocationsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Locations' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-location-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Location
           </button>
         </div>
@@ -50187,7 +50170,7 @@ async function renderLocationsList(container, username, loadView) {
       <div class="admin-list">
         ${data.locations.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">location_on</span>
+            <span class="round-icon">location_on</span>
             <p>No locations yet</p>
           </div>
         ` : `
@@ -50195,7 +50178,7 @@ async function renderLocationsList(container, username, loadView) {
             ${data.locations.map(l => `
               <div class="location-card">
                 <div class="location-icon">
-                  <span class="material-icons-outlined">location_on</span>
+                  <span class="round-icon">location_on</span>
                 </div>
                 <div class="location-info">
                   <h3>${escapeHtml$1(l.short)}</h3>
@@ -50203,7 +50186,7 @@ async function renderLocationsList(container, username, loadView) {
                 </div>
                 <div class="location-actions">
                   <button class="btn btn-sm btn-danger" onclick="deleteLocationAdmin('${l.id}')">
-                    <span class="material-icons-outlined">delete</span>
+                    <span class="round-icon">delete</span>
                   </button>
                 </div>
               </div>
@@ -50213,7 +50196,7 @@ async function renderLocationsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$7);
+    setupBreadcrumbListeners(navigateTo$8);
     
     document.getElementById('create-location-btn').onclick = () => showLocationModal(username, loadView);
     
@@ -50231,7 +50214,7 @@ function showLocationModal(username, loadView) {
       <div class="modal-header">
         <h2>Create Location</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="location-form" class="modal-form">
@@ -50294,7 +50277,7 @@ window.deleteLocationAdmin = async function(locationId) {
   }
 };
 
-const navigateTo$6 = (...args) => window.adminNavigate(...args);
+const navigateTo$7 = (...args) => window.adminNavigate(...args);
 
 let currentSettingsTab = 'general';
 
@@ -50333,7 +50316,7 @@ async function renderSettingsPage(container, username, loadView) {
           <nav class="settings-nav">
             ${SETTINGS_TABS.map(tab => `
               <button class="settings-nav-item ${currentSettingsTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">
-                <span class="material-icons-outlined">${tab.icon}</span>
+                <span class="round-icon">${tab.icon}</span>
                 <span>${tab.label}</span>
               </button>
             `).join('')}
@@ -50346,7 +50329,7 @@ async function renderSettingsPage(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$6);
+    setupBreadcrumbListeners(navigateTo$7);
     
     container.querySelectorAll('.settings-nav-item').forEach(btn => {
       btn.onclick = () => {
@@ -50454,7 +50437,7 @@ function renderGeneralSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -50531,12 +50514,12 @@ function renderBrandingSettings(content, config) {
             <img id="logo-preview" src="${branding.logo || '/favicon.svg'}" alt="Logo" style="width: 48px; height: 48px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: contain; padding: 4px; background: var(--bg-secondary);" />
             <div style="display: flex; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                <span class="round-icon" style="font-size: 16px;">upload</span>
                 Upload Logo
                 <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display: none;" />
               </label>
               ${branding.logo ? `<button type="button" class="btn btn-danger btn-sm" id="remove-logo-btn">
-                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                <span class="round-icon" style="font-size: 16px;">delete</span>
                 Remove
               </button>` : ''}
             </div>
@@ -50550,12 +50533,12 @@ function renderBrandingSettings(content, config) {
             <img id="favicon-preview" src="${branding.favicon || '/favicon.svg'}" alt="Favicon" style="width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; padding: 2px; background: var(--bg-secondary);" />
             <div style="display: flex; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                <span class="round-icon" style="font-size: 16px;">upload</span>
                 Upload Favicon
                 <input type="file" id="favicon-upload" accept="image/png,image/svg+xml,image/x-icon,image/webp" style="display: none;" />
               </label>
               ${branding.favicon ? `<button type="button" class="btn btn-danger btn-sm" id="remove-favicon-btn">
-                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                <span class="round-icon" style="font-size: 16px;">delete</span>
                 Remove
               </button>` : ''}
             </div>
@@ -50581,12 +50564,12 @@ function renderBrandingSettings(content, config) {
             <img id="ogImage-preview" src="${branding.ogImage || '/banner.png'}" alt="OG Image" style="width: 120px; height: 63px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: cover; background: var(--bg-secondary);" />
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                <span class="round-icon" style="font-size: 16px;">upload</span>
                 Upload OG Image
                 <input type="file" id="og-image-upload" accept="image/png,image/jpeg,image/webp" style="display: none;" />
               </label>
               ${branding.ogImage ? `<button type="button" class="btn btn-danger btn-sm" id="remove-ogImage-btn">
-                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                <span class="round-icon" style="font-size: 16px;">delete</span>
                 Remove
               </button>` : ''}
               <small class="form-hint">Recommended: 1200×630px</small>
@@ -50596,7 +50579,7 @@ function renderBrandingSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -50766,7 +50749,7 @@ function renderRegistrationSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -50850,7 +50833,7 @@ function renderDefaultsSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -50911,7 +50894,7 @@ function renderSecuritySettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -50948,7 +50931,7 @@ function renderOAuthSettings(content, config) {
             <p>Configure third-party authentication providers.</p>
           </div>
           <button class="btn btn-primary" id="add-oauth-provider-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Add Provider
           </button>
         </div>
@@ -51012,11 +50995,11 @@ async function loadOAuthProviders() {
     if (providers.length === 0) {
       list.innerHTML = `
         <div class="empty-state-card">
-          <span class="material-icons-outlined">login</span>
+          <span class="round-icon">login</span>
           <h3>No OAuth Providers</h3>
           <p>Add a provider to allow users to sign in with their existing accounts.</p>
           <button class="btn btn-primary" onclick="document.getElementById('add-oauth-provider-btn').click()">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Add Your First Provider
           </button>
         </div>
@@ -51028,7 +51011,7 @@ async function loadOAuthProviders() {
       <div class="oauth-provider-card" data-id="${p.id}">
         <div class="oauth-provider-card-header" style="border-left-color: ${providerColors[p.type] || '#6366f1'}">
           <div class="oauth-provider-icon" style="background: ${providerColors[p.type] || '#6366f1'}">
-            <span class="material-icons-outlined">${providerIcons[p.type] || 'key'}</span>
+            <span class="round-icon">${providerIcons[p.type] || 'key'}</span>
           </div>
           <div class="oauth-provider-info">
             <span class="oauth-provider-name">${escapeHtml$1(p.name)}</span>
@@ -51038,16 +51021,16 @@ async function loadOAuthProviders() {
         </div>
         <div class="oauth-provider-card-footer">
           <span class="oauth-provider-meta">
-            <span class="material-icons-outlined">key</span>
+            <span class="round-icon">key</span>
             ${p.client_id ? 'Configured' : 'Not configured'}
           </span>
           <div class="oauth-provider-actions">
             <button class="btn btn-sm btn-ghost edit-oauth-btn" data-id="${p.id}">
-              <span class="material-icons-outlined">edit</span>
+              <span class="round-icon">edit</span>
               Edit
             </button>
             <button class="btn btn-sm btn-ghost btn-danger delete-oauth-btn" data-id="${p.id}">
-              <span class="material-icons-outlined">delete</span>
+              <span class="round-icon">delete</span>
             </button>
           </div>
         </div>
@@ -51095,7 +51078,7 @@ function showOAuthModal(editId) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit OAuth Provider' : 'Add OAuth Provider'}</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="oauth-form" class="modal-form">
@@ -51242,7 +51225,7 @@ function renderApiKeysSettings(content, config) {
             <p>Create API keys for automation, integrations, and external applications.</p>
           </div>
           <button class="btn btn-primary" id="create-app-key-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Key
           </button>
         </div>
@@ -51259,7 +51242,7 @@ function renderApiKeysSettings(content, config) {
         <div class="modal-header">
           <h3>Create Application Key</h3>
           <button class="modal-close" id="close-app-key-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="app-api-key-form">
@@ -51286,18 +51269,18 @@ function renderApiKeysSettings(content, config) {
         <div class="modal-header">
           <h3>Application Key Created</h3>
           <button class="modal-close" id="close-app-key-created-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <div class="api-key-created-content">
           <div class="warning-box">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <p>Make sure to copy your API key now. You won't be able to see it again!</p>
           </div>
           <div class="api-key-display">
             <code id="created-app-key-token"></code>
             <button type="button" class="btn btn-icon" id="copy-app-key-btn">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
           </div>
         </div>
@@ -51330,11 +51313,11 @@ async function loadAppApiKeys() {
     if (!keysData.keys || keysData.keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state-card">
-          <span class="material-icons-outlined">vpn_key</span>
+          <span class="round-icon">vpn_key</span>
           <h3>No API Keys</h3>
           <p>Create an API key to integrate external applications with the panel.</p>
           <button class="btn btn-primary" onclick="document.getElementById('create-app-key-btn').click()">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Your First Key
           </button>
         </div>
@@ -51346,7 +51329,7 @@ async function loadAppApiKeys() {
       <div class="api-key-card" data-id="${key.id}">
         <div class="api-key-card-main">
           <div class="api-key-icon">
-            <span class="material-icons-outlined">vpn_key</span>
+            <span class="round-icon">vpn_key</span>
           </div>
           <div class="api-key-info">
             <span class="api-key-name">${escapeHtml$1(key.name)}</span>
@@ -51361,7 +51344,7 @@ async function loadAppApiKeys() {
           ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
         </div>
         <button class="btn btn-icon btn-danger delete-app-key-btn" data-id="${key.id}">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     `).join('');
@@ -51448,7 +51431,7 @@ function setupAppApiKeysHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/api-keys/application', {
@@ -51534,11 +51517,11 @@ function renderMailSettings(content, config) {
         
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="test-mail-btn">
-            <span class="material-icons-outlined">send</span>
+            <span class="round-icon">send</span>
             Send Test Email
           </button>
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -51574,7 +51557,7 @@ function renderMailSettings(content, config) {
     
     const btn = document.getElementById('test-mail-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span> Sending...';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span> Sending...';
     
     try {
       const res = await api('/api/admin/mail/test', { 
@@ -51592,7 +51575,7 @@ function renderMailSettings(content, config) {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span class="material-icons-outlined">send</span> Send Test Email';
+    btn.innerHTML = '<span class="round-icon">send</span> Send Test Email';
   };
 }
 
@@ -51641,7 +51624,7 @@ function renderMaintenanceSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -51750,7 +51733,7 @@ function renderAdvancedSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -51822,7 +51805,7 @@ async function saveSettings(newConfig) {
   }
 }
 
-const navigateTo$5 = (...args) => window.adminNavigate(...args);
+const navigateTo$6 = (...args) => window.adminNavigate(...args);
 
 async function renderAnnouncementsList(container, username, loadView) {
   try {
@@ -51866,7 +51849,7 @@ async function renderAnnouncementsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Announcements' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-announcement-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Announcement
           </button>
         </div>
@@ -51875,7 +51858,7 @@ async function renderAnnouncementsList(container, username, loadView) {
       <div class="admin-list">
         ${announcements.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">campaign</span>
+            <span class="round-icon">campaign</span>
             <p>No announcements yet</p>
           </div>
         ` : `
@@ -51971,7 +51954,7 @@ async function renderAnnouncementsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$5);
+    setupBreadcrumbListeners(navigateTo$6);
     
     let editingId = null;
     
@@ -52064,7 +52047,7 @@ async function renderAnnouncementsList(container, username, loadView) {
   }
 }
 
-const navigateTo$4 = (...args) => window.adminNavigate(...args);
+const navigateTo$5 = (...args) => window.adminNavigate(...args);
 
 function formatTimeAgo(dateString) {
   const date = new Date(dateString);
@@ -52140,7 +52123,7 @@ async function renderAuditLogPage(container, username) {
       <div class="admin-list">
         ${data.logs.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">history</span>
+            <span class="round-icon">history</span>
             <h3>No Audit Logs</h3>
             <p>Admin actions will be logged here</p>
           </div>
@@ -52149,7 +52132,7 @@ async function renderAuditLogPage(container, username) {
             ${data.logs.map(log => `
               <div class="audit-log-item">
                 <div class="audit-log-icon">
-                  <span class="material-icons-outlined">${getAuditIcon(log.action)}</span>
+                  <span class="round-icon">${getAuditIcon(log.action)}</span>
                 </div>
                 <div class="audit-log-content">
                   <div class="audit-log-action">
@@ -52175,7 +52158,7 @@ async function renderAuditLogPage(container, username) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$4);
+    setupBreadcrumbListeners(navigateTo$5);
     
   } catch (e) {
     container.innerHTML = '<div class="error">Failed to load audit log</div>';
@@ -52241,7 +52224,7 @@ async function renderActivityLogPage(container, username) {
       <div class="admin-list">
         ${data.logs.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">timeline</span>
+            <span class="round-icon">timeline</span>
             <h3>No Activity</h3>
             <p>User activity will be logged here</p>
           </div>
@@ -52250,7 +52233,7 @@ async function renderActivityLogPage(container, username) {
             ${data.logs.map(log => `
               <div class="activity-log-item">
                 <div class="activity-log-icon">
-                  <span class="material-icons-outlined">${getActivityIcon(log.action)}</span>
+                  <span class="round-icon">${getActivityIcon(log.action)}</span>
                 </div>
                 <div class="activity-log-content">
                   <div class="activity-log-action">
@@ -52275,14 +52258,14 @@ async function renderActivityLogPage(container, username) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$4);
+    setupBreadcrumbListeners(navigateTo$5);
     
   } catch (e) {
     container.innerHTML = '<div class="error">Failed to load activity log</div>';
   }
 }
 
-const navigateTo$3 = (...args) => window.adminNavigate(...args);
+const navigateTo$4 = (...args) => window.adminNavigate(...args);
 
 const WEBHOOK_TYPES = [
   { id: 'discord', label: 'Discord', icon: 'smart_toy' },
@@ -52333,7 +52316,7 @@ async function renderWebhooksList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Webhooks' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-webhook-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Global Webhook
           </button>
         </div>
@@ -52342,12 +52325,12 @@ async function renderWebhooksList(container, username, loadView) {
       <div class="admin-list">
         <div class="webhooks-section">
           <h3 class="section-title">
-            <span class="material-icons-outlined">public</span>
+            <span class="round-icon">public</span>
             Global Webhooks
           </h3>
           ${globalWebhooks.length === 0 ? `
             <div class="empty-state small">
-              <span class="material-icons-outlined">webhook</span>
+              <span class="round-icon">webhook</span>
               <p>No global webhooks configured</p>
             </div>
           ` : `
@@ -52359,12 +52342,12 @@ async function renderWebhooksList(container, username, loadView) {
         
         <div class="webhooks-section">
           <h3 class="section-title">
-            <span class="material-icons-outlined">person</span>
+            <span class="round-icon">person</span>
             User Webhooks
           </h3>
           ${userWebhooks.length === 0 ? `
             <div class="empty-state small">
-              <span class="material-icons-outlined">webhook</span>
+              <span class="round-icon">webhook</span>
               <p>No user webhooks</p>
             </div>
           ` : `
@@ -52378,7 +52361,7 @@ async function renderWebhooksList(container, username, loadView) {
       ${renderWebhookModal()}
     `;
     
-    setupBreadcrumbListeners(navigateTo$3);
+    setupBreadcrumbListeners(navigateTo$4);
     setupWebhookListeners(webhooks, loadView);
     
   } catch (e) {
@@ -52396,7 +52379,7 @@ function renderWebhookCard(webhook, isGlobal) {
     <div class="webhook-card ${!webhook.enabled ? 'disabled' : ''}">
       <div class="webhook-card-header">
         <div class="webhook-info">
-          <span class="webhook-type-icon material-icons-outlined">${typeInfo.icon}</span>
+          <span class="webhook-type-icon round-icon">${typeInfo.icon}</span>
           <div class="webhook-details">
             <span class="webhook-name">${escapeHtml$1(webhook.name)}</span>
             <span class="webhook-url">${escapeHtml$1(webhook.url)}</span>
@@ -52411,16 +52394,16 @@ function renderWebhookCard(webhook, isGlobal) {
       <div class="webhook-card-body">
         <div class="webhook-meta">
           <span class="meta-item">
-            <span class="material-icons-outlined">category</span>
+            <span class="round-icon">category</span>
             ${typeInfo.label}
           </span>
           <span class="meta-item">
-            <span class="material-icons-outlined">notifications</span>
+            <span class="round-icon">notifications</span>
             ${eventsDisplay}
           </span>
           ${!isGlobal && webhook.user_id ? `
             <span class="meta-item">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               User: ${escapeHtml$1(webhook.user_id.substring(0, 8))}
             </span>
           ` : ''}
@@ -52428,17 +52411,17 @@ function renderWebhookCard(webhook, isGlobal) {
       </div>
       <div class="webhook-card-footer">
         <button class="btn btn-xs btn-ghost" onclick="testWebhook('${webhook.id}')">
-          <span class="material-icons-outlined">send</span>
+          <span class="round-icon">send</span>
           Test
         </button>
         ${isGlobal ? `
           <button class="btn btn-xs btn-ghost" onclick="editWebhook('${webhook.id}')">
-            <span class="material-icons-outlined">edit</span>
+            <span class="round-icon">edit</span>
             Edit
           </button>
         ` : ''}
         <button class="btn btn-xs btn-danger-ghost" onclick="deleteWebhook('${webhook.id}')">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
           Delete
         </button>
       </div>
@@ -52694,7 +52677,7 @@ async function renderPluginsList(container) {
       <div class="admin-list">
         ${plugins.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">extension_off</span>
+            <span class="round-icon">extension_off</span>
             <p>No plugins installed</p>
             <small>Place plugin folders in <code>data/plugins/</code> and restart the panel</small>
           </div>
@@ -52730,12 +52713,12 @@ async function renderPluginsList(container) {
                     </td>
                     <td class="actions">
                       <button class="btn btn-sm ${p.active ? 'btn-danger' : 'btn-success'}" onclick="togglePlugin('${escapeHtml$1(p.id)}', ${p.active})">
-                        <span class="material-icons-outlined">${p.active ? 'stop' : 'play_arrow'}</span>
+                        <span class="round-icon">${p.active ? 'stop' : 'play_arrow'}</span>
                         ${p.active ? 'Disable' : 'Enable'}
                       </button>
                       ${Object.keys(p.settings || {}).length > 0 ? `
                         <button class="btn btn-sm btn-secondary" onclick="configurePlugin('${escapeHtml$1(p.id)}')">
-                          <span class="material-icons-outlined">settings</span>
+                          <span class="round-icon">settings</span>
                           Configure
                         </button>
                       ` : ''}
@@ -52839,7 +52822,7 @@ async function renderPluginsList(container) {
   }
 }
 
-const navigateTo$2 = (...args) => window.adminNavigate(...args);
+const navigateTo$3 = (...args) => window.adminNavigate(...args);
 
 const AVAILABLE_PERMISSIONS = [
   { id: 'server.create', label: 'Create Servers' },
@@ -52865,7 +52848,7 @@ async function renderGroupsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Groups' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-group-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Group
           </button>
         </div>
@@ -52874,7 +52857,7 @@ async function renderGroupsList(container, username, loadView) {
       <div class="admin-list">
         ${groups.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">group</span>
+            <span class="round-icon">group</span>
             <h3>No Groups</h3>
             <p>Create user groups to manage permissions and resource limits</p>
           </div>
@@ -52884,7 +52867,7 @@ async function renderGroupsList(container, username, loadView) {
               <div class="list-card" data-id="${group.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined">group</span>
+                    <span class="round-icon">group</span>
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml$1(group.name)}</h3>
@@ -52903,7 +52886,7 @@ async function renderGroupsList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('groups', '${group.id}')">
-                    <span class="material-icons-outlined">settings</span>
+                    <span class="round-icon">settings</span>
                     Manage
                   </button>
                 </div>
@@ -52914,12 +52897,12 @@ async function renderGroupsList(container, username, loadView) {
       </div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$2);
+    setupBreadcrumbListeners(navigateTo$3);
     
     document.getElementById('create-group-btn').onclick = () => showCreateGroupModal(loadView);
     
     document.querySelectorAll('.list-card[data-id]').forEach(card => {
-      card.onclick = () => navigateTo$2('groups', card.dataset.id);
+      card.onclick = () => navigateTo$3('groups', card.dataset.id);
     });
     
   } catch (e) {
@@ -52939,7 +52922,7 @@ function showCreateGroupModal(loadView) {
       <div class="modal-header">
         <h3>Create Group</h3>
         <button class="modal-close" id="close-group-modal">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="create-group-form" class="modal-body">
@@ -52970,7 +52953,7 @@ function showCreateGroupModal(loadView) {
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/admin/groups', {
@@ -53029,7 +53012,7 @@ async function renderGroupDetail(container, username, groupId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-group-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -53043,7 +53026,7 @@ async function renderGroupDetail(container, username, groupId) {
       <div class="detail-content" id="group-detail-content"></div>
     `;
     
-    setupBreadcrumbListeners(navigateTo$2);
+    setupBreadcrumbListeners(navigateTo$3);
     
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.onclick = () => {
@@ -53064,7 +53047,7 @@ async function renderGroupDetail(container, username, groupId) {
           body: JSON.stringify({})
         });
         success('Group deleted');
-        navigateTo$2('groups');
+        navigateTo$3('groups');
       } catch (e) {
         error('Failed to delete group');
       }
@@ -53177,7 +53160,7 @@ function renderGroupSubTab(group, users, memberUsers) {
             body: JSON.stringify({ group: groupData })
           });
           success('Group updated successfully');
-          navigateTo$2('groups', group.id, 'settings');
+          navigateTo$3('groups', group.id, 'settings');
         } catch (e) {
           error('Failed to update group');
         }
@@ -53190,13 +53173,13 @@ function renderGroupSubTab(group, users, memberUsers) {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Members</h3>
             <button class="btn btn-primary btn-sm" id="add-member-btn">
-              <span class="material-icons-outlined">person_add</span>
+              <span class="round-icon">person_add</span>
               Add Member
             </button>
           </div>
           ${memberUsers.length === 0 ? `
             <div class="empty-state small">
-              <span class="material-icons-outlined">people</span>
+              <span class="round-icon">people</span>
               <p>No members in this group</p>
             </div>
           ` : `
@@ -53212,7 +53195,7 @@ function renderGroupSubTab(group, users, memberUsers) {
                   </div>
                   <div class="user-server-actions">
                     <button class="btn btn-sm btn-danger-ghost remove-member-btn" data-user-id="${u.id}">
-                      <span class="material-icons-outlined">close</span>
+                      <span class="round-icon">close</span>
                       Remove
                     </button>
                   </div>
@@ -53243,7 +53226,7 @@ function renderGroupSubTab(group, users, memberUsers) {
             body: JSON.stringify({ user_id: user.id })
           });
           success(`Added ${user.username}`);
-          navigateTo$2('groups', group.id, 'members');
+          navigateTo$3('groups', group.id, 'members');
         } catch {
           error('Failed to add member');
         }
@@ -53256,7 +53239,7 @@ function renderGroupSubTab(group, users, memberUsers) {
           try {
             await api(`/api/admin/groups/${group.id}/members/${btn.dataset.userId}`, { method: 'DELETE' });
             success('Member removed');
-            navigateTo$2('groups', group.id, 'members');
+            navigateTo$3('groups', group.id, 'members');
           } catch {
             error('Failed to remove member');
           }
@@ -53266,7 +53249,7 @@ function renderGroupSubTab(group, users, memberUsers) {
   }
 }
 
-const navigateTo$1 = (...args) => window.adminNavigate(...args);
+const navigateTo$2 = (...args) => window.adminNavigate(...args);
 
 const STATUS_LABELS = {
   investigating: 'Investigating',
@@ -53312,7 +53295,7 @@ async function renderIncidentsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Incidents' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-incident-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Incident
           </button>
         </div>
@@ -53321,7 +53304,7 @@ async function renderIncidentsList(container, username, loadView) {
       <div class="admin-list">
         ${incidents.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">check_circle</span>
+            <span class="round-icon">check_circle</span>
             <h3>No Incidents</h3>
             <p>No incidents have been reported. That's a good thing!</p>
           </div>
@@ -53331,7 +53314,7 @@ async function renderIncidentsList(container, username, loadView) {
               <div class="list-card" data-id="${inc.id}" style="cursor:pointer;">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
+                    <span class="round-icon" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
                       ${inc.status === 'resolved' ? 'check_circle' : 'warning'}
                     </span>
                   </div>
@@ -53364,12 +53347,12 @@ async function renderIncidentsList(container, username, loadView) {
       </div>
     `;
 
-    setupBreadcrumbListeners(navigateTo$1);
+    setupBreadcrumbListeners(navigateTo$2);
 
     document.getElementById('create-incident-btn').onclick = () => showCreateModal(nodes, loadView);
 
     container.querySelectorAll('.list-card[data-id]').forEach(card => {
-      card.onclick = () => navigateTo$1('incidents', card.dataset.id);
+      card.onclick = () => navigateTo$2('incidents', card.dataset.id);
     });
 
   } catch (e) {
@@ -53398,7 +53381,7 @@ async function showCreateModal(nodes, loadView) {
     const data = await res.json();
     if (data.success && data.incident) {
       success('Incident created');
-      navigateTo$1('incidents', data.incident.id);
+      navigateTo$2('incidents', data.incident.id);
     } else {
       error(data.error || 'Failed to create incident');
     }
@@ -53436,7 +53419,7 @@ async function renderIncidentDetail(container, username, incidentId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-incident-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -53490,7 +53473,7 @@ async function renderIncidentDetail(container, username, incidentId) {
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">
-                <span class="material-icons-outlined">save</span>
+                <span class="round-icon">save</span>
                 Save Changes
               </button>
             </div>
@@ -53501,7 +53484,7 @@ async function renderIncidentDetail(container, username, incidentId) {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Updates Timeline</h3>
             <button class="btn btn-sm btn-primary" id="add-update-btn">
-              <span class="material-icons-outlined">add</span>
+              <span class="round-icon">add</span>
               Add Update
             </button>
           </div>
@@ -53549,7 +53532,7 @@ async function renderIncidentDetail(container, username, incidentId) {
       </div>
     `;
 
-    setupBreadcrumbListeners(navigateTo$1);
+    setupBreadcrumbListeners(navigateTo$2);
 
     document.getElementById('delete-incident-btn').onclick = async () => {
       const confirmed = await confirm$1({ title: 'Delete Incident', message: 'Delete this incident? This cannot be undone.', danger: true });
@@ -53557,7 +53540,7 @@ async function renderIncidentDetail(container, username, incidentId) {
       try {
         await api(`/api/admin/incidents/${incidentId}`, { method: 'DELETE' });
         success('Incident deleted');
-        navigateTo$1('incidents');
+        navigateTo$2('incidents');
       } catch {
         error('Failed to delete');
       }
@@ -53583,7 +53566,7 @@ async function renderIncidentDetail(container, username, incidentId) {
           })
         });
         success('Incident updated');
-        navigateTo$1('incidents', incidentId);
+        navigateTo$2('incidents', incidentId);
       } catch {
         error('Failed to update');
       }
@@ -53600,7 +53583,7 @@ async function renderIncidentDetail(container, username, incidentId) {
           body: JSON.stringify({ message, status: incident.status })
         });
         success('Update added');
-        navigateTo$1('incidents', incidentId);
+        navigateTo$2('incidents', incidentId);
       } catch {
         error('Failed to add update');
       }
@@ -53608,6 +53591,53 @@ async function renderIncidentDetail(container, username, incidentId) {
 
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load incident</div>`;
+  }
+}
+
+const navigateTo$1 = (...args) => window.adminNavigate(...args);
+
+async function renderOverview(container, username, loadView) {
+  try {
+    const displayName = state.user?.displayName || state.username;
+    
+    container.innerHTML = `
+      <div class="dashboard-container">
+        <header class="dashboard-header">
+          <div class="greeting">
+            <div class="greeting-icon">
+              <span class="round-icon">manage_accounts</span>
+            </div>
+            <div class="greeting-text">
+              <h1>Welcome, <span class="highlight">${escapeHtml$1(username)}!</span></h1>
+              <p>Welcome to the admin panel.</p>
+            </div>
+          </div>
+        </header>
+        
+        <div class="dashboard-grid">
+          <div class="dashboard-section">
+            <a class="overview-item" href="https://sodiumpanel.github.io/panel/viewer.html">
+              <span class="round-icon">article</span>
+              <div class="info">
+                <div class="title">Documentation</div>
+                <div class="description">You can view the documentation clicking here</div>
+              </div>
+            </a>
+          </div>
+          <div class="dashboard-section">
+            <a class="overview-item" href="https://github.com/sodiumpanel/panel">
+              <span class="round-icon">merge</span>
+              <div class="info">
+                <div class="title">Github</div>
+                <div class="description">Leave us an star on our Github repository</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="error">Failed to load overview</div>`;
   }
 }
 
@@ -53714,6 +53744,9 @@ async function loadView() {
     }
   } else {
     switch (state.currentView.tab) {
+      case 'overview':
+        await renderOverview(container, username, loadView);
+        break;
       case 'nodes':
         await renderNodesList(container, username, loadView);
         break;
@@ -53828,7 +53861,7 @@ async function renderActivityLog() {
         <div class="activity-list">
           ${data.logs.length === 0 ? `
             <div class="empty-state">
-              <span class="material-icons-outlined">history</span>
+              <span class="round-icon">history</span>
               <p>No activity yet</p>
             </div>
           ` : data.logs.map(log => {
@@ -53836,7 +53869,7 @@ async function renderActivityLog() {
             return `
               <div class="activity-item">
                 <div class="activity-icon">
-                  <span class="material-icons-outlined">${info.icon}</span>
+                  <span class="round-icon">${info.icon}</span>
                 </div>
                 <div class="activity-content">
                   <div class="activity-label">${escapeHtml$1(info.label)}</div>
@@ -53897,7 +53930,7 @@ async function renderSetup() {
                 <span>Sodium Setup</span>
               </div>
               <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
-                <span class="material-icons-outlined">${document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+                <span class="round-icon">${document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'}</span>
               </button>
             </div>
             <div class="setup-progress">
@@ -54006,7 +54039,7 @@ async function renderSetup() {
         </div>
         
         <button class="btn btn-secondary" id="test-db-btn">
-          <span class="material-icons-outlined">sync</span>
+          <span class="round-icon">sync</span>
           Test Connection
         </button>
         <span id="db-test-result" class="test-result"></span>
@@ -54045,7 +54078,7 @@ async function renderSetup() {
         </div>
         
         <button class="btn btn-secondary" id="test-redis-btn">
-          <span class="material-icons-outlined">sync</span>
+          <span class="round-icon">sync</span>
           Test Connection
         </button>
         <span id="redis-test-result" class="test-result"></span>
@@ -54241,7 +54274,7 @@ async function renderSetup() {
           <div class="setup-container">
             <div class="setup-card setup-complete">
               <div class="success-icon">
-                <span class="material-icons-outlined">check_circle</span>
+                <span class="round-icon">check_circle</span>
               </div>
               <h2>Setup Complete!</h2>
               <p>Sodium has been configured successfully.</p>
@@ -54421,7 +54454,12 @@ const routes = {
     }
   },
   '/admin': {
-    redirect: '/admin/nodes'
+    redirect: '/admin/overview'
+  },
+  '/admin/overview': {
+    render: (params) => renderAdmin('overview', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Overview', auth: true, sidebar: true }
   },
   '/admin/nodes': {
     render: (params) => renderAdmin('nodes', params),
@@ -54564,7 +54602,7 @@ function renderNav() {
     <div class="nav-content">
       <div class="nav-left">
         <button class="nav-toggle" id="sidebar-toggle">
-          <span class="material-icons-outlined">menu</span>
+          <span class="round-icon">menu</span>
         </button>
         <a href="/dashboard" class="nav-brand">
           <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${escapeHtml$1(branding.name)}" width="22" height="22">
@@ -54580,20 +54618,20 @@ function renderNav() {
                 <img src="/default-avatar.png" alt="Avatar" onerror="this.src='/default-avatar.png'">
               </div>
               <span class="user-display-name">${displayName}</span>
-              <span class="material-icons-outlined dropdown-icon">expand_more</span>
+              <span class="round-icon dropdown-icon">expand_more</span>
             </button>
             <div class="user-dropdown" id="user-dropdown">
               <a href="/profile" class="dropdown-item">
-                <span class="material-icons-outlined">person</span>
+                <span class="round-icon">person</span>
                 <span>Profile</span>
               </a>
               <a href="/settings" class="dropdown-item">
-                <span class="material-icons-outlined">settings</span>
+                <span class="round-icon">settings</span>
                 <span>Settings</span>
               </a>
               <hr class="dropdown-divider">
               <button class="dropdown-item logout" id="nav-logout">
-                <span class="material-icons-outlined">logout</span>
+                <span class="round-icon">logout</span>
                 <span>Sign Out</span>
               </button>
             </div>
@@ -54705,6 +54743,7 @@ function renderSidebar() {
   const adminSection = {
     label: 'Administration',
     items: [
+      { path: '/admin/overview', icon: 'analytics', label: 'Overview' },
       { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
       { path: '/admin/servers', icon: 'dns', label: 'Servers' },
       { path: '/admin/users', icon: 'people', label: 'Users' },
@@ -54760,7 +54799,7 @@ function renderSidebar() {
     const items = section.items.map(item => `
       <li class="nav-item">
         <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
-          <span class="material-icons-outlined">${item.icon}</span>
+          <span class="round-icon">${item.icon}</span>
           <span class="nav-text">${item.label}</span>
         </a>
       </li>
@@ -54788,7 +54827,9 @@ function renderSidebar() {
     
     <div class="sidebar-footer">
       <div class="footer-content">
-        <span class="version">v1.1.2</span>
+        <span>Powered by <a href="https://sodiumpanel.github.io/">Sodium</a></span>
+        <br>
+        <span><a href="https://github.com/zt3xdv/">zt3xdv</a> and contributors.</span>
       </div>
     </div>
   `;

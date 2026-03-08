@@ -19,7 +19,7 @@ export async function renderServersList(container, username, loadView) {
         ${renderSearchBox('servers', 'Search by name or ID...')}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-server-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Server
           </button>
         </div>
@@ -28,7 +28,7 @@ export async function renderServersList(container, username, loadView) {
       <div class="admin-list">
         ${data.servers.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <p>No servers yet</p>
           </div>
         ` : `
@@ -83,7 +83,7 @@ export async function renderServersList(container, username, loadView) {
               <div class="list-card" data-id="${s.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined">dns</span>
+                    <span class="round-icon">dns</span>
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml(s.name)}</h3>
@@ -153,11 +153,11 @@ export async function renderServerDetail(container, username, serverId) {
         ])}
         <div class="admin-header-actions">
           <a href="/server/${serverId}" class="btn btn-ghost">
-            <span class="material-icons-outlined">open_in_new</span>
+            <span class="round-icon">open_in_new</span>
             View Console
           </a>
           <button class="btn btn-danger" id="delete-server-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -408,7 +408,7 @@ function renderServerSubTab(server, username) {
                     : 'This server is configured but not yet installed. Click to install it on the node.'}</p>
                 </div>
                 <button class="btn btn-success" id="install-btn">
-                  <span class="material-icons-outlined">play_arrow</span>
+                  <span class="round-icon">play_arrow</span>
                   Install Now
                 </button>
               </div>
@@ -419,7 +419,7 @@ function renderServerSubTab(server, username) {
                   <p>Access the server console, files, and settings as an administrator.</p>
                 </div>
                 <a href="/server/${server.id}" class="btn btn-primary">
-                  <span class="material-icons-outlined">open_in_new</span>
+                  <span class="round-icon">open_in_new</span>
                   Open Server
                 </a>
               </div>
@@ -432,7 +432,7 @@ function renderServerSubTab(server, username) {
                   <p>Move this server to a different node. The server will be stopped during transfer.</p>
                 </div>
                 <button class="btn btn-primary" id="transfer-btn">
-                  <span class="material-icons-outlined">swap_horiz</span>
+                  <span class="round-icon">swap_horiz</span>
                   Transfer
                 </button>
               </div>
@@ -471,7 +471,7 @@ function renderServerSubTab(server, username) {
         document.getElementById('install-btn').onclick = async () => {
           const btn = document.getElementById('install-btn');
           btn.disabled = true;
-          btn.innerHTML = '<span class="material-icons-outlined rotating">sync</span> Installing...';
+          btn.innerHTML = '<span class="round-icon rotating">sync</span> Installing...';
           
           try {
             const res = await api(`/api/admin/servers/${server.id}/install`, {
@@ -487,12 +487,12 @@ function renderServerSubTab(server, username) {
               const data = await res.json();
               toast.error(data.error || 'Installation failed');
               btn.disabled = false;
-              btn.innerHTML = '<span class="material-icons-outlined">play_arrow</span> Install Now';
+              btn.innerHTML = '<span class="round-icon">play_arrow</span> Install Now';
             }
           } catch (e) {
             toast.error('Failed to install server');
             btn.disabled = false;
-            btn.innerHTML = '<span class="material-icons-outlined">play_arrow</span> Install Now';
+            btn.innerHTML = '<span class="round-icon">play_arrow</span> Install Now';
           }
         };
       }
@@ -677,7 +677,7 @@ function setupEggSearch(server) {
           resultsContainer.innerHTML = data.eggs.map(e => `
             <div class="search-result-item" data-egg-id="${e.id}" data-egg-name="${escapeHtml(e.name)}">
               <div class="egg-icon small">
-                <span class="material-icons-outlined">${e.icon || 'egg'}</span>
+                <span class="round-icon">${e.icon || 'egg'}</span>
               </div>
               <div class="search-result-info">
                 <span class="search-result-name">${escapeHtml(e.name)}</span>
@@ -875,7 +875,7 @@ async function showTransferModal(server) {
       <div class="modal-header">
         <h3>Transfer Server</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="transfer-form" class="modal-form">
@@ -891,7 +891,7 @@ async function showTransferModal(server) {
           </select>
         </div>
         <div class="warning-box">
-          <span class="material-icons-outlined">warning</span>
+          <span class="round-icon">warning</span>
           <p>The server will be stopped during the transfer. All files will be copied to the new node.</p>
         </div>
         <div class="message" id="transfer-message"></div>
@@ -919,7 +919,7 @@ async function showTransferModal(server) {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined rotating">sync</span> Transferring...';
+    btn.innerHTML = '<span class="round-icon rotating">sync</span> Transferring...';
     
     try {
       const res = await api(`/api/admin/servers/${server.id}/transfer`, {

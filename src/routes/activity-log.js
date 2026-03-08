@@ -60,7 +60,7 @@ export async function renderActivityLog() {
         <div class="activity-list">
           ${data.logs.length === 0 ? `
             <div class="empty-state">
-              <span class="material-icons-outlined">history</span>
+              <span class="round-icon">history</span>
               <p>No activity yet</p>
             </div>
           ` : data.logs.map(log => {
@@ -68,7 +68,7 @@ export async function renderActivityLog() {
             return `
               <div class="activity-item">
                 <div class="activity-icon">
-                  <span class="material-icons-outlined">${info.icon}</span>
+                  <span class="round-icon">${info.icon}</span>
                 </div>
                 <div class="activity-content">
                   <div class="activity-label">${escapeHtml(info.label)}</div>

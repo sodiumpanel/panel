@@ -119,7 +119,7 @@ function showCompressIndicator() {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="material-icons-outlined rotating">archive</span>
+      <span class="round-icon rotating">archive</span>
     </div>
     <div class="file-info">
       <span class="file-name">Compressing files...</span>
@@ -161,7 +161,7 @@ function showDecompressIndicator(filename) {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="material-icons-outlined rotating">unarchive</span>
+      <span class="round-icon rotating">unarchive</span>
     </div>
     <div class="file-info">
       <span class="file-name">Extracting ${filename}...</span>
@@ -294,27 +294,27 @@ export function renderFilesTab() {
           <div class="files-actions">
             <div class="files-search-wrapper" id="files-search-wrapper">
               <button class="btn btn-xs btn-ghost" id="btn-search-toggle" title="Search">
-                <span class="material-icons-outlined">search</span>
+                <span class="round-icon">search</span>
               </button>
               <input type="text" class="files-search-input" id="files-search-input" placeholder="Search files..." style="display:none;">
             </div>
             <button class="btn btn-xs btn-ghost" id="btn-sort" title="Sort">
-              <span class="material-icons-outlined">sort</span>
+              <span class="round-icon">sort</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-view-toggle" title="Toggle view">
-              <span class="material-icons-outlined">grid_view</span>
+              <span class="round-icon">grid_view</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
-              <span class="material-icons-outlined">create_new_folder</span>
+              <span class="round-icon">create_new_folder</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
-              <span class="material-icons-outlined">note_add</span>
+              <span class="round-icon">note_add</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
-              <span class="material-icons-outlined">upload</span>
+              <span class="round-icon">upload</span>
             </button>
           </div>
         </div>
@@ -324,22 +324,22 @@ export function renderFilesTab() {
           </div>
           <div class="selection-actions">
             <button class="btn btn-xs btn-ghost" id="btn-copy-clipboard" title="Copy">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-cut-clipboard" title="Cut">
-              <span class="material-icons-outlined">content_cut</span>
+              <span class="round-icon">content_cut</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
-              <span class="material-icons-outlined">drive_file_move</span>
+              <span class="round-icon">drive_file_move</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
-              <span class="material-icons-outlined">archive</span>
+              <span class="round-icon">archive</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
-              <span class="material-icons-outlined">delete</span>
+              <span class="round-icon">delete</span>
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
-              <span class="material-icons-outlined">close</span>
+              <span class="round-icon">close</span>
             </button>
           </div>
         </div>
@@ -349,11 +349,11 @@ export function renderFilesTab() {
           </div>
           <div class="selection-actions">
             <button class="btn btn-xs btn-ghost" id="btn-paste" title="Paste here">
-              <span class="material-icons-outlined">content_paste</span>
+              <span class="round-icon">content_paste</span>
               Paste
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-cancel-paste" title="Cancel">
-              <span class="material-icons-outlined">close</span>
+              <span class="round-icon">close</span>
             </button>
           </div>
         </div>
@@ -721,7 +721,7 @@ function showSortMenu(serverId) {
 function toggleViewMode(serverId) {
   viewMode = viewMode === 'list' ? 'grid' : 'list';
   const btn = document.getElementById('btn-view-toggle');
-  const icon = btn.querySelector('.material-icons-outlined');
+  const icon = btn.querySelector('.round-icon');
   icon.textContent = viewMode === 'list' ? 'grid_view' : 'view_list';
   loadFiles(serverId, currentPath);
 }
@@ -820,7 +820,7 @@ async function loadFiles(serverId, path) {
     console.error('Failed to load files:', e);
     const isNodeError = e.message?.includes('node') || e.message?.includes('connect') || e.message?.includes('offline');
     const msg = isNodeError 
-      ? '<span class="material-icons-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
+      ? '<span class="round-icon" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
       : 'Failed to load files';
     filesList.innerHTML = `<div class="files-error">${msg}</div>`;
   }
@@ -830,7 +830,7 @@ function updateBreadcrumb(path, serverId) {
   const breadcrumb = document.getElementById('files-breadcrumb');
   const parts = path.split('/').filter(p => p);
   
-  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">home</span></span>`;
+  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="round-icon" style="font-size: 16px; vertical-align: middle;">home</span></span>`;
   
   if (parts.length === 0) {
   } else if (parts.length === 1) {
@@ -882,7 +882,7 @@ function renderFilesList(files, serverId) {
   
   if (files.length === 0) {
     filesList.innerHTML = `<div class="files-empty">
-      <span class="material-icons-outlined" style="font-size: 2rem; margin-bottom: .5rem;">folder_open</span>
+      <span class="round-icon" style="font-size: 2rem; margin-bottom: .5rem;">folder_open</span>
       <p>This directory is empty</p>
       <p style="font-size: .7rem; margin-top: .25rem;">Drag files here or use the upload button</p>
     </div>`;
@@ -904,7 +904,7 @@ function renderFilesList(files, serverId) {
       return `
       <div class="file-item-grid ${isDir ? 'directory' : 'file'}" data-name="${file.name}" data-is-dir="${isDir}" data-editable="${canEdit}" data-preview="${previewType || ''}" ${file._searchResult ? `data-path="${file.path}"` : ''}>
         <div class="file-grid-icon">
-          <span class="material-icons-outlined">${isDir ? 'folder' : getFileIcon(file)}</span>
+          <span class="round-icon">${isDir ? 'folder' : getFileIcon(file)}</span>
         </div>
         <div class="file-grid-name">${file.name}</div>
         <div class="file-grid-meta">${isDir ? '' : formatBytes(file.size)}</div>
@@ -917,7 +917,7 @@ function renderFilesList(files, serverId) {
         <input type="checkbox" class="file-checkbox" data-name="${file.name}">
       </div>
       <div class="file-icon">
-        <span class="material-icons-outlined">${isDir ? 'folder' : getFileIcon(file)}</span>
+        <span class="round-icon">${isDir ? 'folder' : getFileIcon(file)}</span>
       </div>
       <div class="file-info">
         <span class="file-name">${file.name}</span>
@@ -926,25 +926,25 @@ function renderFilesList(files, serverId) {
       <div class="file-actions">
         ${!isDir && isArchive(file) ? `
           <button class="btn btn-sm btn-ghost btn-decompress" title="Extract">
-            <span class="material-icons-outlined">unarchive</span>
+            <span class="round-icon">unarchive</span>
           </button>
         ` : ''}
         ${!isDir ? `
           <button class="btn btn-sm btn-ghost btn-download" title="Download">
-            <span class="material-icons-outlined">download</span>
+            <span class="round-icon">download</span>
           </button>
           <button class="btn btn-sm btn-ghost btn-copy" title="Copy">
-            <span class="material-icons-outlined">content_copy</span>
+            <span class="round-icon">content_copy</span>
           </button>
         ` : ''}
         <button class="btn btn-sm btn-ghost btn-chmod" title="Permissions">
-          <span class="material-icons-outlined">lock</span>
+          <span class="round-icon">lock</span>
         </button>
         <button class="btn btn-sm btn-ghost btn-rename" title="Rename">
-          <span class="material-icons-outlined">drive_file_rename_outline</span>
+          <span class="round-icon">drive_file_rename_outline</span>
         </button>
         <button class="btn btn-sm btn-ghost btn-delete" title="Delete">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     </div>
@@ -1108,7 +1108,7 @@ async function openPreview(serverId, name, type, filePath) {
     } else if (type === 'video') {
       content = `<div class="preview-container"><video src="${data.url}" controls class="file-preview-video"></video></div>`;
     } else if (type === 'audio') {
-      content = `<div class="preview-container preview-audio"><span class="material-icons-outlined" style="font-size:3rem;color:var(--accent)">audio_file</span><p>${name}</p><audio src="${data.url}" controls class="file-preview-audio"></audio></div>`;
+      content = `<div class="preview-container preview-audio"><span class="round-icon" style="font-size:3rem;color:var(--accent)">audio_file</span><p>${name}</p><audio src="${data.url}" controls class="file-preview-audio"></audio></div>`;
     } else if (type === 'pdf') {
       content = `<div class="preview-container"><iframe src="${data.url}" class="file-preview-pdf"></iframe></div>`;
     }
@@ -1473,13 +1473,13 @@ async function editFile(serverId, path) {
         <div class="editor-header">
           <div class="editor-title">
             <button class="btn btn-ghost btn-sm" id="btn-back">
-              <span class="material-icons-outlined">arrow_back</span>
+              <span class="round-icon">arrow_back</span>
             </button>
             <span class="editor-filename">${filename}</span>
           </div>
           <div class="editor-actions">
             <button class="btn btn-primary btn-sm" id="btn-save">
-              <span class="material-icons-outlined">save</span>
+              <span class="round-icon">save</span>
               Save
             </button>
           </div>
@@ -1524,7 +1524,7 @@ async function saveFile(serverId, path) {
   const saveBtn = document.getElementById('btn-save');
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
   
   try {
     const res = await api(`/api/servers/${serverId}/files/write`, {
@@ -1533,21 +1533,21 @@ async function saveFile(serverId, path) {
     });
     
     if (res.ok) {
-      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+        saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
       }, 1500);
     } else {
       const data = await res.json();
       toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+      saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
     }
   } catch (e) {
     toast.error('Failed to save file');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save';
+    saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
   }
 }
 
@@ -1631,7 +1631,7 @@ function showUploadIndicator(filename) {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="material-icons-outlined rotating">sync</span>
+      <span class="round-icon rotating">sync</span>
     </div>
     <div class="file-info">
       <span class="file-name">${filename}</span>
@@ -1665,27 +1665,27 @@ function restoreFilesList(serverId) {
       <div class="files-actions">
         <div class="files-search-wrapper" id="files-search-wrapper">
           <button class="btn btn-xs btn-ghost" id="btn-search-toggle" title="Search">
-            <span class="material-icons-outlined">search</span>
+            <span class="round-icon">search</span>
           </button>
           <input type="text" class="files-search-input" id="files-search-input" placeholder="Search files..." style="display:none;">
         </div>
         <button class="btn btn-xs btn-ghost" id="btn-sort" title="Sort">
-          <span class="material-icons-outlined">sort</span>
+          <span class="round-icon">sort</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-view-toggle" title="Toggle view">
-          <span class="material-icons-outlined">${viewMode === 'list' ? 'grid_view' : 'view_list'}</span>
+          <span class="round-icon">${viewMode === 'list' ? 'grid_view' : 'view_list'}</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
-          <span class="material-icons-outlined">refresh</span>
+          <span class="round-icon">refresh</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
-          <span class="material-icons-outlined">create_new_folder</span>
+          <span class="round-icon">create_new_folder</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
-          <span class="material-icons-outlined">note_add</span>
+          <span class="round-icon">note_add</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
-          <span class="material-icons-outlined">upload</span>
+          <span class="round-icon">upload</span>
         </button>
       </div>
     </div>
@@ -1695,22 +1695,22 @@ function restoreFilesList(serverId) {
       </div>
       <div class="selection-actions">
         <button class="btn btn-xs btn-ghost" id="btn-copy-clipboard" title="Copy">
-          <span class="material-icons-outlined">content_copy</span>
+          <span class="round-icon">content_copy</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-cut-clipboard" title="Cut">
-          <span class="material-icons-outlined">content_cut</span>
+          <span class="round-icon">content_cut</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
-          <span class="material-icons-outlined">drive_file_move</span>
+          <span class="round-icon">drive_file_move</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
-          <span class="material-icons-outlined">archive</span>
+          <span class="round-icon">archive</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     </div>
@@ -1720,11 +1720,11 @@ function restoreFilesList(serverId) {
       </div>
       <div class="selection-actions">
         <button class="btn btn-xs btn-ghost" id="btn-paste" title="Paste here">
-          <span class="material-icons-outlined">content_paste</span>
+          <span class="round-icon">content_paste</span>
           Paste
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-cancel-paste" title="Cancel">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     </div>
@@ -1754,6 +1754,7 @@ function restoreFilesList(serverId) {
     if (!visible) searchInput.focus();
     else { searchInput.value = ''; searchQuery = ''; loadFiles(currentServerId, currentPath); }
   };
+  
   searchInput.oninput = () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {

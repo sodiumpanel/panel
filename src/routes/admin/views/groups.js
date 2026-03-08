@@ -31,7 +31,7 @@ export async function renderGroupsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Groups' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-group-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Group
           </button>
         </div>
@@ -40,7 +40,7 @@ export async function renderGroupsList(container, username, loadView) {
       <div class="admin-list">
         ${groups.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">group</span>
+            <span class="round-icon">group</span>
             <h3>No Groups</h3>
             <p>Create user groups to manage permissions and resource limits</p>
           </div>
@@ -50,7 +50,7 @@ export async function renderGroupsList(container, username, loadView) {
               <div class="list-card" data-id="${group.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined">group</span>
+                    <span class="round-icon">group</span>
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml(group.name)}</h3>
@@ -69,7 +69,7 @@ export async function renderGroupsList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('groups', '${group.id}')">
-                    <span class="material-icons-outlined">settings</span>
+                    <span class="round-icon">settings</span>
                     Manage
                   </button>
                 </div>
@@ -105,7 +105,7 @@ function showCreateGroupModal(loadView) {
       <div class="modal-header">
         <h3>Create Group</h3>
         <button class="modal-close" id="close-group-modal">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="create-group-form" class="modal-body">
@@ -136,7 +136,7 @@ function showCreateGroupModal(loadView) {
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/admin/groups', {
@@ -195,7 +195,7 @@ export async function renderGroupDetail(container, username, groupId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-group-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -356,13 +356,13 @@ function renderGroupSubTab(group, users, memberUsers) {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Members</h3>
             <button class="btn btn-primary btn-sm" id="add-member-btn">
-              <span class="material-icons-outlined">person_add</span>
+              <span class="round-icon">person_add</span>
               Add Member
             </button>
           </div>
           ${memberUsers.length === 0 ? `
             <div class="empty-state small">
-              <span class="material-icons-outlined">people</span>
+              <span class="round-icon">people</span>
               <p>No members in this group</p>
             </div>
           ` : `
@@ -378,7 +378,7 @@ function renderGroupSubTab(group, users, memberUsers) {
                   </div>
                   <div class="user-server-actions">
                     <button class="btn btn-sm btn-danger-ghost remove-member-btn" data-user-id="${u.id}">
-                      <span class="material-icons-outlined">close</span>
+                      <span class="round-icon">close</span>
                       Remove
                     </button>
                   </div>

@@ -11,7 +11,7 @@ export function renderSettingsTab() {
       <div class="settings-content">
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <h3>Server Details</h3>
           </div>
           <div id="settings-details">
@@ -21,7 +21,7 @@ export function renderSettingsTab() {
         
         <div class="settings-section danger-section">
           <div class="section-header">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <h3>Danger Zone</h3>
           </div>
           
@@ -31,7 +31,7 @@ export function renderSettingsTab() {
               <span class="setting-description">Delete all server files and reinstall from scratch</span>
             </div>
             <button class="btn btn-warning" id="btn-reinstall">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
               <span>Reinstall</span>
             </button>
           </div>
@@ -42,7 +42,7 @@ export function renderSettingsTab() {
               <span class="setting-description">Permanently delete this server and all its data</span>
             </div>
             <button class="btn btn-danger" id="btn-delete">
-              <span class="material-icons-outlined">delete_forever</span>
+              <span class="round-icon">delete_forever</span>
               <span>Delete</span>
             </button>
           </div>
@@ -107,7 +107,7 @@ function renderDetailsForm(server) {
       <div class="form-group">
         <label for="server-name-input">Server Name</label>
         <div class="input-wrapper">
-          <span class="material-icons-outlined">badge</span>
+          <span class="round-icon">badge</span>
           <input type="text" id="server-name-input" name="name" value="${escapeHtml(server.name)}" maxlength="50" required />
         </div>
       </div>
@@ -136,7 +136,7 @@ function renderDetailsForm(server) {
       
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" id="save-details">
-          <span class="material-icons-outlined">save</span>
+          <span class="round-icon">save</span>
           Save Changes
         </button>
       </div>
@@ -169,7 +169,7 @@ async function saveDetails() {
   }
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
   
   try {
     const res = await api(`/api/servers/${currentServerId}/details`, {
@@ -182,7 +182,7 @@ async function saveDetails() {
     
     if (res.ok) {
       toast.success('Server details saved');
-      saveBtn.innerHTML = '<span class="material-icons-outlined">check</span> Saved';
+      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
       
       // Update server data cache
       if (serverData) {
@@ -202,18 +202,18 @@ async function saveDetails() {
       
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+        saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
       }, 1500);
     } else {
       toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+      saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
     }
   } catch (e) {
     console.error('Failed to save details:', e);
     toast.error('Failed to save server details');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+    saveBtn.innerHTML = '<span class="round-icon">save</span> Save Changes';
   }
 }
 
@@ -226,11 +226,11 @@ function confirmReinstall() {
       <div class="modal-header">
         <h3>Reinstall Server</h3>
         <button class="modal-close">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <div class="warning-box">
-        <span class="material-icons-outlined">warning</span>
+        <span class="round-icon">warning</span>
         <p>This will delete all server files and reinstall the server from scratch. This action cannot be undone!</p>
       </div>
       <p style="margin-bottom: 12px; color: var(--text-secondary);">Type <strong style="color: var(--text-primary);">REINSTALL</strong> to confirm:</p>
@@ -263,7 +263,7 @@ function confirmReinstall() {
   
   doBtn.onclick = async () => {
     doBtn.disabled = true;
-    doBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Reinstalling...';
+    doBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Reinstalling...';
     await reinstallServer();
     closeModal();
   };
@@ -300,11 +300,11 @@ function confirmDelete() {
       <div class="modal-header">
         <h3>Delete Server</h3>
         <button class="modal-close">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <div class="warning-box danger">
-        <span class="material-icons-outlined">error</span>
+        <span class="round-icon">error</span>
         <p>This will permanently delete the server and all its data. This action cannot be undone!</p>
       </div>
       <p style="margin-bottom: 12px; color: var(--text-secondary);">Type <strong style="color: var(--text-primary);">DELETE</strong> to confirm:</p>
@@ -337,7 +337,7 @@ function confirmDelete() {
   
   doBtn.onclick = async () => {
     doBtn.disabled = true;
-    doBtn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Deleting...';
+    doBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Deleting...';
     await deleteServer();
     closeModal();
   };

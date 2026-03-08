@@ -11,31 +11,6 @@ export function renderDashboard() {
   
   const displayName = state.user?.displayName || state.username;
   
-  const hour = new Date().getHours();
-  let greeting, icon, subtitle;
-  
-  if (hour < 6) {
-    greeting = 'Late night';
-    icon = 'dark_mode';
-    subtitle = "Burning the midnight oil?";
-  } else if (hour < 12) {
-    greeting = 'Good morning';
-    icon = 'wb_twilight';
-    subtitle = "Ready to conquer the day";
-  } else if (hour < 18) {
-    greeting = 'Good afternoon';
-    icon = 'wb_sunny';
-    subtitle = "Hope your day is going well";
-  } else if (hour < 22) {
-    greeting = 'Good evening';
-    icon = 'nights_stay';
-    subtitle = "Winding down for the night?";
-  } else {
-    greeting = 'Good night';
-    icon = 'bedtime';
-    subtitle = "Don't stay up too late";
-  }
-  
   app.innerHTML = `
     <div class="dashboard-container">
       <div id="node-alerts-container"></div>
@@ -45,20 +20,20 @@ export function renderDashboard() {
       <header class="dashboard-header">
         <div class="greeting">
           <div class="greeting-icon">
-            <span class="material-icons-outlined">${icon}</span>
+            <span class="round-icon">home</span>
           </div>
           <div class="greeting-text">
-            <h1>${greeting}, <span class="highlight">${escapeHtml(displayName)}</span></h1>
-            <p>${subtitle}</p>
+            <h1>Welcome, <span class="highlight">${escapeHtml(displayName)}!</span></h1>
+            <p>Manage your servers and resources with ease.</p>
           </div>
         </div>
-        <div class="quick-stats" id="quick-stats"></div>
       </header>
       
       <div class="dashboard-grid">
         <div class="dashboard-section resources-section">
+          <span class="round-icon corner-icon">data_usage</span>
           <div class="section-header">
-            <span class="material-icons-outlined">analytics</span>
+            <span class="round-icon">data_usage</span>
             <h2>Resource Usage</h2>
           </div>
           <div class="limits-grid" id="limits-display">
@@ -67,8 +42,9 @@ export function renderDashboard() {
         </div>
         
         <div class="dashboard-section servers-section">
+          <span class="round-icon corner-icon">dns</span>
           <div class="section-header">
-            <span class="material-icons-outlined">dns</span>
+            <span class="round-icon">dns</span>
             <h2>Servers</h2>
             <a href="/servers" class="muted">View All</a>
           </div>
@@ -83,7 +59,6 @@ export function renderDashboard() {
   loadLimits();
   loadServers();
   loadAnnouncements();
-  loadQuickStats();
   checkEmailVerification();
   
   pollInterval = setInterval(() => {
@@ -105,7 +80,7 @@ async function checkEmailVerification() {
       banner.innerHTML = `
         <div class="verification-banner">
           <div class="verification-content">
-            <span class="material-icons-outlined">mail</span>
+            <span class="round-icon">mail</span>
             <div class="verification-text">
               <strong>Email Verification Required</strong>
               <p>Please verify your email address (${data.email || 'not set'}) to unlock all features.</p>
@@ -138,42 +113,6 @@ async function checkEmailVerification() {
     }
   } catch (e) {
     // Ignore verification check errors
-  }
-}
-
-async function loadQuickStats() {
-  const container = document.getElementById('quick-stats');
-  if (!container) return;
-  
-  try {
-    const res = await api('/api/servers');
-    const data = await res.json();
-    
-    const online = data.servers.filter(s => s.status === 'running').length;
-    const starting = data.servers.filter(s => s.status === 'starting').length;
-    const stopping = data.servers.filter(s => s.status === 'stopping').length;
-    const offline = data.servers.filter(s => s.status === 'offline' || !s.status).length;
-    
-    container.innerHTML = `
-      <div class="stat-chip online">
-        <span class="material-icons-outlined">check_circle</span>
-        <span>${online} online</span>
-      </div>
-      <div class="stat-chip starting">
-        <span class="material-icons-outlined">hourglass_top</span>
-        <span>${starting} starting</span>
-      </div>
-      <div class="stat-chip stopping">
-        <span class="material-icons-outlined">pending</span>
-        <span>${stopping} stopping</span>
-      </div>
-      <div class="stat-chip offline">
-        <span class="material-icons-outlined">cancel</span>
-        <span>${offline} offline</span>
-      </div>
-    `;
-  } catch (e) {
-    container.innerHTML = '';
   }
 }
 
@@ -252,7 +191,7 @@ async function loadServers() {
     if (data.servers.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">dns</span>
+          <span class="round-icon">dns</span>
           <p>No servers yet</p>
         </div>
       `;
@@ -265,7 +204,7 @@ async function loadServers() {
     if (alertsContainer) {
       alertsContainer.innerHTML = downNodes.length > 0 ? downNodes.map(name => `
         <div class="node-alert-banner">
-          <span class="material-icons-outlined">warning</span>
+          <span class="round-icon">warning</span>
           <div>
             <strong>Node "${escapeHtml(name)}" is offline</strong>
             <p>Servers on this node may be unreachable. <a href="/status">View status</a></p>
@@ -281,9 +220,9 @@ async function loadServers() {
           <span class="server-address">${server.node_address || `${server.allocation?.ip}:${server.allocation?.port}`}</span>
         </div>
         <div class="server-meta">
-          ${server.node_online === false ? '<span class="node-down-badge"><span class="material-icons-outlined">cloud_off</span>Node Down</span>' : ''}
-          <span class="server-status" data-status-id="${server.id}">--</span>
-          <span class="material-icons-outlined">chevron_right</span>
+          ${server.node_online === false ? '<span class="node-down-badge"><span class="round-icon">cloud_off</span>Node Down</span>' : ''}
+          <span class="server-status" data-status-id="${server.id}"></span>
+          <span class="round-icon">chevron_right</span>
         </div>
       </a>
     `).join('');
@@ -346,19 +285,19 @@ function updateQuickStats() {
   
   container.innerHTML = `
     <div class="stat-chip online">
-      <span class="material-icons-outlined">check_circle</span>
+      <span class="round-icon">check_circle</span>
       <span>${online} online</span>
     </div>
     <div class="stat-chip starting">
-      <span class="material-icons-outlined">hourglass_top</span>
+      <span class="round-icon">hourglass_top</span>
       <span>${starting} starting</span>
     </div>
     <div class="stat-chip stopping">
-      <span class="material-icons-outlined">pending</span>
+      <span class="round-icon">pending</span>
       <span>${stopping} stopping</span>
     </div>
     <div class="stat-chip offline">
-      <span class="material-icons-outlined">cancel</span>
+      <span class="round-icon">cancel</span>
       <span>${offline} offline</span>
     </div>
   `;
@@ -391,14 +330,14 @@ async function loadAnnouncements() {
     container.innerHTML = activeAnnouncements.map(a => `
       <div class="announcement-banner type-${a.type}" data-id="${a.id}">
         <div class="announcement-icon">
-          <span class="material-icons-outlined">campaign</span>
+          <span class="round-icon">campaign</span>
         </div>
         <div class="announcement-content">
           <div class="announcement-title">${escapeHtml(a.title)}</div>
           <div class="announcement-text">${escapeHtml(a.content)}</div>
         </div>
         <button class="announcement-close" onclick="dismissAnnouncement('${a.id}')">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
     `).join('');

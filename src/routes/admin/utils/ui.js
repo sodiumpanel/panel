@@ -70,11 +70,11 @@ export function renderPagination(meta, tab) {
       
       <div class="pagination-center">
         <button class="page-btn" data-page="${meta.current_page - 1}" ${meta.current_page <= 1 ? 'disabled' : ''}>
-          <span class="material-icons-outlined">chevron_left</span>
+          <span class="round-icon">chevron_left</span>
         </button>
         <div class="page-numbers">${pageNumbers}</div>
         <button class="page-btn" data-page="${meta.current_page + 1}" ${meta.current_page >= meta.total_pages ? 'disabled' : ''}>
-          <span class="material-icons-outlined">chevron_right</span>
+          <span class="round-icon">chevron_right</span>
         </button>
       </div>
       
@@ -133,7 +133,7 @@ export function renderBreadcrumb(items) {
   return `
     <nav class="admin-breadcrumb">
       ${items.map((item, idx) => `
-        ${idx > 0 ? '<span class="material-icons-outlined">chevron_right</span>' : ''}
+        ${idx > 0 ? '<span class="round-icon">chevron_right</span>' : ''}
         ${item.onClick ? `<a href="#" class="breadcrumb-item" data-action="${item.onClick}">${escapeHtml(item.label)}</a>` : `<span class="breadcrumb-item current">${escapeHtml(item.label)}</span>`}
       `).join('')}
     </nav>
@@ -157,9 +157,9 @@ export function setupBreadcrumbListeners(navigateToCallback) {
 export function renderSearchBox(tab, placeholder) {
   return `
     <div class="admin-search">
-      <span class="material-icons-outlined">search</span>
+      <span class="round-icon">search</span>
       <input type="text" id="admin-search-input" placeholder="${placeholder}" value="${escapeHtml(state.searchQuery[tab] || '')}" />
-      ${state.searchQuery[tab] ? `<button class="search-clear" id="admin-search-clear"><span class="material-icons-outlined">close</span></button>` : ''}
+      ${state.searchQuery[tab] ? `<button class="search-clear" id="admin-search-clear"><span class="round-icon">close</span></button>` : ''}
     </div>
   `;
 }

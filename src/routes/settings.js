@@ -19,7 +19,7 @@ export function renderSettings() {
       <div class="settings-content">
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">palette</span>
+            <span class="round-icon">palette</span>
             <h3>Appearance</h3>
           </div>
           
@@ -44,7 +44,7 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">notifications</span>
+            <span class="round-icon">notifications</span>
             <h3>Notifications</h3>
           </div>
           
@@ -64,7 +64,7 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">security</span>
+            <span class="round-icon">security</span>
             <h3>Security</h3>
           </div>
           
@@ -86,13 +86,13 @@ export function renderSettings() {
               <span class="setting-title">Change Password</span>
               <span class="setting-description">Update your account password</span>
             </div>
-            <span class="material-icons-outlined">chevron_right</span>
+            <span class="round-icon">chevron_right</span>
           </div>
         </div>
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">devices</span>
+            <span class="round-icon">devices</span>
             <h3>Active Sessions</h3>
           </div>
           
@@ -100,7 +100,7 @@ export function renderSettings() {
             <div class="sessions-header">
               <p class="setting-description">Devices and browsers where you're currently logged in</p>
               <button class="btn btn-danger btn-sm" id="revoke-all-sessions-btn">
-                <span class="material-icons-outlined">logout</span>
+                <span class="round-icon">logout</span>
                 <span>Revoke All Others</span>
               </button>
             </div>
@@ -112,7 +112,7 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">key</span>
+            <span class="round-icon">key</span>
             <h3>SSH Keys</h3>
           </div>
           
@@ -120,7 +120,7 @@ export function renderSettings() {
             <div class="api-keys-header">
               <p class="setting-description">SSH keys for SFTP authentication</p>
               <button class="btn btn-primary btn-sm" id="add-ssh-key-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 <span>Add Key</span>
               </button>
             </div>
@@ -132,7 +132,7 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">vpn_key</span>
+            <span class="round-icon">vpn_key</span>
             <h3>API Keys</h3>
           </div>
           
@@ -140,7 +140,7 @@ export function renderSettings() {
             <div class="api-keys-header">
               <p class="setting-description">Manage API keys to access the Sodium API programmatically</p>
               <button class="btn btn-primary btn-sm" id="create-api-key-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 <span>Create Key</span>
               </button>
             </div>
@@ -152,7 +152,7 @@ export function renderSettings() {
         
         <div class="settings-section">
           <div class="section-header">
-            <span class="material-icons-outlined">webhook</span>
+            <span class="round-icon">webhook</span>
             <h3>Webhooks</h3>
           </div>
           
@@ -160,7 +160,7 @@ export function renderSettings() {
             <div class="webhooks-header">
               <p class="setting-description">Send notifications to Discord, Slack, or custom URLs when events occur</p>
               <button class="btn btn-primary btn-sm" id="create-webhook-btn">
-                <span class="material-icons-outlined">add</span>
+                <span class="round-icon">add</span>
                 <span>Add Webhook</span>
               </button>
             </div>
@@ -172,7 +172,7 @@ export function renderSettings() {
         
         <div class="settings-section danger-section">
           <div class="section-header">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <h3>Danger Zone</h3>
           </div>
           
@@ -182,7 +182,7 @@ export function renderSettings() {
               <span class="setting-description">Sign out of your account on this device</span>
             </div>
             <button class="btn btn-danger" id="logout-btn">
-              <span class="material-icons-outlined">logout</span>
+              <span class="round-icon">logout</span>
               <span>Sign Out</span>
             </button>
           </div>
@@ -196,14 +196,14 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>Create API Key</h3>
           <button class="modal-close" id="close-api-key-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="api-key-form">
           <div class="form-group">
             <label for="api-key-name">Key Name</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">label</span>
+              <span class="round-icon">label</span>
               <input type="text" id="api-key-name" required maxlength="50" placeholder="My API Key">
             </div>
           </div>
@@ -226,18 +226,18 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>API Key Created</h3>
           <button class="modal-close" id="close-api-key-created-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <div class="api-key-created-content">
           <div class="warning-box">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <p>Make sure to copy your API key now. You won't be able to see it again!</p>
           </div>
           <div class="api-key-display">
             <code id="created-api-key-token"></code>
             <button type="button" class="btn btn-icon" id="copy-api-key-btn">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
           </div>
         </div>
@@ -253,28 +253,28 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>Change Password</h3>
           <button class="modal-close" id="close-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="password-form">
           <div class="form-group">
             <label for="current-password">Current Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="current-password" required>
             </div>
           </div>
           <div class="form-group">
             <label for="new-password">New Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="new-password" required minlength="6">
             </div>
           </div>
           <div class="form-group">
             <label for="confirm-password">Confirm New Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="confirm-password" required>
             </div>
           </div>
@@ -293,21 +293,21 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>Add Webhook</h3>
           <button class="modal-close" id="close-webhook-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="webhook-form">
           <div class="form-group">
             <label for="webhook-name">Name</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">label</span>
+              <span class="round-icon">label</span>
               <input type="text" id="webhook-name" required maxlength="50" placeholder="My Webhook">
             </div>
           </div>
           <div class="form-group">
             <label for="webhook-url">Webhook URL</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">link</span>
+              <span class="round-icon">link</span>
               <input type="url" id="webhook-url" required placeholder="https://discord.com/api/webhooks/...">
             </div>
           </div>
@@ -402,7 +402,7 @@ export function renderSettings() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/user/password', {
@@ -550,7 +550,7 @@ async function loadUserSessions() {
     if (!data.sessions || data.sessions.length === 0) {
       container.innerHTML = `
         <div class="empty-state small">
-          <span class="material-icons-outlined">devices</span>
+          <span class="round-icon">devices</span>
           <p>No active sessions</p>
         </div>
       `;
@@ -559,18 +559,20 @@ async function loadUserSessions() {
     
     container.innerHTML = data.sessions.map(session => `
       <div class="list-item session-item" data-id="${session.id}">
-        <div class="item-icon">
-          <span class="material-icons-outlined">${getDeviceIcon(session.userAgent)}</span>
-        </div>
-        <div class="item-info">
-          <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
-          <span class="item-meta">${escapeHtml(session.ip)} • ${formatSessionDate(session.createdAt)}</span>
+        <div class="item-header">
+          <div class="item-icon">
+            <span class="round-icon">${getDeviceIcon(session.userAgent)}</span>
+          </div>
+          <div class="item-info">
+            <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
+            <span class="item-meta">${escapeHtml(session.ip)} • ${formatSessionDate(session.createdAt)}</span>
+          </div>
         </div>
         <div class="item-actions">
           ${session.current 
             ? '<span class="badge badge-success">Current</span>' 
             : `<button class="btn btn-icon btn-sm btn-danger revoke-session-btn" title="Revoke">
-                <span class="material-icons-outlined">close</span>
+                <span class="round-icon">close</span>
               </button>`
           }
         </div>
@@ -688,7 +690,7 @@ async function loadSshKeys() {
     if (keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">key</span>
+          <span class="round-icon">key</span>
           <p>No SSH keys added</p>
         </div>
       `;
@@ -706,7 +708,7 @@ async function loadSshKeys() {
           </span>
         </div>
         <button class="btn btn-icon btn-danger delete-ssh-key-btn" data-id="${key.id}">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     `).join('');
@@ -727,7 +729,7 @@ async function loadSshKeys() {
   } catch (e) {
     list.innerHTML = `
       <div class="empty-state error">
-        <span class="material-icons-outlined">error</span>
+        <span class="round-icon">error</span>
         <p>Failed to load SSH keys</p>
       </div>
     `;
@@ -748,14 +750,14 @@ function setupSshKeysHandlers() {
         <div class="modal-header">
           <h3>Add SSH Key</h3>
           <button class="modal-close" onclick="this.closest('.modal').remove()">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="ssh-key-form">
           <div class="form-group">
             <label for="ssh-key-name-input">Key Name</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">label</span>
+              <span class="round-icon">label</span>
               <input type="text" id="ssh-key-name-input" name="name" required placeholder="My Laptop" maxlength="50">
             </div>
           </div>
@@ -781,7 +783,7 @@ function setupSshKeysHandlers() {
       const btn = e.target.querySelector('button[type="submit"]');
       
       btn.disabled = true;
-      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      btn.innerHTML = '<span class="round-icon spinning">sync</span>';
       
       try {
         const res = await api('/api/user/ssh-keys', {
@@ -832,7 +834,7 @@ async function loadApiKeys() {
     if (!keysData.keys || keysData.keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="material-icons-outlined">vpn_key</span>
+          <span class="round-icon">vpn_key</span>
           <p>No API keys yet</p>
         </div>
       `;
@@ -853,7 +855,7 @@ async function loadApiKeys() {
           ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
         </div>
         <button class="btn btn-icon btn-danger delete-api-key-btn" data-id="${key.id}">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     `).join('');
@@ -877,7 +879,7 @@ async function loadApiKeys() {
     console.error('Failed to load API keys:', err);
     list.innerHTML = `
       <div class="empty-state error">
-        <span class="material-icons-outlined">error</span>
+        <span class="round-icon">error</span>
         <p>Failed to load API keys</p>
       </div>
     `;
@@ -924,9 +926,9 @@ function setupApiKeysHandlers() {
     const token = document.getElementById('created-api-key-token').textContent;
     navigator.clipboard.writeText(token);
     const btn = createdModal.querySelector('#copy-api-key-btn');
-    btn.innerHTML = '<span class="material-icons-outlined">check</span>';
+    btn.innerHTML = '<span class="round-icon">check</span>';
     setTimeout(() => {
-      btn.innerHTML = '<span class="material-icons-outlined">content_copy</span>';
+      btn.innerHTML = '<span class="round-icon">content_copy</span>';
     }, 2000);
   });
   
@@ -946,7 +948,7 @@ function setupApiKeysHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/api-keys', {
@@ -997,7 +999,7 @@ async function loadWebhooks() {
     if (!data.webhooks || data.webhooks.length === 0) {
       container.innerHTML = `
         <div class="empty-state small">
-          <span class="material-icons-outlined">webhook</span>
+          <span class="round-icon">webhook</span>
           <p>No webhooks configured</p>
         </div>
       `;
@@ -1007,7 +1009,7 @@ async function loadWebhooks() {
     container.innerHTML = data.webhooks.map(webhook => `
       <div class="list-item webhook-item" data-id="${webhook.id}">
         <div class="item-icon">
-          <span class="material-icons-outlined">${getWebhookIcon(webhook.type)}</span>
+          <span class="round-icon">${getWebhookIcon(webhook.type)}</span>
         </div>
         <div class="item-info">
           <span class="item-name">${escapeHtml(webhook.name)}</span>
@@ -1015,14 +1017,14 @@ async function loadWebhooks() {
         </div>
         <div class="item-actions">
           <button class="btn btn-icon btn-sm test-webhook-btn" title="Test">
-            <span class="material-icons-outlined">send</span>
+            <span class="round-icon">send</span>
           </button>
           <label class="toggle small">
             <input type="checkbox" class="toggle-webhook-btn" ${webhook.enabled ? 'checked' : ''}>
             <span class="toggle-slider"></span>
           </label>
           <button class="btn btn-icon btn-sm btn-danger delete-webhook-btn" title="Delete">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
           </button>
         </div>
       </div>
@@ -1049,20 +1051,20 @@ async function loadWebhooks() {
         const item = e.target.closest('.webhook-item');
         const id = item.dataset.id;
         btn.disabled = true;
-        btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+        btn.innerHTML = '<span class="round-icon spinning">sync</span>';
         
         try {
           const res = await api(`/api/webhooks/${id}/test`, { method: 'POST' });
           const data = await res.json();
-          btn.innerHTML = '<span class="material-icons-outlined">check</span>';
+          btn.innerHTML = '<span class="round-icon">check</span>';
           setTimeout(() => {
-            btn.innerHTML = '<span class="material-icons-outlined">send</span>';
+            btn.innerHTML = '<span class="round-icon">send</span>';
             btn.disabled = false;
           }, 2000);
         } catch (err) {
-          btn.innerHTML = '<span class="material-icons-outlined">error</span>';
+          btn.innerHTML = '<span class="round-icon">error</span>';
           setTimeout(() => {
-            btn.innerHTML = '<span class="material-icons-outlined">send</span>';
+            btn.innerHTML = '<span class="round-icon">send</span>';
             btn.disabled = false;
           }, 2000);
         }
@@ -1148,7 +1150,7 @@ function setupWebhooksHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/webhooks', {

@@ -30,7 +30,7 @@
     gap: 8px;
     margin-bottom: 12px;
     
-    .material-icons-outlined { font-size: 28px; color: var(--accent); }
+    .round-icon { font-size: 28px; color: var(--accent); }
     .logo-text { font-size: 22px; font-weight: 700; }
   }
   
@@ -80,11 +80,11 @@
   font-size: 13px;
   color: var(--text-secondary);
   
-  .material-icons-outlined { font-size: 20px; color: var(--accent); }
+  .round-icon { font-size: 20px; color: var(--accent); }
   
   &.success {
     background: rgba(16, 185, 129, 0.1);
-    .material-icons-outlined { color: var(--success); }
+    .round-icon { color: var(--success); }
   }
 }
 

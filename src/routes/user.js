@@ -8,7 +8,7 @@ export function renderUser(targetUsername) {
   app.innerHTML = `
     <div class="user-container">
       <div class="loading-state">
-        <span class="material-icons-outlined spinning">sync</span>
+        <span class="round-icon spinning">sync</span>
         <span>Loading profile...</span>
       </div>
     </div>
@@ -28,7 +28,7 @@ async function loadUserProfile(targetUsername) {
     if (data.error) {
       container.innerHTML = `
         <div class="error-state">
-          <span class="material-icons-outlined">error</span>
+          <span class="round-icon">error</span>
           <p>User not found</p>
           <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
         </div>
@@ -52,7 +52,7 @@ async function loadUserProfile(targetUsername) {
           <div class="user-info">
             <h1>${escapeHtml(user.displayName || user.username)}</h1>
             <span class="user-username">@${escapeHtml(user.username)}</span>
-            ${isPrivate ? '<span class="private-badge"><span class="material-icons-outlined">lock</span> Private Profile</span>' : ''}
+            ${isPrivate ? '<span class="private-badge"><span class="round-icon">lock</span> Private Profile</span>' : ''}
           </div>
         </div>
         
@@ -65,14 +65,14 @@ async function loadUserProfile(targetUsername) {
         
         ${isPrivate ? `
           <div class="private-notice">
-            <span class="material-icons-outlined">visibility_off</span>
+            <span class="round-icon">visibility_off</span>
             <p>This profile is private</p>
           </div>
         ` : ''}
         
         ${!isPrivate && user.createdAt ? `
           <div class="user-meta">
-            <span class="material-icons-outlined">calendar_today</span>
+            <span class="round-icon">calendar_today</span>
             <span>Joined ${new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
           </div>
         ` : ''}
@@ -81,7 +81,7 @@ async function loadUserProfile(targetUsername) {
   } catch (err) {
     container.innerHTML = `
       <div class="error-state">
-        <span class="material-icons-outlined">wifi_off</span>
+        <span class="round-icon">wifi_off</span>
         <p>Connection error. Please try again.</p>
         <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
       </div>

@@ -43,7 +43,7 @@ export function renderAuth() {
           <div class="form-group">
             <label for="login-username">Username</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
             </div>
           </div>
@@ -51,7 +51,7 @@ export function renderAuth() {
           <div class="form-group">
             <label for="login-password">Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
             </div>
           </div>
@@ -60,7 +60,7 @@ export function renderAuth() {
           
           <button type="submit" class="btn btn-primary btn-full" id="login-submit-btn">
             <span>Sign In</span>
-            <span class="material-icons-outlined">arrow_forward</span>
+            <span class="round-icon">arrow_forward</span>
           </button>
           
           <div class="auth-links">
@@ -79,7 +79,7 @@ export function renderAuth() {
           <div class="form-group">
             <label for="register-username">Username</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               <input type="text" id="register-username" name="username" placeholder="Choose a username" required minlength="3" maxlength="20">
             </div>
             <small class="form-hint">3-20 characters</small>
@@ -88,7 +88,7 @@ export function renderAuth() {
           <div class="form-group" id="email-field-group" style="display: none;">
             <label for="register-email">Email</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">email</span>
+              <span class="round-icon">email</span>
               <input type="email" id="register-email" name="email" placeholder="Enter your email">
             </div>
             <small class="form-hint">Required for email verification</small>
@@ -97,7 +97,7 @@ export function renderAuth() {
           <div class="form-group">
             <label for="register-password">Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="register-password" name="password" placeholder="Create a password" required minlength="6">
             </div>
             <small class="form-hint">Minimum 6 characters</small>
@@ -106,7 +106,7 @@ export function renderAuth() {
           <div class="form-group">
             <label for="register-confirm">Confirm Password</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">lock</span>
+              <span class="round-icon">lock</span>
               <input type="password" id="register-confirm" name="confirm" placeholder="Confirm your password" required>
             </div>
           </div>
@@ -117,7 +117,7 @@ export function renderAuth() {
           
           <button type="submit" class="btn btn-primary btn-full" id="register-submit-btn">
             <span>Create Account</span>
-            <span class="material-icons-outlined">arrow_forward</span>
+            <span class="round-icon">arrow_forward</span>
           </button>
         </form>
       </div>
@@ -151,7 +151,7 @@ export function renderAuth() {
     const btn = loginForm.querySelector('button[type="submit"]');
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await fetch('/api/auth/login', {
@@ -166,7 +166,7 @@ export function renderAuth() {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Sign In</span><span class="material-icons-outlined">arrow_forward</span>';
+        btn.innerHTML = '<span>Sign In</span><span class="round-icon">arrow_forward</span>';
         return;
       }
       
@@ -182,7 +182,7 @@ export function renderAuth() {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Sign In</span><span class="material-icons-outlined">arrow_forward</span>';
+      btn.innerHTML = '<span>Sign In</span><span class="round-icon">arrow_forward</span>';
     }
   });
   
@@ -202,7 +202,7 @@ export function renderAuth() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const captchaToken = window.turnstile ? window.turnstile.getResponse(turnstileWidgetId) : null;
@@ -219,7 +219,7 @@ export function renderAuth() {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Create Account</span><span class="material-icons-outlined">arrow_forward</span>';
+        btn.innerHTML = '<span>Create Account</span><span class="round-icon">arrow_forward</span>';
         if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
         return;
       }
@@ -231,7 +231,7 @@ export function renderAuth() {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Create Account</span><span class="material-icons-outlined">arrow_forward</span>';
+      btn.innerHTML = '<span>Create Account</span><span class="round-icon">arrow_forward</span>';
       if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
     }
   });
@@ -298,7 +298,7 @@ async function loadOAuthProviders() {
         section.style.display = 'block';
         container.innerHTML = data.providers.map(p => `
           <button type="button" class="oauth-btn oauth-${p.type}" data-provider="${p.id}">
-            ${OAUTH_ICONS[p.type] || '<span class="material-icons-outlined">login</span>'}
+            ${OAUTH_ICONS[p.type] || '<span class="round-icon">login</span>'}
             <span>${p.name}</span>
           </button>
         `).join('');
@@ -328,7 +328,7 @@ export function renderAuthCallback() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Authentication Failed</h2>
             <p class="auth-subtitle">${getErrorMessage(error)}</p>
           </div>
@@ -346,7 +346,7 @@ export function renderAuthCallback() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+            <span class="round-icon spinning" style="font-size: 48px;">sync</span>
             <h2>Signing in...</h2>
           </div>
         </div>
@@ -396,14 +396,14 @@ function render2FAScreen(username, password) {
         
         <form id="2fa-form" class="auth-form active">
           <p class="form-info">
-            <span class="material-icons-outlined">email</span>
+            <span class="round-icon">email</span>
             A verification code has been sent to your email.
           </p>
           
           <div class="form-group">
             <label for="2fa-code">Verification Code</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">pin</span>
+              <span class="round-icon">pin</span>
               <input type="text" id="2fa-code" name="code" placeholder="Enter 6-digit code" 
                      required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code">
             </div>
@@ -413,7 +413,7 @@ function render2FAScreen(username, password) {
           
           <button type="submit" class="btn btn-primary btn-full" id="2fa-submit-btn">
             <span>Verify</span>
-            <span class="material-icons-outlined">check</span>
+            <span class="round-icon">check</span>
           </button>
           
           <div class="auth-links">
@@ -442,7 +442,7 @@ function render2FAScreen(username, password) {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await fetch('/api/auth/login', {
@@ -457,7 +457,7 @@ function render2FAScreen(username, password) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+        btn.innerHTML = '<span>Verify</span><span class="round-icon">check</span>';
         
         if (data.codeExpired) {
           codeInput.value = '';
@@ -472,7 +472,7 @@ function render2FAScreen(username, password) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Verify</span><span class="material-icons-outlined">check</span>';
+      btn.innerHTML = '<span>Verify</span><span class="round-icon">check</span>';
     }
   });
   
@@ -501,7 +501,7 @@ function render2FAScreen(username, password) {
         
         const info = document.querySelector('.form-info');
         if (info) {
-          info.innerHTML = '<span class="material-icons-outlined">check_circle</span> New code sent to your email.';
+          info.innerHTML = '<span class="round-icon">check_circle</span> New code sent to your email.';
           info.classList.add('success');
         }
       }
@@ -533,7 +533,7 @@ export async function renderVerifyEmail() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Invalid Link</h2>
             <p class="auth-subtitle">No verification token provided.</p>
           </div>
@@ -550,7 +550,7 @@ export async function renderVerifyEmail() {
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <span class="round-icon spinning" style="font-size: 48px;">sync</span>
           <h2>Verifying email...</h2>
         </div>
       </div>
@@ -566,7 +566,7 @@ export async function renderVerifyEmail() {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+              <span class="round-icon" style="font-size: 48px; color: var(--success);">check_circle</span>
               <h2>Email Verified!</h2>
               <p class="auth-subtitle">${data.message || 'Your email has been verified successfully.'}</p>
             </div>
@@ -581,7 +581,7 @@ export async function renderVerifyEmail() {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
               <h2>Verification Failed</h2>
               <p class="auth-subtitle">${data.error || 'Unable to verify your email.'}</p>
             </div>
@@ -597,7 +597,7 @@ export async function renderVerifyEmail() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Connection Error</h2>
             <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
           </div>
@@ -628,14 +628,14 @@ function renderForgotPassword() {
         
         <form id="forgot-form" class="auth-form active">
           <p class="form-info">
-            <span class="material-icons-outlined">info</span>
+            <span class="round-icon">info</span>
             Enter your email address and we'll send you a link to reset your password.
           </p>
           
           <div class="form-group">
             <label for="forgot-email">Email</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">email</span>
+              <span class="round-icon">email</span>
               <input type="email" id="forgot-email" name="email" placeholder="Enter your email" required>
             </div>
           </div>
@@ -645,7 +645,7 @@ function renderForgotPassword() {
           
           <button type="submit" class="btn btn-primary btn-full" id="forgot-submit-btn">
             <span>Send Reset Link</span>
-            <span class="material-icons-outlined">send</span>
+            <span class="round-icon">send</span>
           </button>
           
           <div class="auth-links">
@@ -666,7 +666,7 @@ function renderForgotPassword() {
     const btn = document.getElementById('forgot-submit-btn');
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     errorEl.style.display = 'none';
     successEl.style.display = 'none';
     
@@ -693,7 +693,7 @@ function renderForgotPassword() {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span>Send Reset Link</span><span class="material-icons-outlined">send</span>';
+    btn.innerHTML = '<span>Send Reset Link</span><span class="round-icon">send</span>';
   });
   
   document.getElementById('back-to-login-btn').addEventListener('click', () => {
@@ -714,7 +714,7 @@ export async function renderResetPassword() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Invalid Link</h2>
             <p class="auth-subtitle">No reset token provided.</p>
           </div>
@@ -731,7 +731,7 @@ export async function renderResetPassword() {
     <div class="auth-container">
       <div class="auth-card">
         <div class="auth-header">
-          <span class="material-icons-outlined spinning" style="font-size: 48px;">sync</span>
+          <span class="round-icon spinning" style="font-size: 48px;">sync</span>
           <h2>Validating...</h2>
         </div>
       </div>
@@ -747,7 +747,7 @@ export async function renderResetPassword() {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+              <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
               <h2>Invalid Link</h2>
               <p class="auth-subtitle">${data.error || 'This reset link is invalid or has expired.'}</p>
             </div>
@@ -775,7 +775,7 @@ export async function renderResetPassword() {
             <div class="form-group">
               <label for="new-password">New Password</label>
               <div class="input-wrapper">
-                <span class="material-icons-outlined">lock</span>
+                <span class="round-icon">lock</span>
                 <input type="password" id="new-password" name="password" placeholder="Enter new password" required minlength="6">
               </div>
               <small class="form-hint">Minimum 6 characters</small>
@@ -784,7 +784,7 @@ export async function renderResetPassword() {
             <div class="form-group">
               <label for="confirm-password">Confirm Password</label>
               <div class="input-wrapper">
-                <span class="material-icons-outlined">lock</span>
+                <span class="round-icon">lock</span>
                 <input type="password" id="confirm-password" name="confirm" placeholder="Confirm new password" required>
               </div>
             </div>
@@ -793,7 +793,7 @@ export async function renderResetPassword() {
             
             <button type="submit" class="btn btn-primary btn-full" id="reset-submit-btn">
               <span>Reset Password</span>
-              <span class="material-icons-outlined">check</span>
+              <span class="round-icon">check</span>
             </button>
           </form>
         </div>
@@ -816,7 +816,7 @@ export async function renderResetPassword() {
       }
       
       btn.disabled = true;
-      btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+      btn.innerHTML = '<span class="round-icon spinning">sync</span>';
       errorEl.style.display = 'none';
       
       try {
@@ -832,13 +832,13 @@ export async function renderResetPassword() {
           errorEl.textContent = data.error;
           errorEl.style.display = 'block';
           btn.disabled = false;
-          btn.innerHTML = '<span>Reset Password</span><span class="material-icons-outlined">check</span>';
+          btn.innerHTML = '<span>Reset Password</span><span class="round-icon">check</span>';
         } else {
           app.innerHTML = `
             <div class="auth-container">
               <div class="auth-card">
                 <div class="auth-header">
-                  <span class="material-icons-outlined" style="font-size: 48px; color: var(--success);">check_circle</span>
+                  <span class="round-icon" style="font-size: 48px; color: var(--success);">check_circle</span>
                   <h2>Password Reset!</h2>
                   <p class="auth-subtitle">Your password has been reset successfully.</p>
                 </div>
@@ -853,7 +853,7 @@ export async function renderResetPassword() {
         errorEl.textContent = 'Connection error. Please try again.';
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Reset Password</span><span class="material-icons-outlined">check</span>';
+        btn.innerHTML = '<span>Reset Password</span><span class="round-icon">check</span>';
       }
     });
     
@@ -862,7 +862,7 @@ export async function renderResetPassword() {
       <div class="auth-container">
         <div class="auth-card">
           <div class="auth-header">
-            <span class="material-icons-outlined" style="font-size: 48px; color: var(--danger);">error</span>
+            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
             <h2>Connection Error</h2>
             <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
           </div>

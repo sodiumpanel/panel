@@ -13,6 +13,7 @@ import { renderWebhooksList } from './views/webhooks.js';
 import { renderPluginsList } from './views/plugins.js';
 import { renderGroupsList, renderGroupDetail } from './views/groups.js';
 import { renderIncidentsList, renderIncidentDetail } from './views/incidents.js';
+import { renderOverview } from './views/overview.js';
 import { getPluginAdminPages, renderPluginAdminPage } from '../../utils/plugins.js';
 
 let loadViewGeneration = 0;
@@ -118,6 +119,9 @@ export async function loadView() {
     }
   } else {
     switch (state.currentView.tab) {
+      case 'overview':
+        await renderOverview(container, username, loadView);
+        break;
       case 'nodes':
         await renderNodesList(container, username, loadView);
         break;

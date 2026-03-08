@@ -17,7 +17,7 @@ export async function renderLocationsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Locations' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-location-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Location
           </button>
         </div>
@@ -26,7 +26,7 @@ export async function renderLocationsList(container, username, loadView) {
       <div class="admin-list">
         ${data.locations.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">location_on</span>
+            <span class="round-icon">location_on</span>
             <p>No locations yet</p>
           </div>
         ` : `
@@ -34,7 +34,7 @@ export async function renderLocationsList(container, username, loadView) {
             ${data.locations.map(l => `
               <div class="location-card">
                 <div class="location-icon">
-                  <span class="material-icons-outlined">location_on</span>
+                  <span class="round-icon">location_on</span>
                 </div>
                 <div class="location-info">
                   <h3>${escapeHtml(l.short)}</h3>
@@ -42,7 +42,7 @@ export async function renderLocationsList(container, username, loadView) {
                 </div>
                 <div class="location-actions">
                   <button class="btn btn-sm btn-danger" onclick="deleteLocationAdmin('${l.id}')">
-                    <span class="material-icons-outlined">delete</span>
+                    <span class="round-icon">delete</span>
                   </button>
                 </div>
               </div>
@@ -70,7 +70,7 @@ function showLocationModal(username, loadView) {
       <div class="modal-header">
         <h2>Create Location</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="location-form" class="modal-form">

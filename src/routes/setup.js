@@ -30,7 +30,7 @@ export async function renderSetup() {
                 <span>Sodium Setup</span>
               </div>
               <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
-                <span class="material-icons-outlined">${document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+                <span class="round-icon">${document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'}</span>
               </button>
             </div>
             <div class="setup-progress">
@@ -139,7 +139,7 @@ export async function renderSetup() {
         </div>
         
         <button class="btn btn-secondary" id="test-db-btn">
-          <span class="material-icons-outlined">sync</span>
+          <span class="round-icon">sync</span>
           Test Connection
         </button>
         <span id="db-test-result" class="test-result"></span>
@@ -178,7 +178,7 @@ export async function renderSetup() {
         </div>
         
         <button class="btn btn-secondary" id="test-redis-btn">
-          <span class="material-icons-outlined">sync</span>
+          <span class="round-icon">sync</span>
           Test Connection
         </button>
         <span id="redis-test-result" class="test-result"></span>
@@ -374,7 +374,7 @@ export async function renderSetup() {
           <div class="setup-container">
             <div class="setup-card setup-complete">
               <div class="success-icon">
-                <span class="material-icons-outlined">check_circle</span>
+                <span class="round-icon">check_circle</span>
               </div>
               <h2>Setup Complete!</h2>
               <p>Sodium has been configured successfully.</p>

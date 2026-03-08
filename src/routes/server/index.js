@@ -17,7 +17,7 @@ let currentTab = 'console';
 let serverData = null;
 let installCheckInterval = null;
 
-const SPARK_POINTS = 30;
+const SPARK_POINTS = 10;
 const sparkHistory = {
   cpu: [],
   mem: [],
@@ -42,7 +42,7 @@ export function renderServerPage(serverId) {
   app.innerHTML = `
     <div class="server-page">
       <div class="node-down-banner" id="node-down-banner" style="display:none">
-        <span class="material-icons-outlined">warning</span>
+        <span class="round-icon">warning</span>
         <div class="node-down-text">
           <strong>Node Offline</strong>
           <p>The node hosting this server is currently unreachable. Actions like start, stop, and file management may not work until the node is back online.</p>
@@ -58,16 +58,19 @@ export function renderServerPage(serverId) {
         <div class="server-header-right">
           <div class="power-buttons">
             <button class="power-action start" id="btn-start" title="Start">
-              <span class="material-icons-outlined">play_arrow</span>
+              <span class="round-icon">play_arrow</span>
+              Start
             </button>
             <button class="power-action restart" id="btn-restart" title="Restart">
-              <span class="material-icons-outlined">refresh</span>
+              <span class="round-icon">refresh</span>
+              Restart
             </button>
             <button class="power-action stop" id="btn-stop" title="Stop">
-              <span class="material-icons-outlined">stop</span>
+              <span class="round-icon">stop</span>
+              Stop
             </button>
-            <button class="power-action kill" id="btn-kill" title="Kill">
-              <span class="material-icons-outlined">power_settings_new</span>
+            <button class="power-action kill" id="btn-kill" title="Kill" style="display: none">
+              Kill
             </button>
           </div>
         </div>
@@ -77,13 +80,13 @@ export function renderServerPage(serverId) {
         ${tabs.map(tab => `
           <button class="server-tab ${tab.id === currentTab ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}" 
                   data-tab="${tab.id}" ${tab.disabled ? 'disabled' : ''}>
-            <span class="material-icons-outlined">${tab.icon}</span>
+            <span class="round-icon">${tab.icon}</span>
             <span>${tab.label}</span>
           </button>
         `).join('')}
         ${getPluginServerTabs().map(tab => `
           <button class="server-tab" data-tab="plugin:${tab.pluginId}:${tab.id}">
-            <span class="material-icons-outlined">${tab.icon || 'extension'}</span>
+            <span class="round-icon">${tab.icon || 'extension'}</span>
             <span>${tab.label || tab.id}</span>
           </button>
         `).join('')}
@@ -94,26 +97,27 @@ export function renderServerPage(serverId) {
         <div class="server-sidebar">
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">info</span>
+              <span class="round-icon">info</span>
               <h3>Server Info</h3>
             </div>
             <div class="sidebar-card">
+              <span class="round-icon corner-icon">info</span>
               <div class="info-row">
-                <span class="material-icons-outlined">language</span>
+                <span class="round-icon">language</span>
                 <div class="info-content">
                   <span class="info-label">Address</span>
                   <span class="info-value" id="server-address">--</span>
                 </div>
               </div>
               <div class="info-row">
-                <span class="material-icons-outlined">dns</span>
+                <span class="round-icon">dns</span>
                 <div class="info-content">
                   <span class="info-label">Node</span>
                   <span class="info-value" id="server-node">--</span>
                 </div>
               </div>
               <div class="info-row">
-                <span class="material-icons-outlined">schedule</span>
+                <span class="round-icon">schedule</span>
                 <div class="info-content">
                   <span class="info-label">Uptime</span>
                   <span class="info-value" id="server-uptime">--</span>
@@ -124,49 +128,69 @@ export function renderServerPage(serverId) {
           
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">monitor</span>
+              <span class="round-icon">data_usage</span>
               <h3>Resources</h3>
             </div>
             <div class="sidebar-card">
+              <span class="round-icon corner-icon">data_usage</span>
+              <svg style="width:0; height:0; position:absolute;" aria-hidden="true">
+                <defs>
+                  <linearGradient id="grad-cpu" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="grad-mem" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="var(--success)" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="var(--success)" stop-opacity="0" />
+                  </linearGradient>
+                  <linearGradient id="grad-disk" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="var(--warning)" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="var(--warning)" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+              </svg>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
                   <div class="resource-spark-label">
-                    <span class="material-icons-outlined">memory</span>
+                    <span class="round-icon">memory</span>
                     <span>CPU</span>
                   </div>
                   <span class="resource-spark-value" id="res-cpu-text">0%</span>
                 </div>
                 <div class="resource-spark-chart">
                   <svg id="spark-cpu" viewBox="0 0 100 24" preserveAspectRatio="none">
-                    <polyline class="spark-line cpu" points="0,24 100,24" />
+                    <path class="spark-area" fill="url(#grad-cpu)" d="" />
+                    <path class="spark-line cpu" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
                   <div class="resource-spark-label">
-                    <span class="material-icons-outlined">storage</span>
+                    <span class="round-icon">storage</span>
                     <span>Memory</span>
                   </div>
                   <span class="resource-spark-value" id="res-mem-text">0 MB</span>
                 </div>
                 <div class="resource-spark-chart">
                   <svg id="spark-mem" viewBox="0 0 100 24" preserveAspectRatio="none">
-                    <polyline class="spark-line memory" points="0,24 100,24" />
+                    <path class="spark-area" fill="url(#grad-mem)" d="" />
+                    <path class="spark-line memory" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
               <div class="resource-spark-item">
                 <div class="resource-spark-header">
                   <div class="resource-spark-label">
-                    <span class="material-icons-outlined">save</span>
+                    <span class="round-icon">save</span>
                     <span>Disk</span>
                   </div>
                   <span class="resource-spark-value" id="res-disk-text">0 MB</span>
                 </div>
                 <div class="resource-spark-chart">
                   <svg id="spark-disk" viewBox="0 0 100 24" preserveAspectRatio="none">
-                    <polyline class="spark-line disk" points="0,24 100,24" />
+                    <path class="spark-area" fill="url(#grad-disk)" d="" />
+                    <path class="spark-line disk" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
@@ -175,19 +199,21 @@ export function renderServerPage(serverId) {
           
           <div class="sidebar-section">
             <div class="section-header">
-              <span class="material-icons-outlined">swap_vert</span>
+              <span class="round-icon">swap_vert</span>
               <h3>Network</h3>
             </div>
             <div class="sidebar-card network-stats">
+              <span class="round-icon corner-icon">swap_vert</span>
+              <span class="round-icon corner-icon corner-icon-left">swap_vert</span>
               <div class="network-stat">
-                <span class="material-icons-outlined tx">arrow_upward</span>
+                <span class="round-icon tx">arrow_upward</span>
                 <div class="stat-content">
                   <span class="stat-label">Outbound</span>
                   <span class="stat-value" id="res-net-tx">0 B</span>
                 </div>
               </div>
               <div class="network-stat">
-                <span class="material-icons-outlined rx">arrow_downward</span>
+                <span class="round-icon rx">arrow_downward</span>
                 <div class="stat-content">
                   <span class="stat-label">Inbound</span>
                   <span class="stat-value" id="res-net-rx">0 B</span>
@@ -210,7 +236,17 @@ export function renderServerPage(serverId) {
   
   document.getElementById('btn-start').onclick = () => powerAction(serverId, 'start');
   document.getElementById('btn-restart').onclick = () => powerAction(serverId, 'restart');
-  document.getElementById('btn-stop').onclick = () => powerAction(serverId, 'stop');
+  
+  document.getElementById('btn-stop').onclick = () => {
+    powerAction(serverId, 'stop');
+    const btnStop = document.getElementById('btn-stop');
+    const btnKill = document.getElementById('btn-kill');
+    if (btnStop && btnKill) {
+        btnStop.style.display = 'none';
+        btnKill.style.display = 'inline-flex';
+    }
+  };
+  
   document.getElementById('btn-kill').onclick = () => powerAction(serverId, 'kill');
 }
 
@@ -330,7 +366,7 @@ async function loadServerDetails(serverId) {
     if (nodeEl) nodeEl.textContent = serverData.node_name || 'Unknown';
     
     // Show node down banner and disable controls
-    const nodeDown = serverData.node_online === false;
+    const nodeDown = false; //serverData.node_online === false;
     const nodeBanner = document.getElementById('node-down-banner');
     if (nodeBanner) {
       nodeBanner.style.display = nodeDown ? 'flex' : 'none';
@@ -361,12 +397,9 @@ function disableServerControls() {
   
   // Disable tabs that need the node
   document.querySelectorAll('.server-tab').forEach(tab => {
-    const tabId = tab.dataset.tab;
-    if (['console', 'files', 'backups', 'startup', 'schedules'].includes(tabId)) {
-      tab.disabled = true;
-      tab.classList.add('disabled');
-      tab.title = 'Node is offline';
-    }
+    tab.disabled = true;
+    tab.classList.add('disabled');
+    tab.title = 'Node is offline';
   });
   
   // Show message in tab content
@@ -374,7 +407,7 @@ function disableServerControls() {
   if (content) {
     content.innerHTML = `
       <div class="node-offline-tab">
-        <span class="material-icons-outlined">cloud_off</span>
+        <span class="round-icon">cloud_off</span>
         <h3>Node Unreachable</h3>
         <p>The node hosting this server is currently offline. Server management is unavailable until the node comes back online.</p>
         <a href="/status" class="btn btn-sm">View System Status</a>
@@ -397,7 +430,7 @@ function showInstallingScreen() {
     <div class="installing-screen">
       <div class="installing-content">
         <div class="installing-icon">
-          <span class="material-icons-outlined spinning">settings</span>
+          <span class="round-icon spinning">settings</span>
         </div>
         <h2>Server Installing</h2>
         <p>Your server is being set up. This may take a few minutes...</p>
@@ -467,6 +500,15 @@ export function updateServerStatus(status) {
     statusEl.textContent = status;
     statusEl.className = `server-status status-${status}`;
   }
+
+  if (status === 'offline' || status === 'running' || status === 'starting') {
+    const btnStop = document.getElementById('btn-stop');
+    const btnKill = document.getElementById('btn-kill');
+    if (btnStop && btnKill) {
+        btnStop.style.display = '';
+        btnKill.style.display = 'none';
+    }
+  }
 }
 
 export function updateServerResources(stats) {
@@ -521,22 +563,29 @@ function updateSparkline(svgId, data) {
   const svg = document.getElementById(svgId);
   if (!svg) return;
   
-  const polyline = svg.querySelector('polyline');
-  if (!polyline) return;
-  
+  const linePath = svg.querySelector('.spark-line');
+  const areaPath = svg.querySelector('.spark-area');
+  if (!linePath || !areaPath) return;
+
   if (data.length < 2) {
-    polyline.setAttribute('points', '0,24 100,24');
+    const defaultPath = "M0,12 L100,12";
+    linePath.setAttribute('d', defaultPath);
+    areaPath.setAttribute('d', "");
     return;
   }
-  
-  const points = data.map((value, index) => {
-    const x = (index / (SPARK_POINTS - 1)) * 100;
+
+  const linePoints = data.map((value, index) => {
+    const x = (index / (data.length - 1)) * 100;
     const y = 24 - (value / 100) * 22;
-    return `${x},${y}`;
+    return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
   }).join(' ');
-  
-  polyline.setAttribute('points', points);
+
+  linePath.setAttribute('d', linePoints);
+
+  const areaPoints = `${linePoints} L100,24 L0,24 Z`;
+  areaPath.setAttribute('d', areaPoints);
 }
+
 
 export function cleanupServerPage() {
   cleanupCurrentTab();

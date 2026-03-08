@@ -25,7 +25,7 @@
     .success-icon {
       margin-bottom: 20px;
       
-      .material-icons-outlined {
+      .round-icon {
         font-size: 64px;
         color: var(--success);
       }
@@ -65,7 +65,7 @@
   font-size: 20px;
   font-weight: 600;
   
-  .material-icons-outlined {
+  .round-icon {
     font-size: 28px;
     color: var(--accent);
   }
@@ -82,7 +82,7 @@
   justify-content: center;
   transition: all var(--transition-fast);
   
-  .material-icons-outlined {
+  .round-icon {
     font-size: 20px;
     color: var(--text-secondary);
   }
@@ -91,7 +91,7 @@
     background: var(--bg-elevated);
     border-color: var(--accent);
     
-    .material-icons-outlined {
+    .round-icon {
       color: var(--accent);
     }
   }
@@ -252,45 +252,4 @@ small.text-muted {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   margin-right: 6px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 18px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-  cursor: pointer;
-  border: none;
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  .material-icons-outlined {
-    font-size: 18px;
-  }
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-  
-  &:hover:not(:disabled) {
-    background: var(--accent-hover);
-  }
-}
-
-.btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  
-  &:hover:not(:disabled) {
-    background: var(--bg-elevated);
-  }
 }

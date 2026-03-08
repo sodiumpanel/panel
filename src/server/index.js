@@ -7,7 +7,6 @@ import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import logger from './utils/logger.js';
 
-// Rutas
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import statusRoutes from './routes/status.js';
@@ -30,7 +29,9 @@ import { setupWebSocket } from './socket.js';
 import { isInstalled, loadFullConfig } from './config.js';
 import { initRedis } from './redis.js';
 import { loadPlugins, getPluginRouters, getPluginClientData, getPlugin, getPluginMiddlewares } from './plugins/manager.js';
+import fs from 'fs';
 
+let cachedHtml = null;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function matchIp(clientIp, pattern) {
@@ -267,11 +268,8 @@ app.use('/api', schedulesRoutes);
 app.use('/api/application', applicationApiRoutes);
 
 // Fallback para SPA — inject dynamic OG meta tags
-import fs from 'fs';
-let cachedHtml = null;
-
 app.get(/.*/, (req, res) => {
-  const htmlPath = path.join(__dirname, '../../dist', 'index.html');
+  const htmlPath = path.join(__dirname, '../../dist', 'main.html');
   
   if (!cachedHtml) {
     try { cachedHtml = fs.readFileSync(htmlPath, 'utf-8'); } catch { return res.sendFile(htmlPath); }
@@ -298,7 +296,6 @@ app.get(/.*/, (req, res) => {
 async function startServer() {
   setupWebSocket(server);
   
-  // Initialize Redis if configured
   if (isInstalled()) {
     await initRedis();
     startScheduler();

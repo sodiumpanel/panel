@@ -17,7 +17,7 @@ export function renderNav() {
     <div class="nav-content">
       <div class="nav-left">
         <button class="nav-toggle" id="sidebar-toggle">
-          <span class="material-icons-outlined">menu</span>
+          <span class="round-icon">menu</span>
         </button>
         <a href="/dashboard" class="nav-brand">
           <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${escapeHtml(branding.name)}" width="22" height="22">
@@ -33,20 +33,20 @@ export function renderNav() {
                 <img src="/default-avatar.png" alt="Avatar" onerror="this.src='/default-avatar.png'">
               </div>
               <span class="user-display-name">${displayName}</span>
-              <span class="material-icons-outlined dropdown-icon">expand_more</span>
+              <span class="round-icon dropdown-icon">expand_more</span>
             </button>
             <div class="user-dropdown" id="user-dropdown">
               <a href="/profile" class="dropdown-item">
-                <span class="material-icons-outlined">person</span>
+                <span class="round-icon">person</span>
                 <span>Profile</span>
               </a>
               <a href="/settings" class="dropdown-item">
-                <span class="material-icons-outlined">settings</span>
+                <span class="round-icon">settings</span>
                 <span>Settings</span>
               </a>
               <hr class="dropdown-divider">
               <button class="dropdown-item logout" id="nav-logout">
-                <span class="material-icons-outlined">logout</span>
+                <span class="round-icon">logout</span>
                 <span>Sign Out</span>
               </button>
             </div>

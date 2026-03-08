@@ -79,7 +79,7 @@ export async function renderAuditLogPage(container, username) {
       <div class="admin-list">
         ${data.logs.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">history</span>
+            <span class="round-icon">history</span>
             <h3>No Audit Logs</h3>
             <p>Admin actions will be logged here</p>
           </div>
@@ -88,7 +88,7 @@ export async function renderAuditLogPage(container, username) {
             ${data.logs.map(log => `
               <div class="audit-log-item">
                 <div class="audit-log-icon">
-                  <span class="material-icons-outlined">${getAuditIcon(log.action)}</span>
+                  <span class="round-icon">${getAuditIcon(log.action)}</span>
                 </div>
                 <div class="audit-log-content">
                   <div class="audit-log-action">
@@ -180,7 +180,7 @@ export async function renderActivityLogPage(container, username) {
       <div class="admin-list">
         ${data.logs.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">timeline</span>
+            <span class="round-icon">timeline</span>
             <h3>No Activity</h3>
             <p>User activity will be logged here</p>
           </div>
@@ -189,7 +189,7 @@ export async function renderActivityLogPage(container, username) {
             ${data.logs.map(log => `
               <div class="activity-log-item">
                 <div class="activity-log-icon">
-                  <span class="material-icons-outlined">${getActivityIcon(log.action)}</span>
+                  <span class="round-icon">${getActivityIcon(log.action)}</span>
                 </div>
                 <div class="activity-log-content">
                   <div class="activity-log-action">

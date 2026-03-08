@@ -49,7 +49,7 @@ export async function renderAnnouncementsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Announcements' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-announcement-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Announcement
           </button>
         </div>
@@ -58,7 +58,7 @@ export async function renderAnnouncementsList(container, username, loadView) {
       <div class="admin-list">
         ${announcements.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">campaign</span>
+            <span class="round-icon">campaign</span>
             <p>No announcements yet</p>
           </div>
         ` : `

@@ -23,7 +23,7 @@ export function renderStatus() {
         <div class="sp-section-head">
           <h2>Services</h2>
           <div class="sp-updated">
-            <span class="material-icons-outlined spinning" id="sp-sync" style="display:none;font-size:14px">sync</span>
+            <span class="round-icon spinning" id="sp-sync" style="display:none;font-size:14px">sync</span>
             <span id="sp-time">--</span>
           </div>
         </div>
@@ -38,7 +38,7 @@ export function renderStatus() {
         </div>
         <div class="sp-incidents" id="sp-incidents">
           <div class="sp-no-incidents">
-            <span class="material-icons-outlined">check_circle</span>
+            <span class="round-icon">check_circle</span>
             <p>No incidents reported in the last 90 days.</p>
           </div>
         </div>
@@ -201,7 +201,7 @@ async function loadStatus() {
     if (data.nodes.length === 0) {
       container.innerHTML = `
         <div class="sp-empty">
-          <span class="material-icons-outlined">cloud_off</span>
+          <span class="round-icon">cloud_off</span>
           <p>No services to display</p>
         </div>
       `;
@@ -253,7 +253,7 @@ async function loadStatus() {
   } catch {
     container.innerHTML = `
       <div class="sp-empty error">
-        <span class="material-icons-outlined">error_outline</span>
+        <span class="round-icon">error_outline</span>
         <p>Unable to reach monitoring services. Retrying...</p>
       </div>
     `;
@@ -283,7 +283,7 @@ function renderIncidents(incidents) {
   if (!incidents || incidents.length === 0) {
     el.innerHTML = `
       <div class="sp-no-incidents">
-        <span class="material-icons-outlined">check_circle</span>
+        <span class="round-icon">check_circle</span>
         <p>No incidents reported in the last 90 days.</p>
       </div>
     `;
@@ -320,7 +320,7 @@ function renderIncidents(incidents) {
         return `
           <div class="sp-incident-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-              <span class="material-icons-outlined" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
+              <span class="round-icon" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
                 ${impactIcons[inc.impact] || 'warning'}
               </span>
               <span class="sp-incident-text" style="flex: 1;">

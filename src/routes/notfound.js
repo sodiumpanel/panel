@@ -9,7 +9,7 @@ export function renderNotFound() {
         <h1>Page Not Found</h1>
         <p>The page you're looking for doesn't exist or has been moved.</p>
         <a href="/dashboard" class="btn btn-primary">
-          <span class="material-icons-outlined">home</span>
+          <span class="round-icon">home</span>
           <span>Back to Dashboard</span>
         </a>
       </div>

@@ -25,10 +25,7 @@ export function renderConsoleTab() {
       <div class="card console-card">
         <div class="console-terminal" id="console-terminal"></div>
         <div class="console-input">
-          <input type="text" id="command-input" placeholder="Type a command..." />
-          <button class="btn btn-primary" id="send-command">
-            <span class="material-icons-outlined">send</span>
-          </button>
+          <input type="text" id="command-input" placeholder="> Type a command..." />
         </div>
       </div>
     </div>
@@ -46,7 +43,6 @@ export function initConsoleTab(serverId) {
   initTerminal();
   connectWebSocket(serverId);
   
-  document.getElementById('send-command').onclick = () => sendCommand(serverId);
   document.getElementById('command-input').onkeypress = (e) => {
     if (e.key === 'Enter') sendCommand(serverId);
   };

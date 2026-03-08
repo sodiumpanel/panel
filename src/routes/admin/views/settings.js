@@ -44,7 +44,7 @@ export async function renderSettingsPage(container, username, loadView) {
           <nav class="settings-nav">
             ${SETTINGS_TABS.map(tab => `
               <button class="settings-nav-item ${currentSettingsTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">
-                <span class="material-icons-outlined">${tab.icon}</span>
+                <span class="round-icon">${tab.icon}</span>
                 <span>${tab.label}</span>
               </button>
             `).join('')}
@@ -165,7 +165,7 @@ function renderGeneralSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -242,12 +242,12 @@ function renderBrandingSettings(content, config) {
             <img id="logo-preview" src="${branding.logo || '/favicon.svg'}" alt="Logo" style="width: 48px; height: 48px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: contain; padding: 4px; background: var(--bg-secondary);" />
             <div style="display: flex; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                <span class="round-icon" style="font-size: 16px;">upload</span>
                 Upload Logo
                 <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display: none;" />
               </label>
               ${branding.logo ? `<button type="button" class="btn btn-danger btn-sm" id="remove-logo-btn">
-                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                <span class="round-icon" style="font-size: 16px;">delete</span>
                 Remove
               </button>` : ''}
             </div>
@@ -261,12 +261,12 @@ function renderBrandingSettings(content, config) {
             <img id="favicon-preview" src="${branding.favicon || '/favicon.svg'}" alt="Favicon" style="width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; padding: 2px; background: var(--bg-secondary);" />
             <div style="display: flex; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                <span class="round-icon" style="font-size: 16px;">upload</span>
                 Upload Favicon
                 <input type="file" id="favicon-upload" accept="image/png,image/svg+xml,image/x-icon,image/webp" style="display: none;" />
               </label>
               ${branding.favicon ? `<button type="button" class="btn btn-danger btn-sm" id="remove-favicon-btn">
-                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                <span class="round-icon" style="font-size: 16px;">delete</span>
                 Remove
               </button>` : ''}
             </div>
@@ -292,12 +292,12 @@ function renderBrandingSettings(content, config) {
             <img id="ogImage-preview" src="${branding.ogImage || '/banner.png'}" alt="OG Image" style="width: 120px; height: 63px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: cover; background: var(--bg-secondary);" />
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="material-icons-outlined" style="font-size: 16px;">upload</span>
+                <span class="round-icon" style="font-size: 16px;">upload</span>
                 Upload OG Image
                 <input type="file" id="og-image-upload" accept="image/png,image/jpeg,image/webp" style="display: none;" />
               </label>
               ${branding.ogImage ? `<button type="button" class="btn btn-danger btn-sm" id="remove-ogImage-btn">
-                <span class="material-icons-outlined" style="font-size: 16px;">delete</span>
+                <span class="round-icon" style="font-size: 16px;">delete</span>
                 Remove
               </button>` : ''}
               <small class="form-hint">Recommended: 1200×630px</small>
@@ -307,7 +307,7 @@ function renderBrandingSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -477,7 +477,7 @@ function renderRegistrationSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -561,7 +561,7 @@ function renderDefaultsSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -622,7 +622,7 @@ function renderSecuritySettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -659,7 +659,7 @@ function renderOAuthSettings(content, config) {
             <p>Configure third-party authentication providers.</p>
           </div>
           <button class="btn btn-primary" id="add-oauth-provider-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Add Provider
           </button>
         </div>
@@ -723,11 +723,11 @@ async function loadOAuthProviders() {
     if (providers.length === 0) {
       list.innerHTML = `
         <div class="empty-state-card">
-          <span class="material-icons-outlined">login</span>
+          <span class="round-icon">login</span>
           <h3>No OAuth Providers</h3>
           <p>Add a provider to allow users to sign in with their existing accounts.</p>
           <button class="btn btn-primary" onclick="document.getElementById('add-oauth-provider-btn').click()">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Add Your First Provider
           </button>
         </div>
@@ -739,7 +739,7 @@ async function loadOAuthProviders() {
       <div class="oauth-provider-card" data-id="${p.id}">
         <div class="oauth-provider-card-header" style="border-left-color: ${providerColors[p.type] || '#6366f1'}">
           <div class="oauth-provider-icon" style="background: ${providerColors[p.type] || '#6366f1'}">
-            <span class="material-icons-outlined">${providerIcons[p.type] || 'key'}</span>
+            <span class="round-icon">${providerIcons[p.type] || 'key'}</span>
           </div>
           <div class="oauth-provider-info">
             <span class="oauth-provider-name">${escapeHtml(p.name)}</span>
@@ -749,16 +749,16 @@ async function loadOAuthProviders() {
         </div>
         <div class="oauth-provider-card-footer">
           <span class="oauth-provider-meta">
-            <span class="material-icons-outlined">key</span>
+            <span class="round-icon">key</span>
             ${p.client_id ? 'Configured' : 'Not configured'}
           </span>
           <div class="oauth-provider-actions">
             <button class="btn btn-sm btn-ghost edit-oauth-btn" data-id="${p.id}">
-              <span class="material-icons-outlined">edit</span>
+              <span class="round-icon">edit</span>
               Edit
             </button>
             <button class="btn btn-sm btn-ghost btn-danger delete-oauth-btn" data-id="${p.id}">
-              <span class="material-icons-outlined">delete</span>
+              <span class="round-icon">delete</span>
             </button>
           </div>
         </div>
@@ -806,7 +806,7 @@ function showOAuthModal(editId) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit OAuth Provider' : 'Add OAuth Provider'}</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="material-icons-outlined">close</span>
+          <span class="round-icon">close</span>
         </button>
       </div>
       <form id="oauth-form" class="modal-form">
@@ -953,7 +953,7 @@ function renderApiKeysSettings(content, config) {
             <p>Create API keys for automation, integrations, and external applications.</p>
           </div>
           <button class="btn btn-primary" id="create-app-key-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Key
           </button>
         </div>
@@ -970,7 +970,7 @@ function renderApiKeysSettings(content, config) {
         <div class="modal-header">
           <h3>Create Application Key</h3>
           <button class="modal-close" id="close-app-key-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <form id="app-api-key-form">
@@ -997,18 +997,18 @@ function renderApiKeysSettings(content, config) {
         <div class="modal-header">
           <h3>Application Key Created</h3>
           <button class="modal-close" id="close-app-key-created-modal">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <div class="api-key-created-content">
           <div class="warning-box">
-            <span class="material-icons-outlined">warning</span>
+            <span class="round-icon">warning</span>
             <p>Make sure to copy your API key now. You won't be able to see it again!</p>
           </div>
           <div class="api-key-display">
             <code id="created-app-key-token"></code>
             <button type="button" class="btn btn-icon" id="copy-app-key-btn">
-              <span class="material-icons-outlined">content_copy</span>
+              <span class="round-icon">content_copy</span>
             </button>
           </div>
         </div>
@@ -1041,11 +1041,11 @@ async function loadAppApiKeys() {
     if (!keysData.keys || keysData.keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state-card">
-          <span class="material-icons-outlined">vpn_key</span>
+          <span class="round-icon">vpn_key</span>
           <h3>No API Keys</h3>
           <p>Create an API key to integrate external applications with the panel.</p>
           <button class="btn btn-primary" onclick="document.getElementById('create-app-key-btn').click()">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Your First Key
           </button>
         </div>
@@ -1057,7 +1057,7 @@ async function loadAppApiKeys() {
       <div class="api-key-card" data-id="${key.id}">
         <div class="api-key-card-main">
           <div class="api-key-icon">
-            <span class="material-icons-outlined">vpn_key</span>
+            <span class="round-icon">vpn_key</span>
           </div>
           <div class="api-key-info">
             <span class="api-key-name">${escapeHtml(key.name)}</span>
@@ -1072,7 +1072,7 @@ async function loadAppApiKeys() {
           ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
         </div>
         <button class="btn btn-icon btn-danger delete-app-key-btn" data-id="${key.id}">
-          <span class="material-icons-outlined">delete</span>
+          <span class="round-icon">delete</span>
         </button>
       </div>
     `).join('');
@@ -1159,7 +1159,7 @@ function setupAppApiKeysHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
     
     try {
       const res = await api('/api/api-keys/application', {
@@ -1245,11 +1245,11 @@ function renderMailSettings(content, config) {
         
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="test-mail-btn">
-            <span class="material-icons-outlined">send</span>
+            <span class="round-icon">send</span>
             Send Test Email
           </button>
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -1285,7 +1285,7 @@ function renderMailSettings(content, config) {
     
     const btn = document.getElementById('test-mail-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span> Sending...';
+    btn.innerHTML = '<span class="round-icon spinning">sync</span> Sending...';
     
     try {
       const res = await api('/api/admin/mail/test', { 
@@ -1303,7 +1303,7 @@ function renderMailSettings(content, config) {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span class="material-icons-outlined">send</span> Send Test Email';
+    btn.innerHTML = '<span class="round-icon">send</span> Send Test Email';
   };
 }
 
@@ -1352,7 +1352,7 @@ function renderMaintenanceSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>
@@ -1461,7 +1461,7 @@ function renderAdvancedSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="material-icons-outlined">save</span>
+            <span class="round-icon">save</span>
             Save Changes
           </button>
         </div>

@@ -21,7 +21,7 @@ export async function renderPluginsList(container) {
       <div class="admin-list">
         ${plugins.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">extension_off</span>
+            <span class="round-icon">extension_off</span>
             <p>No plugins installed</p>
             <small>Place plugin folders in <code>data/plugins/</code> and restart the panel</small>
           </div>
@@ -57,12 +57,12 @@ export async function renderPluginsList(container) {
                     </td>
                     <td class="actions">
                       <button class="btn btn-sm ${p.active ? 'btn-danger' : 'btn-success'}" onclick="togglePlugin('${escapeHtml(p.id)}', ${p.active})">
-                        <span class="material-icons-outlined">${p.active ? 'stop' : 'play_arrow'}</span>
+                        <span class="round-icon">${p.active ? 'stop' : 'play_arrow'}</span>
                         ${p.active ? 'Disable' : 'Enable'}
                       </button>
                       ${Object.keys(p.settings || {}).length > 0 ? `
                         <button class="btn btn-sm btn-secondary" onclick="configurePlugin('${escapeHtml(p.id)}')">
-                          <span class="material-icons-outlined">settings</span>
+                          <span class="round-icon">settings</span>
                           Configure
                         </button>
                       ` : ''}

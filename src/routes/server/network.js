@@ -12,7 +12,7 @@ export function renderNetworkTab() {
       <div class="network-header">
         <h3>Network Allocations</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-allocation">
-          <span class="material-icons-outlined">add</span>
+          <span class="round-icon">add</span>
           Add Allocation
         </button>
       </div>
@@ -56,7 +56,7 @@ function renderAllocations() {
   if (allocations.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="material-icons-outlined">lan</span>
+        <span class="round-icon">lan</span>
         <p>No allocations configured</p>
       </div>
     `;
@@ -72,10 +72,10 @@ function renderAllocations() {
       <div class="allocation-actions">
         ${!alloc.primary ? `
           <button class="btn btn-ghost btn-sm" data-primary="${alloc.id}" title="Make Primary">
-            <span class="material-icons-outlined">star</span>
+            <span class="round-icon">star</span>
           </button>
           <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${alloc.id}" title="Delete">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
           </button>
         ` : ''}
       </div>
@@ -96,7 +96,7 @@ async function addAllocation() {
   const btn = document.getElementById('btn-add-allocation');
   
   btn.disabled = true;
-  btn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+  btn.innerHTML = '<span class="round-icon spinning">sync</span>';
   
   try {
     const res = await api(`/api/servers/${currentServerId}/allocations`, {
@@ -118,7 +118,7 @@ async function addAllocation() {
   }
   
   btn.disabled = false;
-  btn.innerHTML = '<span class="material-icons-outlined">add</span> Add Allocation';
+  btn.innerHTML = '<span class="round-icon">add</span> Add Allocation';
 }
 
 async function setAllocationPrimary(allocId) {

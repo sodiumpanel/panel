@@ -282,7 +282,7 @@
   gap: 8px;
   color: var(--text-tertiary);
 
-  .material-icons-outlined { font-size: 32px; opacity: 0.5; }
+  .round-icon { font-size: 32px; opacity: 0.5; }
   p { font-size: 13px; margin: 0; }
 }
 
@@ -326,10 +326,10 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 
-  .material-icons-outlined { font-size: 40px; color: var(--text-tertiary); opacity: 0.5; margin-bottom: 10px; }
+  .round-icon { font-size: 40px; color: var(--text-tertiary); opacity: 0.5; margin-bottom: 10px; }
   p { color: var(--text-secondary); font-size: 13px; margin: 0; }
 
-  &.error .material-icons-outlined { color: var(--danger); opacity: 0.7; }
+  &.error .round-icon { color: var(--danger); opacity: 0.7; }
 }
 
 // Footer

@@ -87,7 +87,12 @@ export const routes = {
     }
   },
   '/admin': {
-    redirect: '/admin/nodes'
+    redirect: '/admin/overview'
+  },
+  '/admin/overview': {
+    render: (params) => renderAdmin('overview', params),
+    cleanup: cleanupAdmin,
+    options: { title: 'Overview', auth: true, sidebar: true }
   },
   '/admin/nodes': {
     render: (params) => renderAdmin('nodes', params),

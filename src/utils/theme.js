@@ -1,7 +1,7 @@
 import { api, getToken } from './api.js';
 import { state } from './state.js';
 
-const THEMES = ['dark', 'light', 'amoled'];
+const THEMES = ['dark', 'light'];
 
 let _currentTheme = 'dark';
 
@@ -45,8 +45,7 @@ export function applyTheme(theme) {
 export function getAvailableThemes() {
   return [
     { id: 'dark', name: 'Dark' },
-    { id: 'light', name: 'Light' },
-    { id: 'amoled', name: 'AMOLED' }
+    { id: 'light', name: 'Light' }
   ];
 }
 

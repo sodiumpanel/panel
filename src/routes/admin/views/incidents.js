@@ -51,7 +51,7 @@ export async function renderIncidentsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Incidents' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-incident-btn">
-            <span class="material-icons-outlined">add</span>
+            <span class="round-icon">add</span>
             Create Incident
           </button>
         </div>
@@ -60,7 +60,7 @@ export async function renderIncidentsList(container, username, loadView) {
       <div class="admin-list">
         ${incidents.length === 0 ? `
           <div class="empty-state">
-            <span class="material-icons-outlined">check_circle</span>
+            <span class="round-icon">check_circle</span>
             <h3>No Incidents</h3>
             <p>No incidents have been reported. That's a good thing!</p>
           </div>
@@ -70,7 +70,7 @@ export async function renderIncidentsList(container, username, loadView) {
               <div class="list-card" data-id="${inc.id}" style="cursor:pointer;">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="material-icons-outlined" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
+                    <span class="round-icon" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
                       ${inc.status === 'resolved' ? 'check_circle' : 'warning'}
                     </span>
                   </div>
@@ -175,7 +175,7 @@ export async function renderIncidentDetail(container, username, incidentId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-incident-btn">
-            <span class="material-icons-outlined">delete</span>
+            <span class="round-icon">delete</span>
             Delete
           </button>
         </div>
@@ -229,7 +229,7 @@ export async function renderIncidentDetail(container, username, incidentId) {
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">
-                <span class="material-icons-outlined">save</span>
+                <span class="round-icon">save</span>
                 Save Changes
               </button>
             </div>
@@ -240,7 +240,7 @@ export async function renderIncidentDetail(container, username, incidentId) {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Updates Timeline</h3>
             <button class="btn btn-sm btn-primary" id="add-update-btn">
-              <span class="material-icons-outlined">add</span>
+              <span class="round-icon">add</span>
               Add Update
             </button>
           </div>

@@ -14,7 +14,7 @@ export function renderUsersTab() {
       <div class="users-header">
         <h3>Subusers</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-subuser">
-          <span class="material-icons-outlined">person_add</span>
+          <span class="round-icon">person_add</span>
           Add User
         </button>
       </div>
@@ -29,14 +29,14 @@ export function renderUsersTab() {
         <div class="modal-header">
           <h3 id="modal-title">Add Subuser</h3>
           <button class="modal-close">
-            <span class="material-icons-outlined">close</span>
+            <span class="round-icon">close</span>
           </button>
         </div>
         <div class="modal-body">
           <div class="form-group" id="username-group">
             <label>Username</label>
             <div class="input-wrapper">
-              <span class="material-icons-outlined">person</span>
+              <span class="round-icon">person</span>
               <input type="text" id="subuser-username" placeholder="Enter username" />
             </div>
           </div>
@@ -92,7 +92,7 @@ function renderSubusers() {
   if (subusers.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="material-icons-outlined">group</span>
+        <span class="round-icon">group</span>
         <p>No subusers added yet</p>
       </div>
     `;
@@ -107,10 +107,10 @@ function renderSubusers() {
       </div>
       <div class="subuser-actions">
         <button class="btn btn-ghost btn-sm" data-edit="${sub.id}" title="Edit">
-          <span class="material-icons-outlined">edit</span>
+          <span class="round-icon">edit</span>
         </button>
         <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${sub.id}" title="Remove">
-          <span class="material-icons-outlined">person_remove</span>
+          <span class="round-icon">person_remove</span>
         </button>
       </div>
     </div>
@@ -219,7 +219,7 @@ async function saveSubuser(editId) {
   const saveBtn = document.getElementById('save-subuser');
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="material-icons-outlined spinning">sync</span>';
+  saveBtn.innerHTML = '<span class="round-icon spinning">sync</span>';
   
   try {
     if (editId) {

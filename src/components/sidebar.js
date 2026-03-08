@@ -42,6 +42,7 @@ export function renderSidebar() {
   const adminSection = {
     label: 'Administration',
     items: [
+      { path: '/admin/overview', icon: 'analytics', label: 'Overview' },
       { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
       { path: '/admin/servers', icon: 'dns', label: 'Servers' },
       { path: '/admin/users', icon: 'people', label: 'Users' },
@@ -97,7 +98,7 @@ export function renderSidebar() {
     const items = section.items.map(item => `
       <li class="nav-item">
         <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
-          <span class="material-icons-outlined">${item.icon}</span>
+          <span class="round-icon">${item.icon}</span>
           <span class="nav-text">${item.label}</span>
         </a>
       </li>
@@ -125,7 +126,9 @@ export function renderSidebar() {
     
     <div class="sidebar-footer">
       <div class="footer-content">
-        <span class="version">v1.1.2</span>
+        <span>Powered by <a href="https://sodiumpanel.github.io/">Sodium</a></span>
+        <br>
+        <span><a href="https://github.com/zt3xdv/">zt3xdv</a> and contributors.</span>
       </div>
     </div>
   `;

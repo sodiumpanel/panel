@@ -91,7 +91,7 @@ function getPlugins() {
     }),
     htmlPlugin({
       template: 'src/templates/index.html',
-      filename: 'index.html'
+      filename: 'main.html'
     })
   ];
   
