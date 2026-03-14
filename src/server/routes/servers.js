@@ -204,7 +204,7 @@ router.post('/', authenticateUser, async (req, res) => {
     if (requestedNode.maintenance_mode) {
       return res.status(400).json({ error: 'Node is in maintenance mode' });
     }
-    const resources = getNodeAvailableResources(requestedNode.id);
+    const resources = await getNodeAvailableResources(requestedNode.id);
     if (!resources) {
       return res.status(400).json({ error: 'Cannot check node resources' });
     }
@@ -224,7 +224,7 @@ router.post('/', authenticateUser, async (req, res) => {
     let lowestUsage = Infinity;
     for (const n of nodes.nodes) {
       if (n.maintenance_mode) continue;
-      const resources = getNodeAvailableResources(n.id);
+      const resources = await getNodeAvailableResources(n.id);
       if (!resources) continue;
       if (resources.available_memory < requestedMemory) continue;
       if (resources.available_disk < requestedDisk) continue;
@@ -1292,7 +1292,7 @@ router.post('/:id/allocations', authenticateUser, async (req, res) => {
     return res.status(400).json({ error: 'Server allocation limit reached' });
   }
   
-  const resources = getNodeAvailableResources(node.id);
+  const resources = await getNodeAvailableResources(node.id);
   if (!resources || resources.available_ports.length === 0) {
     return res.status(400).json({ error: 'No available ports' });
   }
