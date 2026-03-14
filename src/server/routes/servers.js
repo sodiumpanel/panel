@@ -475,9 +475,22 @@ router.get('/:id/websocket', authenticateUser, async (req, res) => {
   const wsScheme = node.scheme === 'https' ? 'wss' : 'ws';
   const wsUrl = `${wsScheme}://${node.fqdn}:${node.daemon_port}/api/servers/${server.uuid}/ws`;
   
+  const { default: jwt } = await import('jsonwebtoken');
+  const wsToken = jwt.sign({
+    server_uuid: server.uuid,
+    permissions: ['*'],
+    user_uuid: user.id,
+    user_id: user.id,
+    unique_id: generateUUID()
+  }, node.daemon_token, {
+    expiresIn: '10m',
+    issuer: node.fqdn,
+    audience: [node.fqdn]
+  });
+  
   res.json({
     data: {
-      token: node.daemon_token,
+      token: wsToken,
       socket: wsUrl
     }
   });

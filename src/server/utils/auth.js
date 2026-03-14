@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { loadUsers, loadApiKeys, saveApiKeys, loadSessions, loadGroups } from '../db.js';
+import { loadUsers, loadApiKeys, saveApiKeys, loadSessions, saveSessions, loadGroups } from '../db.js';
 import { loadFullConfig, saveFullConfig } from '../config.js';
 
 export const ROLES = {
@@ -106,12 +106,16 @@ export function authenticateApiKey(req, res, next) {
   
   const data = loadApiKeys();
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const apiKey = (data.apiKeys || []).find(k => {
-    if (k.tokenHash) {
-      return k.tokenHash === tokenHash;
+  let apiKey = (data.apiKeys || []).find(k => k.tokenHash === tokenHash);
+  
+  if (!apiKey) {
+    apiKey = (data.apiKeys || []).find(k => k.token === token);
+    if (apiKey) {
+      apiKey.tokenHash = tokenHash;
+      delete apiKey.token;
+      saveApiKeys(data);
     }
-    return k.token === token;
-  });
+  }
   
   if (!apiKey) {
     return res.status(401).json({ error: 'Invalid API key' });
@@ -207,6 +211,27 @@ export function requireEmailVerified(req, res, next) {
   }
   
   next();
+}
+
+let sessionCleanupStarted = false;
+export function startSessionCleanup() {
+  if (sessionCleanupStarted) return;
+  sessionCleanupStarted = true;
+  setInterval(async () => {
+    try {
+      const data = loadSessions();
+      const now = new Date();
+      const before = data.sessions.length;
+      data.sessions = data.sessions.filter(s => {
+        if (s.revoked) return false;
+        if (new Date(s.expiresAt) < now) return false;
+        return true;
+      });
+      if (data.sessions.length < before) {
+        saveSessions(data);
+      }
+    } catch {}
+  }, 3600000).unref();
 }
 
 export function requireGroupPermission(permission) {

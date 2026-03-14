@@ -322,16 +322,30 @@ router.post('/sftp/auth', async (req, res) => {
   
   const servers = await loadServers();
   const server = servers.servers.find(s => 
-    (s.uuid === serverIdent || s.uuid.startsWith(serverIdent)) && 
-    (s.user_id === userObj.id || userObj.isAdmin)
+    s.uuid === serverIdent || s.uuid.startsWith(serverIdent)
   );
   if (!server) {
     return res.status(403).json({ error: 'Invalid credentials' });
   }
   
+  if (server.suspended) {
+    return res.status(403).json({ error: 'Server is suspended' });
+  }
+  
+  let permissions = ['*'];
+  if (userObj.isAdmin || server.user_id === userObj.id) {
+    permissions = ['*'];
+  } else {
+    const subuser = (server.subusers || []).find(s => s.user_id === userObj.id);
+    if (!subuser) {
+      return res.status(403).json({ error: 'Invalid credentials' });
+    }
+    permissions = subuser.permissions || [];
+  }
+  
   res.json({
     server: server.uuid,
-    permissions: ['*'],
+    permissions,
     user: userObj.id
   });
 });

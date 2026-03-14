@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { isInstalled, loadFullConfig, saveFullConfig, generateJwtSecret, DEFAULT_CONFIG } from '../config.js';
+import { rateLimit } from '../utils/rate-limiter.js';
+import { validateUsername, sanitizeText } from '../utils/helpers.js';
 
 const router = Router();
 
@@ -33,7 +35,9 @@ router.get('/config', (req, res) => {
   });
 });
 
-router.post('/complete', async (req, res) => {
+const setupLimiter = rateLimit({ windowMs: 60000, max: 5, message: 'Too many setup attempts, try again later' });
+
+router.post('/complete', setupLimiter, async (req, res) => {
   if (isInstalled()) {
     return res.status(403).json({ error: 'Already installed' });
   }
@@ -42,6 +46,10 @@ router.post('/complete', async (req, res) => {
   
   if (!admin?.username || !admin?.email || !admin?.password) {
     return res.status(400).json({ error: 'Admin account details required' });
+  }
+  
+  if (!validateUsername(admin.username)) {
+    return res.status(400).json({ error: 'Username must be 3-20 characters (letters, numbers, underscore only)' });
   }
   
   if (admin.password.length < 8) {
@@ -96,10 +104,10 @@ router.post('/complete', async (req, res) => {
     const crypto = await import('crypto');
     const { insert } = await import('../db.js');
     
-    const hashedPassword = await bcrypt.hash(admin.password, 10);
+    const hashedPassword = await bcrypt.hash(admin.password, 12);
     const adminUser = {
       id: crypto.randomUUID(),
-      username: admin.username,
+      username: sanitizeText(admin.username),
       email: admin.email,
       password: hashedPassword,
       role: 'admin',

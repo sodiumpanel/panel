@@ -104,6 +104,12 @@ const authLimiter = rateLimit({ windowMs: 60000, max: 5, message: 'Too many atte
 
 // Temporary store for OAuth one-time codes
 const oauthCodes = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of oauthCodes) {
+    if (entry.expires < now) oauthCodes.delete(key);
+  }
+}, 60000).unref();
 
 function generate2FACode() {
   return crypto.randomInt(100000, 999999).toString();
@@ -159,8 +165,8 @@ router.post('/register', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Username must be 3-20 characters (letters, numbers, underscore only)' });
   }
   
-  if (typeof password !== 'string' || password.length < 6 || password.length > 128) {
-    return res.status(400).json({ error: 'Password must be between 6 and 128 characters' });
+  if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+    return res.status(400).json({ error: 'Password must be between 8 and 128 characters' });
   }
   
   const data = await loadUsers();
@@ -177,7 +183,7 @@ router.post('/register', authLimiter, async (req, res) => {
     }
   }
   
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 12);
   const defaults = config.defaults || {};
   const isFirstUser = data.users.length === 0;
   
@@ -448,7 +454,8 @@ router.get('/oauth/:providerId', (req, res) => {
   const state = generateUUID();
   
   // Store state in session or temporary storage
-  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600000 });
+  const isHttps = panelUrl.startsWith('https');
+  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 600000, sameSite: 'lax', secure: isHttps });
   
   const params = new URLSearchParams({
     client_id: provider.client_id,
@@ -742,7 +749,7 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
 });
 
 // Exchange OAuth one-time code for JWT token
-router.post('/oauth/exchange', (req, res) => {
+router.post('/oauth/exchange', authLimiter, (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Code is required' });
   
@@ -914,15 +921,15 @@ router.get('/reset-password/validate', async (req, res) => {
   res.json({ valid: true, username: user.username });
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', resetLimiter, async (req, res) => {
   const { token, password } = req.body;
   
   if (!token || !password) {
     return res.status(400).json({ error: 'Token and password are required' });
   }
   
-  if (typeof password !== 'string' || password.length < 6 || password.length > 128) {
-    return res.status(400).json({ error: 'Password must be between 6 and 128 characters' });
+  if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+    return res.status(400).json({ error: 'Password must be between 8 and 128 characters' });
   }
   
   const data = await loadUsers();
@@ -937,7 +944,7 @@ router.post('/reset-password', async (req, res) => {
   }
   
   // Update password
-  user.password = await bcrypt.hash(password, 10);
+  user.password = await bcrypt.hash(password, 12);
   user.resetToken = null;
   user.resetTokenExpires = null;
   await saveUsers(data);

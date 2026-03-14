@@ -150,8 +150,8 @@ router.put('/password', authenticateUser, async (req, res) => {
     return res.status(400).json({ error: 'All fields are required' });
   }
   
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters' });
   }
   
   const data = await loadUsers();
@@ -168,7 +168,7 @@ router.put('/password', authenticateUser, async (req, res) => {
     return res.status(401).json({ error: 'Current password is incorrect' });
   }
   
-  user.password = await bcrypt.hash(newPassword, 10);
+  user.password = await bcrypt.hash(newPassword, 12);
   data.users[userIndex] = user;
   await saveUsers(data);
   
@@ -180,6 +180,10 @@ router.get('/limits', authenticateUser, async (req, res) => {
   const users = await loadUsers();
   const user = users.users.find(u => u.username.toLowerCase() === username?.toLowerCase());
   if (!user) return res.status(404).json({ error: 'User not found' });
+  
+  if (user.id !== req.user.id && !req.user.isAdmin) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
   
   const servers = await loadServers();
   const userServers = servers.servers.filter(s => s.user_id === user.id);

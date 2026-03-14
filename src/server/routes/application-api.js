@@ -72,7 +72,7 @@ router.post('/users', requireApiPermission('users.create'), async (req, res) => 
     id: generateUUID(),
     username: sanitizeText(username),
     email: email || null,
-    password: await bcrypt.hash(password, 10),
+    password: await bcrypt.hash(password, 12),
     displayName: sanitizeText(username),
     bio: '',
     avatar: '',
@@ -108,7 +108,7 @@ router.patch('/users/:id', requireApiPermission('users.update'), async (req, res
   
   if (email !== undefined) user.email = email;
   if (isAdmin !== undefined) user.isAdmin = isAdmin;
-  if (password) user.password = await bcrypt.hash(password, 10);
+  if (password) user.password = await bcrypt.hash(password, 12);
   if (limits) user.limits = { ...user.limits, ...limits };
   
   await saveUsers(data);

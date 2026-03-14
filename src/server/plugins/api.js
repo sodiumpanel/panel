@@ -111,12 +111,28 @@ export function createPluginApi(plugin, manager) {
     logger: pluginLogger,
 
     data: {
-      getUsers() { return db.getAll('users'); },
-      getServers() { return db.getAll('servers'); },
-      getNodes() { return db.getAll('nodes'); },
-      findUser(id) { return db.findById('users', id); },
+      async getUsers() {
+        const users = await db.getAll('users');
+        return users.map(({ password, twoFactorCode, twoFactorExpires, verificationToken, resetToken, resetTokenExpires, ...u }) => u);
+      },
+      async getServers() { return db.getAll('servers'); },
+      async getNodes() {
+        const nodes = await db.getAll('nodes');
+        return nodes.map(({ daemon_token, ...n }) => n);
+      },
+      async findUser(id) {
+        const user = await db.findById('users', id);
+        if (!user) return null;
+        const { password, twoFactorCode, twoFactorExpires, verificationToken, resetToken, resetTokenExpires, ...safe } = user;
+        return safe;
+      },
       findServer(id) { return db.findById('servers', id); },
-      findNode(id) { return db.findById('nodes', id); }
+      async findNode(id) {
+        const node = await db.findById('nodes', id);
+        if (!node) return null;
+        const { daemon_token, ...safe } = node;
+        return safe;
+      }
     },
 
     auth: {

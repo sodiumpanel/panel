@@ -18,7 +18,14 @@ async function authenticateNode(req) {
   const tokenId = credentials.substring(0, dotIndex);
   const token = credentials.substring(dotIndex + 1);
   const nodes = await loadNodes();
-  const node = nodes.nodes.find(n => n.daemon_token_id === tokenId && n.daemon_token === token);
+  const node = nodes.nodes.find(n => {
+    if (n.daemon_token_id !== tokenId) return false;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(n.daemon_token), Buffer.from(token));
+    } catch {
+      return false;
+    }
+  });
   return node;
 }
 

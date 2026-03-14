@@ -214,8 +214,8 @@ router.post('/users', async (req, res) => {
     return res.status(400).json({ error: 'Username must be 3-20 characters (letters, numbers, underscore only)' });
   }
   
-  if (user.password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (user.password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
   
   const data = await loadUsers();
@@ -233,7 +233,7 @@ router.post('/users', async (req, res) => {
   
   const config = loadConfig();
   const defaults = config.defaults || {};
-  const hashedPassword = await bcrypt.hash(user.password, 10);
+  const hashedPassword = await bcrypt.hash(user.password, 12);
   
   const newUser = {
     id: generateUUID(),
@@ -1307,6 +1307,7 @@ router.put('/settings', async (req, res) => {
       ogDescription: newConfig.branding.ogDescription !== undefined ? newConfig.branding.ogDescription : config.branding?.ogDescription || '',
       ogImage: newConfig.branding.ogImage !== undefined ? newConfig.branding.ogImage : config.branding?.ogImage || null
     };
+    try { const { clearHtmlCache } = await import('../index.js'); clearHtmlCache(); } catch {}
   }
   
   if (newConfig.maintenance !== undefined) {
@@ -1361,7 +1362,7 @@ router.get('/mail/status', async (req, res) => {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BRANDING_DIR = path.resolve(__dirname, '../../../data/branding');
 
-router.post('/branding/upload', express.raw({ type: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/x-icon', 'image/webp'], limit: '5mb' }), (req, res) => {
+router.post('/branding/upload', express.raw({ type: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/x-icon', 'image/webp'], limit: '5mb' }), async (req, res) => {
   const type = req.query.type;
   if (!['logo', 'favicon', 'ogImage'].includes(type)) {
     return res.status(400).json({ error: 'Invalid type. Must be "logo", "favicon", or "ogImage"' });
@@ -1388,11 +1389,12 @@ router.post('/branding/upload', express.raw({ type: ['image/png', 'image/jpeg', 
   if (!config.branding) config.branding = {};
   config.branding[type] = url;
   saveConfig(config);
+  try { const { clearHtmlCache } = await import('../index.js'); clearHtmlCache(); } catch {}
 
   res.json({ success: true, url });
 });
 
-router.delete('/branding/:type', (req, res) => {
+router.delete('/branding/:type', async (req, res) => {
   const type = req.params.type;
   if (!['logo', 'favicon', 'ogImage'].includes(type)) {
     return res.status(400).json({ error: 'Invalid type' });
@@ -1408,6 +1410,7 @@ router.delete('/branding/:type', (req, res) => {
   if (!config.branding) config.branding = {};
   config.branding[type] = null;
   saveConfig(config);
+  try { const { clearHtmlCache } = await import('../index.js'); clearHtmlCache(); } catch {}
 
   res.json({ success: true });
 });

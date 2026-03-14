@@ -32,6 +32,7 @@ import { loadPlugins, getPluginRouters, getPluginClientData, getPlugin, getPlugi
 import fs from 'fs';
 
 let cachedHtml = null;
+export function clearHtmlCache() { cachedHtml = null; }
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function matchIp(clientIp, pattern) {
@@ -82,7 +83,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
 // Request tracing
@@ -279,16 +280,20 @@ app.get(/.*/, (req, res) => {
   const b = config.branding || {};
   const panelName = config.panel?.name || 'Sodium';
   
-  const ogTitle = b.ogTitle || panelName;
-  const ogDesc = b.ogDescription || config.panel?.description || 'Modern game server management panel.';
-  const ogImage = b.ogImage || '/banner.png';
-  const favicon = b.favicon || '/favicon.svg';
+  const escAttr = (s) => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const escHtml = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  
+  const ogTitle = escAttr(b.ogTitle || panelName);
+  const ogDesc = escAttr(b.ogDescription || config.panel?.description || 'Modern game server management panel.');
+  const ogImage = escAttr(b.ogImage || '/banner.png');
+  const favicon = escAttr(b.favicon || '/favicon.svg');
+  const safePanelName = escHtml(panelName);
   
   let html = cachedHtml
     .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${ogImage}">`)
     .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${ogDesc}"><meta property="og:title" content="${ogTitle}"><meta property="og:description" content="${ogDesc}">`)
     .replace(/<link rel="icon"[^>]*>/, `<link rel="icon" href="${favicon}">`)
-    .replace(/<title>[^<]*<\/title>/, `<title>${panelName}</title>`);
+    .replace(/<title>[^<]*<\/title>/, `<title>${safePanelName}</title>`);
   
   res.type('html').send(html);
 });
@@ -301,6 +306,8 @@ async function startServer() {
     startScheduler();
     const { startNodeHealthMonitor } = await import('./utils/node-health.js');
     startNodeHealthMonitor();
+    const { startSessionCleanup } = await import('./utils/auth.js');
+    startSessionCleanup();
     await loadPlugins();
   }
   
