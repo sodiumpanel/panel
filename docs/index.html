@@ -707,6 +707,10 @@
                     <h3>Plugin system</h3>
                     <p>Extend Sodium with hooks, custom routes, middleware, and WebSocket support.</p>
                 </div>
+                <div class="feature">
+                    <h3><a href="https://github.com/sodiumpanel/reaction" style="color:inherit;">Sodium Reaction ↗</a></h3>
+                    <p>Our optimized daemon with circuit breaker, O(1) server lookups, and graceful shutdown. Drop-in replacement for Wings.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -797,6 +801,11 @@
                     <td class="yes">Built-in hooks, routes, middleware</td>
                     <td class="meh">Limited (Blueprints)</td>
                 </tr>
+                <tr>
+                    <td>Daemon</td>
+                    <td class="yes">Sodium Reaction (circuit breaker, O(1) lookups)</td>
+                    <td class="meh">Wings (no circuit breaker, linear scans)</td>
+                </tr>
                 </table>
         </div>
     </section>
@@ -872,7 +881,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>Can I migrate from Pterodactyl?</h3>
-                    <p>Partially. We have some script to help with this.</p>
+                    <p>Partially. We provide a <a href="https://github.com/sodiumpanel/panel/blob/main/docs/migration.md" style="color:#e07a3a;">migration tool</a> that imports users, servers, and eggs. Database schema differences mean some manual adjustments may be needed.</p>
                 </div>
                 <div class="faq-item">
                     <h3>Does it run on Windows?</h3>
@@ -976,7 +985,23 @@
                 </div>
             `).join('');
         } catch (err) {
-            container.innerHTML = '<div class="changelog-entry" style="text-align:center;color:#71717a;padding:40px;">Could not load releases. <a href="https://github.com/' + REPO + '/releases" style="color:#e07a3a;">View on GitHub</a></div>';
+            container.innerHTML = `
+                <div class="changelog-entry latest">
+                    <div class="changelog-header">
+                        <span class="changelog-version">v1.2.0</span>
+                        <span class="changelog-badge">Latest</span>
+                    </div>
+                    <div class="changelog-section">
+                        <h4>Highlights</h4>
+                        <ul>
+                            <li>Circuit breaker for Panel API calls</li>
+                            <li>SQLite busy timeout to prevent lock errors</li>
+                            <li>Fixed credential file loading bug</li>
+                            <li>Multi-arch build &amp; release workflows</li>
+                        </ul>
+                        <p style="color:#71717a;font-size:13px;margin-top:12px;">Could not load full changelog. <a href="https://github.com/${REPO}/releases" style="color:#e07a3a;">View all releases on GitHub →</a></p>
+                    </div>
+                </div>`;
         }
     })();
     </script>
