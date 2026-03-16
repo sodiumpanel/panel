@@ -110,17 +110,16 @@
         }
 
         .hero-image img {
-            max-width: 140%; /* Un poco más grande para efecto visual */
-            width: 600px; /* Tamaño base */
+            max-width: 140%;
+            width: 600px;
             height: auto;
             
-            /* MÁSCARA DE TRANSPARENCIA A LA IZQUIERDA */
-            /* Transparente (0%) -> Opaco (20%) -> Opaco (100%) */
             -webkit-mask-image: linear-gradient(to right, transparent 0%, black 25%, black 100%);
             mask-image: linear-gradient(to right, transparent 0%, black 25%, black 100%);
             
             opacity: 0.95;
-            transform: scale(1.05); /* Ligero zoom para impacto */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
 
         .buttons {
