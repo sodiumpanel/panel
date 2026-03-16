@@ -673,43 +673,43 @@
             <div class="features-grid">
                 <div class="feature">
                     <h3>Web console</h3>
-                    <p>Full terminal access to your servers through the browser. Powered by xterm.js.</p>
+                    <p>Run commands from your browser. Uses xterm.js so it actually feels like a real terminal.</p>
                 </div>
                 <div class="feature">
                     <h3>File manager</h3>
-                    <p>Browse, edit, upload. CodeMirror editor with syntax highlighting baked in.</p>
+                    <p>Browse, edit, upload files. Has a code editor with syntax highlighting so you don't have to SSH in for everything.</p>
                 </div>
                 <div class="feature">
                     <h3>Eggs</h3>
-                    <p>Pre-made configs for Minecraft, FiveM, ARK, Palworld, and 13+ generic runtimes. Add your own too.</p>
+                    <p>Minecraft, FiveM, ARK, Palworld, and a bunch more already set up. You can also make your own.</p>
                 </div>
                 <div class="feature">
                     <h3>Lightweight</h3>
-                    <p>Express + vanilla JS frontend. No React, no 200MB node_modules of doom.</p>
+                    <p>Express + vanilla JS. No React, no webpack, no 200MB node_modules folder. It just runs.</p>
                 </div>
                 <div class="feature">
                     <h3>Flexible storage</h3>
-                    <p>File-based by default. MySQL, PostgreSQL or SQLite for production.</p>
+                    <p>Works with a local file out of the box. Need something bigger? Plug in MySQL, PostgreSQL, or SQLite.</p>
                 </div>
                 <div class="feature">
                     <h3>JWT auth + OAuth</h3>
-                    <p>Secure by default. Discord, Google, GitHub, GitLab, and more. Email 2FA and password reset included.</p>
+                    <p>Login with Discord, Google, GitHub, whatever. 2FA and password reset are there too.</p>
                 </div>
                 <div class="feature">
                     <h3>Backups & Schedules</h3>
-                    <p>Create, download, and restore server backups. Schedule tasks with cron expressions.</p>
+                    <p>Back up your servers, download them, restore them. Set up cron jobs to do it automatically.</p>
                 </div>
                 <div class="feature">
                     <h3>Webhooks</h3>
-                    <p>Discord, Slack, and generic HTTP webhooks. Get notified on server events automatically.</p>
+                    <p>Get Discord/Slack pings when stuff happens on your servers. Or use a generic HTTP hook for anything else.</p>
                 </div>
                 <div class="feature">
                     <h3>Plugin system</h3>
-                    <p>Extend Sodium with hooks, custom routes, middleware, and WebSocket support.</p>
+                    <p>Add your own routes, hooks, middleware. If the panel doesn't do something you want, extend it.</p>
                 </div>
                 <div class="feature">
                     <h3><a href="https://github.com/sodiumpanel/reaction" style="color:inherit;">Sodium Reaction ↗</a></h3>
-                    <p>Our optimized daemon with circuit breaker, O(1) server lookups, and graceful shutdown. Drop-in replacement for Wings.</p>
+                    <p>Our own daemon. Faster than stock Wings — doesn't choke when the panel goes down and handles thousands of servers without breaking a sweat.</p>
                 </div>
             </div>
         </div>
@@ -803,8 +803,8 @@
                 </tr>
                 <tr>
                     <td>Daemon</td>
-                    <td class="yes">Sodium Reaction (circuit breaker, O(1) lookups)</td>
-                    <td class="meh">Wings (no circuit breaker, linear scans)</td>
+                    <td class="yes">Sodium Reaction (stays alive if panel goes down)</td>
+                    <td class="meh">Wings (struggles when panel is offline)</td>
                 </tr>
                 </table>
         </div>
@@ -881,7 +881,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>Can I migrate from Pterodactyl?</h3>
-                    <p>Partially. We provide a <a href="https://github.com/sodiumpanel/panel/blob/main/docs/migration.md" style="color:#e07a3a;">migration tool</a> that imports users, servers, and eggs. Database schema differences mean some manual adjustments may be needed.</p>
+                    <p>Kind of. There's a <a href="https://github.com/sodiumpanel/panel/blob/main/docs/migration.md" style="color:#e07a3a;">migration script</a> that can pull in your users, servers, and eggs. You'll probably need to tweak a few things manually though — the databases aren't identical.</p>
                 </div>
                 <div class="faq-item">
                     <h3>Does it run on Windows?</h3>
