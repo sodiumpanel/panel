@@ -41,7 +41,7 @@ describe('Database Operations', () => {
   describe('findByField', () => {
     it('should return empty array for non-existent field value', async () => {
       const { findByField } = await import('../src/server/db.js');
-      const result = findByField('users', 'email', 'nonexistent@test.com');
+      const result = await findByField('users', 'email', 'nonexistent@test.com');
       assert.deepStrictEqual(result, []);
     });
   });
@@ -49,7 +49,7 @@ describe('Database Operations', () => {
   describe('count', () => {
     it('should return a number', async () => {
       const { count } = await import('../src/server/db.js');
-      const result = count('users');
+      const result = await count('users');
       assert.strictEqual(typeof result, 'number');
       assert.ok(result >= 0);
     });
@@ -58,13 +58,13 @@ describe('Database Operations', () => {
   describe('getAll', () => {
     it('should return array for any collection', async () => {
       const { getAll } = await import('../src/server/db.js');
-      const result = getAll('users');
+      const result = await getAll('users');
       assert.ok(Array.isArray(result));
     });
 
     it('should return empty array for non-existent collection', async () => {
       const { getAll } = await import('../src/server/db.js');
-      const result = getAll('nonexistent');
+      const result = await getAll('nonexistent');
       assert.deepStrictEqual(result, []);
     });
   });
