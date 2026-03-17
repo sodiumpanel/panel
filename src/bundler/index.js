@@ -1,13 +1,13 @@
+import { rollup, watch as rollupWatch } from '@rollup/wasm-node';
 import { spawn } from 'child_process';
-import { watch as rollupWatch, rollup } from './rollup.js';
-import { cacheBuild } from 'rollup-cache';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import postcss from 'rollup-plugin-postcss';
 import autoprefixer from 'autoprefixer';
 import htmlPlugin from './html-plugin.js';
+import { buildVendor, vendorExternals, vendorGlobals } from './vendor.js';
 import logger from '../server/utils/logger.js';
 import path from 'path';
 import fs from 'fs';
@@ -16,10 +16,10 @@ const args = process.argv.slice(2).map(a => a.toLowerCase());
 const mode = args[0] || 'prod';
 
 const MODES = {
-  dev: { minify: false, treeshake: false, cache: true, watch: true, server: true },
-  watch: { minify: false, treeshake: false, cache: true, watch: true, server: false },
-  fast: { minify: false, treeshake: false, cache: false, watch: false, server: false },
-  prod: { minify: true, treeshake: true, cache: true, watch: false, server: false }
+  dev: { minify: false, treeshake: false, watch: true, server: true },
+  watch: { minify: false, treeshake: false, watch: true, server: false },
+  fast: { minify: false, treeshake: false, watch: false, server: false },
+  prod: { minify: true, treeshake: true, watch: false, server: false }
 };
 
 const config = MODES[mode] || MODES.prod;
@@ -27,7 +27,7 @@ const input = 'src/main.js';
 const outDir = path.resolve('dist');
 
 function progressPlugin() {
-  const ESTIMATED_MODULES = 85;
+  const ESTIMATED_MODULES = 50;
   let processed = 0;
   let startTime = 0;
   
@@ -91,7 +91,8 @@ function getPlugins() {
     }),
     htmlPlugin({
       template: 'src/templates/index.html',
-      filename: 'main.html'
+      filename: 'main.html',
+      vendorScript: '/vendor.js'
     })
   ];
   
@@ -101,6 +102,7 @@ function getPlugins() {
   
   if (config.minify) {
     plugins.push(terser({
+      maxWorkers: 1,
       format: { comments: false },
       compress: { passes: 2 }
     }));
@@ -109,18 +111,19 @@ function getPlugins() {
   return plugins;
 }
 
-const baseConfig = {
+const buildConfig = {
   input,
   plugins: getPlugins(),
+  external: vendorExternals(),
   output: {
     dir: outDir,
-    format: 'es',
+    format: 'iife',
     name: 'Sodium',
+    globals: vendorGlobals(),
     indent: false,
     sourcemap: false,
     compact: config.minify
   },
-  cache: true,
   treeshake: config.treeshake,
   onwarn(warning, warn) {
     if (warning.code === 'FILE_NAME_CONFLICT') return;
@@ -128,10 +131,6 @@ const baseConfig = {
     warn(warning);
   }
 };
-
-const buildConfig = config.cache && !config.watch 
-  ? cacheBuild({ name: 'sodium-cache', dependencies: [], enabled: true }, baseConfig)
-  : baseConfig;
 
 function formatError(err) {
   const file = err.loc?.file || err.id || 'unknown';
@@ -142,9 +141,23 @@ function formatError(err) {
   logger.error(message);
 }
 
+function getOutputStats() {
+  try {
+    const files = fs.readdirSync(outDir);
+    const js = files.filter(f => f.endsWith('.js')).length;
+    const css = files.filter(f => f.endsWith('.css')).length;
+    const html = files.filter(f => f.endsWith('.html')).length;
+    return { js, css, html };
+  } catch {
+    return null;
+  }
+}
+
 async function build() {
   console.log('');
   logger.info(`Build mode: ${mode}`);
+  
+  await buildVendor(config.minify);
   
   try {
     const bundle = await rollup(buildConfig);
@@ -163,23 +176,13 @@ async function build() {
   }
 }
 
-function getOutputStats() {
-  try {
-    const files = fs.readdirSync(outDir);
-    const js = files.filter(f => f.endsWith('.js')).length;
-    const css = files.filter(f => f.endsWith('.css')).length;
-    const html = files.filter(f => f.endsWith('.html')).length;
-    return { js, css, html };
-  } catch {
-    return null;
-  }
-}
-
 async function watch() {
+  await buildVendor(false);
+  
   logger.info(`Watching for changes (${mode})...`);
   
   const watcher = rollupWatch({
-    ...baseConfig,
+    ...buildConfig,
     watch: {
       exclude: ['node_modules/**'],
       chokidar: {
@@ -192,29 +195,22 @@ async function watch() {
     }
   });
   
-  let building = false;
-  let buildStart = 0;
-  
   watcher.on('event', event => {
     switch (event.code) {
       case 'START':
         break;
         
       case 'BUNDLE_START':
-        building = true;
-        buildStart = Date.now();
         logger.info('Rebuilding...');
         break;
         
       case 'BUNDLE_END':
-        building = false;
         logger.success(`Done in ${event.duration}ms`);
         event.result?.close();
         break;
         
       case 'ERROR':
       case 'FATAL':
-        building = false;
         formatError(event.error);
         break;
     }

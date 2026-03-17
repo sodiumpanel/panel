@@ -3,7 +3,8 @@ import { readFile } from 'fs/promises';
 export default function htmlPlugin(options = {}) {
   const {
     template = 'src/index.html',
-    filename = 'index.html'
+    filename = 'index.html',
+    vendorScript = null
   } = options;
 
   return {
@@ -17,17 +18,25 @@ export default function htmlPlugin(options = {}) {
         
         let processedHtml = htmlContent;
         
-        if (jsFiles.length > 0) {
-          processedHtml = processedHtml.replace(
-            '</body>',
-            `  <script src="/${jsFiles[0]}" type="module"></script>\n</body>`
-          );
-        }
-        
         if (cssFiles.length > 0) {
           processedHtml = processedHtml.replace(
             '</head>',
             `  <link rel="stylesheet" href="/${cssFiles[0]}">\n</head>`
+          );
+        }
+        
+        const scripts = [];
+        if (vendorScript) {
+          scripts.push(`<script src="${vendorScript}"></script>`);
+        }
+        if (jsFiles.length > 0) {
+          scripts.push(`<script src="/${jsFiles[0]}"></script>`);
+        }
+        
+        if (scripts.length > 0) {
+          processedHtml = processedHtml.replace(
+            '</body>',
+            `  ${scripts.join('\n  ')}\n</body>`
           );
         }
         
