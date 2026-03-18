@@ -218,12 +218,6 @@ sodium/
 │   ├── config.json    # Panel configuration
 │   └── plugins/       # Installed plugins
 ├── dist/              # Built frontend assets
-├── eggs/              # Game server egg configs
-│   ├── minecraft/     # Paper, Purpur, Fabric, Velocity, PocketMine
-│   ├── steam/         # ARK, Palworld, Enshrouded, 7DaysToDie
-│   ├── gta/           # FiveM
-│   ├── generic/       # Node.js, Python, Java, Go, Rust, Bun, etc.
-│   └── misc/          # LightVM
 ├── scripts/           # Migration and backup scripts
 ├── tests/             # Test suite (Node.js native test runner)
 ├── src/

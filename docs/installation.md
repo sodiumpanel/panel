@@ -112,7 +112,6 @@ sodium/
 │   ├── config.json    # Panel configuration
 │   └── plugins/       # Installed plugins
 ├── dist/              # Built frontend assets
-├── eggs/              # Game server egg configs
 ├── scripts/           # Migration and backup scripts
 ├── tests/             # Test suite
 ├── src/
