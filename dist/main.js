@@ -18,6 +18,7 @@ function setToken(token) {
 function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   Promise.resolve().then(function () { return state$2; }).then(m => m.state.clear());
+  Promise.resolve().then(function () { return sidebar; }).then(m => m.clearAdminPermsCache?.());
 }
 
 function isLoggedIn() {
@@ -1195,30 +1196,49 @@ function renderDashboard() {
             <p>Manage your servers and resources with ease.</p>
           </div>
         </div>
+        <div class="quick-stats" id="quick-stats"></div>
       </header>
-      
-      <div class="dashboard-grid">
-        <div class="dashboard-section resources-section">
-          <span class="round-icon corner-icon">data_usage</span>
-          <div class="section-header">
-            <span class="round-icon">data_usage</span>
-            <h2>Resource Usage</h2>
-          </div>
-          <div class="limits-grid" id="limits-display">
-            <div class="loading-spinner"></div>
+
+      <div class="stats-grid" id="limits-display">
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">dns</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">Servers</span>
           </div>
         </div>
-        
-        <div class="dashboard-section servers-section">
-          <span class="round-icon corner-icon">dns</span>
-          <div class="section-header">
-            <span class="round-icon">dns</span>
-            <h2>Servers</h2>
-            <a href="/servers" class="muted">View All</a>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">memory</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">Memory</span>
           </div>
-          <div class="servers-list" id="servers-list">
-            <div class="loading-spinner"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">storage</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">Disk</span>
           </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">speed</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">CPU</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dashboard-section servers-section">
+        <span class="round-icon corner-icon">dns</span>
+        <div class="section-header">
+          <span class="round-icon">dns</span>
+          <h2>Servers</h2>
+          <a href="/servers" class="muted">View All</a>
+        </div>
+        <div class="servers-list" id="servers-list">
+          <div class="loading-spinner"></div>
         </div>
       </div>
     </div>
@@ -1232,7 +1252,6 @@ function renderDashboard() {
   pollInterval$2 = setInterval(() => {
     loadServers$1();
     loadLimits();
-    loadQuickStats();
   }, 10000);
 }
 
@@ -1293,58 +1312,39 @@ async function loadLimits() {
     const res = await api(`/api/user/limits?username=${encodeURIComponent(username)}`);
     const data = await res.json();
     
-    const calcPercent = (used, limit) => limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
-    
     container.innerHTML = `
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Servers</span>
-          <span class="value">${data.used.servers} / ${data.limits.servers}</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.servers, data.limits.servers)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">dns</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.servers} / ${data.limits.servers}</span>
+          <span class="stat-label">Servers</span>
         </div>
       </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Memory</span>
-          <span class="value">${data.used.memory} / ${data.limits.memory} MB</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.memory, data.limits.memory)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">memory</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.memory} / ${data.limits.memory} MB</span>
+          <span class="stat-label">Memory</span>
         </div>
       </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Disk</span>
-          <span class="value">${data.used.disk} / ${data.limits.disk} MB</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.disk, data.limits.disk)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">storage</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.disk} / ${data.limits.disk} MB</span>
+          <span class="stat-label">Disk</span>
         </div>
       </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">CPU</span>
-          <span class="value">${data.used.cpu} / ${data.limits.cpu}%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.cpu, data.limits.cpu)}%"></div>
-        </div>
-      </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Allocations</span>
-          <span class="value">${data.used.allocations || 0} / ${data.limits.allocations || 5}</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.allocations || 0, data.limits.allocations || 5)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">speed</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.cpu} / ${data.limits.cpu}%</span>
+          <span class="stat-label">CPU</span>
         </div>
       </div>
     `;
   } catch (e) {
     console.error('Failed to load limits:', e);
-    container.innerHTML = `<div class="error-state">Failed to load resources</div>`;
+    container.innerHTML = '';
   }
 }
 
@@ -9570,10 +9570,10 @@ function updateServerResources(stats) {
   if (diskText) diskText.textContent = formatBytes(stats.disk_bytes || 0);
   if (netTx) netTx.textContent = formatBytes(stats.network?.tx_bytes || 0);
   if (netRx) netRx.textContent = formatBytes(stats.network?.rx_bytes || 0);
-  if (uptimeEl) uptimeEl.textContent = formatUptime(stats.uptime || 0);
+  if (uptimeEl) uptimeEl.textContent = formatUptime$1(stats.uptime || 0);
 }
 
-function formatUptime(ms) {
+function formatUptime$1(ms) {
   if (!ms || ms <= 0) return '--';
   
   const seconds = Math.floor(ms / 1000);
@@ -9982,6 +9982,235 @@ function cleanupStatus() {
   }
 }
 
+let _adminPermsCache = null;
+let _adminPermsFetching = false;
+
+const ADMIN_PATH_PERMS = {
+  '/admin/overview': 'admin.overview',
+  '/admin/nodes': 'admin.nodes',
+  '/admin/servers': 'admin.servers',
+  '/admin/users': 'admin.users',
+  '/admin/groups': 'admin.groups',
+  '/admin/nests': 'admin.nests',
+  '/admin/locations': 'admin.locations',
+  '/admin/incidents': 'admin.incidents',
+  '/admin/announcements': 'admin.announcements',
+  '/admin/webhooks': 'admin.webhooks',
+  '/admin/audit': 'admin.audit',
+  '/admin/activity': 'admin.activity',
+  '/admin/plugins': 'admin.plugins',
+  '/admin/settings': 'admin.settings',
+};
+
+function hasAdminPerm(perms, permission) {
+  if (!perms) return false;
+  return perms.includes('*') || perms.includes(permission);
+}
+
+async function loadAdminPermissions() {
+  if (_adminPermsCache) return _adminPermsCache;
+  if (_adminPermsFetching) return null;
+  _adminPermsFetching = true;
+  try {
+    const res = await api('/api/admin/permissions');
+    if (res.ok) {
+      const data = await res.json();
+      _adminPermsCache = data;
+      return data;
+    }
+  } catch {}
+  _adminPermsFetching = false;
+  return null;
+}
+
+function clearAdminPermsCache() {
+  _adminPermsCache = null;
+  _adminPermsFetching = false;
+}
+
+function renderSidebar() {
+  const overlay = document.createElement('div');
+  overlay.id = 'sidebar-overlay';
+  overlay.className = 'sidebar-overlay';
+  
+  const sidebar = document.createElement('aside');
+  sidebar.id = 'sidebar';
+  sidebar.className = 'sidebar';
+  
+  const currentPath = window.location.pathname;
+  const user = state$1.user;
+  const branding = getBranding();
+  
+  const sections = [
+    {
+      label: null,
+      items: [
+        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
+        { path: '/servers', icon: 'dns', label: 'Servers' }
+      ]
+    },
+    {
+      label: 'Monitoring',
+      items: [
+        { path: '/status', icon: 'monitor_heart', label: 'Status' },
+        { path: '/activity', icon: 'timeline', label: 'Activity' }
+      ]
+    },
+    {
+      label: 'Account',
+      items: [
+        { path: '/profile', icon: 'person', label: 'Profile' },
+        { path: '/settings', icon: 'settings', label: 'Settings' }
+      ]
+    }
+  ];
+  
+  const adminSection = {
+    label: 'Administration',
+    items: [
+      { path: '/admin/overview', icon: 'analytics', label: 'Overview' },
+      { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
+      { path: '/admin/servers', icon: 'dns', label: 'Servers' },
+      { path: '/admin/users', icon: 'people', label: 'Users' },
+      { path: '/admin/groups', icon: 'group', label: 'Groups' },
+      { path: '/admin/nests', icon: 'egg', label: 'Nests' },
+      { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
+      { path: '/admin/incidents', icon: 'warning', label: 'Incidents' },
+      { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
+      { path: '/admin/webhooks', icon: 'webhook', label: 'Webhooks' },
+      { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
+      { path: '/admin/plugins', icon: 'extension', label: 'Plugins' },
+      { path: '/admin/settings', icon: 'tune', label: 'Panel Settings' }
+    ]
+  };
+  
+  // Plugin sidebar items
+  const pluginItems = getPluginSidebarItems();
+  if (pluginItems.length > 0) {
+    const insertIdx = sections.findIndex(s => s.label === 'Account');
+    const pluginSection = {
+      label: 'Plugins',
+      items: pluginItems.map(item => ({
+        path: item.href,
+        icon: item.icon || 'extension',
+        label: item.label
+      }))
+    };
+    if (insertIdx !== -1) {
+      sections.splice(insertIdx, 0, pluginSection);
+    } else {
+      sections.push(pluginSection);
+    }
+  }
+
+  if (user?.isAdmin) {
+    const pluginAdminPages = getPluginAdminPages();
+    for (const page of pluginAdminPages) {
+      adminSection.items.push({
+        path: `/admin/plugin:${page.pluginId}:${page.id}`,
+        icon: page.icon || 'extension',
+        label: page.title || page.id
+      });
+    }
+    sections.push(adminSection);
+  } else if (user && _adminPermsCache?.permissions?.length > 0) {
+    const perms = _adminPermsCache.permissions;
+    const filtered = adminSection.items.filter(item => {
+      const requiredPerm = ADMIN_PATH_PERMS[item.path];
+      if (!requiredPerm) return true;
+      return hasAdminPerm(perms, requiredPerm);
+    });
+    if (filtered.length > 0) {
+      sections.push({ ...adminSection, items: filtered });
+    }
+  } else if (user && !_adminPermsCache && !_adminPermsFetching) {
+    loadAdminPermissions().then(data => {
+      if (data?.permissions?.length > 0) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+          const newSidebar = renderSidebar();
+          sidebar.parentNode.replaceChild(newSidebar, sidebar);
+          const oldOverlay = document.getElementById('sidebar-overlay');
+          if (oldOverlay) oldOverlay.remove();
+        }
+      }
+    });
+  }
+  
+  const renderSection = (section) => {
+    const header = section.label 
+      ? `<div class="nav-section-label">${section.label}</div>` 
+      : '';
+    
+    const items = section.items.map(item => `
+      <li class="nav-item">
+        <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
+          <span class="round-icon">${item.icon}</span>
+          <span class="nav-text">${item.label}</span>
+        </a>
+      </li>
+    `).join('');
+    
+    return `
+      <div class="nav-section">
+        ${header}
+        <ul class="nav-list">${items}</ul>
+      </div>
+    `;
+  };
+  
+  sidebar.innerHTML = `
+    <div class="sidebar-header">
+      <a href="/dashboard" class="sidebar-brand">
+        <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="22" height="22">
+        <span class="brand-text">${branding.name}</span>
+      </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+      ${sections.map(renderSection).join('')}
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="footer-content">
+        <span>Powered by <a href="https://sodiumpanel.github.io/">Sodium</a></span>
+        <br>
+        <span><a href="https://github.com/zt3xdv/">zt3xdv</a> and contributors.</span>
+      </div>
+    </div>
+  `;
+  
+  const closeSidebar = () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+  };
+  
+  overlay.addEventListener('click', closeSidebar);
+  
+  setTimeout(() => {
+    sidebar.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          closeSidebar();
+        }
+      });
+    });
+  }, 0);
+  
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(overlay);
+  fragment.appendChild(sidebar);
+  
+  return fragment;
+}
+
+var sidebar = /*#__PURE__*/Object.freeze({
+__proto__: null,
+clearAdminPermsCache: clearAdminPermsCache,
+loadAdminPermissions: loadAdminPermissions,
+renderSidebar: renderSidebar
+});
+
 const state = {
   currentView: { type: 'list', tab: 'nodes', id: null, subTab: null },
   currentPage: { nodes: 1, servers: 1, users: 1 },
@@ -10130,11 +10359,8 @@ function setupBreadcrumbListeners(navigateToCallback) {
     el.onclick = (e) => {
       e.preventDefault();
       const action = el.dataset.action;
-      if (action === 'list-nodes') navigateToCallback('nodes');
-      else if (action === 'list-servers') navigateToCallback('servers');
-      else if (action === 'list-users') navigateToCallback('users');
-      else if (action === 'list-nests') navigateToCallback('nests');
-      else if (action === 'list-locations') navigateToCallback('locations');
+      const match = action.match(/^list-(.+)$/);
+      if (match) navigateToCallback(match[1]);
     };
   });
 }
@@ -11825,9 +12051,10 @@ function showCreateUserModal(loadView) {
   
   const modal = document.createElement('div');
   modal.id = 'create-user-modal';
-  modal.className = 'modal-overlay';
+  modal.className = 'modal';
   modal.innerHTML = `
-    <div class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
       <div class="modal-header">
         <h3>Create User</h3>
         <button class="modal-close" id="close-user-modal">
@@ -11860,7 +12087,7 @@ function showCreateUserModal(loadView) {
             </span>
           </label>
         </div>
-        <div class="modal-footer">
+        <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancel-user-modal">Cancel</button>
           <button type="submit" class="btn btn-primary">Create User</button>
         </div>
@@ -11869,10 +12096,16 @@ function showCreateUserModal(loadView) {
   `;
   
   document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('active'));
   
-  document.getElementById('close-user-modal').onclick = () => modal.remove();
-  document.getElementById('cancel-user-modal').onclick = () => modal.remove();
-  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  const closeModal = () => {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 150);
+  };
+  
+  document.getElementById('close-user-modal').onclick = closeModal;
+  document.getElementById('cancel-user-modal').onclick = closeModal;
+  modal.querySelector('.modal-backdrop').onclick = closeModal;
   
   document.getElementById('create-user-form').onsubmit = async (e) => {
     e.preventDefault();
@@ -11899,7 +12132,7 @@ function showCreateUserModal(loadView) {
       
       if (data.success) {
         success('User created successfully');
-        modal.remove();
+        closeModal();
         loadView();
       } else {
         error(data.error || 'Failed to create user');
@@ -15196,7 +15429,7 @@ function formatTimeAgo(dateString) {
   return date.toLocaleDateString();
 }
 
-function getAuditIcon(action) {
+function getAuditIcon$1(action) {
   const icons = {
     'user:create': 'person_add',
     'user:update': 'edit',
@@ -15266,7 +15499,7 @@ async function renderAuditLogPage(container, username) {
             ${data.logs.map(log => `
               <div class="audit-log-item">
                 <div class="audit-log-icon">
-                  <span class="round-icon">${getAuditIcon(log.action)}</span>
+                  <span class="round-icon">${getAuditIcon$1(log.action)}</span>
                 </div>
                 <div class="audit-log-content">
                   <div class="audit-log-action">
@@ -15299,7 +15532,7 @@ async function renderAuditLogPage(container, username) {
   }
 }
 
-function getActivityIcon(action) {
+function getActivityIcon$1(action) {
   const icons = {
     'auth:login': 'login',
     'auth:logout': 'logout',
@@ -15367,7 +15600,7 @@ async function renderActivityLogPage(container, username) {
             ${data.logs.map(log => `
               <div class="activity-log-item">
                 <div class="activity-log-icon">
-                  <span class="round-icon">${getActivityIcon(log.action)}</span>
+                  <span class="round-icon">${getActivityIcon$1(log.action)}</span>
                 </div>
                 <div class="activity-log-content">
                   <div class="activity-log-action">
@@ -15958,17 +16191,51 @@ async function renderPluginsList(container) {
 
 const navigateTo$3 = (...args) => window.adminNavigate(...args);
 
-const AVAILABLE_PERMISSIONS = [
-  { id: 'server.create', label: 'Create Servers' },
-  { id: 'server.delete', label: 'Delete Servers' },
-  { id: 'server.update', label: 'Update Servers' },
-  { id: 'server.console', label: 'Access Console' },
-  { id: 'server.files', label: 'File Manager' },
-  { id: 'server.backup', label: 'Manage Backups' },
-  { id: 'schedule.create', label: 'Create Schedules' },
-  { id: 'schedule.update', label: 'Update Schedules' },
-  { id: 'schedule.delete', label: 'Delete Schedules' },
-  { id: '*', label: 'All Permissions (Wildcard)' }
+const PERMISSION_CATEGORIES = [
+  {
+    label: 'Admin Panel',
+    permissions: [
+      { id: 'admin.overview', label: 'View Overview' },
+      { id: 'admin.nodes', label: 'Manage Nodes' },
+      { id: 'admin.servers', label: 'Manage Servers' },
+      { id: 'admin.users', label: 'Manage Users' },
+      { id: 'admin.groups', label: 'Manage Groups' },
+      { id: 'admin.nests', label: 'Manage Nests & Eggs' },
+      { id: 'admin.locations', label: 'Manage Locations' },
+      { id: 'admin.settings', label: 'Panel Settings' },
+      { id: 'admin.announcements', label: 'Manage Announcements' },
+      { id: 'admin.webhooks', label: 'Manage Webhooks' },
+      { id: 'admin.plugins', label: 'Manage Plugins' },
+      { id: 'admin.audit', label: 'View Audit Log' },
+      { id: 'admin.activity', label: 'View Activity Log' },
+      { id: 'admin.incidents', label: 'Manage Incidents' },
+    ]
+  },
+  {
+    label: 'Servers',
+    permissions: [
+      { id: 'server.create', label: 'Create Servers' },
+      { id: 'server.delete', label: 'Delete Servers' },
+      { id: 'server.update', label: 'Update Servers' },
+      { id: 'server.console', label: 'Access Console' },
+      { id: 'server.files', label: 'File Manager' },
+      { id: 'server.backup', label: 'Manage Backups' },
+    ]
+  },
+  {
+    label: 'Schedules',
+    permissions: [
+      { id: 'schedule.create', label: 'Create Schedules' },
+      { id: 'schedule.update', label: 'Update Schedules' },
+      { id: 'schedule.delete', label: 'Delete Schedules' },
+    ]
+  },
+  {
+    label: 'Global',
+    permissions: [
+      { id: '*', label: 'All Permissions (Wildcard)' },
+    ]
+  }
 ];
 
 async function renderGroupsList(container, username, loadView) {
@@ -16050,9 +16317,10 @@ function showCreateGroupModal(loadView) {
   
   const m = document.createElement('div');
   m.id = 'create-group-modal';
-  m.className = 'modal-overlay';
+  m.className = 'modal';
   m.innerHTML = `
-    <div class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
       <div class="modal-header">
         <h3>Create Group</h3>
         <button class="modal-close" id="close-group-modal">
@@ -16068,7 +16336,7 @@ function showCreateGroupModal(loadView) {
           <label>Description</label>
           <input type="text" name="description" placeholder="Group description" />
         </div>
-        <div class="modal-footer">
+        <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancel-group-modal">Cancel</button>
           <button type="submit" class="btn btn-primary">Create Group</button>
         </div>
@@ -16077,10 +16345,16 @@ function showCreateGroupModal(loadView) {
   `;
   
   document.body.appendChild(m);
+  requestAnimationFrame(() => m.classList.add('active'));
   
-  document.getElementById('close-group-modal').onclick = () => m.remove();
-  document.getElementById('cancel-group-modal').onclick = () => m.remove();
-  m.onclick = (e) => { if (e.target === m) m.remove(); };
+  const closeModal = () => {
+    m.classList.remove('active');
+    setTimeout(() => m.remove(), 150);
+  };
+  
+  document.getElementById('close-group-modal').onclick = closeModal;
+  document.getElementById('cancel-group-modal').onclick = closeModal;
+  m.querySelector('.modal-backdrop').onclick = closeModal;
   
   document.getElementById('create-group-form').onsubmit = async (e) => {
     e.preventDefault();
@@ -16104,7 +16378,7 @@ function showCreateGroupModal(loadView) {
       
       if (data.success || data.group) {
         success('Group created');
-        m.remove();
+        closeModal();
         loadView();
       } else {
         error(data.error || 'Failed to create group');
@@ -16217,20 +16491,22 @@ function renderGroupSubTab(group, users, memberUsers) {
               </div>
             </div>
             
-            <div class="form-section">
-              <h4>Permissions</h4>
-              <div class="form-toggles">
-                ${AVAILABLE_PERMISSIONS.map(perm => `
-                  <label class="toggle-item">
-                    <input type="checkbox" name="perm" value="${perm.id}" ${(group.permissions || []).includes(perm.id) ? 'checked' : ''} />
-                    <span class="toggle-content">
-                      <span class="toggle-title">${perm.label}</span>
-                      <span class="toggle-desc">${perm.id}</span>
-                    </span>
-                  </label>
-                `).join('')}
+            ${PERMISSION_CATEGORIES.map(cat => `
+              <div class="form-section">
+                <h4>${cat.label}</h4>
+                <div class="form-toggles">
+                  ${cat.permissions.map(perm => `
+                    <label class="toggle-item">
+                      <input type="checkbox" name="perm" value="${perm.id}" ${(group.permissions || []).includes(perm.id) ? 'checked' : ''} />
+                      <span class="toggle-content">
+                        <span class="toggle-title">${perm.label}</span>
+                        <span class="toggle-desc">${perm.id}</span>
+                      </span>
+                    </label>
+                  `).join('')}
+                </div>
               </div>
-            </div>
+            `).join('')}
             
             <div class="form-section">
               <h4>Resource Limits</h4>
@@ -16730,48 +17006,421 @@ async function renderIncidentDetail(container, username, incidentId) {
 
 const navigateTo$1 = (...args) => window.adminNavigate(...args);
 
+function formatUptime(seconds) {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function getActivityIcon(action) {
+  if (!action) return 'history';
+  if (action.includes('login')) return 'login';
+  if (action.includes('logout')) return 'logout';
+  if (action.includes('create')) return 'add_circle';
+  if (action.includes('delete')) return 'delete';
+  if (action.includes('update') || action.includes('edit')) return 'edit';
+  if (action.includes('start')) return 'play_arrow';
+  if (action.includes('stop')) return 'stop';
+  if (action.includes('restart')) return 'restart_alt';
+  if (action.includes('backup')) return 'backup';
+  if (action.includes('file')) return 'folder';
+  if (action.includes('install')) return 'download';
+  return 'history';
+}
+
+function getAuditIcon(action) {
+  if (!action) return 'shield';
+  if (action.includes('user')) return 'person';
+  if (action.includes('server')) return 'dns';
+  if (action.includes('node')) return 'hub';
+  if (action.includes('setting')) return 'settings';
+  if (action.includes('egg') || action.includes('nest')) return 'egg';
+  if (action.includes('suspend')) return 'block';
+  if (action.includes('delete')) return 'delete';
+  return 'shield';
+}
+
 async function renderOverview(container, username, loadView) {
+  container.innerHTML = `
+    <div class="dashboard-container">
+      <header class="dashboard-header">
+        <div class="greeting">
+          <div class="greeting-icon">
+            <span class="round-icon">manage_accounts</span>
+          </div>
+          <div class="greeting-text">
+            <h1>Welcome, <span class="highlight">${escapeHtml$1(username)}!</span></h1>
+            <p>Welcome to the admin panel.</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="stats-grid" id="overview-stats">
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">dns</span></div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-servers">-</span>
+            <span class="stat-label">Servers</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">people</span></div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-users">-</span>
+            <span class="stat-label">Users</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">hub</span></div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-nodes">-</span>
+            <span class="stat-label">Nodes</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">egg</span></div>
+          <div class="stat-content">
+            <span class="stat-value" id="stat-eggs">-</span>
+            <span class="stat-label">Eggs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-section">
+          <span class="round-icon corner-icon">monitor_heart</span>
+          <div class="section-header">
+            <span class="round-icon">monitor_heart</span>
+            <h2>System</h2>
+          </div>
+          <div id="system-info">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <span class="round-icon corner-icon">hub</span>
+          <div class="section-header">
+            <span class="round-icon">hub</span>
+            <h2>Nodes</h2>
+            <a class="muted" data-navigate="nodes">View All</a>
+          </div>
+          <div id="nodes-status">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-section">
+          <span class="round-icon corner-icon">history</span>
+          <div class="section-header">
+            <span class="round-icon">history</span>
+            <h2>Recent Activity</h2>
+            <a class="muted" data-navigate="logs">View All</a>
+          </div>
+          <div id="recent-activity">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <span class="round-icon corner-icon">shield</span>
+          <div class="section-header">
+            <span class="round-icon">shield</span>
+            <h2>Audit Log</h2>
+            <a class="muted" data-navigate="logs">View All</a>
+          </div>
+          <div id="recent-audit">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-section">
+          <a class="overview-item" href="https://sodiumpanel.github.io/panel/viewer.html">
+            <span class="round-icon">article</span>
+            <div class="info">
+              <div class="title">Documentation</div>
+              <div class="description">You can view the documentation clicking here</div>
+            </div>
+          </a>
+        </div>
+        <div class="dashboard-section">
+          <a class="overview-item" href="https://github.com/sodiumpanel/panel">
+            <span class="round-icon">merge</span>
+            <div class="info">
+              <div class="title">Github</div>
+              <div class="description">Leave us an star on our Github repository</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.querySelectorAll('[data-navigate]').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateTo$1(el.dataset.navigate);
+    });
+  });
+
+  loadStats();
+  loadSystemInfo();
+  loadNodesStatus();
+  loadRecentActivity();
+  loadRecentAudit();
+}
+
+async function loadStats() {
   try {
-    const displayName = state.user?.displayName || state.username;
-    
-    container.innerHTML = `
-      <div class="dashboard-container">
-        <header class="dashboard-header">
-          <div class="greeting">
-            <div class="greeting-icon">
-              <span class="round-icon">manage_accounts</span>
-            </div>
-            <div class="greeting-text">
-              <h1>Welcome, <span class="highlight">${escapeHtml$1(username)}!</span></h1>
-              <p>Welcome to the admin panel.</p>
-            </div>
+    const res = await api('/api/admin/system/info');
+    const health = await api('/api/health');
+    const data = await res.json();
+    const healthData = await health.json();
+
+    const usersRes = await api('/api/admin/users?per_page=1');
+    const serversRes = await api('/api/admin/servers?per_page=1');
+    const nodesRes = await api('/api/admin/nodes?per_page=1');
+    const [usersData, serversData, nodesData] = await Promise.all([
+      usersRes.json(), serversRes.json(), nodesRes.json()
+    ]);
+
+    const el = (id) => document.getElementById(id);
+    if (el('stat-servers')) el('stat-servers').textContent = serversData.meta?.total ?? 0;
+    if (el('stat-users')) el('stat-users').textContent = usersData.meta?.total ?? 0;
+    if (el('stat-nodes')) el('stat-nodes').textContent = nodesData.meta?.total ?? 0;
+    if (el('stat-eggs')) el('stat-eggs').textContent = data.features ? '—' : '—';
+
+    try {
+      const eggsRes = await api('/api/admin/nests');
+      const eggsData = await eggsRes.json();
+      const totalEggs = (eggsData.nests || []).reduce((sum, n) => sum + (n.eggs?.length || 0), 0);
+      if (el('stat-eggs')) el('stat-eggs').textContent = totalEggs;
+    } catch {}
+  } catch {
+    // Stats will show "-" on error
+  }
+}
+
+async function loadSystemInfo() {
+  const target = document.getElementById('system-info');
+  if (!target) return;
+
+  try {
+    const [sysRes, healthRes] = await Promise.all([
+      api('/api/admin/system/info'),
+      api('/api/health')
+    ]);
+    const sys = await sysRes.json();
+    const health = await healthRes.json();
+
+    const memUsedMB = health.memory?.used || Math.round((sys.memory?.heapUsed || 0) / 1024 / 1024);
+    const memTotalMB = health.memory?.total || Math.round((sys.memory?.heapTotal || 0) / 1024 / 1024);
+    const memPercent = memTotalMB > 0 ? Math.round((memUsedMB / memTotalMB) * 100) : 0;
+    const sysMemUsed = (health.memory?.system || 0) - (health.memory?.free || 0);
+    const sysMemTotal = health.memory?.system || 0;
+    const sysMemPercent = sysMemTotal > 0 ? Math.round((sysMemUsed / sysMemTotal) * 100) : 0;
+
+    target.innerHTML = `
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Version</span>
+          <span class="info-value">${escapeHtml$1(sys.version || '1.0.0')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Node.js</span>
+          <span class="info-value">${escapeHtml$1(sys.node_version || '-')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Platform</span>
+          <span class="info-value">${escapeHtml$1(sys.platform || '-')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Uptime</span>
+          <span class="info-value">${formatUptime(Math.floor(sys.uptime || health.uptime || 0))}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Database</span>
+          <span class="info-value">${escapeHtml$1(sys.database?.type || '-')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">DB Status</span>
+          <span class="info-value">${health.database?.connected ? 'Connected' : 'Disconnected'}</span>
+        </div>
+      </div>
+      <div class="resource-bars" style="margin-top: 14px;">
+        <div class="resource-bar">
+          <div class="resource-header">
+            <span>Process Memory</span>
+            <span>${memUsedMB} / ${memTotalMB} MB</span>
           </div>
-        </header>
-        
-        <div class="dashboard-grid">
-          <div class="dashboard-section">
-            <a class="overview-item" href="https://sodiumpanel.github.io/panel/viewer.html">
-              <span class="round-icon">article</span>
-              <div class="info">
-                <div class="title">Documentation</div>
-                <div class="description">You can view the documentation clicking here</div>
-              </div>
-            </a>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${memPercent}%"></div>
           </div>
-          <div class="dashboard-section">
-            <a class="overview-item" href="https://github.com/sodiumpanel/panel">
-              <span class="round-icon">merge</span>
-              <div class="info">
-                <div class="title">Github</div>
-                <div class="description">Leave us an star on our Github repository</div>
-              </div>
-            </a>
+        </div>
+        <div class="resource-bar">
+          <div class="resource-header">
+            <span>System Memory</span>
+            <span>${sysMemUsed} / ${sysMemTotal} MB</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${sysMemPercent}%"></div>
           </div>
         </div>
       </div>
     `;
-  } catch (e) {
-    container.innerHTML = `<div class="error">Failed to load overview</div>`;
+  } catch {
+    target.innerHTML = `<div class="error-state">Failed to load system info</div>`;
+  }
+}
+
+async function loadNodesStatus() {
+  const target = document.getElementById('nodes-status');
+  if (!target) return;
+
+  try {
+    const res = await api('/api/status/nodes');
+    const data = await res.json();
+    const nodes = data.nodes || [];
+
+    if (nodes.length === 0) {
+      target.innerHTML = `
+        <div class="status-grid">
+          <div class="status-item info">
+            <span class="round-icon">info</span>
+            No nodes configured
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    target.innerHTML = `
+      <div class="status-grid">
+        ${nodes.map(node => {
+          const statusClass = node.status === 'online' ? 'success' : 'danger';
+          const statusIcon = node.status === 'online' ? 'check_circle' : 'error';
+          const memPercent = node.memory?.total > 0
+            ? Math.round((node.memory.allocated / node.memory.total) * 100)
+            : 0;
+          return `
+            <div class="status-item ${statusClass}" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                <span class="round-icon">${statusIcon}</span>
+                <span style="font-weight: 600; flex: 1;">${escapeHtml$1(node.name)}</span>
+                <span style="font-size: 11px; opacity: 0.8;">${node.servers || 0} servers</span>
+              </div>
+              <div style="width: 100%; display: flex; gap: 12px; font-size: 11px; opacity: 0.8; padding-left: 26px;">
+                <span>Mem: ${memPercent}% allocated</span>
+                <span>Location: ${escapeHtml$1(node.location || '-')}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } catch {
+    target.innerHTML = `<div class="error-state">Failed to load node status</div>`;
+  }
+}
+
+async function loadRecentActivity() {
+  const target = document.getElementById('recent-activity');
+  if (!target) return;
+
+  try {
+    const res = await api('/api/activity-logs?per_page=6');
+    const data = await res.json();
+    const logs = data.logs || [];
+
+    if (logs.length === 0) {
+      target.innerHTML = `
+        <div class="activity-list">
+          <div class="activity-item">
+            <span class="round-icon">info</span>
+            <div class="activity-content">
+              <span class="activity-title">No recent activity</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    target.innerHTML = `
+      <div class="activity-list">
+        ${logs.map(log => `
+          <div class="activity-item">
+            <span class="round-icon">${getActivityIcon(log.action)}</span>
+            <div class="activity-content">
+              <span class="activity-title">${escapeHtml$1(log.username || 'Unknown')} — ${escapeHtml$1(log.action || '-')}</span>
+              <span class="activity-time">${log.timestamp ? timeAgo(log.timestamp) : '-'}${log.ip ? ` · ${escapeHtml$1(log.ip)}` : ''}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch {
+    target.innerHTML = `<div class="error-state">Failed to load activity</div>`;
+  }
+}
+
+async function loadRecentAudit() {
+  const target = document.getElementById('recent-audit');
+  if (!target) return;
+
+  try {
+    const res = await api('/api/admin/audit-logs?per_page=6');
+    const data = await res.json();
+    const logs = data.logs || [];
+
+    if (logs.length === 0) {
+      target.innerHTML = `
+        <div class="activity-list">
+          <div class="activity-item">
+            <span class="round-icon">info</span>
+            <div class="activity-content">
+              <span class="activity-title">No audit logs</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    target.innerHTML = `
+      <div class="activity-list">
+        ${logs.map(log => `
+          <div class="activity-item">
+            <span class="round-icon">${getAuditIcon(log.action)}</span>
+            <div class="activity-content">
+              <span class="activity-title">${escapeHtml$1(log.adminUsername || 'Unknown')} — ${escapeHtml$1(log.action || '-')}</span>
+              <span class="activity-time">${log.timestamp ? timeAgo(log.timestamp) : '-'}${log.targetType ? ` · ${escapeHtml$1(log.targetType)}` : ''}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch {
+    target.innerHTML = `<div class="error-state">Failed to load audit logs</div>`;
   }
 }
 
@@ -16800,6 +17449,24 @@ function getDefaultSubTab(tab) {
 
 window.adminNavigate = navigateTo;
 
+const TAB_PERMISSIONS = {
+  overview: 'admin.overview',
+  nodes: 'admin.nodes',
+  servers: 'admin.servers',
+  users: 'admin.users',
+  groups: 'admin.groups',
+  nests: 'admin.nests',
+  eggs: 'admin.nests',
+  locations: 'admin.locations',
+  settings: 'admin.settings',
+  announcements: 'admin.announcements',
+  webhooks: 'admin.webhooks',
+  audit: 'admin.audit',
+  activity: 'admin.activity',
+  plugins: 'admin.plugins',
+  incidents: 'admin.incidents',
+};
+
 async function renderAdmin(tab = 'nodes', params = {}) {
   const app = document.getElementById('app');
   const user = state$1.user;
@@ -16808,14 +17475,17 @@ async function renderAdmin(tab = 'nodes', params = {}) {
   
   try {
     if (!user?.isAdmin) {
-      app.innerHTML = `
-        <div class="error-page">
-          <h1>403</h1>
-          <p>Access Denied</p>
-          <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
-        </div>
-      `;
-      return;
+      const res = await api('/api/admin/permissions');
+      if (!res.ok) {
+        app.innerHTML = `
+          <div class="error-page">
+            <h1>403</h1>
+            <p>Access Denied</p>
+            <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+          </div>
+        `;
+        return;
+      }
     }
   } catch (e) {
     app.innerHTML = '<div class="error">Failed to verify permissions</div>';
@@ -16854,6 +17524,22 @@ async function loadView() {
   container.id = 'admin-content';
   container.innerHTML = '<div class="loading-spinner"></div>';
   parent.appendChild(container);
+  
+  if (!state$1.user?.isAdmin) {
+    const permData = await loadAdminPermissions();
+    const perms = permData?.permissions || [];
+    const requiredPerm = TAB_PERMISSIONS[state.currentView.tab];
+    if (requiredPerm && !perms.includes('*') && !perms.includes(requiredPerm)) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="round-icon">block</span>
+          <h3>Not Found</h3>
+          <p>The page you're looking for doesn't exist.</p>
+        </div>
+      `;
+      return;
+    }
+  }
   
   if (state.currentView.type === 'detail' && state.currentView.id) {
     switch (state.currentView.tab) {
@@ -17835,161 +18521,6 @@ async function updateNav() {
   } catch {
     // Keep defaults on error
   }
-}
-
-function renderSidebar() {
-  const overlay = document.createElement('div');
-  overlay.id = 'sidebar-overlay';
-  overlay.className = 'sidebar-overlay';
-  
-  const sidebar = document.createElement('aside');
-  sidebar.id = 'sidebar';
-  sidebar.className = 'sidebar';
-  
-  const currentPath = window.location.pathname;
-  const user = state$1.user;
-  const branding = getBranding();
-  
-  const sections = [
-    {
-      label: null,
-      items: [
-        { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-        { path: '/servers', icon: 'dns', label: 'Servers' }
-      ]
-    },
-    {
-      label: 'Monitoring',
-      items: [
-        { path: '/status', icon: 'monitor_heart', label: 'Status' },
-        { path: '/activity', icon: 'timeline', label: 'Activity' }
-      ]
-    },
-    {
-      label: 'Account',
-      items: [
-        { path: '/profile', icon: 'person', label: 'Profile' },
-        { path: '/settings', icon: 'settings', label: 'Settings' }
-      ]
-    }
-  ];
-  
-  const adminSection = {
-    label: 'Administration',
-    items: [
-      { path: '/admin/overview', icon: 'analytics', label: 'Overview' },
-      { path: '/admin/nodes', icon: 'dns', label: 'Nodes' },
-      { path: '/admin/servers', icon: 'dns', label: 'Servers' },
-      { path: '/admin/users', icon: 'people', label: 'Users' },
-      { path: '/admin/groups', icon: 'group', label: 'Groups' },
-      { path: '/admin/nests', icon: 'egg', label: 'Nests' },
-      { path: '/admin/locations', icon: 'location_on', label: 'Locations' },
-      { path: '/admin/incidents', icon: 'warning', label: 'Incidents' },
-      { path: '/admin/announcements', icon: 'campaign', label: 'Announcements' },
-      { path: '/admin/webhooks', icon: 'webhook', label: 'Webhooks' },
-      { path: '/admin/audit', icon: 'history', label: 'Audit Log' },
-      { path: '/admin/plugins', icon: 'extension', label: 'Plugins' },
-      { path: '/admin/settings', icon: 'tune', label: 'Panel Settings' }
-    ]
-  };
-  
-  // Plugin sidebar items
-  const pluginItems = getPluginSidebarItems();
-  if (pluginItems.length > 0) {
-    const insertIdx = sections.findIndex(s => s.label === 'Account');
-    const pluginSection = {
-      label: 'Plugins',
-      items: pluginItems.map(item => ({
-        path: item.href,
-        icon: item.icon || 'extension',
-        label: item.label
-      }))
-    };
-    if (insertIdx !== -1) {
-      sections.splice(insertIdx, 0, pluginSection);
-    } else {
-      sections.push(pluginSection);
-    }
-  }
-
-  if (user?.isAdmin) {
-    // Add plugin admin pages to admin section
-    const pluginAdminPages = getPluginAdminPages();
-    for (const page of pluginAdminPages) {
-      adminSection.items.push({
-        path: `/admin/plugin:${page.pluginId}:${page.id}`,
-        icon: page.icon || 'extension',
-        label: page.title || page.id
-      });
-    }
-    sections.push(adminSection);
-  }
-  
-  const renderSection = (section) => {
-    const header = section.label 
-      ? `<div class="nav-section-label">${section.label}</div>` 
-      : '';
-    
-    const items = section.items.map(item => `
-      <li class="nav-item">
-        <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
-          <span class="round-icon">${item.icon}</span>
-          <span class="nav-text">${item.label}</span>
-        </a>
-      </li>
-    `).join('');
-    
-    return `
-      <div class="nav-section">
-        ${header}
-        <ul class="nav-list">${items}</ul>
-      </div>
-    `;
-  };
-  
-  sidebar.innerHTML = `
-    <div class="sidebar-header">
-      <a href="/dashboard" class="sidebar-brand">
-        <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="22" height="22">
-        <span class="brand-text">${branding.name}</span>
-      </a>
-    </div>
-    
-    <nav class="sidebar-nav">
-      ${sections.map(renderSection).join('')}
-    </nav>
-    
-    <div class="sidebar-footer">
-      <div class="footer-content">
-        <span>Powered by <a href="https://sodiumpanel.github.io/">Sodium</a></span>
-        <br>
-        <span><a href="https://github.com/zt3xdv/">zt3xdv</a> and contributors.</span>
-      </div>
-    </div>
-  `;
-  
-  const closeSidebar = () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('active');
-  };
-  
-  overlay.addEventListener('click', closeSidebar);
-  
-  setTimeout(() => {
-    sidebar.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
-          closeSidebar();
-        }
-      });
-    });
-  }, 0);
-  
-  const fragment = document.createDocumentFragment();
-  fragment.appendChild(overlay);
-  fragment.appendChild(sidebar);
-  
-  return fragment;
 }
 
 let mounted = false;

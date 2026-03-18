@@ -77,11 +77,34 @@ export function authenticateUser(req, res, next) {
   }
 }
 
-export function requireAdmin(req, res, next) {
-  if (!req.user || req.user.isAdmin !== true) {
-    return res.status(403).json({ error: 'Admin access required' });
+export async function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  if (req.user.isAdmin) return next();
+  
+  const data = await loadGroups();
+  const userGroups = (data.groups || []).filter(g => g.members?.includes(req.user.id));
+  const hasAnyAdmin = userGroups.some(g => 
+    g.permissions?.includes('*') || g.permissions?.some(p => p.startsWith('admin.'))
+  );
+  
+  if (hasAnyAdmin) {
+    req.user.adminPermissions = [...new Set(userGroups.flatMap(g => g.permissions || []))];
+    return next();
   }
-  next();
+  
+  return res.status(403).json({ error: 'Admin access required' });
+}
+
+export function requireAdminPermission(permission) {
+  return (req, res, next) => {
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (req.user.isAdmin) return next();
+    
+    const perms = req.user.adminPermissions || [];
+    if (perms.includes('*') || perms.includes(permission)) return next();
+    
+    return res.status(403).json({ error: `Missing permission: ${permission}` });
+  };
 }
 
 export function requireModerator(req, res, next) {

@@ -1,12 +1,12 @@
 import express from 'express';
 import { loadAuditLogs, loadUsers } from '../db.js';
-import { authenticateUser, requireAdmin } from '../utils/auth.js';
+import { authenticateUser, requireAdmin, requireAdminPermission } from '../utils/auth.js';
 
 const router = express.Router();
 
 router.use(authenticateUser, requireAdmin);
 
-router.get('/', async (req, res) => {
+router.get('/', requireAdminPermission('admin.audit'), async (req, res) => {
   const { page = 1, per_page = 50, action, targetType, adminId } = req.query;
   const data = await loadAuditLogs();
   const users = await loadUsers();
@@ -48,13 +48,13 @@ router.get('/', async (req, res) => {
   });
 });
 
-router.get('/actions', async (req, res) => {
+router.get('/actions', requireAdminPermission('admin.audit'), async (req, res) => {
   const data = await loadAuditLogs();
   const actions = [...new Set(data.auditLogs.map(l => l.action))];
   res.json({ actions });
 });
 
-router.get('/target-types', async (req, res) => {
+router.get('/target-types', requireAdminPermission('admin.audit'), async (req, res) => {
   const data = await loadAuditLogs();
   const targetTypes = [...new Set(data.auditLogs.map(l => l.targetType))];
   res.json({ targetTypes });

@@ -1,6 +1,6 @@
 import express from 'express';
 import { loadAnnouncements, saveAnnouncements } from '../db.js';
-import { authenticateUser, requireAdmin } from '../utils/auth.js';
+import { authenticateUser, requireAdmin, requireAdminPermission } from '../utils/auth.js';
 import { generateUUID, sanitizeText } from '../utils/helpers.js';
 import { logAudit, AUDIT_TYPES } from '../utils/activity.js';
 
@@ -36,7 +36,7 @@ router.get('/active', authenticateUser, async (req, res) => {
   res.json({ announcements });
 });
 
-router.post('/', authenticateUser, requireAdmin, async (req, res) => {
+router.post('/', authenticateUser, requireAdmin, requireAdminPermission('admin.announcements'), async (req, res) => {
   const { title, content, type = 'info', active = true, expiresAt } = req.body;
   
   if (!title || !content) {
@@ -66,7 +66,7 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
   res.json({ success: true, announcement });
 });
 
-router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.put('/:id', authenticateUser, requireAdmin, requireAdminPermission('admin.announcements'), async (req, res) => {
   const { title, content, type, active, expiresAt } = req.body;
   const data = await loadAnnouncements();
   const idx = data.announcements.findIndex(a => a.id === req.params.id);
@@ -95,7 +95,7 @@ router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
   res.json({ success: true, announcement });
 });
 
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateUser, requireAdmin, requireAdminPermission('admin.announcements'), async (req, res) => {
   const data = await loadAnnouncements();
   const announcement = data.announcements.find(a => a.id === req.params.id);
   

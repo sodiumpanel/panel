@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateUser, requireAdmin } from '../utils/auth.js';
+import { authenticateUser, requireAdmin, requireAdminPermission } from '../utils/auth.js';
 import {
   getAllPlugins, activatePlugin, deactivatePlugin,
   getPluginSettings, savePluginSettings
@@ -8,12 +8,12 @@ import {
 const router = express.Router();
 
 // List all plugins
-router.get('/', authenticateUser, requireAdmin, (req, res) => {
+router.get('/', authenticateUser, requireAdmin, requireAdminPermission('admin.plugins'), (req, res) => {
   res.json({ plugins: getAllPlugins() });
 });
 
 // Activate a plugin
-router.post('/:id/activate', authenticateUser, requireAdmin, async (req, res) => {
+router.post('/:id/activate', authenticateUser, requireAdmin, requireAdminPermission('admin.plugins'), async (req, res) => {
   try {
     await activatePlugin(req.params.id);
     res.json({ success: true });
@@ -23,7 +23,7 @@ router.post('/:id/activate', authenticateUser, requireAdmin, async (req, res) =>
 });
 
 // Deactivate a plugin
-router.post('/:id/deactivate', authenticateUser, requireAdmin, async (req, res) => {
+router.post('/:id/deactivate', authenticateUser, requireAdmin, requireAdminPermission('admin.plugins'), async (req, res) => {
   try {
     await deactivatePlugin(req.params.id);
     res.json({ success: true });
@@ -33,14 +33,14 @@ router.post('/:id/deactivate', authenticateUser, requireAdmin, async (req, res) 
 });
 
 // Get plugin settings
-router.get('/:id/settings', authenticateUser, requireAdmin, (req, res) => {
+router.get('/:id/settings', authenticateUser, requireAdmin, requireAdminPermission('admin.plugins'), (req, res) => {
   const settings = getPluginSettings(req.params.id);
   if (!settings) return res.status(404).json({ error: 'Plugin not found' });
   res.json(settings);
 });
 
 // Save plugin settings
-router.put('/:id/settings', authenticateUser, requireAdmin, (req, res) => {
+router.put('/:id/settings', authenticateUser, requireAdmin, requireAdminPermission('admin.plugins'), (req, res) => {
   try {
     savePluginSettings(req.params.id, req.body.values || {});
     res.json({ success: true });

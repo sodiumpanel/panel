@@ -128,9 +128,11 @@
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  
+  .stat-card { flex: 1 1 200px; }
 }
 
 .stat-card {

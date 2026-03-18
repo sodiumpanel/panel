@@ -1,6 +1,6 @@
 import express from 'express';
 import { loadWebhooks, saveWebhooks } from '../db.js';
-import { authenticateUser, requireAdmin } from '../utils/auth.js';
+import { authenticateUser, requireAdmin, requireAdminPermission } from '../utils/auth.js';
 import { generateUUID, sanitizeText, sanitizeUrl } from '../utils/helpers.js';
 import { WEBHOOK_EVENTS, triggerWebhook } from '../utils/webhooks.js';
 
@@ -170,7 +170,7 @@ router.post('/:id/test', async (req, res) => {
 // ==================== ADMIN WEBHOOKS ====================
 
 // Get all webhooks (admin)
-router.get('/admin/all', requireAdmin, async (req, res) => {
+router.get('/admin/all', requireAdmin, requireAdminPermission('admin.webhooks'), async (req, res) => {
   const data = await loadWebhooks();
   const webhooks = (data.webhooks || []).map(w => ({
     ...w,
@@ -182,7 +182,7 @@ router.get('/admin/all', requireAdmin, async (req, res) => {
 });
 
 // Create global webhook (admin)
-router.post('/admin', requireAdmin, async (req, res) => {
+router.post('/admin', requireAdmin, requireAdminPermission('admin.webhooks'), async (req, res) => {
   const { name, url, type, events, secret } = req.body;
   
   if (!name || !url) {
@@ -230,7 +230,7 @@ router.post('/admin', requireAdmin, async (req, res) => {
 });
 
 // Delete any webhook (admin)
-router.delete('/admin/:id', requireAdmin, async (req, res) => {
+router.delete('/admin/:id', requireAdmin, requireAdminPermission('admin.webhooks'), async (req, res) => {
   const data = await loadWebhooks();
   const idx = (data.webhooks || []).findIndex(w => w.id === req.params.id);
   

@@ -1,6 +1,53 @@
 import { state } from '../utils/state.js';
+import { api } from '../utils/api.js';
 import { getPluginSidebarItems, getPluginAdminPages } from '../utils/plugins.js';
 import { getBranding } from '../utils/branding.js';
+
+let _adminPermsCache = null;
+let _adminPermsFetching = false;
+
+const ADMIN_PATH_PERMS = {
+  '/admin/overview': 'admin.overview',
+  '/admin/nodes': 'admin.nodes',
+  '/admin/servers': 'admin.servers',
+  '/admin/users': 'admin.users',
+  '/admin/groups': 'admin.groups',
+  '/admin/nests': 'admin.nests',
+  '/admin/locations': 'admin.locations',
+  '/admin/incidents': 'admin.incidents',
+  '/admin/announcements': 'admin.announcements',
+  '/admin/webhooks': 'admin.webhooks',
+  '/admin/audit': 'admin.audit',
+  '/admin/activity': 'admin.activity',
+  '/admin/plugins': 'admin.plugins',
+  '/admin/settings': 'admin.settings',
+};
+
+function hasAdminPerm(perms, permission) {
+  if (!perms) return false;
+  return perms.includes('*') || perms.includes(permission);
+}
+
+export async function loadAdminPermissions() {
+  if (_adminPermsCache) return _adminPermsCache;
+  if (_adminPermsFetching) return null;
+  _adminPermsFetching = true;
+  try {
+    const res = await api('/api/admin/permissions');
+    if (res.ok) {
+      const data = await res.json();
+      _adminPermsCache = data;
+      return data;
+    }
+  } catch {}
+  _adminPermsFetching = false;
+  return null;
+}
+
+export function clearAdminPermsCache() {
+  _adminPermsCache = null;
+  _adminPermsFetching = false;
+}
 
 export function renderSidebar() {
   const overlay = document.createElement('div');
@@ -78,7 +125,6 @@ export function renderSidebar() {
   }
 
   if (user?.isAdmin) {
-    // Add plugin admin pages to admin section
     const pluginAdminPages = getPluginAdminPages();
     for (const page of pluginAdminPages) {
       adminSection.items.push({
@@ -88,6 +134,28 @@ export function renderSidebar() {
       });
     }
     sections.push(adminSection);
+  } else if (user && _adminPermsCache?.permissions?.length > 0) {
+    const perms = _adminPermsCache.permissions;
+    const filtered = adminSection.items.filter(item => {
+      const requiredPerm = ADMIN_PATH_PERMS[item.path];
+      if (!requiredPerm) return true;
+      return hasAdminPerm(perms, requiredPerm);
+    });
+    if (filtered.length > 0) {
+      sections.push({ ...adminSection, items: filtered });
+    }
+  } else if (user && !_adminPermsCache && !_adminPermsFetching) {
+    loadAdminPermissions().then(data => {
+      if (data?.permissions?.length > 0) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+          const newSidebar = renderSidebar();
+          sidebar.parentNode.replaceChild(newSidebar, sidebar);
+          const oldOverlay = document.getElementById('sidebar-overlay');
+          if (oldOverlay) oldOverlay.remove();
+        }
+      }
+    });
   }
   
   const renderSection = (section) => {

@@ -27,30 +27,49 @@ export function renderDashboard() {
             <p>Manage your servers and resources with ease.</p>
           </div>
         </div>
+        <div class="quick-stats" id="quick-stats"></div>
       </header>
-      
-      <div class="dashboard-grid">
-        <div class="dashboard-section resources-section">
-          <span class="round-icon corner-icon">data_usage</span>
-          <div class="section-header">
-            <span class="round-icon">data_usage</span>
-            <h2>Resource Usage</h2>
-          </div>
-          <div class="limits-grid" id="limits-display">
-            <div class="loading-spinner"></div>
+
+      <div class="stats-grid" id="limits-display">
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">dns</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">Servers</span>
           </div>
         </div>
-        
-        <div class="dashboard-section servers-section">
-          <span class="round-icon corner-icon">dns</span>
-          <div class="section-header">
-            <span class="round-icon">dns</span>
-            <h2>Servers</h2>
-            <a href="/servers" class="muted">View All</a>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">memory</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">Memory</span>
           </div>
-          <div class="servers-list" id="servers-list">
-            <div class="loading-spinner"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">storage</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">Disk</span>
           </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="round-icon">speed</span></div>
+          <div class="stat-content">
+            <span class="stat-value">-</span>
+            <span class="stat-label">CPU</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dashboard-section servers-section">
+        <span class="round-icon corner-icon">dns</span>
+        <div class="section-header">
+          <span class="round-icon">dns</span>
+          <h2>Servers</h2>
+          <a href="/servers" class="muted">View All</a>
+        </div>
+        <div class="servers-list" id="servers-list">
+          <div class="loading-spinner"></div>
         </div>
       </div>
     </div>
@@ -64,7 +83,6 @@ export function renderDashboard() {
   pollInterval = setInterval(() => {
     loadServers();
     loadLimits();
-    loadQuickStats();
   }, 10000);
 }
 
@@ -125,58 +143,39 @@ async function loadLimits() {
     const res = await api(`/api/user/limits?username=${encodeURIComponent(username)}`);
     const data = await res.json();
     
-    const calcPercent = (used, limit) => limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
-    
     container.innerHTML = `
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Servers</span>
-          <span class="value">${data.used.servers} / ${data.limits.servers}</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.servers, data.limits.servers)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">dns</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.servers} / ${data.limits.servers}</span>
+          <span class="stat-label">Servers</span>
         </div>
       </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Memory</span>
-          <span class="value">${data.used.memory} / ${data.limits.memory} MB</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.memory, data.limits.memory)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">memory</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.memory} / ${data.limits.memory} MB</span>
+          <span class="stat-label">Memory</span>
         </div>
       </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Disk</span>
-          <span class="value">${data.used.disk} / ${data.limits.disk} MB</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.disk, data.limits.disk)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">storage</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.disk} / ${data.limits.disk} MB</span>
+          <span class="stat-label">Disk</span>
         </div>
       </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">CPU</span>
-          <span class="value">${data.used.cpu} / ${data.limits.cpu}%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.cpu, data.limits.cpu)}%"></div>
-        </div>
-      </div>
-      <div class="limit-item">
-        <div class="limit-header">
-          <span class="label">Allocations</span>
-          <span class="value">${data.used.allocations || 0} / ${data.limits.allocations || 5}</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress" style="width: ${calcPercent(data.used.allocations || 0, data.limits.allocations || 5)}%"></div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="round-icon">speed</span></div>
+        <div class="stat-content">
+          <span class="stat-value">${data.used.cpu} / ${data.limits.cpu}%</span>
+          <span class="stat-label">CPU</span>
         </div>
       </div>
     `;
   } catch (e) {
     console.error('Failed to load limits:', e);
-    container.innerHTML = `<div class="error-state">Failed to load resources</div>`;
+    container.innerHTML = '';
   }
 }
 

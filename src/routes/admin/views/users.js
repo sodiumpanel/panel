@@ -141,9 +141,10 @@ function showCreateUserModal(loadView) {
   
   const modal = document.createElement('div');
   modal.id = 'create-user-modal';
-  modal.className = 'modal-overlay';
+  modal.className = 'modal';
   modal.innerHTML = `
-    <div class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
       <div class="modal-header">
         <h3>Create User</h3>
         <button class="modal-close" id="close-user-modal">
@@ -176,7 +177,7 @@ function showCreateUserModal(loadView) {
             </span>
           </label>
         </div>
-        <div class="modal-footer">
+        <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancel-user-modal">Cancel</button>
           <button type="submit" class="btn btn-primary">Create User</button>
         </div>
@@ -185,10 +186,16 @@ function showCreateUserModal(loadView) {
   `;
   
   document.body.appendChild(modal);
+  requestAnimationFrame(() => modal.classList.add('active'));
   
-  document.getElementById('close-user-modal').onclick = () => modal.remove();
-  document.getElementById('cancel-user-modal').onclick = () => modal.remove();
-  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  const closeModal = () => {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 150);
+  };
+  
+  document.getElementById('close-user-modal').onclick = closeModal;
+  document.getElementById('cancel-user-modal').onclick = closeModal;
+  modal.querySelector('.modal-backdrop').onclick = closeModal;
   
   document.getElementById('create-user-form').onsubmit = async (e) => {
     e.preventDefault();
@@ -215,7 +222,7 @@ function showCreateUserModal(loadView) {
       
       if (data.success) {
         toast.success('User created successfully');
-        modal.remove();
+        closeModal();
         loadView();
       } else {
         toast.error(data.error || 'Failed to create user');

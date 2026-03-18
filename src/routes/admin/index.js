@@ -1,4 +1,6 @@
 import { state as appState } from '../../utils/state.js';
+import { api } from '../../utils/api.js';
+import { loadAdminPermissions } from '../../components/sidebar.js';
 import { state } from './state.js';
 
 import { renderNodesList, renderNodeDetail } from './views/nodes.js';
@@ -41,6 +43,24 @@ function getDefaultSubTab(tab) {
 
 window.adminNavigate = navigateTo;
 
+const TAB_PERMISSIONS = {
+  overview: 'admin.overview',
+  nodes: 'admin.nodes',
+  servers: 'admin.servers',
+  users: 'admin.users',
+  groups: 'admin.groups',
+  nests: 'admin.nests',
+  eggs: 'admin.nests',
+  locations: 'admin.locations',
+  settings: 'admin.settings',
+  announcements: 'admin.announcements',
+  webhooks: 'admin.webhooks',
+  audit: 'admin.audit',
+  activity: 'admin.activity',
+  plugins: 'admin.plugins',
+  incidents: 'admin.incidents',
+};
+
 export async function renderAdmin(tab = 'nodes', params = {}) {
   const app = document.getElementById('app');
   const user = appState.user;
@@ -49,14 +69,17 @@ export async function renderAdmin(tab = 'nodes', params = {}) {
   
   try {
     if (!user?.isAdmin) {
-      app.innerHTML = `
-        <div class="error-page">
-          <h1>403</h1>
-          <p>Access Denied</p>
-          <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
-        </div>
-      `;
-      return;
+      const res = await api('/api/admin/permissions');
+      if (!res.ok) {
+        app.innerHTML = `
+          <div class="error-page">
+            <h1>403</h1>
+            <p>Access Denied</p>
+            <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+          </div>
+        `;
+        return;
+      }
     }
   } catch (e) {
     app.innerHTML = '<div class="error">Failed to verify permissions</div>';
@@ -95,6 +118,22 @@ export async function loadView() {
   container.id = 'admin-content';
   container.innerHTML = '<div class="loading-spinner"></div>';
   parent.appendChild(container);
+  
+  if (!appState.user?.isAdmin) {
+    const permData = await loadAdminPermissions();
+    const perms = permData?.permissions || [];
+    const requiredPerm = TAB_PERMISSIONS[state.currentView.tab];
+    if (requiredPerm && !perms.includes('*') && !perms.includes(requiredPerm)) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="round-icon">block</span>
+          <h3>Not Found</h3>
+          <p>The page you're looking for doesn't exist.</p>
+        </div>
+      `;
+      return;
+    }
+  }
   
   if (state.currentView.type === 'detail' && state.currentView.id) {
     switch (state.currentView.tab) {

@@ -11,6 +11,7 @@ export function setToken(token) {
 export function clearAuth() {
   localStorage.removeItem(TOKEN_KEY);
   import('./state.js').then(m => m.state.clear());
+  import('../components/sidebar.js').then(m => m.clearAdminPermsCache?.());
 }
 
 export function isLoggedIn() {

@@ -145,11 +145,8 @@ export function setupBreadcrumbListeners(navigateToCallback) {
     el.onclick = (e) => {
       e.preventDefault();
       const action = el.dataset.action;
-      if (action === 'list-nodes') navigateToCallback('nodes');
-      else if (action === 'list-servers') navigateToCallback('servers');
-      else if (action === 'list-users') navigateToCallback('users');
-      else if (action === 'list-nests') navigateToCallback('nests');
-      else if (action === 'list-locations') navigateToCallback('locations');
+      const match = action.match(/^list-(.+)$/);
+      if (match) navigateToCallback(match[1]);
     };
   });
 }

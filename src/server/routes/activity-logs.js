@@ -1,6 +1,6 @@
 import express from 'express';
 import { loadActivityLogs, loadUsers } from '../db.js';
-import { authenticateUser, requireAdmin } from '../utils/auth.js';
+import { authenticateUser, requireAdmin, requireAdminPermission } from '../utils/auth.js';
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.get('/me', authenticateUser, async (req, res) => {
   });
 });
 
-router.get('/', authenticateUser, requireAdmin, async (req, res) => {
+router.get('/', authenticateUser, requireAdmin, requireAdminPermission('admin.activity'), async (req, res) => {
   const { page = 1, per_page = 50, userId, action } = req.query;
   const data = await loadActivityLogs();
   const users = await loadUsers();
@@ -66,7 +66,7 @@ router.get('/', authenticateUser, requireAdmin, async (req, res) => {
   });
 });
 
-router.get('/user/:userId', authenticateUser, requireAdmin, async (req, res) => {
+router.get('/user/:userId', authenticateUser, requireAdmin, requireAdminPermission('admin.activity'), async (req, res) => {
   const { page = 1, per_page = 25 } = req.query;
   const data = await loadActivityLogs();
   

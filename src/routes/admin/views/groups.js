@@ -7,17 +7,51 @@ import { renderBreadcrumb, setupBreadcrumbListeners } from '../utils/ui.js';
 
 const navigateTo = (...args) => window.adminNavigate(...args);
 
-const AVAILABLE_PERMISSIONS = [
-  { id: 'server.create', label: 'Create Servers' },
-  { id: 'server.delete', label: 'Delete Servers' },
-  { id: 'server.update', label: 'Update Servers' },
-  { id: 'server.console', label: 'Access Console' },
-  { id: 'server.files', label: 'File Manager' },
-  { id: 'server.backup', label: 'Manage Backups' },
-  { id: 'schedule.create', label: 'Create Schedules' },
-  { id: 'schedule.update', label: 'Update Schedules' },
-  { id: 'schedule.delete', label: 'Delete Schedules' },
-  { id: '*', label: 'All Permissions (Wildcard)' }
+const PERMISSION_CATEGORIES = [
+  {
+    label: 'Admin Panel',
+    permissions: [
+      { id: 'admin.overview', label: 'View Overview' },
+      { id: 'admin.nodes', label: 'Manage Nodes' },
+      { id: 'admin.servers', label: 'Manage Servers' },
+      { id: 'admin.users', label: 'Manage Users' },
+      { id: 'admin.groups', label: 'Manage Groups' },
+      { id: 'admin.nests', label: 'Manage Nests & Eggs' },
+      { id: 'admin.locations', label: 'Manage Locations' },
+      { id: 'admin.settings', label: 'Panel Settings' },
+      { id: 'admin.announcements', label: 'Manage Announcements' },
+      { id: 'admin.webhooks', label: 'Manage Webhooks' },
+      { id: 'admin.plugins', label: 'Manage Plugins' },
+      { id: 'admin.audit', label: 'View Audit Log' },
+      { id: 'admin.activity', label: 'View Activity Log' },
+      { id: 'admin.incidents', label: 'Manage Incidents' },
+    ]
+  },
+  {
+    label: 'Servers',
+    permissions: [
+      { id: 'server.create', label: 'Create Servers' },
+      { id: 'server.delete', label: 'Delete Servers' },
+      { id: 'server.update', label: 'Update Servers' },
+      { id: 'server.console', label: 'Access Console' },
+      { id: 'server.files', label: 'File Manager' },
+      { id: 'server.backup', label: 'Manage Backups' },
+    ]
+  },
+  {
+    label: 'Schedules',
+    permissions: [
+      { id: 'schedule.create', label: 'Create Schedules' },
+      { id: 'schedule.update', label: 'Update Schedules' },
+      { id: 'schedule.delete', label: 'Delete Schedules' },
+    ]
+  },
+  {
+    label: 'Global',
+    permissions: [
+      { id: '*', label: 'All Permissions (Wildcard)' },
+    ]
+  }
 ];
 
 export async function renderGroupsList(container, username, loadView) {
@@ -99,9 +133,10 @@ function showCreateGroupModal(loadView) {
   
   const m = document.createElement('div');
   m.id = 'create-group-modal';
-  m.className = 'modal-overlay';
+  m.className = 'modal';
   m.innerHTML = `
-    <div class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
       <div class="modal-header">
         <h3>Create Group</h3>
         <button class="modal-close" id="close-group-modal">
@@ -117,7 +152,7 @@ function showCreateGroupModal(loadView) {
           <label>Description</label>
           <input type="text" name="description" placeholder="Group description" />
         </div>
-        <div class="modal-footer">
+        <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancel-group-modal">Cancel</button>
           <button type="submit" class="btn btn-primary">Create Group</button>
         </div>
@@ -126,10 +161,16 @@ function showCreateGroupModal(loadView) {
   `;
   
   document.body.appendChild(m);
+  requestAnimationFrame(() => m.classList.add('active'));
   
-  document.getElementById('close-group-modal').onclick = () => m.remove();
-  document.getElementById('cancel-group-modal').onclick = () => m.remove();
-  m.onclick = (e) => { if (e.target === m) m.remove(); };
+  const closeModal = () => {
+    m.classList.remove('active');
+    setTimeout(() => m.remove(), 150);
+  };
+  
+  document.getElementById('close-group-modal').onclick = closeModal;
+  document.getElementById('cancel-group-modal').onclick = closeModal;
+  m.querySelector('.modal-backdrop').onclick = closeModal;
   
   document.getElementById('create-group-form').onsubmit = async (e) => {
     e.preventDefault();
@@ -153,7 +194,7 @@ function showCreateGroupModal(loadView) {
       
       if (data.success || data.group) {
         toast.success('Group created');
-        m.remove();
+        closeModal();
         loadView();
       } else {
         toast.error(data.error || 'Failed to create group');
@@ -266,20 +307,22 @@ function renderGroupSubTab(group, users, memberUsers) {
               </div>
             </div>
             
-            <div class="form-section">
-              <h4>Permissions</h4>
-              <div class="form-toggles">
-                ${AVAILABLE_PERMISSIONS.map(perm => `
-                  <label class="toggle-item">
-                    <input type="checkbox" name="perm" value="${perm.id}" ${(group.permissions || []).includes(perm.id) ? 'checked' : ''} />
-                    <span class="toggle-content">
-                      <span class="toggle-title">${perm.label}</span>
-                      <span class="toggle-desc">${perm.id}</span>
-                    </span>
-                  </label>
-                `).join('')}
+            ${PERMISSION_CATEGORIES.map(cat => `
+              <div class="form-section">
+                <h4>${cat.label}</h4>
+                <div class="form-toggles">
+                  ${cat.permissions.map(perm => `
+                    <label class="toggle-item">
+                      <input type="checkbox" name="perm" value="${perm.id}" ${(group.permissions || []).includes(perm.id) ? 'checked' : ''} />
+                      <span class="toggle-content">
+                        <span class="toggle-title">${perm.label}</span>
+                        <span class="toggle-desc">${perm.id}</span>
+                      </span>
+                    </label>
+                  `).join('')}
+                </div>
               </div>
-            </div>
+            `).join('')}
             
             <div class="form-section">
               <h4>Resource Limits</h4>

@@ -15,14 +15,19 @@ import {
   wingsRequest, generateNodeConfig, configToYaml, sanitizeUrl,
   validateUsername
 } from '../utils/helpers.js';
-import { authenticateUser, requireAdmin } from '../utils/auth.js';
+import { authenticateUser, requireAdmin, requireAdminPermission } from '../utils/auth.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
 
 router.use(authenticateUser, requireAdmin);
 
-router.get('/nodes', async (req, res) => {
+router.get('/permissions', (req, res) => {
+  if (req.user.isAdmin) return res.json({ permissions: ['*'], isAdmin: true });
+  res.json({ permissions: req.user.adminPermissions || [], isAdmin: false });
+});
+
+router.get('/nodes', requireAdminPermission('admin.nodes'), async (req, res) => {
   const { page = 1, per_page: rawPerPage = 10 } = req.query;
   const per_page = parseInt(rawPerPage) || 10;
   const data = await loadNodes();
@@ -43,12 +48,12 @@ router.get('/nodes', async (req, res) => {
   });
 });
 
-router.get('/nodes/health', async (req, res) => {
+router.get('/nodes/health', requireAdminPermission('admin.nodes'), async (req, res) => {
   const { getAllNodeHealth } = await import('../utils/node-health.js');
   res.json({ health: getAllNodeHealth() });
 });
 
-router.post('/nodes', async (req, res) => {
+router.post('/nodes', requireAdminPermission('admin.nodes'), async (req, res) => {
   const { node } = req.body;
   const data = await loadNodes();
   const newNode = {
@@ -79,7 +84,7 @@ router.post('/nodes', async (req, res) => {
   res.json({ success: true, node: newNode });
 });
 
-router.get('/nodes/:id/config', async (req, res) => {
+router.get('/nodes/:id/config', requireAdminPermission('admin.nodes'), async (req, res) => {
   const data = await loadNodes();
   const node = data.nodes.find(n => n.id === req.params.id);
   if (!node) return res.status(404).json({ error: 'Node not found' });
@@ -87,7 +92,7 @@ router.get('/nodes/:id/config', async (req, res) => {
   res.json({ config: generateNodeConfig(node) });
 });
 
-router.get('/nodes/:id/deploy', async (req, res) => {
+router.get('/nodes/:id/deploy', requireAdminPermission('admin.nodes'), async (req, res) => {
   const data = await loadNodes();
   const node = data.nodes.find(n => n.id === req.params.id);
   if (!node) return res.status(404).json({ error: 'Node not found' });
@@ -101,7 +106,7 @@ router.get('/nodes/:id/deploy', async (req, res) => {
   res.json({ command });
 });
 
-router.put('/nodes/:id', async (req, res) => {
+router.put('/nodes/:id', requireAdminPermission('admin.nodes'), async (req, res) => {
   const { node } = req.body;
   const data = await loadNodes();
   const idx = data.nodes.findIndex(n => n.id === req.params.id);
@@ -131,7 +136,7 @@ router.put('/nodes/:id', async (req, res) => {
   res.json({ success: true, node: current });
 });
 
-router.delete('/nodes/:id', async (req, res) => {
+router.delete('/nodes/:id', requireAdminPermission('admin.nodes'), async (req, res) => {
   const data = await loadNodes();
   const servers = await loadServers();
   
@@ -145,11 +150,11 @@ router.delete('/nodes/:id', async (req, res) => {
 });
 
 // ==================== LOCATIONS ====================
-router.get('/locations', async (req, res) => {
+router.get('/locations', requireAdminPermission('admin.locations'), async (req, res) => {
   res.json(await loadLocations());
 });
 
-router.post('/locations', async (req, res) => {
+router.post('/locations', requireAdminPermission('admin.locations'), async (req, res) => {
   const { location } = req.body;
   const data = await loadLocations();
   const newLocation = {
@@ -162,7 +167,7 @@ router.post('/locations', async (req, res) => {
   res.json({ success: true, location: newLocation });
 });
 
-router.delete('/locations/:id', async (req, res) => {
+router.delete('/locations/:id', requireAdminPermission('admin.locations'), async (req, res) => {
   const data = await loadLocations();
   data.locations = data.locations.filter(l => l.id !== req.params.id);
   await saveLocations(data);
@@ -170,7 +175,7 @@ router.delete('/locations/:id', async (req, res) => {
 });
 
 // ==================== USERS ====================
-router.get('/users', async (req, res) => {
+router.get('/users', requireAdminPermission('admin.users'), async (req, res) => {
   const { page = 1, per_page: rawPerPage = 10, search = '' } = req.query;
   const per_page = parseInt(rawPerPage) || 10;
   const data = await loadUsers();
@@ -203,7 +208,7 @@ router.get('/users', async (req, res) => {
   });
 });
 
-router.post('/users', async (req, res) => {
+router.post('/users', requireAdminPermission('admin.users'), async (req, res) => {
   const { user } = req.body;
   
   if (!user?.username || !user?.password) {
@@ -270,7 +275,7 @@ router.post('/users', async (req, res) => {
   res.json({ success: true, user: userWithoutPassword });
 });
 
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', requireAdminPermission('admin.users'), async (req, res) => {
   const { updates } = req.body;
   const data = await loadUsers();
   const idx = data.users.findIndex(u => u.id === req.params.id);
@@ -292,7 +297,7 @@ router.put('/users/:id', async (req, res) => {
   res.json({ success: true, user });
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', requireAdminPermission('admin.users'), async (req, res) => {
   const usersData = await loadUsers();
   const user = usersData.users.find(u => u.id === req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
@@ -339,7 +344,7 @@ router.delete('/users/:id', async (req, res) => {
   });
 });
 
-router.delete('/users/:id/sessions', async (req, res) => {
+router.delete('/users/:id/sessions', requireAdminPermission('admin.users'), async (req, res) => {
   const data = await loadSessions();
   let revokedCount = 0;
   
@@ -356,7 +361,7 @@ router.delete('/users/:id/sessions', async (req, res) => {
 });
 
 // ==================== NESTS & EGGS ====================
-router.get('/nests', async (req, res) => {
+router.get('/nests', requireAdminPermission('admin.nests'), async (req, res) => {
   const nests = await loadNests();
   const eggs = await loadEggs();
   const result = nests.nests.map(nest => ({
@@ -366,7 +371,7 @@ router.get('/nests', async (req, res) => {
   res.json({ nests: result });
 });
 
-router.post('/nests', async (req, res) => {
+router.post('/nests', requireAdminPermission('admin.nests'), async (req, res) => {
   const { nest } = req.body;
   const data = await loadNests();
   const newNest = {
@@ -379,7 +384,7 @@ router.post('/nests', async (req, res) => {
   res.json({ success: true, nest: newNest });
 });
 
-router.get('/eggs', async (req, res) => {
+router.get('/eggs', requireAdminPermission('admin.nests'), async (req, res) => {
   const { search = '' } = req.query;
   const data = await loadEggs();
   let eggs = data.eggs;
@@ -396,14 +401,14 @@ router.get('/eggs', async (req, res) => {
   res.json({ eggs });
 });
 
-router.get('/eggs/:id', async (req, res) => {
+router.get('/eggs/:id', requireAdminPermission('admin.nests'), async (req, res) => {
   const data = await loadEggs();
   const egg = data.eggs.find(e => e.id === req.params.id);
   if (!egg) return res.status(404).json({ error: 'Egg not found' });
   res.json({ egg });
 });
 
-router.post('/eggs', async (req, res) => {
+router.post('/eggs', requireAdminPermission('admin.nests'), async (req, res) => {
   const { egg } = req.body;
   const data = await loadEggs();
   const newEgg = {
@@ -428,7 +433,7 @@ router.post('/eggs', async (req, res) => {
   res.json({ success: true, egg: newEgg });
 });
 
-router.post('/eggs/import', async (req, res) => {
+router.post('/eggs/import', requireAdminPermission('admin.nests'), async (req, res) => {
   const { nest_id, eggJson } = req.body;
   try {
     const imported = typeof eggJson === 'string' ? JSON.parse(eggJson) : eggJson;
@@ -495,7 +500,7 @@ router.post('/eggs/import', async (req, res) => {
   }
 });
 
-router.put('/nests/:id', async (req, res) => {
+router.put('/nests/:id', requireAdminPermission('admin.nests'), async (req, res) => {
   const { nest } = req.body;
   const data = await loadNests();
   const idx = data.nests.findIndex(n => n.id === req.params.id);
@@ -508,7 +513,7 @@ router.put('/nests/:id', async (req, res) => {
   res.json({ success: true, nest: data.nests[idx] });
 });
 
-router.delete('/nests/:id', async (req, res) => {
+router.delete('/nests/:id', requireAdminPermission('admin.nests'), async (req, res) => {
   const nestsData = await loadNests();
   nestsData.nests = nestsData.nests.filter(n => n.id !== req.params.id);
   await saveNests(nestsData);
@@ -520,7 +525,7 @@ router.delete('/nests/:id', async (req, res) => {
   res.json({ success: true });
 });
 
-router.put('/eggs/:id', async (req, res) => {
+router.put('/eggs/:id', requireAdminPermission('admin.nests'), async (req, res) => {
   const { egg } = req.body;
   const data = await loadEggs();
   const idx = data.eggs.findIndex(e => e.id === req.params.id);
@@ -548,7 +553,7 @@ router.put('/eggs/:id', async (req, res) => {
   res.json({ success: true, egg: data.eggs[idx] });
 });
 
-router.delete('/eggs/:id', async (req, res) => {
+router.delete('/eggs/:id', requireAdminPermission('admin.nests'), async (req, res) => {
   const data = await loadEggs();
   data.eggs = data.eggs.filter(e => e.id !== req.params.id);
   await saveEggs(data);
@@ -557,7 +562,7 @@ router.delete('/eggs/:id', async (req, res) => {
 });
 
 // ==================== SERVERS ====================
-router.get('/servers', async (req, res) => {
+router.get('/servers', requireAdminPermission('admin.servers'), async (req, res) => {
   const { page = 1, per_page = 10 } = req.query;
   const data = await loadServers();
   const users = await loadUsers();
@@ -587,7 +592,7 @@ router.get('/servers', async (req, res) => {
   });
 });
 
-router.post('/servers', async (req, res) => {
+router.post('/servers', requireAdminPermission('admin.servers'), async (req, res) => {
   const { server, skipInstall } = req.body;
   
   const nodes = await loadNodes();
@@ -669,7 +674,7 @@ router.post('/servers', async (req, res) => {
 });
 
 // Install a draft server
-router.post('/servers/:id/install', async (req, res) => {
+router.post('/servers/:id/install', requireAdminPermission('admin.servers'), async (req, res) => {
   const data = await loadServers();
   const serverIdx = data.servers.findIndex(s => s.id === req.params.id);
   if (serverIdx === -1) return res.status(404).json({ error: 'Server not found' });
@@ -728,7 +733,7 @@ router.post('/servers/:id/install', async (req, res) => {
   }
 });
 
-router.put('/servers/:id', async (req, res) => {
+router.put('/servers/:id', requireAdminPermission('admin.servers'), async (req, res) => {
   const { updates } = req.body;
   const data = await loadServers();
   const idx = data.servers.findIndex(s => s.id === req.params.id);
@@ -763,7 +768,7 @@ router.put('/servers/:id', async (req, res) => {
   res.json({ success: true, server });
 });
 
-router.delete('/servers/:id', async (req, res) => {
+router.delete('/servers/:id', requireAdminPermission('admin.servers'), async (req, res) => {
   const data = await loadServers();
   const server = data.servers.find(s => s.id === req.params.id);
   if (!server) return res.status(404).json({ error: 'Server not found' });
@@ -785,7 +790,7 @@ router.delete('/servers/:id', async (req, res) => {
 });
 
 // ==================== SERVER TRANSFERS ====================
-router.post('/servers/:id/transfer', async (req, res) => {
+router.post('/servers/:id/transfer', requireAdminPermission('admin.servers'), async (req, res) => {
   const { target_node_id } = req.body;
   if (!target_node_id) return res.status(400).json({ error: 'Target node required' });
   
@@ -908,7 +913,7 @@ router.post('/servers/:id/transfer', async (req, res) => {
 });
 
 // ==================== OAUTH PROVIDERS ====================
-router.get('/oauth/providers', (req, res) => {
+router.get('/oauth/providers', requireAdminPermission('admin.settings'), (req, res) => {
   const config = loadConfig();
   const providers = config.oauth?.providers || [];
   // Don't expose client secrets
@@ -923,7 +928,7 @@ router.get('/oauth/providers', (req, res) => {
   });
 });
 
-router.post('/oauth/providers', (req, res) => {
+router.post('/oauth/providers', requireAdminPermission('admin.settings'), (req, res) => {
   const { provider } = req.body;
   if (!provider?.name || !provider?.type) {
     return res.status(400).json({ error: 'Provider name and type required' });
@@ -960,7 +965,7 @@ router.post('/oauth/providers', (req, res) => {
   res.json({ success: true, provider: safeProvider });
 });
 
-router.put('/oauth/providers/:id', (req, res) => {
+router.put('/oauth/providers/:id', requireAdminPermission('admin.settings'), (req, res) => {
   const { provider } = req.body;
   const config = loadConfig();
   
@@ -991,7 +996,7 @@ router.put('/oauth/providers/:id', (req, res) => {
   res.json({ success: true, provider: safeProvider });
 });
 
-router.delete('/oauth/providers/:id', (req, res) => {
+router.delete('/oauth/providers/:id', requireAdminPermission('admin.settings'), (req, res) => {
   const config = loadConfig();
   
   if (!config.oauth?.providers) {
@@ -1008,12 +1013,12 @@ router.delete('/oauth/providers/:id', (req, res) => {
 });
 
 // ==================== GROUPS ====================
-router.get('/groups', async (req, res) => {
+router.get('/groups', requireAdminPermission('admin.groups'), async (req, res) => {
   const data = await loadGroups();
   res.json({ groups: data.groups || [] });
 });
 
-router.post('/groups', async (req, res) => {
+router.post('/groups', requireAdminPermission('admin.groups'), async (req, res) => {
   const { group } = req.body;
   if (!group?.name) {
     return res.status(400).json({ error: 'Group name is required' });
@@ -1041,7 +1046,7 @@ router.post('/groups', async (req, res) => {
   res.json({ success: true, group: newGroup });
 });
 
-router.put('/groups/:id', async (req, res) => {
+router.put('/groups/:id', requireAdminPermission('admin.groups'), async (req, res) => {
   const { group } = req.body;
   const data = await loadGroups();
   const idx = data.groups.findIndex(g => g.id === req.params.id);
@@ -1059,14 +1064,14 @@ router.put('/groups/:id', async (req, res) => {
   res.json({ success: true, group: data.groups[idx] });
 });
 
-router.delete('/groups/:id', async (req, res) => {
+router.delete('/groups/:id', requireAdminPermission('admin.groups'), async (req, res) => {
   const data = await loadGroups();
   data.groups = data.groups.filter(g => g.id !== req.params.id);
   await saveGroups(data);
   res.json({ success: true });
 });
 
-router.post('/groups/:id/members', async (req, res) => {
+router.post('/groups/:id/members', requireAdminPermission('admin.groups'), async (req, res) => {
   const { user_id } = req.body;
   if (!user_id) return res.status(400).json({ error: 'User ID required' });
   
@@ -1087,7 +1092,7 @@ router.post('/groups/:id/members', async (req, res) => {
   res.json({ success: true, group: data.groups[idx] });
 });
 
-router.delete('/groups/:id/members/:userId', async (req, res) => {
+router.delete('/groups/:id/members/:userId', requireAdminPermission('admin.groups'), async (req, res) => {
   const data = await loadGroups();
   const idx = data.groups.findIndex(g => g.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Group not found' });
@@ -1098,13 +1103,13 @@ router.delete('/groups/:id/members/:userId', async (req, res) => {
 });
 
 // ==================== INCIDENTS ====================
-router.get('/incidents', async (req, res) => {
+router.get('/incidents', requireAdminPermission('admin.incidents'), async (req, res) => {
   const data = await loadIncidents();
   const incidents = (data.incidents || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   res.json({ incidents });
 });
 
-router.post('/incidents', async (req, res) => {
+router.post('/incidents', requireAdminPermission('admin.incidents'), async (req, res) => {
   const { incident } = req.body;
   if (!incident?.title) return res.status(400).json({ error: 'Title is required' });
 
@@ -1135,7 +1140,7 @@ router.post('/incidents', async (req, res) => {
   res.json({ success: true, incident: newIncident });
 });
 
-router.put('/incidents/:id', async (req, res) => {
+router.put('/incidents/:id', requireAdminPermission('admin.incidents'), async (req, res) => {
   const { incident } = req.body;
   const data = await loadIncidents();
   const idx = data.incidents.findIndex(i => i.id === req.params.id);
@@ -1164,7 +1169,7 @@ router.put('/incidents/:id', async (req, res) => {
   res.json({ success: true, incident: data.incidents[idx] });
 });
 
-router.post('/incidents/:id/updates', async (req, res) => {
+router.post('/incidents/:id/updates', requireAdminPermission('admin.incidents'), async (req, res) => {
   const { message, status } = req.body;
   if (!message) return res.status(400).json({ error: 'Message is required' });
 
@@ -1196,7 +1201,7 @@ router.post('/incidents/:id/updates', async (req, res) => {
   res.json({ success: true, incident: data.incidents[idx] });
 });
 
-router.delete('/incidents/:id', async (req, res) => {
+router.delete('/incidents/:id', requireAdminPermission('admin.incidents'), async (req, res) => {
   const data = await loadIncidents();
   data.incidents = data.incidents.filter(i => i.id !== req.params.id);
   await saveIncidents(data);
@@ -1204,7 +1209,7 @@ router.delete('/incidents/:id', async (req, res) => {
 });
 
 // ==================== SETTINGS ====================
-router.get('/settings', async (req, res) => {
+router.get('/settings', requireAdminPermission('admin.settings'), async (req, res) => {
   const config = loadConfig();
   
   let mailConfigured = false;
@@ -1216,7 +1221,7 @@ router.get('/settings', async (req, res) => {
   res.json({ config, mailConfigured });
 });
 
-router.put('/settings', async (req, res) => {
+router.put('/settings', requireAdminPermission('admin.settings'), async (req, res) => {
   const { config: newConfig } = req.body;
   const config = loadConfig();
   
@@ -1325,7 +1330,7 @@ router.put('/settings', async (req, res) => {
 
 // ==================== MAIL ====================
 
-router.post('/mail/test', async (req, res) => {
+router.post('/mail/test', requireAdminPermission('admin.settings'), async (req, res) => {
   try {
     const { sendTestEmail, verifyConnection } = await import('../utils/mail.js');
     
@@ -1347,7 +1352,7 @@ router.post('/mail/test', async (req, res) => {
   }
 });
 
-router.get('/mail/status', async (req, res) => {
+router.get('/mail/status', requireAdminPermission('admin.settings'), async (req, res) => {
   try {
     const { verifyConnection } = await import('../utils/mail.js');
     await verifyConnection();
@@ -1362,7 +1367,7 @@ router.get('/mail/status', async (req, res) => {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BRANDING_DIR = path.resolve(__dirname, '../../../data/branding');
 
-router.post('/branding/upload', express.raw({ type: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/x-icon', 'image/webp'], limit: '5mb' }), async (req, res) => {
+router.post('/branding/upload', requireAdminPermission('admin.settings'), express.raw({ type: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/x-icon', 'image/webp'], limit: '5mb' }), async (req, res) => {
   const type = req.query.type;
   if (!['logo', 'favicon', 'ogImage'].includes(type)) {
     return res.status(400).json({ error: 'Invalid type. Must be "logo", "favicon", or "ogImage"' });
@@ -1394,7 +1399,7 @@ router.post('/branding/upload', express.raw({ type: ['image/png', 'image/jpeg', 
   res.json({ success: true, url });
 });
 
-router.delete('/branding/:type', async (req, res) => {
+router.delete('/branding/:type', requireAdminPermission('admin.settings'), async (req, res) => {
   const type = req.params.type;
   if (!['logo', 'favicon', 'ogImage'].includes(type)) {
     return res.status(400).json({ error: 'Invalid type' });
@@ -1417,7 +1422,7 @@ router.delete('/branding/:type', async (req, res) => {
 
 // ==================== CACHE & DATABASE ====================
 
-router.post('/cache/clear', async (req, res) => {
+router.post('/cache/clear', requireAdminPermission('admin.settings'), async (req, res) => {
   try {
     const { clearConfigCache, reloadConfig } = await import('../config.js');
     clearConfigCache();
@@ -1431,7 +1436,7 @@ router.post('/cache/clear', async (req, res) => {
   }
 });
 
-router.post('/database/rebuild', async (req, res) => {
+router.post('/database/rebuild', requireAdminPermission('admin.settings'), async (req, res) => {
   try {
     const { waitForDb } = await import('../db.js');
     
@@ -1474,7 +1479,7 @@ router.post('/database/rebuild', async (req, res) => {
 
 // ==================== SYSTEM INFO ====================
 
-router.get('/system/info', async (req, res) => {
+router.get('/system/info', requireAdminPermission('admin.overview'), async (req, res) => {
   const { getDbInfo } = await import('../db.js');
   const config = loadConfig();
   
