@@ -83,7 +83,7 @@ See [docs/](docs/) for full documentation:
 - [Daemon Setup](docs/daemon-setup.md)
 - [API Reference](docs/api.md)
 - [Architecture](docs/architecture.md)
-- [Eggs](eggs/)
+- [Eggs](https://github.com/sodiumpanel/eggs)
 
 ## Related
 
