@@ -1,4 +1,5 @@
 import { api, getToken } from '../../utils/api.js';
+import { icons, icon } from '../../utils/icons.js';
 import * as toast from '../../utils/toast.js';
 import { createEditor } from '../../utils/editor.js';
 import * as modal from '../../utils/modal.js';
@@ -294,27 +295,27 @@ export function renderFilesTab() {
           <div class="files-actions">
             <div class="files-search-wrapper" id="files-search-wrapper">
               <button class="btn btn-xs btn-ghost" id="btn-search-toggle" title="Search">
-                <span class="round-icon">search</span>
+                ${icons.search}
               </button>
               <input type="text" class="files-search-input" id="files-search-input" placeholder="Search files..." style="display:none;">
             </div>
             <button class="btn btn-xs btn-ghost" id="btn-sort" title="Sort">
-              <span class="round-icon">sort</span>
+              ${icons.sort}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-view-toggle" title="Toggle view">
-              <span class="round-icon">grid_view</span>
+              ${icons.grid_view}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
-              <span class="round-icon">refresh</span>
+              ${icons.refresh}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
-              <span class="round-icon">create_new_folder</span>
+              ${icons.create_new_folder}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
-              <span class="round-icon">note_add</span>
+              ${icons.note_add}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
-              <span class="round-icon">upload</span>
+              ${icons.upload}
             </button>
           </div>
         </div>
@@ -324,22 +325,22 @@ export function renderFilesTab() {
           </div>
           <div class="selection-actions">
             <button class="btn btn-xs btn-ghost" id="btn-copy-clipboard" title="Copy">
-              <span class="round-icon">content_copy</span>
+              ${icons.content_copy}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-cut-clipboard" title="Cut">
-              <span class="round-icon">content_cut</span>
+              ${icons.content_cut}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
-              <span class="round-icon">drive_file_move</span>
+              ${icons.drive_file_move}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
-              <span class="round-icon">archive</span>
+              ${icons.archive}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
-              <span class="round-icon">delete</span>
+              ${icons.delete}
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
-              <span class="round-icon">close</span>
+              ${icons.close}
             </button>
           </div>
         </div>
@@ -349,11 +350,11 @@ export function renderFilesTab() {
           </div>
           <div class="selection-actions">
             <button class="btn btn-xs btn-ghost" id="btn-paste" title="Paste here">
-              <span class="round-icon">content_paste</span>
+              ${icons.content_paste}
               Paste
             </button>
             <button class="btn btn-xs btn-ghost" id="btn-cancel-paste" title="Cancel">
-              <span class="round-icon">close</span>
+              ${icons.close}
             </button>
           </div>
         </div>
@@ -904,7 +905,7 @@ function renderFilesList(files, serverId) {
       return `
       <div class="file-item-grid ${isDir ? 'directory' : 'file'}" data-name="${file.name}" data-is-dir="${isDir}" data-editable="${canEdit}" data-preview="${previewType || ''}" ${file._searchResult ? `data-path="${file.path}"` : ''}>
         <div class="file-grid-icon">
-          <span class="round-icon">${isDir ? 'folder' : getFileIcon(file)}</span>
+          ${icons[isDir ? 'folder' : getFileIcon(file)] || ""}
         </div>
         <div class="file-grid-name">${file.name}</div>
         <div class="file-grid-meta">${isDir ? '' : formatBytes(file.size)}</div>
@@ -917,7 +918,7 @@ function renderFilesList(files, serverId) {
         <input type="checkbox" class="file-checkbox" data-name="${file.name}">
       </div>
       <div class="file-icon">
-        <span class="round-icon">${isDir ? 'folder' : getFileIcon(file)}</span>
+        ${icons[isDir ? 'folder' : getFileIcon(file)] || ""}
       </div>
       <div class="file-info">
         <span class="file-name">${file.name}</span>
@@ -926,25 +927,25 @@ function renderFilesList(files, serverId) {
       <div class="file-actions">
         ${!isDir && isArchive(file) ? `
           <button class="btn btn-sm btn-ghost btn-decompress" title="Extract">
-            <span class="round-icon">unarchive</span>
+            ${icons.unarchive}
           </button>
         ` : ''}
         ${!isDir ? `
           <button class="btn btn-sm btn-ghost btn-download" title="Download">
-            <span class="round-icon">download</span>
+            ${icons.download}
           </button>
           <button class="btn btn-sm btn-ghost btn-copy" title="Copy">
-            <span class="round-icon">content_copy</span>
+            ${icons.content_copy}
           </button>
         ` : ''}
         <button class="btn btn-sm btn-ghost btn-chmod" title="Permissions">
-          <span class="round-icon">lock</span>
+          ${icons.lock}
         </button>
         <button class="btn btn-sm btn-ghost btn-rename" title="Rename">
-          <span class="round-icon">drive_file_rename_outline</span>
+          ${icons.drive_file_rename_outline}
         </button>
         <button class="btn btn-sm btn-ghost btn-delete" title="Delete">
-          <span class="round-icon">delete</span>
+          ${icons.delete}
         </button>
       </div>
     </div>
@@ -1473,13 +1474,13 @@ async function editFile(serverId, path) {
         <div class="editor-header">
           <div class="editor-title">
             <button class="btn btn-ghost btn-sm" id="btn-back">
-              <span class="round-icon">arrow_back</span>
+              ${icons.arrow_back}
             </button>
             <span class="editor-filename">${filename}</span>
           </div>
           <div class="editor-actions">
             <button class="btn btn-primary btn-sm" id="btn-save">
-              <span class="round-icon">save</span>
+              ${icons.save}
               Save
             </button>
           </div>
@@ -1524,7 +1525,7 @@ async function saveFile(serverId, path) {
   const saveBtn = document.getElementById('btn-save');
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="round-icon">hourglass_empty</span> Saving...';
+  saveBtn.innerHTML = '${icons.hourglass_empty} Saving...';
   
   try {
     const res = await api(`/api/servers/${serverId}/files/write`, {
@@ -1533,21 +1534,21 @@ async function saveFile(serverId, path) {
     });
     
     if (res.ok) {
-      saveBtn.innerHTML = '<span class="round-icon">check</span> Saved';
+      saveBtn.innerHTML = '${icons.check} Saved';
       setTimeout(() => {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
+        saveBtn.innerHTML = '${icons.save} Save';
       }, 1500);
     } else {
       const data = await res.json();
       toast.error(data.error || 'Failed to save');
       saveBtn.disabled = false;
-      saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
+      saveBtn.innerHTML = '${icons.save} Save';
     }
   } catch (e) {
     toast.error('Failed to save file');
     saveBtn.disabled = false;
-    saveBtn.innerHTML = '<span class="round-icon">save</span> Save';
+    saveBtn.innerHTML = '${icons.save} Save';
   }
 }
 
@@ -1665,27 +1666,27 @@ function restoreFilesList(serverId) {
       <div class="files-actions">
         <div class="files-search-wrapper" id="files-search-wrapper">
           <button class="btn btn-xs btn-ghost" id="btn-search-toggle" title="Search">
-            <span class="round-icon">search</span>
+            ${icons.search}
           </button>
           <input type="text" class="files-search-input" id="files-search-input" placeholder="Search files..." style="display:none;">
         </div>
         <button class="btn btn-xs btn-ghost" id="btn-sort" title="Sort">
-          <span class="round-icon">sort</span>
+          ${icons.sort}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-view-toggle" title="Toggle view">
-          <span class="round-icon">${viewMode === 'list' ? 'grid_view' : 'view_list'}</span>
+          ${icons[viewMode === 'list' ? 'grid_view' : 'view_list'] || ""}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-refresh" title="Refresh">
-          <span class="round-icon">refresh</span>
+          ${icons.refresh}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-new-folder" title="New Folder">
-          <span class="round-icon">create_new_folder</span>
+          ${icons.create_new_folder}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-new-file" title="New File">
-          <span class="round-icon">note_add</span>
+          ${icons.note_add}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-upload" title="Upload">
-          <span class="round-icon">upload</span>
+          ${icons.upload}
         </button>
       </div>
     </div>
@@ -1695,22 +1696,22 @@ function restoreFilesList(serverId) {
       </div>
       <div class="selection-actions">
         <button class="btn btn-xs btn-ghost" id="btn-copy-clipboard" title="Copy">
-          <span class="round-icon">content_copy</span>
+          ${icons.content_copy}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-cut-clipboard" title="Cut">
-          <span class="round-icon">content_cut</span>
+          ${icons.content_cut}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-move" title="Move">
-          <span class="round-icon">drive_file_move</span>
+          ${icons.drive_file_move}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-compress" title="Compress">
-          <span class="round-icon">archive</span>
+          ${icons.archive}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-delete-selected" title="Delete">
-          <span class="round-icon">delete</span>
+          ${icons.delete}
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-clear-selection" title="Clear">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
     </div>
@@ -1720,11 +1721,11 @@ function restoreFilesList(serverId) {
       </div>
       <div class="selection-actions">
         <button class="btn btn-xs btn-ghost" id="btn-paste" title="Paste here">
-          <span class="round-icon">content_paste</span>
+          ${icons.content_paste}
           Paste
         </button>
         <button class="btn btn-xs btn-ghost" id="btn-cancel-paste" title="Cancel">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { escapeHtml } from '../utils/security.js';
+import { icons, icon } from '../utils/icons.js';
 import * as toast from '../utils/toast.js';
 import { api, getToken } from '../utils/api.js';
 import { state } from '../utils/state.js';
@@ -24,7 +25,7 @@ export async function renderServers() {
         </div>
         ${canCreate ? `
           <a href="/servers/create" class="btn btn-primary" id="create-server-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Server
           </a>
         ` : ''}
@@ -64,7 +65,7 @@ async function loadServers() {
         <div class="server-card-header">
           <div class="server-card-title">
             <div class="server-icon">
-              <span class="round-icon">dns</span>
+              ${icons.dns}
             </div>
             <div class="server-name-wrap">
               <h3>${escapeHtml(server.name)}</h3>
@@ -76,15 +77,15 @@ async function loadServers() {
         <div class="server-card-body">
           <div class="server-resources">
             <div class="resource-chip">
-              <span class="round-icon">memory</span>
+              ${icons.memory}
               <span>${server.limits?.memory || 0} MB</span>
             </div>
             <div class="resource-chip">
-              <span class="round-icon">storage</span>
+              ${icons.storage}
               <span>${server.limits?.disk || 0} MB</span>
             </div>
             <div class="resource-chip">
-              <span class="round-icon">speed</span>
+              ${icons.speed}
               <span>${server.limits?.cpu || 0}%</span>
             </div>
           </div>
@@ -92,17 +93,17 @@ async function loadServers() {
         <div class="server-card-footer">
           <div class="power-actions">
             <button class="power-btn start" onclick="serverPower('${server.id}', 'start')" title="Start">
-              <span class="round-icon">play_arrow</span>
+              ${icons.play_arrow}
             </button>
             <button class="power-btn restart" onclick="serverPower('${server.id}', 'restart')" title="Restart">
-              <span class="round-icon">refresh</span>
+              ${icons.refresh}
             </button>
             <button class="power-btn stop" onclick="serverPower('${server.id}', 'stop')" title="Stop">
-              <span class="round-icon">stop</span>
+              ${icons.stop}
             </button>
           </div>
           <a href="/server/${server.id}" class="btn btn-primary btn-sm">
-            <span class="round-icon">terminal</span>
+            ${icons.terminal}
             Console
           </a>
         </div>

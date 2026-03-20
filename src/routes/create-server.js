@@ -1,4 +1,5 @@
 import { escapeHtml } from '../utils/security.js';
+import { icons, icon } from '../utils/icons.js';
 import * as toast from '../utils/toast.js';
 import { api } from '../utils/api.js';
 import { state } from '../utils/state.js';
@@ -19,7 +20,7 @@ export async function renderCreateServer() {
     <div class="create-server-page">
       <div class="page-header">
         <a href="/servers" class="back-link">
-          <span class="round-icon">arrow_back</span>
+          ${icons.arrow_back}
           <span>Back to Servers</span>
         </a>
         <h1>Create Server</h1>
@@ -44,7 +45,7 @@ export async function renderCreateServer() {
     if (limitsData.canCreateServers === false) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">block</span>
+          ${icons.block}
           <p>Server creation is disabled</p>
           <p class="hint">Contact an administrator to create servers for you.</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
@@ -56,7 +57,7 @@ export async function renderCreateServer() {
     if (!nestsData.nests || nestsData.nests.length === 0) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">egg_alt</span>
+          ${icons.egg_alt}
           <p>No eggs configured. Contact an administrator.</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
         </div>
@@ -67,7 +68,7 @@ export async function renderCreateServer() {
     if (!nodesData.nodes || nodesData.nodes.length === 0) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">dns</span>
+          ${icons.dns}
           <p>No nodes available. Contact an administrator.</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
         </div>
@@ -86,7 +87,7 @@ export async function renderCreateServer() {
     if (remaining.servers <= 0) {
       document.querySelector('.create-server-content').innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">block</span>
+          ${icons.block}
           <p>Server limit reached (${limitsData.limits.servers} max)</p>
           <a href="/servers" class="btn btn-primary">Go Back</a>
         </div>
@@ -164,7 +165,7 @@ function renderCreateForm(remaining) {
               <div class="resources-grid">
                 <div class="resource-input">
                   <label>
-                    <span class="round-icon">memory</span>
+                    ${icons.memory}
                     Memory (MB)
                   </label>
                   <input type="number" name="memory" value="${Math.min(512, remaining.memory)}" min="${Math.min(8, remaining.memory)}" max="${remaining.memory}" required />
@@ -172,7 +173,7 @@ function renderCreateForm(remaining) {
                 </div>
                 <div class="resource-input">
                   <label>
-                    <span class="round-icon">storage</span>
+                    ${icons.storage}
                     Disk (MB)
                   </label>
                   <input type="number" name="disk" value="${Math.min(1024, remaining.disk)}" min="${Math.min(8, remaining.disk)}" max="${remaining.disk}" required />
@@ -180,7 +181,7 @@ function renderCreateForm(remaining) {
                 </div>
                 <div class="resource-input">
                   <label>
-                    <span class="round-icon">speed</span>
+                    ${icons.speed}
                     CPU (%)
                   </label>
                   <input type="number" name="cpu" value="${Math.min(100, remaining.cpu)}" min="${Math.min(5, remaining.cpu)}" max="${remaining.cpu}" required />
@@ -188,7 +189,7 @@ function renderCreateForm(remaining) {
                 </div>
                 <div class="resource-input">
                   <label>
-                    <span class="round-icon">lan</span>
+                    ${icons.lan}
                     Allocations
                   </label>
                   <input type="number" name="allocations" value="${Math.min(1, remaining.allocations)}" min="1" max="${remaining.allocations}" required />
@@ -209,7 +210,7 @@ function renderCreateForm(remaining) {
             <div class="form-actions">
               <a href="/servers" class="btn btn-ghost">Cancel</a>
               <button type="submit" class="btn btn-primary btn-large" id="submit-btn">
-                <span class="round-icon">add</span>
+                ${icons.add}
                 Create Server
               </button>
             </div>
@@ -279,12 +280,12 @@ function renderEggsGrid(nest) {
 
 function renderEggIcon(egg) {
   if (!egg.icon) {
-    return '<span class="round-icon">egg_alt</span>';
+    return '${icons.egg_alt}';
   }
   
   // Check if it's a Material Icon name
   if (!egg.icon.includes('/') && !egg.icon.includes('.')) {
-    return `<span class="round-icon">${escapeHtml(egg.icon)}</span>`;
+    return `${icons[escapeHtml(egg.icon)] || ""}`;
   }
   
   // Check if it's a URL (image)
@@ -292,7 +293,7 @@ function renderEggIcon(egg) {
     return `<img src="${escapeHtml(egg.icon)}" alt="${escapeHtml(egg.name)}" onerror="this.outerHTML='<span class=\\'round-icon\\'>egg_alt</span>'" />`;
   }
   
-  return '<span class="round-icon">egg_alt</span>';
+  return '${icons.egg_alt}';
 }
 
 function renderEggPreview(egg) {
@@ -330,7 +331,7 @@ function renderNodesGrid(requestedMemory, requestedDisk) {
            data-node-id="${node.id}" 
            ${!canFit ? 'title="Insufficient resources"' : ''}>
         <div class="node-select-icon">
-          <span class="round-icon">${canFit ? 'dns' : 'block'}</span>
+          ${icons[canFit ? 'dns' : 'block'] || ""}
         </div>
         <div class="node-select-info">
           <h4>${escapeHtml(node.name)}</h4>
@@ -491,7 +492,7 @@ async function submitCreateServer(remaining) {
   }
   
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="round-icon spinning">sync</span> Creating...';
+  submitBtn.innerHTML = '${icons.sync} Creating...';
   errorEl.style.display = 'none';
   
   try {
@@ -519,13 +520,13 @@ async function submitCreateServer(remaining) {
       errorEl.textContent = data.error || 'Failed to create server';
       errorEl.style.display = 'block';
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<span class="round-icon">add</span> Create Server';
+      submitBtn.innerHTML = '${icons.add} Create Server';
     }
   } catch (err) {
     errorEl.textContent = 'Network error. Please try again.';
     errorEl.style.display = 'block';
     submitBtn.disabled = false;
-    submitBtn.innerHTML = '<span class="round-icon">add</span> Create Server';
+    submitBtn.innerHTML = '${icons.add} Create Server';
   }
 }
 

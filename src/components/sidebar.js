@@ -1,4 +1,5 @@
 import { state } from '../utils/state.js';
+import { icons, icon } from '../utils/icons.js';
 import { api } from '../utils/api.js';
 import { getPluginSidebarItems, getPluginAdminPages } from '../utils/plugins.js';
 import { getBranding } from '../utils/branding.js';
@@ -166,7 +167,7 @@ export function renderSidebar() {
     const items = section.items.map(item => `
       <li class="nav-item">
         <a href="${item.path}" class="nav-link ${currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'active' : ''}">
-          <span class="round-icon">${item.icon}</span>
+          ${icons[item.icon] || ""}
           <span class="nav-text">${item.label}</span>
         </a>
       </li>

@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { icons, icon } from '../../utils/icons.js';
 import * as toast from '../../utils/toast.js';
 import * as modal from '../../utils/modal.js';
 import { formatBytes, formatDate } from '../../utils/format.js';
@@ -16,10 +17,10 @@ export function renderBackupsTab() {
         <h3>Backups</h3>
         <div>
           <button class="btn btn-ghost btn-sm" id="btn-refresh-backups" title="Refresh">
-            <span class="round-icon">refresh</span>
+            ${icons.refresh}
           </button>
           <button class="btn btn-primary btn-sm" id="btn-create-backup">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Backup
           </button>
         </div>
@@ -91,7 +92,7 @@ async function loadBackups(serverId) {
     if (backups.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">cloud_off</span>
+          ${icons.cloud_off}
           <p>No backups yet</p>
           <p class="hint">Create a backup to save your server files</p>
         </div>
@@ -121,10 +122,10 @@ async function loadBackups(serverId) {
         <div class="backup-actions">
           ${backup.is_successful ? `
             <button class="btn btn-xs btn-ghost" title="Download" data-action="download">
-              <span class="round-icon">download</span>
+              ${icons.download}
             </button>
             <button class="btn btn-xs btn-ghost" title="Restore" data-action="restore">
-              <span class="round-icon">restore</span>
+              ${icons.restore}
             </button>
           ` : `
             <div class="backup-pending-indicator">
@@ -134,10 +135,10 @@ async function loadBackups(serverId) {
             </div>
           `}
           <button class="btn btn-xs btn-ghost" title="${backup.is_locked ? 'Unlock' : 'Lock'}" data-action="lock">
-            <span class="round-icon">${backup.is_locked ? 'lock_open' : 'lock'}</span>
+            ${icons[backup.is_locked ? 'lock_open' : 'lock'] || ""}
           </button>
           <button class="btn btn-xs btn-ghost btn-danger" title="Delete" data-action="delete" ${backup.is_locked ? 'disabled' : ''}>
-            <span class="round-icon">delete</span>
+            ${icons.delete}
           </button>
         </div>
       </div>

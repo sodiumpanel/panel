@@ -1,62 +1,76 @@
 import { escapeHtml } from '../utils/security.js';
+import { icons, icon } from '../utils/icons.js';
 
 let pollInterval = null;
 let uptimeData = {};
 
 export function renderStatus() {
   const app = document.getElementById('app');
-  
+
   app.innerHTML = `
     <div class="status-page">
-      <div class="sp-hero">
-        <div class="sp-hero-badge" id="sp-badge">
+      <header class="sp-header">
+        <div class="sp-header-left">
+          <h1>System Status</h1>
+          <div class="sp-last-updated">
+            ${icon('schedule', 14)}
+            <span id="sp-time">Checking...</span>
+          </div>
+        </div>
+        <div class="sp-badge" id="sp-badge">
           <span class="sp-badge-dot"></span>
-          <span class="sp-badge-text" id="sp-badge-text">Checking...</span>
+          <span id="sp-badge-text">Checking</span>
         </div>
-        <h1 class="sp-hero-title" id="sp-hero-title">Checking system status</h1>
-        <p class="sp-hero-sub" id="sp-hero-sub">Connecting to monitoring services</p>
+      </header>
+
+      <div class="sp-banner" id="sp-banner">
+        <div class="sp-banner-icon" id="sp-banner-icon">${icon('pulse', 22)}</div>
+        <div class="sp-banner-content">
+          <span class="sp-banner-title" id="sp-banner-title">Checking system status...</span>
+          <span class="sp-banner-sub" id="sp-banner-sub">Connecting to monitoring services</span>
+        </div>
       </div>
 
-      <div class="sp-overview" id="sp-overview"></div>
-
-      <div class="sp-section">
-        <div class="sp-section-head">
-          <h2>Services</h2>
-          <div class="sp-updated">
-            <span class="round-icon spinning" id="sp-sync" style="display:none;font-size:14px">sync</span>
-            <span id="sp-time">--</span>
-          </div>
-        </div>
-        <div class="sp-services" id="sp-services">
-          <div class="loading-spinner"></div>
-        </div>
-      </div>
+      <div class="sp-metrics" id="sp-overview"></div>
 
       <div class="sp-section">
         <div class="sp-section-head">
-          <h2>Past Incidents</h2>
+          <h2>Infrastructure</h2>
+          <span class="sp-section-count" id="sp-node-count"></span>
         </div>
-        <div class="sp-incidents" id="sp-incidents">
-          <div class="sp-no-incidents">
-            <span class="round-icon">check_circle</span>
-            <p>No incidents reported in the last 90 days.</p>
+        <div class="sp-grid" id="sp-services">
+          <div class="sp-loading"><span class="sp-spinner"></span></div>
+        </div>
+      </div>
+
+      <div class="sp-section">
+        <div class="sp-section-head">
+          <h2>Uptime</h2>
+          <span class="sp-section-hint">90 days</span>
+        </div>
+        <div class="sp-uptime-global" id="sp-uptime-global"></div>
+      </div>
+
+      <div class="sp-section">
+        <div class="sp-section-head">
+          <h2>Incidents</h2>
+        </div>
+        <div id="sp-incidents">
+          <div class="sp-incidents-empty">
+            ${icon('check_circle', 20)}
+            <span>No incidents in the last 90 days</span>
           </div>
         </div>
       </div>
 
-      <div class="sp-footer">
-        <p>Auto-refreshes every 30 seconds</p>
-      </div>
+      <footer class="sp-footer">
+        <span>Updated every 30s</span>
+      </footer>
     </div>
   `;
-  
+
   loadStatus();
   pollInterval = setInterval(loadStatus, 30000);
-}
-
-function formatDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function formatDateFull(dateStr) {
@@ -95,18 +109,12 @@ function renderUptimeBars(history) {
 
 function renderTimeScale(history) {
   if (history.length === 0) return '';
-  // Show ~5 labels spread across 90 days
-  const indices = [0, 22, 44, 66, 89].filter(i => i < history.length);
+  const indices = [0, 44, 89].filter(i => i < history.length);
   const labels = indices.map(i => {
-    const h = history[i];
-    const d = new Date(h.date + 'T00:00:00');
+    const d = new Date(history[i].date + 'T00:00:00');
     return `<span>${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`;
   });
-  return `
-    <div class="sp-bars-legend">
-      ${labels.join('')}
-    </div>
-  `;
+  return `<div class="sp-bars-legend">${labels.join('')}</div>`;
 }
 
 function calcUptime(history) {
@@ -116,12 +124,14 @@ function calcUptime(history) {
   return ((up / withData.length) * 100).toFixed(2);
 }
 
+function fmtMB(mb) {
+  if (mb >= 1024) return (mb / 1024).toFixed(1) + ' GB';
+  return mb + ' MB';
+}
+
 async function loadStatus() {
   const container = document.getElementById('sp-services');
-  const syncIcon = document.getElementById('sp-sync');
-  
-  if (syncIcon) syncIcon.style.display = 'inline-block';
-  
+
   try {
     const [nodesRes, uptimeRes, incidentsRes] = await Promise.all([
       fetch('/api/status/nodes'),
@@ -133,39 +143,47 @@ async function loadStatus() {
     uptimeData = uptimeJson.history || {};
     const incidentsJson = await incidentsRes.json();
     const realIncidents = incidentsJson.incidents || [];
-    
+
     const online = data.nodes.filter(n => n.status === 'online').length;
     const total = data.nodes.length;
-    
-    // Hero badge
+
     const badge = document.getElementById('sp-badge');
     const badgeText = document.getElementById('sp-badge-text');
-    const title = document.getElementById('sp-hero-title');
-    const sub = document.getElementById('sp-hero-sub');
-    
+    const bannerTitle = document.getElementById('sp-banner-title');
+    const bannerSub = document.getElementById('sp-banner-sub');
+    const banner = document.getElementById('sp-banner');
+    const bannerIcon = document.getElementById('sp-banner-icon');
+
     if (online === total && total > 0) {
-      badge.className = 'sp-hero-badge online';
+      badge.className = 'sp-badge online';
       badgeText.textContent = 'Operational';
-      title.textContent = 'All Systems Operational';
-      sub.textContent = 'All services are running smoothly';
+      banner.className = 'sp-banner online';
+      bannerIcon.innerHTML = icon('check_circle', 22);
+      bannerTitle.textContent = 'All Systems Operational';
+      bannerSub.textContent = `All ${total} services running normally`;
     } else if (online > 0) {
-      badge.className = 'sp-hero-badge partial';
+      badge.className = 'sp-badge partial';
       badgeText.textContent = 'Degraded';
-      title.textContent = 'Partial System Outage';
-      sub.textContent = `${total - online} of ${total} services experiencing issues`;
+      banner.className = 'sp-banner partial';
+      bannerIcon.innerHTML = icon('warning', 22);
+      bannerTitle.textContent = 'Partial System Outage';
+      bannerSub.textContent = `${total - online} of ${total} services affected`;
     } else if (total > 0) {
-      badge.className = 'sp-hero-badge offline';
-      badgeText.textContent = 'Major Outage';
-      title.textContent = 'Major System Outage';
-      sub.textContent = 'All services are currently down';
+      badge.className = 'sp-badge offline';
+      badgeText.textContent = 'Outage';
+      banner.className = 'sp-banner offline';
+      bannerIcon.innerHTML = icon('error', 22);
+      bannerTitle.textContent = 'Major System Outage';
+      bannerSub.textContent = 'All services are currently down';
     } else {
-      badge.className = 'sp-hero-badge';
+      badge.className = 'sp-badge';
       badgeText.textContent = 'No Data';
-      title.textContent = 'No Services Configured';
-      sub.textContent = 'There are no monitored services yet';
+      banner.className = 'sp-banner';
+      bannerIcon.innerHTML = icon('info', 22);
+      bannerTitle.textContent = 'No Services Configured';
+      bannerSub.textContent = 'No monitored services found';
     }
-    
-    // Overview metrics
+
     const overview = document.getElementById('sp-overview');
     const totalServers = data.nodes.reduce((s, n) => s + n.servers, 0);
     const totalAllocMem = data.nodes.reduce((s, n) => s + n.memory.allocated, 0);
@@ -174,94 +192,121 @@ async function loadStatus() {
     const totalAllocDisk = data.nodes.reduce((s, n) => s + n.disk.allocated, 0);
     const totalDisk = data.nodes.reduce((s, n) => s + n.disk.total, 0);
     const diskPercent = totalDisk > 0 ? ((totalAllocDisk / totalDisk) * 100).toFixed(0) : '0';
-    
+
     overview.innerHTML = `
-      <div class="sp-metric">
-        <span class="sp-metric-value">${online}/${total}</span>
-        <span class="sp-metric-label">Nodes Online</span>
+      <div class="sp-metric-card">
+        <div class="sp-metric-icon">${icon('dns', 18)}</div>
+        <div class="sp-metric-body">
+          <span class="sp-metric-val">${online}<small>/${total}</small></span>
+          <span class="sp-metric-lbl">Nodes Online</span>
+        </div>
       </div>
-      <div class="sp-metric">
-        <span class="sp-metric-value">${totalServers}</span>
-        <span class="sp-metric-label">Servers</span>
+      <div class="sp-metric-card">
+        <div class="sp-metric-icon">${icon('storage', 18)}</div>
+        <div class="sp-metric-body">
+          <span class="sp-metric-val">${totalServers}</span>
+          <span class="sp-metric-lbl">Active Servers</span>
+        </div>
       </div>
-      <div class="sp-metric">
-        <span class="sp-metric-value">${memPercent}%</span>
-        <span class="sp-metric-label">Memory Allocated</span>
+      <div class="sp-metric-card">
+        <div class="sp-metric-icon">${icon('memory', 18)}</div>
+        <div class="sp-metric-body">
+          <span class="sp-metric-val">${memPercent}<small>%</small></span>
+          <span class="sp-metric-lbl">Memory · ${fmtMB(totalAllocMem)} / ${fmtMB(totalMem)}</span>
+        </div>
       </div>
-      <div class="sp-metric">
-        <span class="sp-metric-value">${diskPercent}%</span>
-        <span class="sp-metric-label">Disk Allocated</span>
+      <div class="sp-metric-card">
+        <div class="sp-metric-icon">${icon('data_usage', 18)}</div>
+        <div class="sp-metric-body">
+          <span class="sp-metric-val">${diskPercent}<small>%</small></span>
+          <span class="sp-metric-lbl">Disk · ${fmtMB(totalAllocDisk)} / ${fmtMB(totalDisk)}</span>
+        </div>
       </div>
     `;
-    
-    // Update time
+
     document.getElementById('sp-time').textContent = new Date().toLocaleTimeString();
-    
-    // Services list
+
+    const countEl = document.getElementById('sp-node-count');
+    if (countEl) countEl.textContent = `${total} node${total !== 1 ? 's' : ''}`;
+
     if (data.nodes.length === 0) {
       container.innerHTML = `
-        <div class="sp-empty">
-          <span class="round-icon">cloud_off</span>
-          <p>No services to display</p>
+        <div class="sp-empty-state">
+          ${icon('cloud_off', 28)}
+          <p>No services configured</p>
         </div>
       `;
-      return;
+    } else {
+      container.innerHTML = data.nodes.map(node => {
+        const history = uptimeData[node.id] || generateEmptyHistory();
+        const uptime = calcUptime(history);
+        const uptimeDisplay = uptime !== null ? `${uptime}%` : '—';
+        const isUp = node.status === 'online';
+
+        return `
+          <div class="sp-node ${node.status}">
+            <div class="sp-node-header">
+              <div class="sp-node-name">
+                <span class="sp-node-dot ${node.status}"></span>
+                <span>${escapeHtml(node.name)}</span>
+              </div>
+              <span class="sp-node-status ${node.status}">${isUp ? 'Operational' : 'Down'}</span>
+            </div>
+            <div class="sp-node-bars">
+              <div class="sp-bars">${renderUptimeBars(history)}</div>
+              ${renderTimeScale(history)}
+            </div>
+            <div class="sp-node-meta">
+              <span class="sp-node-tag">${icon('location_on', 12)} ${escapeHtml(node.location || 'Unknown')}</span>
+              <span class="sp-node-tag">${icon('arrow_upward', 12)} ${uptimeDisplay} uptime</span>
+              <span class="sp-node-tag">${icon('memory', 12)} ${fmtMB(node.memory.allocated)}/${fmtMB(node.memory.total)}</span>
+              <span class="sp-node-tag">${icon('dns', 12)} ${node.servers} server${node.servers !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
-    
-    container.innerHTML = data.nodes.map(node => {
-      const history = uptimeData[node.id] || generateEmptyHistory();
-      const uptime = calcUptime(history);
-      const uptimeDisplay = uptime !== null ? `${uptime}%` : '—';
-      
-      return `
-        <div class="sp-service">
-          <div class="sp-service-top">
-            <div class="sp-service-info">
-              <span class="sp-dot ${node.status}"></span>
-              <span class="sp-service-name">${escapeHtml(node.name)}</span>
-              <span class="sp-service-loc">${escapeHtml(node.location || 'Unknown')}</span>
-            </div>
-            <div class="sp-service-right">
-              <span class="sp-uptime-pct">${uptimeDisplay}</span>
-              <span class="sp-status-tag ${node.status}">${node.status === 'online' ? 'Operational' : 'Down'}</span>
-            </div>
+
+    const globalContainer = document.getElementById('sp-uptime-global');
+    if (globalContainer && data.nodes.length > 0) {
+      const allHistories = data.nodes.map(n => uptimeData[n.id] || generateEmptyHistory());
+      const merged = mergeHistories(allHistories);
+      const globalUptime = calcUptime(merged);
+      globalContainer.innerHTML = `
+        <div class="sp-uptime-card">
+          <div class="sp-uptime-head">
+            <span class="sp-uptime-label">Overall Uptime</span>
+            <span class="sp-uptime-pct">${globalUptime !== null ? globalUptime + '%' : '—'}</span>
           </div>
-          <div class="sp-uptime-track">
-            <div class="sp-bars">${renderUptimeBars(history)}</div>
-            ${renderTimeScale(history)}
-          </div>
-          <div class="sp-service-resources">
-            <div class="sp-res">
-              <span class="sp-res-label">Memory</span>
-              <span class="sp-res-value">${node.memory.allocated} / ${node.memory.total} MB</span>
-            </div>
-            <div class="sp-res">
-              <span class="sp-res-label">Disk</span>
-              <span class="sp-res-value">${node.disk.allocated} / ${node.disk.total} MB</span>
-            </div>
-            <div class="sp-res">
-              <span class="sp-res-label">Servers</span>
-              <span class="sp-res-value">${node.servers}</span>
-            </div>
-          </div>
+          <div class="sp-bars sp-bars-lg">${renderUptimeBars(merged)}</div>
+          ${renderTimeScale(merged)}
         </div>
       `;
-    }).join('');
-    
-    // Render real incidents from DB
+    }
+
     renderIncidents(realIncidents);
   } catch {
     container.innerHTML = `
-      <div class="sp-empty error">
-        <span class="round-icon">error_outline</span>
-        <p>Unable to reach monitoring services. Retrying...</p>
+      <div class="sp-empty-state error">
+        ${icon('error_outline', 28)}
+        <p>Unable to reach monitoring services</p>
+        <small>Retrying automatically...</small>
       </div>
     `;
-  } finally {
-    if (syncIcon) {
-      setTimeout(() => { syncIcon.style.display = 'none'; }, 500);
-    }
   }
+}
+
+function mergeHistories(histories) {
+  if (histories.length === 0) return generateEmptyHistory();
+  const base = histories[0];
+  return base.map((entry, i) => {
+    const statuses = histories.map(h => (h[i] || entry).status);
+    let merged = 'unknown';
+    if (statuses.some(s => s === 'offline')) merged = 'offline';
+    else if (statuses.some(s => s === 'degraded')) merged = 'degraded';
+    else if (statuses.some(s => s === 'online')) merged = 'online';
+    return { ...entry, status: merged };
+  });
 }
 
 function generateEmptyHistory() {
@@ -270,8 +315,7 @@ function generateEmptyHistory() {
   for (let i = 89; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0, 10);
-    history.push({ date: ds, status: 'unknown', checks: 0, online: 0 });
+    history.push({ date: d.toISOString().slice(0, 10), status: 'unknown', checks: 0, online: 0 });
   }
   return history;
 }
@@ -279,67 +323,54 @@ function generateEmptyHistory() {
 function renderIncidents(incidents) {
   const el = document.getElementById('sp-incidents');
   if (!el) return;
-  
+
   if (!incidents || incidents.length === 0) {
     el.innerHTML = `
-      <div class="sp-no-incidents">
-        <span class="round-icon">check_circle</span>
-        <p>No incidents reported in the last 90 days.</p>
+      <div class="sp-incidents-empty">
+        ${icon('check_circle', 20)}
+        <span>No incidents in the last 90 days</span>
       </div>
     `;
     return;
   }
-  
-  const statusColors = {
-    investigating: 'var(--warning, #f59e0b)',
-    identified: '#f97316',
-    monitoring: 'var(--info, #3b82f6)',
-    resolved: 'var(--success)'
-  };
 
-  const impactIcons = {
-    none: 'info',
-    minor: 'warning',
-    major: 'error',
-    critical: 'dangerous'
-  };
-  
-  // Group by date (created_at)
   const grouped = {};
   for (const inc of incidents) {
     const date = inc.created_at.slice(0, 10);
     if (!grouped[date]) grouped[date] = [];
     grouped[date].push(inc);
   }
-  
-  el.innerHTML = Object.entries(grouped).map(([date, incs]) => `
-    <div class="sp-incident-day">
-      <div class="sp-incident-date">${formatDateFull(date)}</div>
+
+  const impactCls = { none: 'info', minor: 'warn', major: 'err', critical: 'crit' };
+  const statusText = { investigating: 'Investigating', identified: 'Identified', monitoring: 'Monitoring', resolved: 'Resolved' };
+
+  el.innerHTML = `<div class="sp-incidents-list">${Object.entries(grouped).map(([date, incs]) => `
+    <div class="sp-inc-group">
+      <div class="sp-inc-date">${formatDateFull(date)}</div>
       ${incs.map(inc => {
+        const cls = impactCls[inc.impact] || 'warn';
         const latestUpdate = (inc.updates || []).slice(-1)[0];
         return `
-          <div class="sp-incident-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-              <span class="round-icon" style="font-size: 18px; color: ${statusColors[inc.status] || 'inherit'}">
-                ${impactIcons[inc.impact] || 'warning'}
-              </span>
-              <span class="sp-incident-text" style="flex: 1;">
-                <strong>${escapeHtml(inc.title)}</strong>
-                <small style="margin-left: 6px; text-transform: capitalize;">${inc.status}</small>
-              </span>
-              ${inc.resolved_at ? `<small style="color: var(--success); font-size: 11px;">Resolved</small>` : ''}
+          <div class="sp-inc ${cls}">
+            <div class="sp-inc-dot"></div>
+            <div class="sp-inc-body">
+              <div class="sp-inc-top">
+                <span class="sp-inc-title">${escapeHtml(inc.title)}</span>
+                <span class="sp-inc-status ${inc.status}">${statusText[inc.status] || inc.status}</span>
+              </div>
+              ${inc.description ? `<p class="sp-inc-desc">${escapeHtml(inc.description)}</p>` : ''}
+              ${latestUpdate && latestUpdate.message !== inc.description ? `
+                <p class="sp-inc-update">
+                  ${escapeHtml(latestUpdate.message)}
+                  <time>${new Date(latestUpdate.created_at).toLocaleString()}</time>
+                </p>
+              ` : ''}
             </div>
-            ${inc.description ? `<p style="margin: 0 0 0 26px; font-size: 12px; color: var(--text-secondary);">${escapeHtml(inc.description)}</p>` : ''}
-            ${latestUpdate && latestUpdate.message !== inc.description ? `
-              <p style="margin: 0 0 0 26px; font-size: 11px; color: var(--text-tertiary);">
-                Latest: ${escapeHtml(latestUpdate.message)} <small>(${new Date(latestUpdate.created_at).toLocaleString()})</small>
-              </p>
-            ` : ''}
           </div>
         `;
       }).join('')}
     </div>
-  `).join('');
+  `).join('')}</div>`;
 }
 
 export function cleanupStatus() {

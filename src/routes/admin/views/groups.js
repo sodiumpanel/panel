@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -65,7 +66,7 @@ export async function renderGroupsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Groups' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-group-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Group
           </button>
         </div>
@@ -74,7 +75,7 @@ export async function renderGroupsList(container, username, loadView) {
       <div class="admin-list">
         ${groups.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">group</span>
+            ${icons.group}
             <h3>No Groups</h3>
             <p>Create user groups to manage permissions and resource limits</p>
           </div>
@@ -84,7 +85,7 @@ export async function renderGroupsList(container, username, loadView) {
               <div class="list-card" data-id="${group.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="round-icon">group</span>
+                    ${icons.group}
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml(group.name)}</h3>
@@ -103,7 +104,7 @@ export async function renderGroupsList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('groups', '${group.id}')">
-                    <span class="round-icon">settings</span>
+                    ${icons.settings}
                     Manage
                   </button>
                 </div>
@@ -140,7 +141,7 @@ function showCreateGroupModal(loadView) {
       <div class="modal-header">
         <h3>Create Group</h3>
         <button class="modal-close" id="close-group-modal">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="create-group-form" class="modal-body">
@@ -177,7 +178,7 @@ function showCreateGroupModal(loadView) {
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     try {
       const res = await api('/api/admin/groups', {
@@ -236,7 +237,7 @@ export async function renderGroupDetail(container, username, groupId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-group-btn">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
             Delete
           </button>
         </div>
@@ -399,13 +400,13 @@ function renderGroupSubTab(group, users, memberUsers) {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Members</h3>
             <button class="btn btn-primary btn-sm" id="add-member-btn">
-              <span class="round-icon">person_add</span>
+              ${icons.person_add}
               Add Member
             </button>
           </div>
           ${memberUsers.length === 0 ? `
             <div class="empty-state small">
-              <span class="round-icon">people</span>
+              ${icons.people}
               <p>No members in this group</p>
             </div>
           ` : `
@@ -421,7 +422,7 @@ function renderGroupSubTab(group, users, memberUsers) {
                   </div>
                   <div class="user-server-actions">
                     <button class="btn btn-sm btn-danger-ghost remove-member-btn" data-user-id="${u.id}">
-                      <span class="round-icon">close</span>
+                      ${icons.close}
                       Remove
                     </button>
                   </div>

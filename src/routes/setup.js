@@ -1,4 +1,5 @@
 import * as toast from '../utils/toast.js';
+import { icons, icon } from '../utils/icons.js';
 
 export async function renderSetup() {
   const app = document.getElementById('app');
@@ -30,7 +31,7 @@ export async function renderSetup() {
                 <span>Sodium Setup</span>
               </div>
               <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
-                <span class="round-icon">${document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+                ${icons[document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode'] || ""}
               </button>
             </div>
             <div class="setup-progress">
@@ -139,7 +140,7 @@ export async function renderSetup() {
         </div>
         
         <button class="btn btn-secondary" id="test-db-btn">
-          <span class="round-icon">sync</span>
+          ${icons.sync}
           Test Connection
         </button>
         <span id="db-test-result" class="test-result"></span>
@@ -178,7 +179,7 @@ export async function renderSetup() {
         </div>
         
         <button class="btn btn-secondary" id="test-redis-btn">
-          <span class="round-icon">sync</span>
+          ${icons.sync}
           Test Connection
         </button>
         <span id="redis-test-result" class="test-result"></span>
@@ -374,7 +375,7 @@ export async function renderSetup() {
           <div class="setup-container">
             <div class="setup-card setup-complete">
               <div class="success-icon">
-                <span class="round-icon">check_circle</span>
+                ${icons.check_circle}
               </div>
               <h2>Setup Complete!</h2>
               <p>Sodium has been configured successfully.</p>

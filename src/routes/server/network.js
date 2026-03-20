@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { icons, icon } from '../../utils/icons.js';
 import { state } from '../../utils/state.js';
 import * as toast from '../../utils/toast.js';
 import * as modal from '../../utils/modal.js';
@@ -12,7 +13,7 @@ export function renderNetworkTab() {
       <div class="network-header">
         <h3>Network Allocations</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-allocation">
-          <span class="round-icon">add</span>
+          ${icons.add}
           Add Allocation
         </button>
       </div>
@@ -56,7 +57,7 @@ function renderAllocations() {
   if (allocations.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="round-icon">lan</span>
+        ${icons.lan}
         <p>No allocations configured</p>
       </div>
     `;
@@ -72,10 +73,10 @@ function renderAllocations() {
       <div class="allocation-actions">
         ${!alloc.primary ? `
           <button class="btn btn-ghost btn-sm" data-primary="${alloc.id}" title="Make Primary">
-            <span class="round-icon">star</span>
+            ${icons.star}
           </button>
           <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${alloc.id}" title="Delete">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
           </button>
         ` : ''}
       </div>
@@ -96,7 +97,7 @@ async function addAllocation() {
   const btn = document.getElementById('btn-add-allocation');
   
   btn.disabled = true;
-  btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+  btn.innerHTML = '${icons.sync}';
   
   try {
     const res = await api(`/api/servers/${currentServerId}/allocations`, {
@@ -118,7 +119,7 @@ async function addAllocation() {
   }
   
   btn.disabled = false;
-  btn.innerHTML = '<span class="round-icon">add</span> Add Allocation';
+  btn.innerHTML = '${icons.add} Add Allocation';
 }
 
 async function setAllocationPrimary(allocId) {

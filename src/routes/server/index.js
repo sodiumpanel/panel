@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { icons, icon } from '../../utils/icons.js';
 import { state } from '../../utils/state.js';
 import { formatBytes } from '../../utils/format.js';
 import { renderConsoleTab, initConsoleTab, cleanupConsoleTab, setConsoleCallbacks } from './console.js';
@@ -42,97 +43,61 @@ export function renderServerPage(serverId) {
   app.innerHTML = `
     <div class="server-page">
       <div class="node-down-banner" id="node-down-banner" style="display:none">
-        <span class="round-icon">warning</span>
+        ${icons.warning}
         <div class="node-down-text">
           <strong>Node Offline</strong>
           <p>The node hosting this server is currently unreachable. Actions like start, stop, and file management may not work until the node is back online.</p>
         </div>
       </div>
-      <div class="server-header">
-        <div class="server-header-left">
-          <div class="server-title">
-            <h1 id="server-name">Loading...</h1>
-            <span class="server-status" id="server-status">--</span>
-          </div>
+
+      <div class="sv-header">
+        <div class="sv-header-left">
+          <h1 id="server-name">Loading...</h1>
+          <span class="sv-status" id="server-status">--</span>
         </div>
-        <div class="server-header-right">
-          <div class="power-buttons">
-            <button class="power-action start" id="btn-start" title="Start">
-              <span class="round-icon">play_arrow</span>
-              Start
+        <div class="sv-header-right">
+          <div class="sv-power">
+            <button class="sv-power-btn sv-power-start" id="btn-start" title="Start">
+              ${icons.play_arrow}
+              <span>Start</span>
             </button>
-            <button class="power-action restart" id="btn-restart" title="Restart">
-              <span class="round-icon">refresh</span>
-              Restart
+            <button class="sv-power-btn sv-power-restart" id="btn-restart" title="Restart">
+              ${icons.refresh}
+              <span>Restart</span>
             </button>
-            <button class="power-action stop" id="btn-stop" title="Stop">
-              <span class="round-icon">stop</span>
-              Stop
+            <button class="sv-power-btn sv-power-stop" id="btn-stop" title="Stop">
+              ${icons.stop}
+              <span>Stop</span>
             </button>
-            <button class="power-action kill" id="btn-kill" title="Kill" style="display: none">
-              Kill
+            <button class="sv-power-btn sv-power-stop" id="btn-kill" title="Kill" style="display: none">
+              <span>Kill</span>
             </button>
           </div>
         </div>
       </div>
-      
-      <div class="server-tabs">
+
+      <div class="sv-tabs">
         ${tabs.map(tab => `
-          <button class="server-tab ${tab.id === currentTab ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}" 
+          <button class="sv-tab ${tab.id === currentTab ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}" 
                   data-tab="${tab.id}" ${tab.disabled ? 'disabled' : ''}>
-            <span class="round-icon">${tab.icon}</span>
+            ${icons[tab.icon] || ""}
             <span>${tab.label}</span>
           </button>
         `).join('')}
         ${getPluginServerTabs().map(tab => `
-          <button class="server-tab" data-tab="plugin:${tab.pluginId}:${tab.id}">
-            <span class="round-icon">${tab.icon || 'extension'}</span>
+          <button class="sv-tab" data-tab="plugin:${tab.pluginId}:${tab.id}">
+            ${icons[tab.icon || 'extension'] || ""}
             <span>${tab.label || tab.id}</span>
           </button>
         `).join('')}
       </div>
-      
-      <div class="server-content">
-        <div class="server-main" id="tab-content"></div>
-        <div class="server-sidebar">
-          <div class="sidebar-section">
-            <div class="section-header">
-              <span class="round-icon">info</span>
-              <h3>Server Info</h3>
-            </div>
-            <div class="sidebar-card">
-              <span class="round-icon corner-icon">info</span>
-              <div class="info-row">
-                <span class="round-icon">language</span>
-                <div class="info-content">
-                  <span class="info-label">Address</span>
-                  <span class="info-value" id="server-address">--</span>
-                </div>
-              </div>
-              <div class="info-row">
-                <span class="round-icon">dns</span>
-                <div class="info-content">
-                  <span class="info-label">Node</span>
-                  <span class="info-value" id="server-node">--</span>
-                </div>
-              </div>
-              <div class="info-row">
-                <span class="round-icon">schedule</span>
-                <div class="info-content">
-                  <span class="info-label">Uptime</span>
-                  <span class="info-value" id="server-uptime">--</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="sidebar-section">
-            <div class="section-header">
-              <span class="round-icon">data_usage</span>
-              <h3>Resources</h3>
-            </div>
-            <div class="sidebar-card">
-              <span class="round-icon corner-icon">data_usage</span>
+
+      <div class="sv-body">
+        <div class="sv-main" id="tab-content"></div>
+        <div class="sv-sidebar">
+          <div class="sv-panel">
+            <div class="sv-panel-label">Server Info</div>
+            <div class="sv-panel-card">
               <svg style="width:0; height:0; position:absolute;" aria-hidden="true">
                 <defs>
                   <linearGradient id="grad-cpu" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -149,45 +114,54 @@ export function renderServerPage(serverId) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div class="resource-spark-item">
-                <div class="resource-spark-header">
-                  <div class="resource-spark-label">
-                    <span class="round-icon">memory</span>
-                    <span>CPU</span>
-                  </div>
-                  <span class="resource-spark-value" id="res-cpu-text">0%</span>
+              <div class="sv-info-row">
+                <span class="sv-info-label">Address</span>
+                <span class="sv-info-value mono" id="server-address">--</span>
+              </div>
+              <div class="sv-info-row">
+                <span class="sv-info-label">Node</span>
+                <span class="sv-info-value" id="server-node">--</span>
+              </div>
+              <div class="sv-info-row">
+                <span class="sv-info-label">Uptime</span>
+                <span class="sv-info-value mono" id="server-uptime">--</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sv-panel">
+            <div class="sv-panel-label">Resources</div>
+            <div class="sv-panel-card">
+              <div class="sv-resource">
+                <div class="sv-resource-head">
+                  <span class="sv-resource-name">CPU</span>
+                  <span class="sv-resource-val" id="res-cpu-text">0%</span>
                 </div>
-                <div class="resource-spark-chart">
+                <div class="sv-spark">
                   <svg id="spark-cpu" viewBox="0 0 100 24" preserveAspectRatio="none">
                     <path class="spark-area" fill="url(#grad-cpu)" d="" />
                     <path class="spark-line cpu" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
-              <div class="resource-spark-item">
-                <div class="resource-spark-header">
-                  <div class="resource-spark-label">
-                    <span class="round-icon">storage</span>
-                    <span>Memory</span>
-                  </div>
-                  <span class="resource-spark-value" id="res-mem-text">0 MB</span>
+              <div class="sv-resource">
+                <div class="sv-resource-head">
+                  <span class="sv-resource-name">Memory</span>
+                  <span class="sv-resource-val" id="res-mem-text">0 MB</span>
                 </div>
-                <div class="resource-spark-chart">
+                <div class="sv-spark">
                   <svg id="spark-mem" viewBox="0 0 100 24" preserveAspectRatio="none">
                     <path class="spark-area" fill="url(#grad-mem)" d="" />
                     <path class="spark-line memory" d="M0,24 L100,24" fill="none" />
                   </svg>
                 </div>
               </div>
-              <div class="resource-spark-item">
-                <div class="resource-spark-header">
-                  <div class="resource-spark-label">
-                    <span class="round-icon">save</span>
-                    <span>Disk</span>
-                  </div>
-                  <span class="resource-spark-value" id="res-disk-text">0 MB</span>
+              <div class="sv-resource">
+                <div class="sv-resource-head">
+                  <span class="sv-resource-name">Disk</span>
+                  <span class="sv-resource-val" id="res-disk-text">0 MB</span>
                 </div>
-                <div class="resource-spark-chart">
+                <div class="sv-spark">
                   <svg id="spark-disk" viewBox="0 0 100 24" preserveAspectRatio="none">
                     <path class="spark-area" fill="url(#grad-disk)" d="" />
                     <path class="spark-line disk" d="M0,24 L100,24" fill="none" />
@@ -196,27 +170,22 @@ export function renderServerPage(serverId) {
               </div>
             </div>
           </div>
-          
-          <div class="sidebar-section">
-            <div class="section-header">
-              <span class="round-icon">swap_vert</span>
-              <h3>Network</h3>
-            </div>
-            <div class="sidebar-card network-stats">
-              <span class="round-icon corner-icon">swap_vert</span>
-              <span class="round-icon corner-icon corner-icon-left">swap_vert</span>
-              <div class="network-stat">
-                <span class="round-icon tx">arrow_upward</span>
-                <div class="stat-content">
-                  <span class="stat-label">Outbound</span>
-                  <span class="stat-value" id="res-net-tx">0 B</span>
+
+          <div class="sv-panel">
+            <div class="sv-panel-label">Network</div>
+            <div class="sv-panel-card sv-net-card">
+              <div class="sv-net-stat">
+                <span class="sv-net-dir out">↑</span>
+                <div class="sv-net-info">
+                  <span class="sv-net-label">Outbound</span>
+                  <span class="sv-net-value" id="res-net-tx">0 B</span>
                 </div>
               </div>
-              <div class="network-stat">
-                <span class="round-icon rx">arrow_downward</span>
-                <div class="stat-content">
-                  <span class="stat-label">Inbound</span>
-                  <span class="stat-value" id="res-net-rx">0 B</span>
+              <div class="sv-net-stat">
+                <span class="sv-net-dir in">↓</span>
+                <div class="sv-net-info">
+                  <span class="sv-net-label">Inbound</span>
+                  <span class="sv-net-value" id="res-net-rx">0 B</span>
                 </div>
               </div>
             </div>
@@ -230,7 +199,7 @@ export function renderServerPage(serverId) {
   loadServerDetails(serverId);
   switchTab(currentTab);
   
-  document.querySelectorAll('.server-tab:not(.disabled)').forEach(tab => {
+  document.querySelectorAll('.sv-tab:not(.disabled)').forEach(tab => {
     tab.onclick = () => switchTab(tab.dataset.tab);
   });
   
@@ -255,15 +224,15 @@ function switchTab(tabId) {
   
   currentTab = tabId;
   
-  document.querySelectorAll('.server-tab').forEach(tab => {
+  document.querySelectorAll('.sv-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.tab === tabId);
   });
   
   const content = document.getElementById('tab-content');
-  const sidebar = document.querySelector('.server-sidebar');
+  const sidebar = document.querySelector('.sv-sidebar');
   
   if (sidebar) {
-    sidebar.style.display = tabId === 'console' ? 'flex' : 'none';
+    sidebar.classList.toggle('hidden', tabId !== 'console');
   }
   
   switch (tabId) {
@@ -395,8 +364,7 @@ function disableServerControls() {
     }
   });
   
-  // Disable tabs that need the node
-  document.querySelectorAll('.server-tab').forEach(tab => {
+  document.querySelectorAll('.sv-tab').forEach(tab => {
     tab.disabled = true;
     tab.classList.add('disabled');
     tab.title = 'Node is offline';
@@ -407,7 +375,7 @@ function disableServerControls() {
   if (content) {
     content.innerHTML = `
       <div class="node-offline-tab">
-        <span class="round-icon">cloud_off</span>
+        ${icons.cloud_off}
         <h3>Node Unreachable</h3>
         <p>The node hosting this server is currently offline. Server management is unavailable until the node comes back online.</p>
         <a href="/status" class="btn btn-sm">View System Status</a>
@@ -418,13 +386,13 @@ function disableServerControls() {
 
 function showInstallingScreen() {
   const content = document.getElementById('tab-content');
-  const sidebar = document.querySelector('.server-sidebar');
-  const tabsEl = document.querySelector('.server-tabs');
-  const powerBtns = document.querySelector('.power-buttons');
+  const sidebar = document.querySelector('.sv-sidebar');
+  const tabsEl = document.querySelector('.sv-tabs');
+  const powerBtns = document.querySelector('.sv-power');
   
-  if (sidebar) sidebar.style.display = 'none';
-  if (tabsEl) tabsEl.style.display = 'none';
-  if (powerBtns) powerBtns.style.display = 'none';
+  if (sidebar) sidebar.classList.add('hidden');
+  if (tabsEl) tabsEl.classList.add('hidden');
+  if (powerBtns) powerBtns.classList.add('hidden');
   
   content.innerHTML = `
     <div class="installing-screen">
@@ -460,13 +428,13 @@ async function checkInstallStatus() {
       
       // Reload the page to show full interface
       serverData = data.server;
-      const tabsEl = document.querySelector('.server-tabs');
-      const sidebar = document.querySelector('.server-sidebar');
-      const powerBtns = document.querySelector('.power-buttons');
+      const tabsEl = document.querySelector('.sv-tabs');
+      const sidebar = document.querySelector('.sv-sidebar');
+      const powerBtns = document.querySelector('.sv-power');
       
-      if (tabsEl) tabsEl.style.display = 'flex';
-      if (sidebar) sidebar.style.display = 'flex';
-      if (powerBtns) powerBtns.style.display = 'flex';
+      if (tabsEl) tabsEl.classList.remove('hidden');
+      if (sidebar) sidebar.classList.remove('hidden');
+      if (powerBtns) powerBtns.classList.remove('hidden');
       
       switchTab('console');
     }
@@ -498,7 +466,7 @@ export function updateServerStatus(status) {
   const statusEl = document.getElementById('server-status');
   if (statusEl) {
     statusEl.textContent = status;
-    statusEl.className = `server-status status-${status}`;
+    statusEl.className = `sv-status status-${status}`;
   }
 
   if (status === 'offline' || status === 'running' || status === 'starting') {

@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { icons, icon } from '../../utils/icons.js';
 import { escapeHtml } from '../../utils/security.js';
 import * as toast from '../../utils/toast.js';
 import * as modal from '../../utils/modal.js';
@@ -12,7 +13,7 @@ export function renderSchedulesTab(serverId) {
       <div class="tab-header">
         <h2>Schedules</h2>
         <button class="btn btn-primary" id="create-schedule-btn">
-          <span class="round-icon">add</span>
+          ${icons.add}
           New Schedule
         </button>
       </div>
@@ -44,7 +45,7 @@ async function loadSchedules() {
     if (data.schedules.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">schedule</span>
+          ${icons.schedule}
           <p>No schedules configured</p>
           <span class="text-muted">Create automated tasks for your server</span>
         </div>
@@ -64,33 +65,33 @@ async function loadSchedules() {
           </div>
           <div class="schedule-actions">
             <button class="btn btn-sm btn-ghost" title="Run Now" data-action="execute" data-id="${schedule.id}">
-              <span class="round-icon">play_arrow</span>
+              ${icons.play_arrow}
             </button>
             <button class="btn btn-sm btn-ghost" title="Duplicate" data-action="duplicate" data-id="${schedule.id}">
-              <span class="round-icon">content_copy</span>
+              ${icons.content_copy}
             </button>
             <button class="btn btn-sm btn-ghost" title="Edit" data-action="edit" data-id="${schedule.id}">
-              <span class="round-icon">edit</span>
+              ${icons.edit}
             </button>
             <button class="btn btn-sm btn-ghost btn-danger" title="Delete" data-action="delete" data-id="${schedule.id}">
-              <span class="round-icon">delete</span>
+              ${icons.delete}
             </button>
           </div>
         </div>
         <div class="schedule-meta">
           <span class="meta-item">
-            <span class="round-icon">task</span>
+            ${icons.task}
             ${schedule.tasks?.length || 0} task${schedule.tasks?.length !== 1 ? 's' : ''}
           </span>
           ${schedule.last_run_at ? `
             <span class="meta-item">
-              <span class="round-icon">history</span>
+              ${icons.history}
               Last: ${formatRelativeTime(schedule.last_run_at)}
             </span>
           ` : ''}
           ${schedule.next_run_at ? `
             <span class="meta-item">
-              <span class="round-icon">schedule</span>
+              ${icons.schedule}
               Next: ${formatRelativeTime(schedule.next_run_at)}
             </span>
           ` : ''}
@@ -99,7 +100,7 @@ async function loadSchedules() {
           ${renderTasks(schedule.tasks || [], schedule.id)}
         </div>
         <button class="btn btn-sm btn-ghost add-task-btn" data-schedule="${schedule.id}">
-          <span class="round-icon">add</span>
+          ${icons.add}
           Add Task
         </button>
       </div>
@@ -126,10 +127,10 @@ function renderTasks(tasks, scheduleId) {
       </div>
       <div class="task-actions">
         <button class="btn btn-xs btn-ghost" data-action="edit-task" data-task="${task.id}" data-schedule="${scheduleId}">
-          <span class="round-icon">edit</span>
+          ${icons.edit}
         </button>
         <button class="btn btn-xs btn-ghost btn-danger" data-action="delete-task" data-task="${task.id}" data-schedule="${scheduleId}">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
     </div>
@@ -258,7 +259,7 @@ function showScheduleModal(schedule, isDuplicate = false) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit Schedule' : isDuplicate ? 'Duplicate Schedule' : 'Create Schedule'}</h3>
         <button class="modal-close" id="close-schedule-modal">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="schedule-form" class="modal-body">
@@ -418,7 +419,7 @@ function showTaskModal(scheduleId, task) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit Task' : 'Add Task'}</h3>
         <button class="modal-close" id="close-task-modal">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="task-form" class="modal-body">

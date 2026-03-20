@@ -16,8 +16,8 @@ export function confirm(options = {}) {
           <p>${escapeHtml(message)}</p>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-ghost" id="modal-cancel">${cancelText}</button>
-          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modal-confirm">${confirmText}</button>
+          <button class="btn btn-ghost" id="modal-cancel">${escapeHtml(cancelText)}</button>
+          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modal-confirm">${escapeHtml(confirmText)}</button>
         </div>
       </div>
     `;
@@ -69,8 +69,8 @@ export function prompt(message, options = {}) {
           <input type="text" class="input" id="modal-input" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(defaultValue)}">
         </div>
         <div class="modal-actions">
-          <button class="btn btn-ghost" id="modal-cancel">${cancelText}</button>
-          <button class="btn btn-primary" id="modal-confirm">${confirmText}</button>
+          <button class="btn btn-ghost" id="modal-cancel">${escapeHtml(cancelText)}</button>
+          <button class="btn btn-primary" id="modal-confirm">${escapeHtml(confirmText)}</button>
         </div>
       </div>
     `;
@@ -128,8 +128,8 @@ export function show(options = {}) {
           ${content}
         </div>
         <div class="modal-actions">
-          <button class="btn btn-ghost" id="modal-cancel">${cancelText}</button>
-          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modal-confirm">${confirmText}</button>
+          <button class="btn btn-ghost" id="modal-cancel">${escapeHtml(cancelText)}</button>
+          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modal-confirm">${escapeHtml(confirmText)}</button>
         </div>
       </div>
     `;
@@ -178,7 +178,7 @@ export function alert(message, options = {}) {
           <p>${escapeHtml(message)}</p>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-primary" id="modal-confirm">${confirmText}</button>
+          <button class="btn btn-primary" id="modal-confirm">${escapeHtml(confirmText)}</button>
         </div>
       </div>
     `;

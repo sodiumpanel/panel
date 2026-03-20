@@ -1,4 +1,5 @@
 import { escapeHtml, escapeUrl } from '../utils/security.js';
+import { icons, icon } from '../utils/icons.js';
 import { api } from '../utils/api.js';
 import { state } from '../utils/state.js';
 
@@ -31,7 +32,7 @@ export function renderProfile() {
             <div class="form-group">
               <label for="avatar-url">Profile Picture URL</label>
               <div class="input-wrapper">
-                <span class="round-icon">image</span>
+                ${icons.image}
                 <input type="url" id="avatar-url" name="avatar" placeholder="https://example.com/avatar.png">
               </div>
               <small class="form-hint">Use a direct image URL (https only)</small>
@@ -40,7 +41,7 @@ export function renderProfile() {
             <div class="form-group">
               <label for="display-name">Display Name</label>
               <div class="input-wrapper">
-                <span class="round-icon">badge</span>
+                ${icons.badge}
                 <input type="text" id="display-name" name="displayName" value="${escapeHtml(displayName)}" maxlength="50" placeholder="Your display name">
               </div>
               <small class="form-hint">This is how others will see you</small>
@@ -58,7 +59,7 @@ export function renderProfile() {
           <div class="form-actions">
             <div class="message" id="profile-message"></div>
             <button type="submit" class="btn btn-primary">
-              <span class="round-icon">save</span>
+              ${icons.save}
               <span>Save Changes</span>
             </button>
           </div>
@@ -101,7 +102,7 @@ export function renderProfile() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     try {
       const res = await api('/api/user/profile', {
@@ -136,7 +137,7 @@ export function renderProfile() {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span class="round-icon">save</span><span>Save Changes</span>';
+    btn.innerHTML = '${icons.save}<span>Save Changes</span>';
     
     setTimeout(() => {
       messageEl.textContent = '';

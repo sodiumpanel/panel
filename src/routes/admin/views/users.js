@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -19,7 +20,7 @@ export async function renderUsersList(container, username, loadView) {
         <div class="admin-header-actions">
           ${renderSearchBox('users', 'Search by username, ID, or display name...')}
           <button class="btn btn-primary" id="create-user-btn">
-            <span class="round-icon">person_add</span>
+            ${icons.person_add}
             Create User
           </button>
         </div>
@@ -28,7 +29,7 @@ export async function renderUsersList(container, username, loadView) {
       <div class="admin-list">
         ${data.users.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">people</span>
+            ${icons.people}
             <p>No users yet</p>
           </div>
         ` : `
@@ -106,7 +107,7 @@ export async function renderUsersList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('users', '${u.id}')">
-                    <span class="round-icon">settings</span>
+                    ${icons.settings}
                     Manage
                   </button>
                 </div>
@@ -148,7 +149,7 @@ function showCreateUserModal(loadView) {
       <div class="modal-header">
         <h3>Create User</h3>
         <button class="modal-close" id="close-user-modal">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="create-user-form" class="modal-body">
@@ -202,7 +203,7 @@ function showCreateUserModal(loadView) {
     const form = e.target;
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     const user = {
       username: form.username.value,
@@ -374,7 +375,7 @@ async function renderUserSubTab(user, username) {
         
         const btn = document.getElementById('delete-user-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="round-icon spinning">sync</span> Deleting...';
+        btn.innerHTML = '${icons.sync} Deleting...';
         
         try {
           const res = await api('/api/admin/users/' + user.id, { method: 'DELETE' });
@@ -408,7 +409,7 @@ async function renderUserSubTab(user, username) {
             <h3>User Servers</h3>
             ${userServers.length === 0 ? `
               <div class="empty-state small">
-                <span class="round-icon">storage</span>
+                ${icons.storage}
                 <p>This user has no servers</p>
               </div>
             ` : `
@@ -416,7 +417,7 @@ async function renderUserSubTab(user, username) {
                 ${userServers.map(s => `
                   <div class="user-server-item" data-server-id="${s.id}">
                     <div class="user-server-info">
-                      <span class="round-icon">dns</span>
+                      ${icons.dns}
                       <div class="user-server-details">
                         <span class="user-server-name">${escapeHtml(s.name)}</span>
                         <span class="user-server-meta">${s.node_name || 'Unknown Node'} • ${formatBytes((s.limits?.memory || 0) * 1024 * 1024)} RAM</span>
@@ -425,7 +426,7 @@ async function renderUserSubTab(user, username) {
                     <div class="user-server-actions">
                       <span class="server-status-badge ${s.suspended ? 'suspended' : ''}">${s.suspended ? 'Suspended' : 'Active'}</span>
                       <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('servers', '${s.id}')">
-                        <span class="round-icon">settings</span>
+                        ${icons.settings}
                         Manage
                       </button>
                     </div>

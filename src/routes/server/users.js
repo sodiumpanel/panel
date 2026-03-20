@@ -1,4 +1,5 @@
 import { api } from '../../utils/api.js';
+import { icons, icon } from '../../utils/icons.js';
 import { state } from '../../utils/state.js';
 import { PERMISSIONS, PERMISSION_GROUPS } from '../../utils/permissions.js';
 import * as toast from '../../utils/toast.js';
@@ -14,7 +15,7 @@ export function renderUsersTab() {
       <div class="users-header">
         <h3>Subusers</h3>
         <button class="btn btn-primary btn-sm" id="btn-add-subuser">
-          <span class="round-icon">person_add</span>
+          ${icons.person_add}
           Add User
         </button>
       </div>
@@ -29,14 +30,14 @@ export function renderUsersTab() {
         <div class="modal-header">
           <h3 id="modal-title">Add Subuser</h3>
           <button class="modal-close">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <div class="modal-body">
           <div class="form-group" id="username-group">
             <label>Username</label>
             <div class="input-wrapper">
-              <span class="round-icon">person</span>
+              ${icons.person}
               <input type="text" id="subuser-username" placeholder="Enter username" />
             </div>
           </div>
@@ -92,7 +93,7 @@ function renderSubusers() {
   if (subusers.length === 0) {
     list.innerHTML = `
       <div class="empty-state">
-        <span class="round-icon">group</span>
+        ${icons.group}
         <p>No subusers added yet</p>
       </div>
     `;
@@ -107,10 +108,10 @@ function renderSubusers() {
       </div>
       <div class="subuser-actions">
         <button class="btn btn-ghost btn-sm" data-edit="${sub.id}" title="Edit">
-          <span class="round-icon">edit</span>
+          ${icons.edit}
         </button>
         <button class="btn btn-ghost btn-sm btn-danger-hover" data-delete="${sub.id}" title="Remove">
-          <span class="round-icon">person_remove</span>
+          ${icons.person_remove}
         </button>
       </div>
     </div>
@@ -219,7 +220,7 @@ async function saveSubuser(editId) {
   const saveBtn = document.getElementById('save-subuser');
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="round-icon spinning">sync</span>';
+  saveBtn.innerHTML = '${icons.sync}';
   
   try {
     if (editId) {

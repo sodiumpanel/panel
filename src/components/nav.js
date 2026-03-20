@@ -1,4 +1,5 @@
 import { clearAuth, api } from '../utils/api.js';
+import { icons, icon } from '../utils/icons.js';
 import { state } from '../utils/state.js';
 import { escapeHtml } from '../utils/security.js';
 import { getBranding } from '../utils/branding.js';
@@ -17,7 +18,7 @@ export function renderNav() {
     <div class="nav-content">
       <div class="nav-left">
         <button class="nav-toggle" id="sidebar-toggle">
-          <span class="round-icon">menu</span>
+          ${icons.menu}
         </button>
         <a href="/dashboard" class="nav-brand">
           <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${escapeHtml(branding.name)}" width="22" height="22">
@@ -37,16 +38,16 @@ export function renderNav() {
             </button>
             <div class="user-dropdown" id="user-dropdown">
               <a href="/profile" class="dropdown-item">
-                <span class="round-icon">person</span>
+                ${icons.person}
                 <span>Profile</span>
               </a>
               <a href="/settings" class="dropdown-item">
-                <span class="round-icon">settings</span>
+                ${icons.settings}
                 <span>Settings</span>
               </a>
               <hr class="dropdown-divider">
               <button class="dropdown-item logout" id="nav-logout">
-                <span class="round-icon">logout</span>
+                ${icons.logout}
                 <span>Sign Out</span>
               </button>
             </div>

@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -44,7 +45,7 @@ export async function renderSettingsPage(container, username, loadView) {
           <nav class="settings-nav">
             ${SETTINGS_TABS.map(tab => `
               <button class="settings-nav-item ${currentSettingsTab === tab.id ? 'active' : ''}" data-tab="${tab.id}">
-                <span class="round-icon">${tab.icon}</span>
+                ${icons[tab.icon] || ""}
                 <span>${tab.label}</span>
               </button>
             `).join('')}
@@ -165,7 +166,7 @@ function renderGeneralSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -307,7 +308,7 @@ function renderBrandingSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -477,7 +478,7 @@ function renderRegistrationSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -561,7 +562,7 @@ function renderDefaultsSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -622,7 +623,7 @@ function renderSecuritySettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -659,7 +660,7 @@ function renderOAuthSettings(content, config) {
             <p>Configure third-party authentication providers.</p>
           </div>
           <button class="btn btn-primary" id="add-oauth-provider-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Add Provider
           </button>
         </div>
@@ -723,11 +724,11 @@ async function loadOAuthProviders() {
     if (providers.length === 0) {
       list.innerHTML = `
         <div class="empty-state-card">
-          <span class="round-icon">login</span>
+          ${icons.login}
           <h3>No OAuth Providers</h3>
           <p>Add a provider to allow users to sign in with their existing accounts.</p>
           <button class="btn btn-primary" onclick="document.getElementById('add-oauth-provider-btn').click()">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Add Your First Provider
           </button>
         </div>
@@ -739,7 +740,7 @@ async function loadOAuthProviders() {
       <div class="oauth-provider-card" data-id="${p.id}">
         <div class="oauth-provider-card-header" style="border-left-color: ${providerColors[p.type] || '#6366f1'}">
           <div class="oauth-provider-icon" style="background: ${providerColors[p.type] || '#6366f1'}">
-            <span class="round-icon">${providerIcons[p.type] || 'key'}</span>
+            ${icons[providerIcons[p.type] || 'key'] || ""}
           </div>
           <div class="oauth-provider-info">
             <span class="oauth-provider-name">${escapeHtml(p.name)}</span>
@@ -749,16 +750,16 @@ async function loadOAuthProviders() {
         </div>
         <div class="oauth-provider-card-footer">
           <span class="oauth-provider-meta">
-            <span class="round-icon">key</span>
+            ${icons.key}
             ${p.client_id ? 'Configured' : 'Not configured'}
           </span>
           <div class="oauth-provider-actions">
             <button class="btn btn-sm btn-ghost edit-oauth-btn" data-id="${p.id}">
-              <span class="round-icon">edit</span>
+              ${icons.edit}
               Edit
             </button>
             <button class="btn btn-sm btn-ghost btn-danger delete-oauth-btn" data-id="${p.id}">
-              <span class="round-icon">delete</span>
+              ${icons.delete}
             </button>
           </div>
         </div>
@@ -806,7 +807,7 @@ function showOAuthModal(editId) {
       <div class="modal-header">
         <h3>${isEdit ? 'Edit OAuth Provider' : 'Add OAuth Provider'}</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="oauth-form" class="modal-form">
@@ -953,7 +954,7 @@ function renderApiKeysSettings(content, config) {
             <p>Create API keys for automation, integrations, and external applications.</p>
           </div>
           <button class="btn btn-primary" id="create-app-key-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Key
           </button>
         </div>
@@ -970,7 +971,7 @@ function renderApiKeysSettings(content, config) {
         <div class="modal-header">
           <h3>Create Application Key</h3>
           <button class="modal-close" id="close-app-key-modal">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <form id="app-api-key-form">
@@ -997,18 +998,18 @@ function renderApiKeysSettings(content, config) {
         <div class="modal-header">
           <h3>Application Key Created</h3>
           <button class="modal-close" id="close-app-key-created-modal">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <div class="api-key-created-content">
           <div class="warning-box">
-            <span class="round-icon">warning</span>
+            ${icons.warning}
             <p>Make sure to copy your API key now. You won't be able to see it again!</p>
           </div>
           <div class="api-key-display">
             <code id="created-app-key-token"></code>
             <button type="button" class="btn btn-icon" id="copy-app-key-btn">
-              <span class="round-icon">content_copy</span>
+              ${icons.content_copy}
             </button>
           </div>
         </div>
@@ -1041,11 +1042,11 @@ async function loadAppApiKeys() {
     if (!keysData.keys || keysData.keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state-card">
-          <span class="round-icon">vpn_key</span>
+          ${icons.vpn_key}
           <h3>No API Keys</h3>
           <p>Create an API key to integrate external applications with the panel.</p>
           <button class="btn btn-primary" onclick="document.getElementById('create-app-key-btn').click()">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Your First Key
           </button>
         </div>
@@ -1057,7 +1058,7 @@ async function loadAppApiKeys() {
       <div class="api-key-card" data-id="${key.id}">
         <div class="api-key-card-main">
           <div class="api-key-icon">
-            <span class="round-icon">vpn_key</span>
+            ${icons.vpn_key}
           </div>
           <div class="api-key-info">
             <span class="api-key-name">${escapeHtml(key.name)}</span>
@@ -1072,7 +1073,7 @@ async function loadAppApiKeys() {
           ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
         </div>
         <button class="btn btn-icon btn-danger delete-app-key-btn" data-id="${key.id}">
-          <span class="round-icon">delete</span>
+          ${icons.delete}
         </button>
       </div>
     `).join('');
@@ -1159,7 +1160,7 @@ function setupAppApiKeysHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     try {
       const res = await api('/api/api-keys/application', {
@@ -1245,11 +1246,11 @@ function renderMailSettings(content, config) {
         
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="test-mail-btn">
-            <span class="round-icon">send</span>
+            ${icons.send}
             Send Test Email
           </button>
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -1285,7 +1286,7 @@ function renderMailSettings(content, config) {
     
     const btn = document.getElementById('test-mail-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span> Sending...';
+    btn.innerHTML = '${icons.sync} Sending...';
     
     try {
       const res = await api('/api/admin/mail/test', { 
@@ -1303,7 +1304,7 @@ function renderMailSettings(content, config) {
     }
     
     btn.disabled = false;
-    btn.innerHTML = '<span class="round-icon">send</span> Send Test Email';
+    btn.innerHTML = '${icons.send} Send Test Email';
   };
 }
 
@@ -1352,7 +1353,7 @@ function renderMaintenanceSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>
@@ -1461,7 +1462,7 @@ function renderAdvancedSettings(content, config) {
         
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
-            <span class="round-icon">save</span>
+            ${icons.save}
             Save Changes
           </button>
         </div>

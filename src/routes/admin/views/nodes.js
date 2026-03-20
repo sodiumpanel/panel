@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -28,7 +29,7 @@ export async function renderNodesList(container, username, loadView) {
         ${renderSearchBox('nodes', 'Search by name, IP, or ID...')}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-node-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Node
           </button>
         </div>
@@ -37,7 +38,7 @@ export async function renderNodesList(container, username, loadView) {
       <div class="admin-list">
         ${data.nodes.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">dns</span>
+            ${icons.dns}
             <h3>No Nodes</h3>
             <p>Create your first node to get started</p>
           </div>
@@ -47,7 +48,7 @@ export async function renderNodesList(container, username, loadView) {
               <div class="list-card" data-id="${node.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="round-icon">dns</span>
+                    ${icons.dns}
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml(node.name)}</h3>
@@ -71,7 +72,7 @@ export async function renderNodesList(container, username, loadView) {
                 </div>
                 <div class="list-card-footer">
                   <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); adminNavigate('nodes', '${node.id}')">
-                    <span class="round-icon">settings</span>
+                    ${icons.settings}
                     Manage
                   </button>
                 </div>
@@ -130,7 +131,7 @@ export async function renderNodeDetail(container, username, nodeId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-node-btn">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
             Delete
           </button>
         </div>
@@ -244,15 +245,15 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
             <h3>Status</h3>
             <div class="status-grid">
               <div class="status-item ${isOnline ? 'success' : 'danger'}">
-                <span class="round-icon">${isOnline ? 'check_circle' : 'cancel'}</span>
+                ${icons[isOnline ? 'check_circle' : 'cancel'] || ""}
                 <span>${isOnline ? 'Online' : 'Offline'}</span>
               </div>
               <div class="status-item ${node.maintenance_mode ? 'warning' : 'success'}">
-                <span class="round-icon">${node.maintenance_mode ? 'construction' : 'check_circle'}</span>
+                ${icons[node.maintenance_mode ? 'construction' : 'check_circle'] || ""}
                 <span>${node.maintenance_mode ? 'Maintenance Mode' : 'Operational'}</span>
               </div>
               <div class="status-item ${node.behind_proxy ? 'info' : ''}">
-                <span class="round-icon">${node.behind_proxy ? 'vpn_lock' : 'public'}</span>
+                ${icons[node.behind_proxy ? 'vpn_lock' : 'public'] || ""}
                 <span>${node.behind_proxy ? 'Behind Proxy' : 'Direct Connection'}</span>
               </div>
             </div>
@@ -433,11 +434,11 @@ function renderNodeSubTab(node, locations, username, isOnline, healthInfo) {
           
           <div class="config-actions">
             <button class="btn btn-ghost" id="show-config-btn">
-              <span class="round-icon">description</span>
+              ${icons.description}
               View Configuration
             </button>
             <button class="btn btn-ghost" id="show-deploy-btn">
-              <span class="round-icon">terminal</span>
+              ${icons.terminal}
               Deploy Command
             </button>
           </div>

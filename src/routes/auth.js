@@ -1,5 +1,6 @@
 import { setToken } from '../utils/api.js';
 import { getBranding } from '../utils/branding.js';
+import { icons, icon } from '../utils/icons.js';
 
 const OAUTH_ICONS = {
   discord: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>',
@@ -18,174 +19,218 @@ const OAUTH_ICONS = {
   bitbucket: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M.778 1.213a.768.768 0 0 0-.768.892l3.263 19.81c.084.5.515.868 1.022.873H19.95a.772.772 0 0 0 .77-.646l3.27-20.03a.768.768 0 0 0-.768-.891zM14.52 15.53H9.522L8.17 8.466h7.561z"/></svg>'
 };
 
+const SVG_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const SVG_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+const IC = {
+  arrow: icon('chevron_right', 16),
+  check: icon('check', 16),
+  send: icon('send', 16),
+  info: icon('info', 16),
+  mail: icon('mail', 16),
+  errBig: icon('error', 24),
+  okBig: icon('check_circle', 24),
+};
+
+function pwField(id, label, placeholder, attrs = '') {
+  return `
+    <div class="field">
+      <label class="field-label" for="${id}">${label}</label>
+      <div class="field-pw-wrap">
+        <input type="password" id="${id}" class="field-input" placeholder="${placeholder}" required ${attrs}>
+        <button type="button" class="pw-toggle" aria-label="Toggle password visibility">${SVG_EYE}</button>
+      </div>
+    </div>`;
+}
+
+function initPwToggles(container) {
+  container.querySelectorAll('.pw-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.previousElementSibling;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.innerHTML = show ? SVG_EYE_OFF : SVG_EYE;
+    });
+  });
+}
+
+function spin() {
+  return '<span class="spin"></span>';
+}
+
+function splitShell(rightContent, branding) {
+  return `
+    <div class="auth-split">
+      <div class="auth-brand">
+        <div class="brand-top">
+          <img src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
+          <span class="brand-name">${branding.name}</span>
+        </div>
+        <div class="brand-hero">
+          <div class="brand-tagline">Deploy, manage<br>and scale.</div>
+          <p class="brand-desc">The modern game server management panel built for speed and simplicity.</p>
+        </div>
+        <div class="brand-footer">&copy; ${new Date().getFullYear()} ${branding.name}</div>
+      </div>
+      <div class="auth-main">
+        <div class="auth-panel">
+          <div class="auth-panel-header">
+            <div class="mobile-logo">
+              <img src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="22" height="22">
+              <span>${branding.name}</span>
+            </div>
+            ${rightContent}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function statusPage(branding, { icon, title, subtitle, btnText, btnHref }) {
+  return splitShell(`
+    <div class="status-card">
+      ${icon}
+      <h2>${title}</h2>
+      <p>${subtitle}</p>
+      <a href="${btnHref}" class="btn-auth btn-fill">${btnText}</a>
+    </div>
+  `, branding);
+}
+
+function loaderPage(branding, title) {
+  return splitShell(`
+    <div class="status-card">
+      <div class="status-loader"></div>
+      <h2>${title}</h2>
+    </div>
+  `, branding);
+}
+
 export function renderAuth() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
   const branding = getBranding();
-  
-  app.innerHTML = `
-    <div class="auth-container" id="auth-container">
-      <div class="auth-card" id="auth-card">
-        <div class="auth-header" id="auth-header">
-          <div class="logo">
-            <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
-            <span class="logo-text">${branding.name}</span>
-          </div>
-          <p class="auth-subtitle">Welcome back</p>
-        </div>
-        
-        <div class="auth-tabs" id="auth-tabs">
-          <button class="tab-btn active" data-tab="login">Sign In</button>
-          <button class="tab-btn" data-tab="register">Sign Up</button>
-        </div>
-        
-        <form id="login-form" class="auth-form active">
-          <div class="form-group">
-            <label for="login-username">Username</label>
-            <div class="input-wrapper">
-              <span class="round-icon">person</span>
-              <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="login-password">Password</label>
-            <div class="input-wrapper">
-              <span class="round-icon">lock</span>
-              <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
-            </div>
-          </div>
-          
-          <div class="error-message" id="login-error"></div>
-          
-          <button type="submit" class="btn btn-primary btn-full" id="login-submit-btn">
-            <span>Sign In</span>
-            <span class="round-icon">arrow_forward</span>
-          </button>
-          
-          <div class="auth-links">
-            <button type="button" class="link-btn" id="forgot-password-btn">Forgot password?</button>
-          </div>
-          
-          <div class="oauth-section" id="oauth-section" style="display: none;">
-            <div class="oauth-divider">
-              <span>or continue with</span>
-            </div>
-            <div class="oauth-buttons" id="oauth-buttons"></div>
-          </div>
-        </form>
-        
-        <form id="register-form" class="auth-form">
-          <div class="form-group">
-            <label for="register-username">Username</label>
-            <div class="input-wrapper">
-              <span class="round-icon">person</span>
-              <input type="text" id="register-username" name="username" placeholder="Choose a username" required minlength="3" maxlength="20">
-            </div>
-            <small class="form-hint">3-20 characters</small>
-          </div>
-          
-          <div class="form-group" id="email-field-group" style="display: none;">
-            <label for="register-email">Email</label>
-            <div class="input-wrapper">
-              <span class="round-icon">email</span>
-              <input type="email" id="register-email" name="email" placeholder="Enter your email">
-            </div>
-            <small class="form-hint">Required for email verification</small>
-          </div>
-          
-          <div class="form-group">
-            <label for="register-password">Password</label>
-            <div class="input-wrapper">
-              <span class="round-icon">lock</span>
-              <input type="password" id="register-password" name="password" placeholder="Create a password" required minlength="6">
-            </div>
-            <small class="form-hint">Minimum 6 characters</small>
-          </div>
-          
-          <div class="form-group">
-            <label for="register-confirm">Confirm Password</label>
-            <div class="input-wrapper">
-              <span class="round-icon">lock</span>
-              <input type="password" id="register-confirm" name="confirm" placeholder="Confirm your password" required>
-            </div>
-          </div>
-          
-          <div id="captcha-container" style="display: none; margin-bottom: 16px;"></div>
-          
-          <div class="error-message" id="register-error"></div>
-          
-          <button type="submit" class="btn btn-primary btn-full" id="register-submit-btn">
-            <span>Create Account</span>
-            <span class="round-icon">arrow_forward</span>
-          </button>
-        </form>
-      </div>
+
+  app.innerHTML = splitShell(`
+    <h1 id="auth-title">Welcome back</h1>
+    <p class="auth-desc" id="auth-desc">Sign in to your account to continue</p>
+  </div>
+
+  <form id="login-form" class="auth-form active">
+    <div class="field">
+      <label class="field-label" for="login-username">Username</label>
+      <input type="text" id="login-username" class="field-input" placeholder="your-username" required>
     </div>
-  `;
-  
-  const tabs = app.querySelectorAll('.tab-btn');
+    ${pwField('login-password', 'Password', '••••••••')}
+
+    <div class="auth-error" id="login-error"></div>
+
+    <button type="submit" class="btn-auth btn-fill" id="login-submit-btn">
+      <span>Continue</span>
+      ${IC.arrow}
+    </button>
+
+    <div class="auth-footer-links">
+      <button type="button" class="foot-link" id="forgot-password-btn">Forgot password?</button>
+      <button type="button" class="foot-link" id="switch-to-register">Or sign up ${IC.arrow}</button>
+    </div>
+
+    <div class="oauth-block" id="oauth-section" style="display:none;">
+      <div class="oauth-line"><span>or</span></div>
+      <div class="oauth-grid" id="oauth-buttons"></div>
+    </div>
+  </form>
+
+  <form id="register-form" class="auth-form">
+    <div class="field">
+      <label class="field-label" for="register-username">Username</label>
+      <input type="text" id="register-username" class="field-input" placeholder="your-username" required minlength="3" maxlength="20">
+      <small class="field-hint">3-20 characters, letters, numbers, underscore</small>
+    </div>
+
+    <div class="field" id="email-field-group" style="display:none;">
+      <label class="field-label" for="register-email">Email</label>
+      <input type="email" id="register-email" class="field-input" placeholder="you@example.com">
+      <small class="field-hint">Required for verification</small>
+    </div>
+
+    ${pwField('register-password', 'Password', '••••••••', 'minlength="8"')}
+    ${pwField('register-confirm', 'Confirm Password', '••••••••')}
+
+    <div id="captcha-container" style="display:none;margin-bottom:16px;"></div>
+
+    <div class="auth-error" id="register-error"></div>
+
+    <button type="submit" class="btn-auth btn-fill" id="register-submit-btn">
+      <span>Create Account</span>
+      ${IC.arrow}
+    </button>
+
+    <div class="auth-footer-links">
+      <button type="button" class="foot-link" id="switch-to-login">Or sign in ${IC.arrow}</button>
+    </div>
+  </form>
+  `, branding);
+
+  initPwToggles(app);
+
   const loginForm = app.querySelector('#login-form');
   const registerForm = app.querySelector('#register-form');
-  
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      
-      if (tab.dataset.tab === 'login') {
-        loginForm.classList.add('active');
-        registerForm.classList.remove('active');
-      } else {
-        registerForm.classList.add('active');
-        loginForm.classList.remove('active');
-      }
-    });
-  });
-  
+  const headerEl = app.querySelector('#auth-title');
+  const descEl = app.querySelector('#auth-desc');
+
+  function showLogin() {
+    loginForm.classList.add('active');
+    registerForm.classList.remove('active');
+    if (headerEl) headerEl.textContent = 'Welcome back';
+    if (descEl) descEl.textContent = 'Sign in to your account to continue';
+  }
+
+  function showRegister() {
+    registerForm.classList.add('active');
+    loginForm.classList.remove('active');
+    if (headerEl) headerEl.textContent = 'Get started';
+    if (descEl) descEl.textContent = 'Create a new account';
+  }
+
+  app.querySelector('#switch-to-register').addEventListener('click', showRegister);
+  app.querySelector('#switch-to-login').addEventListener('click', showLogin);
+
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = loginForm.querySelector('#login-username').value;
     const password = loginForm.querySelector('#login-password').value;
     const errorEl = loginForm.querySelector('#login-error');
-    const btn = loginForm.querySelector('button[type="submit"]');
-    
+    const btn = loginForm.querySelector('#login-submit-btn');
+
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
-    
+    btn.innerHTML = spin();
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      
       const data = await res.json();
-      
       if (data.error) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Sign In</span><span class="round-icon">arrow_forward</span>';
+        btn.innerHTML = `<span>Continue</span>${IC.arrow}`;
         return;
       }
-      
-      if (data.requires2FA) {
-        render2FAScreen(username, password);
-        return;
-      }
-      
+      if (data.requires2FA) { render2FAScreen(username, password); return; }
       setToken(data.token);
-      
       window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Sign In</span><span class="round-icon">arrow_forward</span>';
+      btn.innerHTML = `<span>Continue</span>${IC.arrow}`;
     }
   });
-  
+
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = registerForm.querySelector('#register-username').value;
@@ -193,52 +238,45 @@ export function renderAuth() {
     const password = registerForm.querySelector('#register-password').value;
     const confirm = registerForm.querySelector('#register-confirm').value;
     const errorEl = registerForm.querySelector('#register-error');
-    const btn = registerForm.querySelector('button[type="submit"]');
-    
+    const btn = registerForm.querySelector('#register-submit-btn');
+
     if (password !== confirm) {
       errorEl.textContent = 'Passwords do not match';
       errorEl.style.display = 'block';
       return;
     }
-    
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
-    
+    btn.innerHTML = spin();
     try {
       const captchaToken = window.turnstile ? window.turnstile.getResponse(turnstileWidgetId) : null;
-      
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password, captchaToken })
       });
-      
       const data = await res.json();
-      
       if (data.error) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Create Account</span><span class="round-icon">arrow_forward</span>';
+        btn.innerHTML = `<span>Create Account</span>${IC.arrow}`;
         if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
         return;
       }
-      
       setToken(data.token);
-      
       window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Create Account</span><span class="round-icon">arrow_forward</span>';
+      btn.innerHTML = `<span>Create Account</span>${IC.arrow}`;
       if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
     }
   });
-  
+
   loadOAuthProviders();
   checkEmailVerificationRequired();
-  
+
   document.getElementById('forgot-password-btn').addEventListener('click', () => {
     renderForgotPassword();
   });
@@ -259,9 +297,7 @@ async function checkEmailVerificationRequired() {
     if (data.registration?.captcha && data.registration?.captchaSiteKey) {
       loadCaptchaWidget(data.registration.captchaSiteKey);
     }
-  } catch (e) {
-    // Ignore - email field will be optional
-  }
+  } catch (e) {}
 }
 
 let turnstileWidgetId = null;
@@ -270,12 +306,10 @@ function loadCaptchaWidget(siteKey) {
   const container = document.getElementById('captcha-container');
   if (!container) return;
   container.style.display = 'block';
-  
   if (window.turnstile) {
     turnstileWidgetId = window.turnstile.render(container, { sitekey: siteKey, theme: 'dark' });
     return;
   }
-  
   const script = document.createElement('script');
   script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
   script.async = true;
@@ -289,21 +323,18 @@ async function loadOAuthProviders() {
   try {
     const res = await fetch('/api/auth/oauth/providers');
     const data = await res.json();
-    
     if (data.providers && data.providers.length > 0) {
       const section = document.getElementById('oauth-section');
       const container = document.getElementById('oauth-buttons');
-      
       if (section && container) {
         section.style.display = 'block';
         container.innerHTML = data.providers.map(p => `
-          <button type="button" class="oauth-btn oauth-${p.type}" data-provider="${p.id}">
-            ${OAUTH_ICONS[p.type] || '<span class="round-icon">login</span>'}
+          <button type="button" class="oauth-pill" data-provider="${p.id}">
+            ${OAUTH_ICONS[p.type] || ''}
             <span>${p.name}</span>
           </button>
         `).join('');
-        
-        container.querySelectorAll('.oauth-btn').forEach(btn => {
+        container.querySelectorAll('.oauth-pill').forEach(btn => {
           btn.addEventListener('click', () => {
             window.location.href = `/api/auth/oauth/${btn.dataset.provider}`;
           });
@@ -318,43 +349,26 @@ async function loadOAuthProviders() {
 export function renderAuthCallback() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
-  
+  const branding = getBranding();
+
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
   const error = params.get('error');
-  
+
   if (error) {
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-            <h2>Authentication Failed</h2>
-            <p class="auth-subtitle">${getErrorMessage(error)}</p>
-          </div>
-          <a href="/auth" class="btn btn-primary btn-full">
-            <span>Try Again</span>
-          </a>
-        </div>
-      </div>
-    `;
+    app.innerHTML = statusPage(branding, {
+      icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+      title: 'Authentication Failed',
+      subtitle: getErrorMessage(error),
+      btnText: 'Try Again',
+      btnHref: '/auth'
+    });
     return;
   }
-  
+
   if (token) {
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <span class="round-icon spinning" style="font-size: 48px;">sync</span>
-            <h2>Signing in...</h2>
-          </div>
-        </div>
-      </div>
-    `;
-    
+    app.innerHTML = loaderPage(branding, 'Signing in...');
     setToken(token);
-    
     fetch('/api/servers', {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(res => res.json()).then(() => {
@@ -382,114 +396,90 @@ function render2FAScreen(username, password) {
   const app = document.getElementById('app');
   app.className = 'auth-page';
   const branding = getBranding();
-  
-  app.innerHTML = `
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-header">
-          <div class="logo">
-            <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
-            <span class="logo-text">${branding.name}</span>
-          </div>
-          <p class="auth-subtitle">Two-Factor Authentication</p>
-        </div>
-        
-        <form id="2fa-form" class="auth-form active">
-          <p class="form-info">
-            <span class="round-icon">email</span>
-            A verification code has been sent to your email.
-          </p>
-          
-          <div class="form-group">
-            <label for="2fa-code">Verification Code</label>
-            <div class="input-wrapper">
-              <span class="round-icon">pin</span>
-              <input type="text" id="2fa-code" name="code" placeholder="Enter 6-digit code" 
-                     required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code">
-            </div>
-          </div>
-          
-          <div class="error-message" id="2fa-error"></div>
-          
-          <button type="submit" class="btn btn-primary btn-full" id="2fa-submit-btn">
-            <span>Verify</span>
-            <span class="round-icon">check</span>
-          </button>
-          
-          <div class="auth-links">
-            <button type="button" class="link-btn" id="resend-code-btn">Resend Code</button>
-            <span class="divider">•</span>
-            <button type="button" class="link-btn" id="back-to-login-btn">Back to Login</button>
-          </div>
-        </form>
-      </div>
+
+  app.innerHTML = splitShell(`
+    <h1>Two-Factor Auth</h1>
+    <p class="auth-desc">Verify your identity to continue</p>
+  </div>
+
+  <form id="2fa-form" class="auth-form active">
+    <div class="auth-notice">
+      ${IC.mail}
+      A verification code has been sent to your email.
     </div>
-  `;
-  
+
+    <div class="field">
+      <label class="field-label" for="2fa-code">Verification Code</label>
+      <input type="text" id="2fa-code" class="field-input field-code" placeholder="000000"
+             required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code">
+    </div>
+
+    <div class="auth-error" id="2fa-error"></div>
+
+    <button type="submit" class="btn-auth btn-fill" id="2fa-submit-btn">
+      <span>Verify</span>
+      ${IC.check}
+    </button>
+
+    <div class="auth-footer-links">
+      <button type="button" class="foot-link" id="resend-code-btn">Resend Code</button>
+      <span class="dot">·</span>
+      <button type="button" class="foot-link" id="back-to-login-btn">Back</button>
+    </div>
+  </form>
+  `, branding);
+
   const form = document.getElementById('2fa-form');
   const errorEl = document.getElementById('2fa-error');
   const codeInput = document.getElementById('2fa-code');
-  
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const code = codeInput.value.trim();
     const btn = document.getElementById('2fa-submit-btn');
-    
     if (!/^\d{6}$/.test(code)) {
       errorEl.textContent = 'Please enter a valid 6-digit code';
       errorEl.style.display = 'block';
       return;
     }
-    
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
-    
+    btn.innerHTML = spin();
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, twoFactorCode: code })
       });
-      
       const data = await res.json();
-      
       if (data.error) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Verify</span><span class="round-icon">check</span>';
-        
-        if (data.codeExpired) {
-          codeInput.value = '';
-        }
+        btn.innerHTML = `<span>Verify</span>${IC.check}`;
+        if (data.codeExpired) codeInput.value = '';
         return;
       }
-      
       setToken(data.token);
-      
       window.router.navigateTo('/dashboard');
     } catch (err) {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
       btn.disabled = false;
-      btn.innerHTML = '<span>Verify</span><span class="round-icon">check</span>';
+      btn.innerHTML = `<span>Verify</span>${IC.check}`;
     }
   });
-  
+
   document.getElementById('resend-code-btn').addEventListener('click', async () => {
     const btn = document.getElementById('resend-code-btn');
     btn.disabled = true;
     btn.textContent = 'Sending...';
-    
     try {
       const res = await fetch('/api/auth/2fa/resend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      
       const data = await res.json();
-      
       if (data.error) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
@@ -498,187 +488,125 @@ function render2FAScreen(username, password) {
         errorEl.style.display = 'none';
         codeInput.value = '';
         codeInput.focus();
-        
-        const info = document.querySelector('.form-info');
-        if (info) {
-          info.innerHTML = '<span class="round-icon">check_circle</span> New code sent to your email.';
-          info.classList.add('success');
+        const notice = document.querySelector('.auth-notice');
+        if (notice) {
+          notice.innerHTML = `${IC.check} New code sent to your email.`;
+          notice.classList.add('notice-ok');
         }
       }
     } catch (err) {
       errorEl.textContent = 'Failed to resend code';
       errorEl.style.display = 'block';
     }
-    
     btn.disabled = false;
     btn.textContent = 'Resend Code';
   });
-  
-  document.getElementById('back-to-login-btn').addEventListener('click', () => {
-    renderAuth();
-  });
-  
+
+  document.getElementById('back-to-login-btn').addEventListener('click', () => renderAuth());
   codeInput.focus();
 }
 
 export async function renderVerifyEmail() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
-  
+  const branding = getBranding();
+
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
-  
+
   if (!token) {
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-            <h2>Invalid Link</h2>
-            <p class="auth-subtitle">No verification token provided.</p>
-          </div>
-          <a href="/auth" class="btn btn-primary btn-full">
-            <span>Go to Login</span>
-          </a>
-        </div>
-      </div>
-    `;
+    app.innerHTML = statusPage(branding, {
+      icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+      title: 'Invalid Link',
+      subtitle: 'No verification token provided.',
+      btnText: 'Go to Login',
+      btnHref: '/auth'
+    });
     return;
   }
-  
-  app.innerHTML = `
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-header">
-          <span class="round-icon spinning" style="font-size: 48px;">sync</span>
-          <h2>Verifying email...</h2>
-        </div>
-      </div>
-    </div>
-  `;
-  
+
+  app.innerHTML = loaderPage(branding, 'Verifying email...');
+
   try {
     const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
     const data = await res.json();
-    
     if (data.success) {
-      app.innerHTML = `
-        <div class="auth-container">
-          <div class="auth-card">
-            <div class="auth-header">
-              <span class="round-icon" style="font-size: 48px; color: var(--success);">check_circle</span>
-              <h2>Email Verified!</h2>
-              <p class="auth-subtitle">${data.message || 'Your email has been verified successfully.'}</p>
-            </div>
-            <a href="/dashboard" class="btn btn-primary btn-full">
-              <span>Go to Dashboard</span>
-            </a>
-          </div>
-        </div>
-      `;
+      app.innerHTML = statusPage(branding, {
+        icon: `<div class="status-card-icon icon-ok">${IC.okBig}</div>`,
+        title: 'Email Verified',
+        subtitle: data.message || 'Your email has been verified successfully.',
+        btnText: 'Go to Dashboard',
+        btnHref: '/dashboard'
+      });
     } else {
-      app.innerHTML = `
-        <div class="auth-container">
-          <div class="auth-card">
-            <div class="auth-header">
-              <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-              <h2>Verification Failed</h2>
-              <p class="auth-subtitle">${data.error || 'Unable to verify your email.'}</p>
-            </div>
-            <a href="/dashboard" class="btn btn-primary btn-full">
-              <span>Go to Dashboard</span>
-            </a>
-          </div>
-        </div>
-      `;
+      app.innerHTML = statusPage(branding, {
+        icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+        title: 'Verification Failed',
+        subtitle: data.error || 'Unable to verify your email.',
+        btnText: 'Go to Dashboard',
+        btnHref: '/dashboard'
+      });
     }
   } catch (e) {
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-            <h2>Connection Error</h2>
-            <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
-          </div>
-          <a href="${window.location.href}" class="btn btn-primary btn-full">
-            <span>Try Again</span>
-          </a>
-        </div>
-      </div>
-    `;
+    app.innerHTML = statusPage(branding, {
+      icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+      title: 'Connection Error',
+      subtitle: 'Unable to reach the server. Please try again.',
+      btnText: 'Try Again',
+      btnHref: window.location.href
+    });
   }
 }
 
 function renderForgotPassword() {
-  const branding = getBranding();
   const app = document.getElementById('app');
   app.className = 'auth-page';
-  
-  app.innerHTML = `
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-header">
-          <div class="logo">
-            <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
-            <span class="logo-text">${branding.name}</span>
-          </div>
-          <p class="auth-subtitle">Reset your password</p>
-        </div>
-        
-        <form id="forgot-form" class="auth-form active">
-          <p class="form-info">
-            <span class="round-icon">info</span>
-            Enter your email address and we'll send you a link to reset your password.
-          </p>
-          
-          <div class="form-group">
-            <label for="forgot-email">Email</label>
-            <div class="input-wrapper">
-              <span class="round-icon">email</span>
-              <input type="email" id="forgot-email" name="email" placeholder="Enter your email" required>
-            </div>
-          </div>
-          
-          <div class="error-message" id="forgot-error"></div>
-          <div class="success-message" id="forgot-success" style="display: none;"></div>
-          
-          <button type="submit" class="btn btn-primary btn-full" id="forgot-submit-btn">
-            <span>Send Reset Link</span>
-            <span class="round-icon">send</span>
-          </button>
-          
-          <div class="auth-links">
-            <button type="button" class="link-btn" id="back-to-login-btn">Back to Login</button>
-          </div>
-        </form>
-      </div>
+  const branding = getBranding();
+
+  app.innerHTML = splitShell(`
+    <h1>Reset password</h1>
+    <p class="auth-desc">We'll send you a link to reset it</p>
+  </div>
+
+  <form id="forgot-form" class="auth-form active">
+    <div class="field">
+      <label class="field-label" for="forgot-email">Email</label>
+      <input type="email" id="forgot-email" class="field-input" placeholder="you@example.com" required>
     </div>
-  `;
-  
+
+    <div class="auth-error" id="forgot-error"></div>
+    <div class="auth-success" id="forgot-success" style="display:none;"></div>
+
+    <button type="submit" class="btn-auth btn-fill" id="forgot-submit-btn">
+      <span>Send Reset Link</span>
+      ${IC.send}
+    </button>
+
+    <div class="auth-footer-links">
+      <button type="button" class="foot-link" id="back-to-login-btn">Back to Login</button>
+    </div>
+  </form>
+  `, branding);
+
   const form = document.getElementById('forgot-form');
   const errorEl = document.getElementById('forgot-error');
   const successEl = document.getElementById('forgot-success');
-  
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('forgot-email').value.trim();
     const btn = document.getElementById('forgot-submit-btn');
-    
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = spin();
     errorEl.style.display = 'none';
     successEl.style.display = 'none';
-    
     try {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-      
       const data = await res.json();
-      
       if (data.error) {
         errorEl.textContent = data.error;
         errorEl.style.display = 'block';
@@ -691,186 +619,122 @@ function renderForgotPassword() {
       errorEl.textContent = 'Connection error. Please try again.';
       errorEl.style.display = 'block';
     }
-    
     btn.disabled = false;
-    btn.innerHTML = '<span>Send Reset Link</span><span class="round-icon">send</span>';
+    btn.innerHTML = `<span>Send Reset Link</span>${IC.send}`;
   });
-  
-  document.getElementById('back-to-login-btn').addEventListener('click', () => {
-    renderAuth();
-  });
+
+  document.getElementById('back-to-login-btn').addEventListener('click', () => renderAuth());
 }
 
 export async function renderResetPassword() {
   const app = document.getElementById('app');
   app.className = 'auth-page';
   const branding = getBranding();
-  
+
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
-  
+
   if (!token) {
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-            <h2>Invalid Link</h2>
-            <p class="auth-subtitle">No reset token provided.</p>
-          </div>
-          <a href="/auth" class="btn btn-primary btn-full">
-            <span>Go to Login</span>
-          </a>
-        </div>
-      </div>
-    `;
+    app.innerHTML = statusPage(branding, {
+      icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+      title: 'Invalid Link',
+      subtitle: 'No reset token provided.',
+      btnText: 'Go to Login',
+      btnHref: '/auth'
+    });
     return;
   }
-  
-  app.innerHTML = `
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-header">
-          <span class="round-icon spinning" style="font-size: 48px;">sync</span>
-          <h2>Validating...</h2>
-        </div>
-      </div>
-    </div>
-  `;
-  
+
+  app.innerHTML = loaderPage(branding, 'Validating...');
+
   try {
     const res = await fetch(`/api/auth/reset-password/validate?token=${encodeURIComponent(token)}`);
     const data = await res.json();
-    
+
     if (!data.valid) {
-      app.innerHTML = `
-        <div class="auth-container">
-          <div class="auth-card">
-            <div class="auth-header">
-              <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-              <h2>Invalid Link</h2>
-              <p class="auth-subtitle">${data.error || 'This reset link is invalid or has expired.'}</p>
-            </div>
-            <a href="/auth" class="btn btn-primary btn-full">
-              <span>Go to Login</span>
-            </a>
-          </div>
-        </div>
-      `;
+      app.innerHTML = statusPage(branding, {
+        icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+        title: 'Invalid Link',
+        subtitle: data.error || 'This reset link is invalid or has expired.',
+        btnText: 'Go to Login',
+        btnHref: '/auth'
+      });
       return;
     }
-    
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <div class="logo">
-              <img class="brand-icon" src="${branding.logo || '/favicon.svg'}" alt="${branding.name}" width="28" height="28">
-              <span class="logo-text">${branding.name}</span>
-            </div>
-            <p class="auth-subtitle">Reset password for <strong>${data.username}</strong></p>
-          </div>
-          
-          <form id="reset-form" class="auth-form active">
-            <div class="form-group">
-              <label for="new-password">New Password</label>
-              <div class="input-wrapper">
-                <span class="round-icon">lock</span>
-                <input type="password" id="new-password" name="password" placeholder="Enter new password" required minlength="6">
-              </div>
-              <small class="form-hint">Minimum 6 characters</small>
-            </div>
-            
-            <div class="form-group">
-              <label for="confirm-password">Confirm Password</label>
-              <div class="input-wrapper">
-                <span class="round-icon">lock</span>
-                <input type="password" id="confirm-password" name="confirm" placeholder="Confirm new password" required>
-              </div>
-            </div>
-            
-            <div class="error-message" id="reset-error"></div>
-            
-            <button type="submit" class="btn btn-primary btn-full" id="reset-submit-btn">
-              <span>Reset Password</span>
-              <span class="round-icon">check</span>
-            </button>
-          </form>
-        </div>
-      </div>
-    `;
-    
+
+    app.innerHTML = splitShell(`
+      <h1>New password</h1>
+      <p class="auth-desc">Reset password for <strong>${data.username}</strong></p>
+    </div>
+
+    <form id="reset-form" class="auth-form active">
+      ${pwField('new-password', 'New Password', '••••••••', 'minlength="8"')}
+      ${pwField('confirm-password', 'Confirm Password', '••••••••')}
+
+      <div class="auth-error" id="reset-error"></div>
+
+      <button type="submit" class="btn-auth btn-fill" id="reset-submit-btn">
+        <span>Reset Password</span>
+        ${IC.check}
+      </button>
+    </form>
+    `, branding);
+
+    initPwToggles(app);
+
     const form = document.getElementById('reset-form');
     const errorEl = document.getElementById('reset-error');
-    
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const password = document.getElementById('new-password').value;
       const confirm = document.getElementById('confirm-password').value;
       const btn = document.getElementById('reset-submit-btn');
-      
+
       if (password !== confirm) {
         errorEl.textContent = 'Passwords do not match';
         errorEl.style.display = 'block';
         return;
       }
-      
       btn.disabled = true;
-      btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+      btn.innerHTML = spin();
       errorEl.style.display = 'none';
-      
       try {
         const res = await fetch('/api/auth/reset-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, password })
         });
-        
         const data = await res.json();
-        
         if (data.error) {
           errorEl.textContent = data.error;
           errorEl.style.display = 'block';
           btn.disabled = false;
-          btn.innerHTML = '<span>Reset Password</span><span class="round-icon">check</span>';
+          btn.innerHTML = `<span>Reset Password</span>${IC.check}`;
         } else {
-          app.innerHTML = `
-            <div class="auth-container">
-              <div class="auth-card">
-                <div class="auth-header">
-                  <span class="round-icon" style="font-size: 48px; color: var(--success);">check_circle</span>
-                  <h2>Password Reset!</h2>
-                  <p class="auth-subtitle">Your password has been reset successfully.</p>
-                </div>
-                <a href="/auth" class="btn btn-primary btn-full">
-                  <span>Sign In</span>
-                </a>
-              </div>
-            </div>
-          `;
+          app.innerHTML = statusPage(branding, {
+            icon: `<div class="status-card-icon icon-ok">${IC.okBig}</div>`,
+            title: 'Password Reset',
+            subtitle: 'Your password has been reset successfully.',
+            btnText: 'Sign In',
+            btnHref: '/auth'
+          });
         }
       } catch (err) {
         errorEl.textContent = 'Connection error. Please try again.';
         errorEl.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<span>Reset Password</span><span class="round-icon">check</span>';
+        btn.innerHTML = `<span>Reset Password</span>${IC.check}`;
       }
     });
-    
+
   } catch (e) {
-    app.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-header">
-            <span class="round-icon" style="font-size: 48px; color: var(--danger);">error</span>
-            <h2>Connection Error</h2>
-            <p class="auth-subtitle">Unable to reach the server. Please try again.</p>
-          </div>
-          <a href="${window.location.href}" class="btn btn-primary btn-full">
-            <span>Try Again</span>
-          </a>
-        </div>
-      </div>
-    `;
+    app.innerHTML = statusPage(branding, {
+      icon: `<div class="status-card-icon icon-error">${IC.errBig}</div>`,
+      title: 'Connection Error',
+      subtitle: 'Unable to reach the server. Please try again.',
+      btnText: 'Try Again',
+      btnHref: window.location.href
+    });
   }
 }

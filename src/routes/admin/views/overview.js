@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -61,7 +62,7 @@ export async function renderOverview(container, username, loadView) {
       <header class="dashboard-header">
         <div class="greeting">
           <div class="greeting-icon">
-            <span class="round-icon">manage_accounts</span>
+            ${icons.manage_accounts}
           </div>
           <div class="greeting-text">
             <h1>Welcome, <span class="highlight">${escapeHtml(username)}!</span></h1>
@@ -72,28 +73,28 @@ export async function renderOverview(container, username, loadView) {
 
       <div class="stats-grid" id="overview-stats">
         <div class="stat-card">
-          <div class="stat-icon"><span class="round-icon">dns</span></div>
+          <div class="stat-icon">${icons.dns}</div>
           <div class="stat-content">
             <span class="stat-value" id="stat-servers">-</span>
             <span class="stat-label">Servers</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon"><span class="round-icon">people</span></div>
+          <div class="stat-icon">${icons.people}</div>
           <div class="stat-content">
             <span class="stat-value" id="stat-users">-</span>
             <span class="stat-label">Users</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon"><span class="round-icon">hub</span></div>
+          <div class="stat-icon">${icons.hub}</div>
           <div class="stat-content">
             <span class="stat-value" id="stat-nodes">-</span>
             <span class="stat-label">Nodes</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon"><span class="round-icon">egg</span></div>
+          <div class="stat-icon">${icons.egg}</div>
           <div class="stat-content">
             <span class="stat-value" id="stat-eggs">-</span>
             <span class="stat-label">Eggs</span>
@@ -105,7 +106,7 @@ export async function renderOverview(container, username, loadView) {
         <div class="dashboard-section">
           <span class="round-icon corner-icon">monitor_heart</span>
           <div class="section-header">
-            <span class="round-icon">monitor_heart</span>
+            ${icons.monitor_heart}
             <h2>System</h2>
           </div>
           <div id="system-info">
@@ -116,7 +117,7 @@ export async function renderOverview(container, username, loadView) {
         <div class="dashboard-section">
           <span class="round-icon corner-icon">hub</span>
           <div class="section-header">
-            <span class="round-icon">hub</span>
+            ${icons.hub}
             <h2>Nodes</h2>
             <a class="muted" data-navigate="nodes">View All</a>
           </div>
@@ -130,7 +131,7 @@ export async function renderOverview(container, username, loadView) {
         <div class="dashboard-section">
           <span class="round-icon corner-icon">history</span>
           <div class="section-header">
-            <span class="round-icon">history</span>
+            ${icons.history}
             <h2>Recent Activity</h2>
             <a class="muted" data-navigate="logs">View All</a>
           </div>
@@ -142,7 +143,7 @@ export async function renderOverview(container, username, loadView) {
         <div class="dashboard-section">
           <span class="round-icon corner-icon">shield</span>
           <div class="section-header">
-            <span class="round-icon">shield</span>
+            ${icons.shield}
             <h2>Audit Log</h2>
             <a class="muted" data-navigate="logs">View All</a>
           </div>
@@ -155,7 +156,7 @@ export async function renderOverview(container, username, loadView) {
       <div class="dashboard-grid">
         <div class="dashboard-section">
           <a class="overview-item" href="https://sodiumpanel.github.io/panel/viewer.html">
-            <span class="round-icon">article</span>
+            ${icons.article}
             <div class="info">
               <div class="title">Documentation</div>
               <div class="description">You can view the documentation clicking here</div>
@@ -164,7 +165,7 @@ export async function renderOverview(container, username, loadView) {
         </div>
         <div class="dashboard-section">
           <a class="overview-item" href="https://github.com/sodiumpanel/panel">
-            <span class="round-icon">merge</span>
+            ${icons.merge}
             <div class="info">
               <div class="title">Github</div>
               <div class="description">Leave us an star on our Github repository</div>
@@ -306,7 +307,7 @@ async function loadNodesStatus() {
       target.innerHTML = `
         <div class="status-grid">
           <div class="status-item info">
-            <span class="round-icon">info</span>
+            ${icons.info}
             No nodes configured
           </div>
         </div>
@@ -325,7 +326,7 @@ async function loadNodesStatus() {
           return `
             <div class="status-item ${statusClass}" style="flex-direction: column; align-items: flex-start; gap: 6px;">
               <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                <span class="round-icon">${statusIcon}</span>
+                ${icons[statusIcon] || ""}
                 <span style="font-weight: 600; flex: 1;">${escapeHtml(node.name)}</span>
                 <span style="font-size: 11px; opacity: 0.8;">${node.servers || 0} servers</span>
               </div>
@@ -356,7 +357,7 @@ async function loadRecentActivity() {
       target.innerHTML = `
         <div class="activity-list">
           <div class="activity-item">
-            <span class="round-icon">info</span>
+            ${icons.info}
             <div class="activity-content">
               <span class="activity-title">No recent activity</span>
             </div>
@@ -370,7 +371,7 @@ async function loadRecentActivity() {
       <div class="activity-list">
         ${logs.map(log => `
           <div class="activity-item">
-            <span class="round-icon">${getActivityIcon(log.action)}</span>
+            ${icons[getActivityIcon(log.action)] || ""}
             <div class="activity-content">
               <span class="activity-title">${escapeHtml(log.username || 'Unknown')} — ${escapeHtml(log.action || '-')}</span>
               <span class="activity-time">${log.timestamp ? timeAgo(log.timestamp) : '-'}${log.ip ? ` · ${escapeHtml(log.ip)}` : ''}</span>
@@ -397,7 +398,7 @@ async function loadRecentAudit() {
       target.innerHTML = `
         <div class="activity-list">
           <div class="activity-item">
-            <span class="round-icon">info</span>
+            ${icons.info}
             <div class="activity-content">
               <span class="activity-title">No audit logs</span>
             </div>
@@ -411,7 +412,7 @@ async function loadRecentAudit() {
       <div class="activity-list">
         ${logs.map(log => `
           <div class="activity-item">
-            <span class="round-icon">${getAuditIcon(log.action)}</span>
+            ${icons[getAuditIcon(log.action)] || ""}
             <div class="activity-content">
               <span class="activity-title">${escapeHtml(log.adminUsername || 'Unknown')} — ${escapeHtml(log.action || '-')}</span>
               <span class="activity-time">${log.timestamp ? timeAgo(log.timestamp) : '-'}${log.targetType ? ` · ${escapeHtml(log.targetType)}` : ''}</span>

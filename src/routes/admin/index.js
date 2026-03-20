@@ -1,4 +1,5 @@
 import { state as appState } from '../../utils/state.js';
+import { icons, icon } from '../../utils/icons.js';
 import { api } from '../../utils/api.js';
 import { loadAdminPermissions } from '../../components/sidebar.js';
 import { state } from './state.js';
@@ -126,7 +127,7 @@ export async function loadView() {
     if (requiredPerm && !perms.includes('*') && !perms.includes(requiredPerm)) {
       container.innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">block</span>
+          ${icons.block}
           <h3>Not Found</h3>
           <p>The page you're looking for doesn't exist.</p>
         </div>

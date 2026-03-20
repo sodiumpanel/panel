@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -51,7 +52,7 @@ export async function renderIncidentsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Incidents' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-incident-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Incident
           </button>
         </div>
@@ -60,7 +61,7 @@ export async function renderIncidentsList(container, username, loadView) {
       <div class="admin-list">
         ${incidents.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">check_circle</span>
+            ${icons.check_circle}
             <h3>No Incidents</h3>
             <p>No incidents have been reported. That's a good thing!</p>
           </div>
@@ -175,7 +176,7 @@ export async function renderIncidentDetail(container, username, incidentId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-danger" id="delete-incident-btn">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
             Delete
           </button>
         </div>
@@ -229,7 +230,7 @@ export async function renderIncidentDetail(container, username, incidentId) {
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">
-                <span class="round-icon">save</span>
+                ${icons.save}
                 Save Changes
               </button>
             </div>
@@ -240,7 +241,7 @@ export async function renderIncidentDetail(container, username, incidentId) {
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3>Updates Timeline</h3>
             <button class="btn btn-sm btn-primary" id="add-update-btn">
-              <span class="round-icon">add</span>
+              ${icons.add}
               Add Update
             </button>
           </div>

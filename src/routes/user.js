@@ -1,4 +1,5 @@
 import { escapeHtml, escapeUrl } from '../utils/security.js';
+import { icons, icon } from '../utils/icons.js';
 import { state } from '../utils/state.js';
 
 export function renderUser(targetUsername) {
@@ -8,7 +9,7 @@ export function renderUser(targetUsername) {
   app.innerHTML = `
     <div class="user-container">
       <div class="loading-state">
-        <span class="round-icon spinning">sync</span>
+        ${icons.sync}
         <span>Loading profile...</span>
       </div>
     </div>
@@ -28,7 +29,7 @@ async function loadUserProfile(targetUsername) {
     if (data.error) {
       container.innerHTML = `
         <div class="error-state">
-          <span class="round-icon">error</span>
+          ${icons.error}
           <p>User not found</p>
           <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
         </div>
@@ -52,7 +53,7 @@ async function loadUserProfile(targetUsername) {
           <div class="user-info">
             <h1>${escapeHtml(user.displayName || user.username)}</h1>
             <span class="user-username">@${escapeHtml(user.username)}</span>
-            ${isPrivate ? '<span class="private-badge"><span class="round-icon">lock</span> Private Profile</span>' : ''}
+            ${isPrivate ? '<span class="private-badge">${icons.lock} Private Profile</span>' : ''}
           </div>
         </div>
         
@@ -65,14 +66,14 @@ async function loadUserProfile(targetUsername) {
         
         ${isPrivate ? `
           <div class="private-notice">
-            <span class="round-icon">visibility_off</span>
+            ${icons.visibility_off}
             <p>This profile is private</p>
           </div>
         ` : ''}
         
         ${!isPrivate && user.createdAt ? `
           <div class="user-meta">
-            <span class="round-icon">calendar_today</span>
+            ${icons.calendar_today}
             <span>Joined ${new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
           </div>
         ` : ''}
@@ -81,7 +82,7 @@ async function loadUserProfile(targetUsername) {
   } catch (err) {
     container.innerHTML = `
       <div class="error-state">
-        <span class="round-icon">wifi_off</span>
+        ${icons.wifi_off}
         <p>Connection error. Please try again.</p>
         <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
       </div>

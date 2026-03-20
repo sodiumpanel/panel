@@ -1,4 +1,5 @@
 import { getTheme, setTheme, saveTheme, getAvailableThemes } from '../utils/theme.js';
+import { icons, icon } from '../utils/icons.js';
 import { clearAuth, api } from '../utils/api.js';
 import { state } from '../utils/state.js';
 import * as modal from '../utils/modal.js';
@@ -10,50 +11,44 @@ export function renderSettings() {
   const username = state.username;
   
   app.innerHTML = `
-    <div class="settings-container">
-      <div class="settings-header">
+    <div class="st-page">
+      <div class="st-header">
         <h1>Settings</h1>
-        <p>Manage your account preferences</p>
+        <p>Manage your account and preferences</p>
       </div>
-      
-      <div class="settings-content">
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">palette</span>
-            <h3>Appearance</h3>
-          </div>
-          
-          <div class="theme-grid" id="theme-grid">
-            ${getAvailableThemes().map(t => `
-              <button class="theme-card ${getTheme() === t.id ? 'active' : ''}" data-theme="${t.id}">
-                <div class="theme-preview" data-preview="${t.id}">
-                  <div class="preview-sidebar"></div>
-                  <div class="preview-content">
-                    <div class="preview-header"></div>
-                    <div class="preview-cards">
-                      <div class="preview-card"></div>
-                      <div class="preview-card"></div>
+
+      <div class="st-sections">
+        <div class="st-group">
+          <div class="st-group-label">Appearance</div>
+          <div class="st-card">
+            <div class="st-themes" id="theme-grid">
+              ${getAvailableThemes().map(t => `
+                <button class="theme-card ${getTheme() === t.id ? 'active' : ''}" data-theme="${t.id}">
+                  <div class="theme-preview" data-preview="${t.id}">
+                    <div class="preview-sidebar"></div>
+                    <div class="preview-content">
+                      <div class="preview-header"></div>
+                      <div class="preview-cards">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <span class="theme-name">${t.name}</span>
-              </button>
-            `).join('')}
+                  <span class="theme-name">${t.name}</span>
+                </button>
+              `).join('')}
+            </div>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">notifications</span>
-            <h3>Notifications</h3>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title">Push Notifications</span>
-              <span class="setting-description">Receive notifications about activity</span>
-            </div>
-            <div class="setting-control">
+
+        <div class="st-group">
+          <div class="st-group-label">Notifications</div>
+          <div class="st-card">
+            <div class="st-row">
+              <div class="st-row-info">
+                <span class="st-row-title">Push Notifications</span>
+                <span class="st-row-desc">Receive notifications about activity</span>
+              </div>
               <label class="toggle">
                 <input type="checkbox" id="notifications-toggle" checked>
                 <span class="toggle-slider"></span>
@@ -61,130 +56,107 @@ export function renderSettings() {
             </div>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">security</span>
-            <h3>Security</h3>
-          </div>
-          
-          <div class="setting-item" id="2fa-setting">
-            <div class="setting-info">
-              <span class="setting-title">Two-Factor Authentication</span>
-              <span class="setting-description" id="2fa-description">Require email verification code on login</span>
-            </div>
-            <div class="setting-control">
+
+        <div class="st-group">
+          <div class="st-group-label">Security</div>
+          <div class="st-card">
+            <div class="st-row" id="2fa-setting">
+              <div class="st-row-info">
+                <span class="st-row-title">Two-Factor Authentication</span>
+                <span class="st-row-desc" id="2fa-description">Require email verification code on login</span>
+              </div>
               <label class="toggle">
                 <input type="checkbox" id="2fa-toggle" disabled>
                 <span class="toggle-slider"></span>
               </label>
             </div>
-          </div>
-          
-          <div class="setting-item clickable" id="change-password-btn">
-            <div class="setting-info">
-              <span class="setting-title">Change Password</span>
-              <span class="setting-description">Update your account password</span>
+            <div class="st-row clickable" id="change-password-btn">
+              <div class="st-row-info">
+                <span class="st-row-title">Change Password</span>
+                <span class="st-row-desc">Update your account password</span>
+              </div>
+              ${icons.chevron_right}
             </div>
-            <span class="round-icon">chevron_right</span>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">devices</span>
-            <h3>Active Sessions</h3>
-          </div>
-          
-          <div class="sessions-container">
-            <div class="sessions-header">
-              <p class="setting-description">Devices and browsers where you're currently logged in</p>
+
+        <div class="st-group">
+          <div class="st-group-label">Active Sessions</div>
+          <div class="st-card">
+            <div class="st-card-head">
+              <span class="st-card-desc">Devices and browsers where you're currently logged in</span>
               <button class="btn btn-danger btn-sm" id="revoke-all-sessions-btn">
-                <span class="round-icon">logout</span>
+                ${icons.logout}
                 <span>Revoke All Others</span>
               </button>
             </div>
-            <div class="sessions-list" id="sessions-list">
+            <div class="st-card-body" id="sessions-list">
               <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">key</span>
-            <h3>SSH Keys</h3>
-          </div>
-          
-          <div class="api-keys-container">
-            <div class="api-keys-header">
-              <p class="setting-description">SSH keys for SFTP authentication</p>
+
+        <div class="st-group">
+          <div class="st-group-label">SSH Keys</div>
+          <div class="st-card">
+            <div class="st-card-head">
+              <span class="st-card-desc">SSH keys for SFTP authentication</span>
               <button class="btn btn-primary btn-sm" id="add-ssh-key-btn">
-                <span class="round-icon">add</span>
+                ${icons.add}
                 <span>Add Key</span>
               </button>
             </div>
-            <div class="api-keys-list" id="ssh-keys-list">
+            <div class="st-card-body" id="ssh-keys-list">
               <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">vpn_key</span>
-            <h3>API Keys</h3>
-          </div>
-          
-          <div class="api-keys-container">
-            <div class="api-keys-header">
-              <p class="setting-description">Manage API keys to access the Sodium API programmatically</p>
+
+        <div class="st-group">
+          <div class="st-group-label">API Keys</div>
+          <div class="st-card">
+            <div class="st-card-head">
+              <span class="st-card-desc">Manage API keys to access the Sodium API programmatically</span>
               <button class="btn btn-primary btn-sm" id="create-api-key-btn">
-                <span class="round-icon">add</span>
+                ${icons.add}
                 <span>Create Key</span>
               </button>
             </div>
-            <div class="api-keys-list" id="api-keys-list">
+            <div class="st-card-body" id="api-keys-list">
               <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <div class="section-header">
-            <span class="round-icon">webhook</span>
-            <h3>Webhooks</h3>
-          </div>
-          
-          <div class="webhooks-container">
-            <div class="webhooks-header">
-              <p class="setting-description">Send notifications to Discord, Slack, or custom URLs when events occur</p>
+
+        <div class="st-group">
+          <div class="st-group-label">Webhooks</div>
+          <div class="st-card">
+            <div class="st-card-head">
+              <span class="st-card-desc">Send notifications to Discord, Slack, or custom URLs when events occur</span>
               <button class="btn btn-primary btn-sm" id="create-webhook-btn">
-                <span class="round-icon">add</span>
+                ${icons.add}
                 <span>Add Webhook</span>
               </button>
             </div>
-            <div class="webhooks-list" id="webhooks-list">
+            <div class="st-card-body" id="webhooks-list">
               <div class="loading-spinner"></div>
             </div>
           </div>
         </div>
-        
-        <div class="settings-section danger-section">
-          <div class="section-header">
-            <span class="round-icon">warning</span>
-            <h3>Danger Zone</h3>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title">Sign Out</span>
-              <span class="setting-description">Sign out of your account on this device</span>
+
+        <div class="st-group">
+          <div class="st-group-label danger">Danger Zone</div>
+          <div class="st-card st-card-danger">
+            <div class="st-row">
+              <div class="st-row-info">
+                <span class="st-row-title">Sign Out</span>
+                <span class="st-row-desc">Sign out of your account on this device</span>
+              </div>
+              <button class="btn btn-danger" id="logout-btn">
+                ${icons.logout}
+                <span>Sign Out</span>
+              </button>
             </div>
-            <button class="btn btn-danger" id="logout-btn">
-              <span class="round-icon">logout</span>
-              <span>Sign Out</span>
-            </button>
           </div>
         </div>
       </div>
@@ -196,14 +168,14 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>Create API Key</h3>
           <button class="modal-close" id="close-api-key-modal">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <form id="api-key-form">
           <div class="form-group">
             <label for="api-key-name">Key Name</label>
             <div class="input-wrapper">
-              <span class="round-icon">label</span>
+              ${icons.label}
               <input type="text" id="api-key-name" required maxlength="50" placeholder="My API Key">
             </div>
           </div>
@@ -226,18 +198,18 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>API Key Created</h3>
           <button class="modal-close" id="close-api-key-created-modal">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <div class="api-key-created-content">
           <div class="warning-box">
-            <span class="round-icon">warning</span>
+            ${icons.warning}
             <p>Make sure to copy your API key now. You won't be able to see it again!</p>
           </div>
           <div class="api-key-display">
             <code id="created-api-key-token"></code>
             <button type="button" class="btn btn-icon" id="copy-api-key-btn">
-              <span class="round-icon">content_copy</span>
+              ${icons.content_copy}
             </button>
           </div>
         </div>
@@ -253,28 +225,28 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>Change Password</h3>
           <button class="modal-close" id="close-modal">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <form id="password-form">
           <div class="form-group">
             <label for="current-password">Current Password</label>
             <div class="input-wrapper">
-              <span class="round-icon">lock</span>
+              ${icons.lock}
               <input type="password" id="current-password" required>
             </div>
           </div>
           <div class="form-group">
             <label for="new-password">New Password</label>
             <div class="input-wrapper">
-              <span class="round-icon">lock</span>
+              ${icons.lock}
               <input type="password" id="new-password" required minlength="6">
             </div>
           </div>
           <div class="form-group">
             <label for="confirm-password">Confirm New Password</label>
             <div class="input-wrapper">
-              <span class="round-icon">lock</span>
+              ${icons.lock}
               <input type="password" id="confirm-password" required>
             </div>
           </div>
@@ -293,21 +265,21 @@ export function renderSettings() {
         <div class="modal-header">
           <h3>Add Webhook</h3>
           <button class="modal-close" id="close-webhook-modal">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <form id="webhook-form">
           <div class="form-group">
             <label for="webhook-name">Name</label>
             <div class="input-wrapper">
-              <span class="round-icon">label</span>
+              ${icons.label}
               <input type="text" id="webhook-name" required maxlength="50" placeholder="My Webhook">
             </div>
           </div>
           <div class="form-group">
             <label for="webhook-url">Webhook URL</label>
             <div class="input-wrapper">
-              <span class="round-icon">link</span>
+              ${icons.link}
               <input type="url" id="webhook-url" required placeholder="https://discord.com/api/webhooks/...">
             </div>
           </div>
@@ -402,7 +374,7 @@ export function renderSettings() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     try {
       const res = await api('/api/user/password', {
@@ -550,7 +522,7 @@ async function loadUserSessions() {
     if (!data.sessions || data.sessions.length === 0) {
       container.innerHTML = `
         <div class="empty-state small">
-          <span class="round-icon">devices</span>
+          ${icons.devices}
           <p>No active sessions</p>
         </div>
       `;
@@ -561,7 +533,7 @@ async function loadUserSessions() {
       <div class="list-item session-item" data-id="${session.id}">
         <div class="item-header">
           <div class="item-icon">
-            <span class="round-icon">${getDeviceIcon(session.userAgent)}</span>
+            ${icons[getDeviceIcon(session.userAgent)] || ""}
           </div>
           <div class="item-info">
             <span class="item-name">${session.current ? 'Current Session' : escapeHtml(parseUserAgent(session.userAgent))}</span>
@@ -572,7 +544,7 @@ async function loadUserSessions() {
           ${session.current 
             ? '<span class="badge badge-success">Current</span>' 
             : `<button class="btn btn-icon btn-sm btn-danger revoke-session-btn" title="Revoke">
-                <span class="round-icon">close</span>
+                ${icons.close}
               </button>`
           }
         </div>
@@ -690,7 +662,7 @@ async function loadSshKeys() {
     if (keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">key</span>
+          ${icons.key}
           <p>No SSH keys added</p>
         </div>
       `;
@@ -708,7 +680,7 @@ async function loadSshKeys() {
           </span>
         </div>
         <button class="btn btn-icon btn-danger delete-ssh-key-btn" data-id="${key.id}">
-          <span class="round-icon">delete</span>
+          ${icons.delete}
         </button>
       </div>
     `).join('');
@@ -729,7 +701,7 @@ async function loadSshKeys() {
   } catch (e) {
     list.innerHTML = `
       <div class="empty-state error">
-        <span class="round-icon">error</span>
+        ${icons.error}
         <p>Failed to load SSH keys</p>
       </div>
     `;
@@ -750,14 +722,14 @@ function setupSshKeysHandlers() {
         <div class="modal-header">
           <h3>Add SSH Key</h3>
           <button class="modal-close" onclick="this.closest('.modal').remove()">
-            <span class="round-icon">close</span>
+            ${icons.close}
           </button>
         </div>
         <form id="ssh-key-form">
           <div class="form-group">
             <label for="ssh-key-name-input">Key Name</label>
             <div class="input-wrapper">
-              <span class="round-icon">label</span>
+              ${icons.label}
               <input type="text" id="ssh-key-name-input" name="name" required placeholder="My Laptop" maxlength="50">
             </div>
           </div>
@@ -783,7 +755,7 @@ function setupSshKeysHandlers() {
       const btn = e.target.querySelector('button[type="submit"]');
       
       btn.disabled = true;
-      btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+      btn.innerHTML = '${icons.sync}';
       
       try {
         const res = await api('/api/user/ssh-keys', {
@@ -834,7 +806,7 @@ async function loadApiKeys() {
     if (!keysData.keys || keysData.keys.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <span class="round-icon">vpn_key</span>
+          ${icons.vpn_key}
           <p>No API keys yet</p>
         </div>
       `;
@@ -855,7 +827,7 @@ async function loadApiKeys() {
           ${key.permissions.length > 3 ? `<span class="permission-tag">+${key.permissions.length - 3}</span>` : ''}
         </div>
         <button class="btn btn-icon btn-danger delete-api-key-btn" data-id="${key.id}">
-          <span class="round-icon">delete</span>
+          ${icons.delete}
         </button>
       </div>
     `).join('');
@@ -879,7 +851,7 @@ async function loadApiKeys() {
     console.error('Failed to load API keys:', err);
     list.innerHTML = `
       <div class="empty-state error">
-        <span class="round-icon">error</span>
+        ${icons.error}
         <p>Failed to load API keys</p>
       </div>
     `;
@@ -926,9 +898,9 @@ function setupApiKeysHandlers() {
     const token = document.getElementById('created-api-key-token').textContent;
     navigator.clipboard.writeText(token);
     const btn = createdModal.querySelector('#copy-api-key-btn');
-    btn.innerHTML = '<span class="round-icon">check</span>';
+    btn.innerHTML = '${icons.check}';
     setTimeout(() => {
-      btn.innerHTML = '<span class="round-icon">content_copy</span>';
+      btn.innerHTML = '${icons.content_copy}';
     }, 2000);
   });
   
@@ -948,7 +920,7 @@ function setupApiKeysHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     try {
       const res = await api('/api/api-keys', {
@@ -999,7 +971,7 @@ async function loadWebhooks() {
     if (!data.webhooks || data.webhooks.length === 0) {
       container.innerHTML = `
         <div class="empty-state small">
-          <span class="round-icon">webhook</span>
+          ${icons.webhook}
           <p>No webhooks configured</p>
         </div>
       `;
@@ -1009,7 +981,7 @@ async function loadWebhooks() {
     container.innerHTML = data.webhooks.map(webhook => `
       <div class="list-item webhook-item" data-id="${webhook.id}">
         <div class="item-icon">
-          <span class="round-icon">${getWebhookIcon(webhook.type)}</span>
+          ${icons[getWebhookIcon(webhook.type)] || ""}
         </div>
         <div class="item-info">
           <span class="item-name">${escapeHtml(webhook.name)}</span>
@@ -1017,14 +989,14 @@ async function loadWebhooks() {
         </div>
         <div class="item-actions">
           <button class="btn btn-icon btn-sm test-webhook-btn" title="Test">
-            <span class="round-icon">send</span>
+            ${icons.send}
           </button>
           <label class="toggle small">
             <input type="checkbox" class="toggle-webhook-btn" ${webhook.enabled ? 'checked' : ''}>
             <span class="toggle-slider"></span>
           </label>
           <button class="btn btn-icon btn-sm btn-danger delete-webhook-btn" title="Delete">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
           </button>
         </div>
       </div>
@@ -1051,20 +1023,20 @@ async function loadWebhooks() {
         const item = e.target.closest('.webhook-item');
         const id = item.dataset.id;
         btn.disabled = true;
-        btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+        btn.innerHTML = '${icons.sync}';
         
         try {
           const res = await api(`/api/webhooks/${id}/test`, { method: 'POST' });
           const data = await res.json();
-          btn.innerHTML = '<span class="round-icon">check</span>';
+          btn.innerHTML = '${icons.check}';
           setTimeout(() => {
-            btn.innerHTML = '<span class="round-icon">send</span>';
+            btn.innerHTML = '${icons.send}';
             btn.disabled = false;
           }, 2000);
         } catch (err) {
-          btn.innerHTML = '<span class="round-icon">error</span>';
+          btn.innerHTML = '${icons.error}';
           setTimeout(() => {
-            btn.innerHTML = '<span class="round-icon">send</span>';
+            btn.innerHTML = '${icons.send}';
             btn.disabled = false;
           }, 2000);
         }
@@ -1150,7 +1122,7 @@ function setupWebhooksHandlers() {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon spinning">sync</span>';
+    btn.innerHTML = '${icons.sync}';
     
     try {
       const res = await api('/api/webhooks', {

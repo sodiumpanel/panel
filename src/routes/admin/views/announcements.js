@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -49,7 +50,7 @@ export async function renderAnnouncementsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Announcements' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-announcement-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Announcement
           </button>
         </div>
@@ -58,7 +59,7 @@ export async function renderAnnouncementsList(container, username, loadView) {
       <div class="admin-list">
         ${announcements.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">campaign</span>
+            ${icons.campaign}
             <p>No announcements yet</p>
           </div>
         ` : `

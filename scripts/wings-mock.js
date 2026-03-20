@@ -7,6 +7,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 import * as tar from 'tar';
 
 const PORT = 8080;
+const PANEL_PORT = 3000;
+const PANEL_TOKEN_ID = process.env.PANEL_TOKEN_ID || '';
+const PANEL_TOKEN = process.env.PANEL_TOKEN || '';
 const WINGS_VERSION = '1.11.13';
 const DATA_ROOT = path.resolve(process.env.WINGS_DATA || './wings-data');
 const BACKUP_DIR = path.join(DATA_ROOT, 'backups');
@@ -17,6 +20,26 @@ if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
 const servers = new Map();
 const activeDownloads = new Map();
 let downloadIdCounter = 0;
+
+function notifyPanelInstallComplete(uuid) {
+    if (!PANEL_TOKEN_ID || !PANEL_TOKEN) {
+        console.log(`[Install] No PANEL_TOKEN_ID/PANEL_TOKEN set, skipping callback for ${uuid}`);
+        return;
+    }
+    const url = `http://localhost:${PANEL_PORT}/api/remote/servers/${uuid}/install`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${PANEL_TOKEN_ID}.${PANEL_TOKEN}`,
+        },
+        body: JSON.stringify({ successful: true }),
+    }).then(r => {
+        console.log(`[Install] Panel callback for ${uuid}: ${r.status}`);
+    }).catch(err => {
+        console.error(`[Install] Panel callback failed for ${uuid}: ${err.message}`);
+    });
+}
 
 const LOG_TEMPLATES = [
     '[INFO] Server listening on 0.0.0.0:25565',
@@ -307,7 +330,15 @@ app.post('/api/servers', (req, res) => {
     } else {
         srv.config = details;
     }
-    if (details.start_on_completion) setTimeout(() => srv.start(), 1000);
+    srv.installing = true;
+    srv.pushLog('[Installer] Starting installation process...');
+    setTimeout(() => {
+        srv.pushLog('[Installer] Installation complete.');
+        srv.installing = false;
+        srv.broadcast('install completed', null);
+        notifyPanelInstallComplete(uuid);
+    }, 3000);
+    if (details.start_on_completion) setTimeout(() => srv.start(), 4000);
     res.status(202).send();
 });
 
@@ -419,6 +450,7 @@ app.post('/api/servers/:server/install', (req, res) => {
         srv.pushLog('[Installer] Installation complete.');
         srv.installing = false;
         srv.broadcast('install completed', null);
+        notifyPanelInstallComplete(srv.uuid);
     }, 3000);
     res.status(202).send();
 });
@@ -434,6 +466,7 @@ app.post('/api/servers/:server/reinstall', (req, res) => {
         srv.pushLog('[Installer] Reinstallation complete.');
         srv.installing = false;
         srv.broadcast('install completed', null);
+        notifyPanelInstallComplete(srv.uuid);
     }, 3000);
     res.status(202).send();
 });

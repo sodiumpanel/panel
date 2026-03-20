@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import { formatBytes } from '../../../utils/format.js';
 import { state } from '../state.js';
 
@@ -70,11 +71,11 @@ export function renderPagination(meta, tab) {
       
       <div class="pagination-center">
         <button class="page-btn" data-page="${meta.current_page - 1}" ${meta.current_page <= 1 ? 'disabled' : ''}>
-          <span class="round-icon">chevron_left</span>
+          ${icons.chevron_left}
         </button>
         <div class="page-numbers">${pageNumbers}</div>
         <button class="page-btn" data-page="${meta.current_page + 1}" ${meta.current_page >= meta.total_pages ? 'disabled' : ''}>
-          <span class="round-icon">chevron_right</span>
+          ${icons.chevron_right}
         </button>
       </div>
       
@@ -133,7 +134,7 @@ export function renderBreadcrumb(items) {
   return `
     <nav class="admin-breadcrumb">
       ${items.map((item, idx) => `
-        ${idx > 0 ? '<span class="round-icon">chevron_right</span>' : ''}
+        ${idx > 0 ? '${icons.chevron_right}' : ''}
         ${item.onClick ? `<a href="#" class="breadcrumb-item" data-action="${item.onClick}">${escapeHtml(item.label)}</a>` : `<span class="breadcrumb-item current">${escapeHtml(item.label)}</span>`}
       `).join('')}
     </nav>
@@ -154,9 +155,9 @@ export function setupBreadcrumbListeners(navigateToCallback) {
 export function renderSearchBox(tab, placeholder) {
   return `
     <div class="admin-search">
-      <span class="round-icon">search</span>
+      ${icons.search}
       <input type="text" id="admin-search-input" placeholder="${placeholder}" value="${escapeHtml(state.searchQuery[tab] || '')}" />
-      ${state.searchQuery[tab] ? `<button class="search-clear" id="admin-search-clear"><span class="round-icon">close</span></button>` : ''}
+      ${state.searchQuery[tab] ? `<button class="search-clear" id="admin-search-clear">${icons.close}</button>` : ''}
     </div>
   `;
 }

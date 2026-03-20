@@ -1,3 +1,4 @@
+import { icons, icon } from '../utils/icons.js';
 export function renderNotFound() {
   const app = document.getElementById('app');
   app.className = 'notfound-page';
@@ -9,7 +10,7 @@ export function renderNotFound() {
         <h1>Page Not Found</h1>
         <p>The page you're looking for doesn't exist or has been moved.</p>
         <a href="/dashboard" class="btn btn-primary">
-          <span class="round-icon">home</span>
+          ${icons.home}
           <span>Back to Dashboard</span>
         </a>
       </div>

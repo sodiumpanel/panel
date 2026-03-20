@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -17,7 +18,7 @@ export async function renderLocationsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Locations' }])}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-location-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Location
           </button>
         </div>
@@ -26,7 +27,7 @@ export async function renderLocationsList(container, username, loadView) {
       <div class="admin-list">
         ${data.locations.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">location_on</span>
+            ${icons.location_on}
             <p>No locations yet</p>
           </div>
         ` : `
@@ -34,7 +35,7 @@ export async function renderLocationsList(container, username, loadView) {
             ${data.locations.map(l => `
               <div class="location-card">
                 <div class="location-icon">
-                  <span class="round-icon">location_on</span>
+                  ${icons.location_on}
                 </div>
                 <div class="location-info">
                   <h3>${escapeHtml(l.short)}</h3>
@@ -42,7 +43,7 @@ export async function renderLocationsList(container, username, loadView) {
                 </div>
                 <div class="location-actions">
                   <button class="btn btn-sm btn-danger" onclick="deleteLocationAdmin('${l.id}')">
-                    <span class="round-icon">delete</span>
+                    ${icons.delete}
                   </button>
                 </div>
               </div>
@@ -70,7 +71,7 @@ function showLocationModal(username, loadView) {
       <div class="modal-header">
         <h2>Create Location</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="location-form" class="modal-form">

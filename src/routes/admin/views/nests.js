@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -10,12 +11,12 @@ const navigateTo = (...args) => window.adminNavigate(...args);
 
 function renderAdminEggIcon(egg) {
   if (!egg.icon) {
-    return '<span class="round-icon">egg_alt</span>';
+    return '${icons.egg_alt}';
   }
   
   // Check if it's a Material Icon name (no slashes, no dots)
   if (!egg.icon.includes('/') && !egg.icon.includes('.')) {
-    return `<span class="round-icon">${escapeHtml(egg.icon)}</span>`;
+    return `${icons[escapeHtml(egg.icon)] || ""}`;
   }
   
   // It's a URL (image)
@@ -23,7 +24,7 @@ function renderAdminEggIcon(egg) {
     return `<img src="${escapeHtml(egg.icon)}" alt="${escapeHtml(egg.name)}" onerror="this.outerHTML='<span class=\\'round-icon\\'>egg_alt</span>'" />`;
   }
   
-  return '<span class="round-icon">egg_alt</span>';
+  return '${icons.egg_alt}';
 }
 
 export async function renderNestsList(container, username, loadView) {
@@ -37,16 +38,16 @@ export async function renderNestsList(container, username, loadView) {
         ${renderBreadcrumb([{ label: 'Nests & Eggs' }])}
         <div class="admin-header-actions">
           <button class="btn btn-ghost" id="create-nest-btn">
-            <span class="round-icon">create_new_folder</span>
+            ${icons.create_new_folder}
             Create Nest
           </button>
           ${nests.length > 0 ? `
             <button class="btn btn-ghost" id="create-egg-btn">
-              <span class="round-icon">add</span>
+              ${icons.add}
               New Egg
             </button>
             <button class="btn btn-primary" id="import-egg-btn">
-              <span class="round-icon">upload</span>
+              ${icons.upload}
               Import Egg
             </button>
           ` : ''}
@@ -56,7 +57,7 @@ export async function renderNestsList(container, username, loadView) {
       <div class="admin-list">
         ${nests.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">egg</span>
+            ${icons.egg}
             <p>No nests yet. Create one to organize your eggs.</p>
           </div>
         ` : `
@@ -70,13 +71,13 @@ export async function renderNestsList(container, username, loadView) {
                   </div>
                   <div class="nest-actions">
                     <button class="btn btn-sm btn-ghost" onclick="editNestAdmin('${nest.id}')" title="Edit Nest">
-                      <span class="round-icon">edit</span>
+                      ${icons.edit}
                     </button>
                     <button class="btn btn-sm btn-ghost" onclick="addEggToNestAdmin('${nest.id}')" title="Add Egg">
-                      <span class="round-icon">add</span>
+                      ${icons.add}
                     </button>
                     <button class="btn btn-sm btn-danger" onclick="deleteNestAdmin('${nest.id}')" title="Delete Nest">
-                      <span class="round-icon">delete</span>
+                      ${icons.delete}
                     </button>
                   </div>
                 </div>
@@ -138,7 +139,7 @@ function showNestModal(username, nest = null, loadView) {
       <div class="modal-header">
         <h2>${nest ? 'Edit Nest' : 'Create Nest'}</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="nest-form" class="modal-form">
@@ -200,7 +201,7 @@ function showImportEggModal(username, nests, loadView) {
       <div class="modal-header">
         <h2>Import Egg</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="import-egg-form" class="modal-form">
@@ -215,11 +216,11 @@ function showImportEggModal(username, nests, loadView) {
           <label>Import Method</label>
           <div class="import-method-tabs">
             <button type="button" class="import-tab active" data-method="file">
-              <span class="round-icon">upload_file</span>
+              ${icons.upload_file}
               Upload File
             </button>
             <button type="button" class="import-tab" data-method="paste">
-              <span class="round-icon">content_paste</span>
+              ${icons.content_paste}
               Paste JSON
             </button>
           </div>
@@ -229,7 +230,7 @@ function showImportEggModal(username, nests, loadView) {
           <label>Egg File (.json)</label>
           <div class="file-upload-area" id="file-upload-area">
             <input type="file" name="eggFile" id="egg-file-input" accept=".json" hidden />
-            <span class="round-icon">cloud_upload</span>
+            ${icons.cloud_upload}
             <p>Click to select or drag & drop egg file</p>
             <span class="file-name" id="selected-file-name"></span>
           </div>
@@ -484,11 +485,11 @@ export async function renderEggDetail(container, username, eggId) {
         ])}
         <div class="admin-header-actions">
           <button class="btn btn-ghost" id="export-egg-btn">
-            <span class="round-icon">download</span>
+            ${icons.download}
             Export
           </button>
           <button class="btn btn-danger" id="delete-egg-btn">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
             Delete
           </button>
         </div>
@@ -817,7 +818,7 @@ function renderEggVariablesTab(content, egg, username) {
       <div class="card-header-flex">
         <h3>Environment Variables</h3>
         <button class="btn btn-primary btn-sm" id="add-variable-btn">
-          <span class="round-icon">add</span>
+          ${icons.add}
           Add Variable
         </button>
       </div>
@@ -826,7 +827,7 @@ function renderEggVariablesTab(content, egg, username) {
       <div class="variables-list" id="variables-list">
         ${variables.length === 0 ? `
           <div class="empty-state small">
-            <span class="round-icon">code</span>
+            ${icons.code}
             <p>No variables defined</p>
           </div>
         ` : variables.map((v, idx) => `
@@ -838,10 +839,10 @@ function renderEggVariablesTab(content, egg, username) {
               </div>
               <div class="variable-actions">
                 <button class="btn btn-xs btn-ghost edit-var-btn" data-index="${idx}">
-                  <span class="round-icon">edit</span>
+                  ${icons.edit}
                 </button>
                 <button class="btn btn-xs btn-danger delete-var-btn" data-index="${idx}">
-                  <span class="round-icon">delete</span>
+                  ${icons.delete}
                 </button>
               </div>
             </div>
@@ -908,7 +909,7 @@ function showVariableModal(egg, editIndex, username) {
       <div class="modal-header">
         <h2>${isEdit ? 'Edit Variable' : 'Add Variable'}</h2>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="variable-form" class="modal-form">

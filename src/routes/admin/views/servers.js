@@ -1,4 +1,5 @@
 import { escapeHtml } from '../../../utils/security.js';
+import { icons, icon } from '../../../utils/icons.js';
 import * as toast from '../../../utils/toast.js';
 import * as modal from '../../../utils/modal.js';
 import { api } from '../../../utils/api.js';
@@ -19,7 +20,7 @@ export async function renderServersList(container, username, loadView) {
         ${renderSearchBox('servers', 'Search by name or ID...')}
         <div class="admin-header-actions">
           <button class="btn btn-primary" id="create-server-btn">
-            <span class="round-icon">add</span>
+            ${icons.add}
             Create Server
           </button>
         </div>
@@ -28,7 +29,7 @@ export async function renderServersList(container, username, loadView) {
       <div class="admin-list">
         ${data.servers.length === 0 ? `
           <div class="empty-state">
-            <span class="round-icon">dns</span>
+            ${icons.dns}
             <p>No servers yet</p>
           </div>
         ` : `
@@ -83,7 +84,7 @@ export async function renderServersList(container, username, loadView) {
               <div class="list-card" data-id="${s.id}">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="round-icon">dns</span>
+                    ${icons.dns}
                   </div>
                   <div class="list-card-title">
                     <h3>${escapeHtml(s.name)}</h3>
@@ -153,11 +154,11 @@ export async function renderServerDetail(container, username, serverId) {
         ])}
         <div class="admin-header-actions">
           <a href="/server/${serverId}" class="btn btn-ghost">
-            <span class="round-icon">open_in_new</span>
+            ${icons.open_in_new}
             View Console
           </a>
           <button class="btn btn-danger" id="delete-server-btn">
-            <span class="round-icon">delete</span>
+            ${icons.delete}
             Delete
           </button>
         </div>
@@ -408,7 +409,7 @@ function renderServerSubTab(server, username) {
                     : 'This server is configured but not yet installed. Click to install it on the node.'}</p>
                 </div>
                 <button class="btn btn-success" id="install-btn">
-                  <span class="round-icon">play_arrow</span>
+                  ${icons.play_arrow}
                   Install Now
                 </button>
               </div>
@@ -419,7 +420,7 @@ function renderServerSubTab(server, username) {
                   <p>Access the server console, files, and settings as an administrator.</p>
                 </div>
                 <a href="/server/${server.id}" class="btn btn-primary">
-                  <span class="round-icon">open_in_new</span>
+                  ${icons.open_in_new}
                   Open Server
                 </a>
               </div>
@@ -432,7 +433,7 @@ function renderServerSubTab(server, username) {
                   <p>Move this server to a different node. The server will be stopped during transfer.</p>
                 </div>
                 <button class="btn btn-primary" id="transfer-btn">
-                  <span class="round-icon">swap_horiz</span>
+                  ${icons.swap_horiz}
                   Transfer
                 </button>
               </div>
@@ -487,12 +488,12 @@ function renderServerSubTab(server, username) {
               const data = await res.json();
               toast.error(data.error || 'Installation failed');
               btn.disabled = false;
-              btn.innerHTML = '<span class="round-icon">play_arrow</span> Install Now';
+              btn.innerHTML = '${icons.play_arrow} Install Now';
             }
           } catch (e) {
             toast.error('Failed to install server');
             btn.disabled = false;
-            btn.innerHTML = '<span class="round-icon">play_arrow</span> Install Now';
+            btn.innerHTML = '${icons.play_arrow} Install Now';
           }
         };
       }
@@ -677,7 +678,7 @@ function setupEggSearch(server) {
           resultsContainer.innerHTML = data.eggs.map(e => `
             <div class="search-result-item" data-egg-id="${e.id}" data-egg-name="${escapeHtml(e.name)}">
               <div class="egg-icon small">
-                <span class="round-icon">${e.icon || 'egg'}</span>
+                ${icons[e.icon || 'egg'] || ""}
               </div>
               <div class="search-result-info">
                 <span class="search-result-name">${escapeHtml(e.name)}</span>
@@ -875,7 +876,7 @@ async function showTransferModal(server) {
       <div class="modal-header">
         <h3>Transfer Server</h3>
         <button class="modal-close" onclick="this.closest('.modal').remove()">
-          <span class="round-icon">close</span>
+          ${icons.close}
         </button>
       </div>
       <form id="transfer-form" class="modal-form">
@@ -891,7 +892,7 @@ async function showTransferModal(server) {
           </select>
         </div>
         <div class="warning-box">
-          <span class="round-icon">warning</span>
+          ${icons.warning}
           <p>The server will be stopped during the transfer. All files will be copied to the new node.</p>
         </div>
         <div class="message" id="transfer-message"></div>
