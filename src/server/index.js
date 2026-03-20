@@ -124,18 +124,20 @@ app.use(async (req, res, next) => {
     return next();
   }
   
-  // Check if admin via JWT
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith('Bearer ') && !authHeader.substring(7).startsWith('sodium_')) {
+  if (authHeader?.startsWith('Bearer ') && authHeader.substring(7).startsWith('sodium_sess_')) {
     try {
-      const { default: jwt } = await import('jsonwebtoken');
-      const { JWT_SECRET } = await import('./utils/auth.js');
-      const { loadUsers } = await import('./db.js');
+      const { hashToken } = await import('./utils/auth.js');
+      const { loadUsers, loadSessions } = await import('./db.js');
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const data = loadUsers();
-      const user = (data.users || []).find(u => u.id === decoded.id);
-      if (user?.isAdmin) return next();
+      const tokenHash = hashToken(token);
+      const sessions = loadSessions();
+      const session = sessions.sessions.find(s => s.tokenHash === tokenHash && !s.revoked && new Date(s.expiresAt) > new Date());
+      if (session) {
+        const data = loadUsers();
+        const user = (data.users || []).find(u => u.id === session.userId);
+        if (user?.isAdmin) return next();
+      }
     } catch {}
   }
   

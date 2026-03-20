@@ -1,10 +1,9 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { loadUsers, saveUsers, loadConfig, loadSessions, saveSessions } from '../db.js';
 import { validateUsername, sanitizeText, generateUUID, generateToken } from '../utils/helpers.js';
-import { JWT_SECRET, authenticateUser } from '../utils/auth.js';
+import { authenticateUser, generateSessionToken, hashToken } from '../utils/auth.js';
 import { rateLimit } from '../utils/rate-limiter.js';
 import { logActivity, ACTIVITY_TYPES } from '../utils/activity.js';
 import { sendVerificationEmail, send2FACode, sendPasswordReset, getTransporter } from '../utils/mail.js';
@@ -230,18 +229,12 @@ router.post('/register', authLimiter, async (req, res) => {
   
   const { password: _, verificationToken: __, ...userWithoutPassword } = newUser;
   
-  const sessionId = generateUUID();
-  const token = jwt.sign(
-    { id: newUser.id, username: newUser.username, isAdmin: newUser.isAdmin, jti: sessionId },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-  
-  // Create session record
+  const token = generateSessionToken();
   const sessionsData = await loadSessions();
   sessionsData.sessions.push({
-    id: sessionId,
+    id: generateUUID(),
     userId: newUser.id,
+    tokenHash: hashToken(token),
     ip: req.ip,
     userAgent: req.headers['user-agent'] || 'Unknown',
     createdAt: new Date().toISOString(),
@@ -348,18 +341,12 @@ router.post('/login', authLimiter, async (req, res) => {
   
   const { password: _, twoFactorCode: __, twoFactorExpires: ___, verificationToken: __vt, resetToken: __rt, resetTokenExpires: __rte, ...userWithoutSensitive } = user;
   
-  const sessionId = generateUUID();
-  const token = jwt.sign(
-    { id: user.id, username: user.username, isAdmin: user.isAdmin, jti: sessionId },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-  
-  // Create session record
+  const token = generateSessionToken();
   const sessionsData = await loadSessions();
   sessionsData.sessions.push({
-    id: sessionId,
+    id: generateUUID(),
     userId: user.id,
+    tokenHash: hashToken(token),
     ip: req.ip,
     userAgent: req.headers['user-agent'] || 'Unknown',
     createdAt: new Date().toISOString(),
@@ -709,20 +696,13 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
       await saveUsers(data);
     }
     
-    // Generate a one-time code that can be exchanged for a JWT
     const oauthCode = crypto.randomBytes(32).toString('hex');
-    const oauthSessionId = generateUUID();
-    const token = jwt.sign(
-      { id: user.id, username: user.username, isAdmin: user.isAdmin, jti: oauthSessionId },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    // Create session record
+    const token = generateSessionToken();
     const sessionsData = await loadSessions();
     sessionsData.sessions.push({
-      id: oauthSessionId,
+      id: generateUUID(),
       userId: user.id,
+      tokenHash: hashToken(token),
       ip: req.ip,
       userAgent: req.headers['user-agent'] || 'Unknown',
       createdAt: new Date().toISOString(),
@@ -748,7 +728,7 @@ router.get('/oauth/:providerId/callback', async (req, res) => {
   }
 });
 
-// Exchange OAuth one-time code for JWT token
+// Exchange OAuth one-time code for session token
 router.post('/oauth/exchange', authLimiter, (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Code is required' });
@@ -761,6 +741,10 @@ router.post('/oauth/exchange', authLimiter, (req, res) => {
   }
   
   res.json({ token: entry.token });
+});
+
+router.get('/me', authenticateUser, (req, res) => {
+  res.json({ id: req.user.id, username: req.user.username, isAdmin: req.user.isAdmin });
 });
 
 // ==================== EMAIL VERIFICATION ====================

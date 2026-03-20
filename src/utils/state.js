@@ -7,23 +7,15 @@ class State {
   }
 
   get user() {
-    if (this._user) return this._user;
-    const token = getToken();
-    if (!token) return null;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return { id: payload.id, username: payload.username, isAdmin: payload.isAdmin };
-    } catch {
-      return null;
-    }
+    return this._user;
   }
 
   get username() {
-    return this.user?.username || '';
+    return this._user?.username || '';
   }
 
   get isAdmin() {
-    return this.user?.isAdmin || false;
+    return this._user?.isAdmin || false;
   }
 
   get isLoggedIn() {
@@ -32,13 +24,11 @@ class State {
 
   async load() {
     if (this._loaded || !getToken()) return;
-    const username = this.username;
-    if (!username) return;
     try {
-      const res = await api(`/api/user/profile?username=${encodeURIComponent(username)}&viewer=${encodeURIComponent(username)}`);
-      const data = await res.json();
-      if (data.user) {
-        this._user = data.user;
+      const res = await api('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        this._user = data;
         this._loaded = true;
       }
     } catch {}

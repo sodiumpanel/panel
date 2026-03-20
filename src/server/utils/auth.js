@@ -15,7 +15,6 @@ export function getJwtSecret() {
     return config.jwt.secret;
   }
   
-  // Generate secure secret if not configured
   const newSecret = crypto.randomBytes(64).toString('base64url');
   console.warn('[SECURITY] No JWT secret configured - generating secure random secret');
   
@@ -27,6 +26,14 @@ export function getJwtSecret() {
 }
 
 export const JWT_SECRET = getJwtSecret();
+
+export function generateSessionToken() {
+  return 'sodium_sess_' + crypto.randomBytes(48).toString('base64url');
+}
+
+export function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 export function getUserRole(user) {
   if (user.isAdmin) return ROLES.ADMIN;
@@ -43,38 +50,40 @@ export function authenticateUser(req, res, next) {
   
   const token = authHeader.substring(7);
   
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const data = loadUsers();
-    const user = data.users.find(u => u.id === decoded.id);
-    
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-    
-    // Check session validity if token has a session ID
-    if (decoded.jti) {
-      const sessions = loadSessions();
-      const session = sessions.sessions.find(s => s.id === decoded.jti);
-      if (!session || session.revoked) {
-        return res.status(401).json({ error: 'Session revoked' });
-      }
-    }
-    
-    const role = getUserRole(user);
-    
-    req.user = {
-      id: user.id,
-      username: user.username,
-      isAdmin: user.isAdmin || role === ROLES.ADMIN,
-      isModerator: role === ROLES.MODERATOR || role === ROLES.ADMIN,
-      role: role
-    };
-    req.sessionId = decoded.jti || null;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  if (!token.startsWith('sodium_sess_')) {
+    return res.status(401).json({ error: 'Invalid token format' });
   }
+  
+  const tokenHash = hashToken(token);
+  const sessions = loadSessions();
+  const session = sessions.sessions.find(s => s.tokenHash === tokenHash);
+  
+  if (!session || session.revoked) {
+    return res.status(401).json({ error: 'Invalid or revoked session' });
+  }
+  
+  if (new Date(session.expiresAt) < new Date()) {
+    return res.status(401).json({ error: 'Session expired' });
+  }
+  
+  const data = loadUsers();
+  const user = data.users.find(u => u.id === session.userId);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  
+  const role = getUserRole(user);
+  
+  req.user = {
+    id: user.id,
+    username: user.username,
+    isAdmin: user.isAdmin || role === ROLES.ADMIN,
+    isModerator: role === ROLES.MODERATOR || role === ROLES.ADMIN,
+    role: role
+  };
+  req.sessionId = session.id;
+  next();
 }
 
 export async function requireAdmin(req, res, next) {

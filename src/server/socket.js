@@ -1,9 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import jwt from 'jsonwebtoken';
-import { loadUsers, loadServers, loadNodes } from './db.js';
+import { loadUsers, loadServers, loadNodes, loadSessions } from './db.js';
 import { generateUUID } from './utils/helpers.js';
 import { hasPermission } from './utils/permissions.js';
-import { JWT_SECRET } from './utils/auth.js';
+import { hashToken } from './utils/auth.js';
 import logger from './utils/logger.js';
 
 export function setupWebSocket(server) {
@@ -20,13 +20,21 @@ export function setupWebSocket(server) {
     }
     
     let user;
-    try {
-      const payload = jwt.verify(token, JWT_SECRET);
-      const users = loadUsers();
-      user = users.users.find(u => u.id === payload.id);
-      if (!user) throw new Error('User not found');
-    } catch (err) {
-      clientWs.close(4002, 'Invalid token');
+    if (!token.startsWith('sodium_sess_')) {
+      clientWs.close(4002, 'Invalid token format');
+      return;
+    }
+    const tokenHashVal = hashToken(token);
+    const sessions = loadSessions();
+    const session = sessions.sessions.find(s => s.tokenHash === tokenHashVal && !s.revoked && new Date(s.expiresAt) > new Date());
+    if (!session) {
+      clientWs.close(4002, 'Invalid or expired session');
+      return;
+    }
+    const users = loadUsers();
+    user = users.users.find(u => u.id === session.userId);
+    if (!user) {
+      clientWs.close(4002, 'User not found');
       return;
     }
     
