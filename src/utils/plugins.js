@@ -1,4 +1,5 @@
 import { api } from './api.js';
+import { icons } from './icons.js';
 import { escapeHtml } from './security.js';
 import * as toast from './toast.js';
 import * as modal from './modal.js';
@@ -185,7 +186,7 @@ export function renderPluginPage(pluginId, pageId, container) {
   }
   container.innerHTML = `
     <div class="empty-state">
-      <span class="round-icon">extension_off</span>
+      ${icons.extension_off}
       <p>Plugin page not available</p>
     </div>
   `;

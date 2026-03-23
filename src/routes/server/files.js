@@ -120,7 +120,7 @@ function showCompressIndicator() {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="round-icon rotating">archive</span>
+      <span class="icon rotating">${icons.archive}</span>
     </div>
     <div class="file-info">
       <span class="file-name">Compressing files...</span>
@@ -162,7 +162,7 @@ function showDecompressIndicator(filename) {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="round-icon rotating">unarchive</span>
+      <span class="icon rotating">${icons.unarchive}</span>
     </div>
     <div class="file-info">
       <span class="file-name">Extracting ${filename}...</span>
@@ -722,8 +722,8 @@ function showSortMenu(serverId) {
 function toggleViewMode(serverId) {
   viewMode = viewMode === 'list' ? 'grid' : 'list';
   const btn = document.getElementById('btn-view-toggle');
-  const icon = btn.querySelector('.round-icon');
-  icon.textContent = viewMode === 'list' ? 'grid_view' : 'view_list';
+  const iconEl = btn.querySelector('.icon');
+  iconEl.innerHTML = viewMode === 'list' ? icons.grid_view : icons.view_list;
   loadFiles(serverId, currentPath);
 }
 
@@ -821,7 +821,7 @@ async function loadFiles(serverId, path) {
     console.error('Failed to load files:', e);
     const isNodeError = e.message?.includes('node') || e.message?.includes('connect') || e.message?.includes('offline');
     const msg = isNodeError 
-      ? '<span class="round-icon" style="font-size:20px;vertical-align:middle;margin-right:6px">cloud_off</span>Cannot connect to the node. Please try again later.'
+      ? '<span class="icon" style="vertical-align:middle;margin-right:6px">' + icons.cloud_off + '</span>Cannot connect to the node. Please try again later.'
       : 'Failed to load files';
     filesList.innerHTML = `<div class="files-error">${msg}</div>`;
   }
@@ -831,7 +831,7 @@ function updateBreadcrumb(path, serverId) {
   const breadcrumb = document.getElementById('files-breadcrumb');
   const parts = path.split('/').filter(p => p);
   
-  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="round-icon" style="font-size: 16px; vertical-align: middle;">home</span></span>`;
+  let html = `<span class="breadcrumb-item clickable" data-path="/"><span class="icon" style="vertical-align: middle;">${icons.home}</span></span>`;
   
   if (parts.length === 0) {
   } else if (parts.length === 1) {
@@ -883,7 +883,7 @@ function renderFilesList(files, serverId) {
   
   if (files.length === 0) {
     filesList.innerHTML = `<div class="files-empty">
-      <span class="round-icon" style="font-size: 2rem; margin-bottom: .5rem;">folder_open</span>
+      <span class="icon" style="margin-bottom: .5rem;">${icon('folder_open', 32)}</span>
       <p>This directory is empty</p>
       <p style="font-size: .7rem; margin-top: .25rem;">Drag files here or use the upload button</p>
     </div>`;
@@ -1109,7 +1109,7 @@ async function openPreview(serverId, name, type, filePath) {
     } else if (type === 'video') {
       content = `<div class="preview-container"><video src="${data.url}" controls class="file-preview-video"></video></div>`;
     } else if (type === 'audio') {
-      content = `<div class="preview-container preview-audio"><span class="round-icon" style="font-size:3rem;color:var(--accent)">audio_file</span><p>${name}</p><audio src="${data.url}" controls class="file-preview-audio"></audio></div>`;
+      content = `<div class="preview-container preview-audio"><span class="icon" style="color:var(--accent)">${icon('audio_file', 48)}</span><p>${name}</p><audio src="${data.url}" controls class="file-preview-audio"></audio></div>`;
     } else if (type === 'pdf') {
       content = `<div class="preview-container"><iframe src="${data.url}" class="file-preview-pdf"></iframe></div>`;
     }
@@ -1632,7 +1632,7 @@ function showUploadIndicator(filename) {
   el.innerHTML = `
     <div class="file-select"></div>
     <div class="file-icon">
-      <span class="round-icon rotating">sync</span>
+      <span class="icon rotating">${icons.sync}</span>
     </div>
     <div class="file-info">
       <span class="file-name">${filename}</span>

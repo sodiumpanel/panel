@@ -1,5 +1,5 @@
 title: Sodium Panel
-description: A modern, lightweight control panel for game server management
+description: Sodium is a open-server panel for managing game servers.
 theme: null
 include:
   - "*.html"

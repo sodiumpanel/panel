@@ -71,8 +71,8 @@ export async function renderIncidentsList(container, username, loadView) {
               <div class="list-card" data-id="${inc.id}" style="cursor:pointer;">
                 <div class="list-card-header">
                   <div class="list-card-icon">
-                    <span class="round-icon" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
-                      ${inc.status === 'resolved' ? 'check_circle' : 'warning'}
+                    <span class="icon" style="color: ${IMPACT_COLORS[inc.impact] || 'inherit'}">
+                      ${inc.status === 'resolved' ? icons.check_circle : icons.warning}
                     </span>
                   </div>
                   <div class="list-card-title">

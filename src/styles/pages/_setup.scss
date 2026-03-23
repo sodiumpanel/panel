@@ -25,7 +25,7 @@
     .success-icon {
       margin-bottom: 20px;
       
-      .round-icon {
+      .icon {
         font-size: 64px;
         color: var(--success);
       }
@@ -65,7 +65,7 @@
   font-size: 20px;
   font-weight: 600;
   
-  .round-icon {
+  .icon {
     font-size: 28px;
     color: var(--accent);
   }
@@ -82,7 +82,7 @@
   justify-content: center;
   transition: all var(--transition-fast);
   
-  .round-icon {
+  .icon {
     font-size: 20px;
     color: var(--text-secondary);
   }
@@ -91,7 +91,7 @@
     background: var(--bg-elevated);
     border-color: var(--accent);
     
-    .round-icon {
+    .icon {
       color: var(--accent);
     }
   }

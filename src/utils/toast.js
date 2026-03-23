@@ -1,4 +1,5 @@
 import { escapeHtml } from './security.js';
+import { icons } from './icons.js';
 
 let container = null;
 
@@ -17,18 +18,18 @@ export function toast(message, type = 'info', duration = 3000) {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
   
-  const icons = {
-    success: 'check_circle',
-    error: 'error',
-    warning: 'warning',
-    info: 'info'
+  const toastIcons = {
+    success: icons.check_circle,
+    error: icons.error,
+    warning: icons.warning,
+    info: icons.info
   };
   
   el.innerHTML = `
-    <span class="round-icon">${icons[type] || 'info'}</span>
+    <span class="icon">${toastIcons[type] || icons.info}</span>
     <span class="toast-message">${escapeHtml(message)}</span>
     <button class="toast-close">
-      <span class="round-icon">close</span>
+      <span class="icon">${icons.close}</span>
     </button>
   `;
   

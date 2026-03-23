@@ -13,7 +13,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/sodiumpanel/panel.git
-cd sodium
+cd panel
 ```
 
 Install dependencies:
@@ -101,30 +101,6 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
-```
-
-## Directory Structure
-
-```
-sodium/
-├── data/              # Database and configuration (gitignored)
-│   ├── sodium.db      # Binary database file (when using file DB)
-│   ├── config.json    # Panel configuration
-│   └── plugins/       # Installed plugins
-├── dist/              # Built frontend assets
-├── scripts/           # Migration and backup scripts
-├── tests/             # Test suite
-├── src/
-│   ├── server/        # Backend (Express.js 5)
-│   │   ├── routes/    # API route handlers
-│   │   ├── plugins/   # Plugin system
-│   │   └── utils/     # Auth, helpers, logger, mail, webhooks
-│   ├── routes/        # Frontend page components
-│   ├── components/    # Shared UI components
-│   ├── styles/        # SCSS stylesheets
-│   └── bundler/       # Rollup build system
-├── android/           # Android companion app
-└── assets/            # Static assets
 ```
 
 ## External Database Setup

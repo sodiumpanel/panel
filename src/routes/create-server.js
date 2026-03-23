@@ -273,7 +273,7 @@ function renderEggsGrid(nest) {
         <h4>${escapeHtml(egg.name)}</h4>
         <p>${escapeHtml(egg.description || 'No description')}</p>
       </div>
-      <span class="egg-select-check round-icon">check_circle</span>
+      <span class="egg-select-check icon">${icons.check_circle}</span>
     </div>
   `).join('');
 }
@@ -290,7 +290,7 @@ function renderEggIcon(egg) {
   
   // Check if it's a URL (image)
   if (egg.icon.startsWith('http') || egg.icon.startsWith('/') || egg.icon.includes('.')) {
-    return `<img src="${escapeHtml(egg.icon)}" alt="${escapeHtml(egg.name)}" onerror="this.outerHTML='<span class=\\'round-icon\\'>egg_alt</span>'" />`;
+    return `<img src="${escapeHtml(egg.icon)}" alt="${escapeHtml(egg.name)}" onerror="this.outerHTML='${icons.egg_alt.replace(/'/g, "\\'")}'" />`;
   }
   
   return '${icons.egg_alt}';
@@ -352,7 +352,7 @@ function renderNodesGrid(requestedMemory, requestedDisk) {
             </div>
           </div>
         </div>
-        <span class="node-select-check round-icon">check_circle</span>
+        <span class="node-select-check icon">${icons.check_circle}</span>
       </div>
     `;
   }).join('');

@@ -21,7 +21,7 @@ function renderAdminEggIcon(egg) {
   
   // It's a URL (image)
   if (egg.icon.startsWith('http') || egg.icon.startsWith('/') || egg.icon.includes('.')) {
-    return `<img src="${escapeHtml(egg.icon)}" alt="${escapeHtml(egg.name)}" onerror="this.outerHTML='<span class=\\'round-icon\\'>egg_alt</span>'" />`;
+    return `<img src="${escapeHtml(egg.icon)}" alt="${escapeHtml(egg.name)}" onerror="this.outerHTML='${icons.egg_alt.replace(/'/g, "\\'")}'" />`;
   }
   
   return '${icons.egg_alt}';

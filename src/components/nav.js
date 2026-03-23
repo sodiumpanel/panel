@@ -34,7 +34,7 @@ export function renderNav() {
                 <img src="/default-avatar.png" alt="Avatar" onerror="this.src='/default-avatar.png'">
               </div>
               <span class="user-display-name">${displayName}</span>
-              <span class="round-icon dropdown-icon">expand_more</span>
+              <span class="icon dropdown-icon">${icons.expand_more}</span>
             </button>
             <div class="user-dropdown" id="user-dropdown">
               <a href="/profile" class="dropdown-item">

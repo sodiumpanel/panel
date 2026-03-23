@@ -64,14 +64,14 @@ async function refreshBackups() {
   const btn = document.getElementById('btn-refresh-backups');
   if (btn) {
     btn.disabled = true;
-    btn.querySelector('.round-icon').classList.add('spinning');
+    btn.querySelector('.icon svg').classList.add('spinning');
   }
   
   await loadBackups(currentServerId);
   
   if (btn) {
     btn.disabled = false;
-    btn.querySelector('.round-icon').classList.remove('spinning');
+    btn.querySelector('.icon svg').classList.remove('spinning');
   }
 }
 
@@ -103,14 +103,14 @@ async function loadBackups(serverId) {
     container.innerHTML = backups.map(backup => `
       <div class="backup-item ${backup.is_successful ? '' : 'pending'}" data-id="${backup.id}">
         <div class="backup-icon">
-          <span class="round-icon ${backup.is_successful ? '' : 'spinning'}">
-            ${backup.is_successful ? 'cloud_done' : 'cloud_sync'}
+          <span class="icon ${backup.is_successful ? '' : 'spinning'}">
+            ${backup.is_successful ? icons.cloud_done : icons.cloud_sync}
           </span>
         </div>
         <div class="backup-info">
           <div class="backup-name">
             ${backup.name}
-            ${backup.is_locked ? '<span class="round-icon locked-icon">lock</span>' : ''}
+            ${backup.is_locked ? '<span class="icon locked-icon">' + icons.lock + '</span>' : ''}
           </div>
           <div class="backup-meta">
             ${backup.is_successful ? formatBytes(backup.bytes || 0) : '<span class="backup-progress">Creating backup...</span>'}

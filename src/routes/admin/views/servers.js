@@ -472,7 +472,7 @@ function renderServerSubTab(server, username) {
         document.getElementById('install-btn').onclick = async () => {
           const btn = document.getElementById('install-btn');
           btn.disabled = true;
-          btn.innerHTML = '<span class="round-icon rotating">sync</span> Installing...';
+          btn.innerHTML = '<span class="icon rotating">' + icons.sync + '</span> Installing...';
           
           try {
             const res = await api(`/api/admin/servers/${server.id}/install`, {
@@ -920,7 +920,7 @@ async function showTransferModal(server) {
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="round-icon rotating">sync</span> Transferring...';
+    btn.innerHTML = '<span class="icon rotating">' + icons.sync + '</span> Transferring...';
     
     try {
       const res = await api(`/api/admin/servers/${server.id}/transfer`, {

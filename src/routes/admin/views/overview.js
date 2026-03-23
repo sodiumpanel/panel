@@ -104,7 +104,7 @@ export async function renderOverview(container, username, loadView) {
 
       <div class="dashboard-grid">
         <div class="dashboard-section">
-          <span class="round-icon corner-icon">monitor_heart</span>
+          <span class="icon corner-icon">${icons.monitor_heart}</span>
           <div class="section-header">
             ${icons.monitor_heart}
             <h2>System</h2>
@@ -115,7 +115,7 @@ export async function renderOverview(container, username, loadView) {
         </div>
 
         <div class="dashboard-section">
-          <span class="round-icon corner-icon">hub</span>
+          <span class="icon corner-icon">${icons.hub}</span>
           <div class="section-header">
             ${icons.hub}
             <h2>Nodes</h2>
@@ -129,7 +129,7 @@ export async function renderOverview(container, username, loadView) {
 
       <div class="dashboard-grid">
         <div class="dashboard-section">
-          <span class="round-icon corner-icon">history</span>
+          <span class="icon corner-icon">${icons.history}</span>
           <div class="section-header">
             ${icons.history}
             <h2>Recent Activity</h2>
@@ -141,7 +141,7 @@ export async function renderOverview(container, username, loadView) {
         </div>
 
         <div class="dashboard-section">
-          <span class="round-icon corner-icon">shield</span>
+          <span class="icon corner-icon">${icons.shield}</span>
           <div class="section-header">
             ${icons.shield}
             <h2>Audit Log</h2>

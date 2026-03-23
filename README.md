@@ -10,8 +10,7 @@
 </p>
 
 <p align="center">
-  A modern, lightweight control panel for game server management.<br>
-  Easy to install. File-based database by default, with optional MySQL, PostgreSQL, and SQLite support.
+  A modern, lightweight control panel for game server management.
 </p>
 
 ---
@@ -20,17 +19,17 @@
 
 <p align="center">
   <img src="docs/assets/dashboard.gif" alt="Dashboard" width="700"><br>
-  <sub>Dashboard — Overview of your servers at a glance</sub>
+  <sub>Dashboard - Overview of your servers at a glance</sub>
 </p>
 
 <p align="center">
   <img src="docs/assets/server.gif" alt="Server Management" width="700"><br>
-  <sub>Server Management — Console, files, and resource monitoring</sub>
+  <sub>Server Management - Console, files, and resource monitoring</sub>
 </p>
 
 <p align="center">
   <img src="docs/assets/admin.gif" alt="Admin Panel" width="700"><br>
-  <sub>Admin Panel — Full control over users, nodes, and servers</sub>
+  <sub>Admin Panel - Full control over users, nodes, and servers</sub>
 </p>
 
 ---
@@ -41,7 +40,6 @@
 |---------|--------|--------|
 | **Lightweight** | Minimal resource usage | Heavy dependencies |
 | **Easy Setup** | Single command install | Complex configuration |
-| **No .env files** | JSON config, setup wizard | Manual environment setup |
 | **Flexible Database** | File, SQLite, MySQL, PostgreSQL | Usually MySQL only |
 | **Modern Stack** | Node.js | PHP, older tech |
 
@@ -55,35 +53,9 @@ npm run build
 npm start
 ```
 
-On first launch, a setup wizard will guide you through:
-
-1. **Panel Configuration** - Name, URL, and port
-2. **Database** - File (default), SQLite, MySQL, or PostgreSQL
-3. **Redis** - Optional, for large-scale deployments
-4. **Default Limits** - Resource limits for new users
-5. **Admin Account** - Create the first administrator
-
-All configuration is stored in `data/config.json`. No manual environment variables required.
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start production server |
-| `npm run build` | Build frontend |
-| `npm run fast` | Quick build |
-| `npm run watch` | Development mode |
-
 ## Documentation
 
-See [docs/](docs/) for full documentation:
-
-- [Installation](docs/installation.md)
-- [Configuration](docs/configuration.md)
-- [Daemon Setup](docs/daemon-setup.md)
-- [API Reference](docs/api.md)
-- [Architecture](docs/architecture.md)
-- [Eggs](https://github.com/sodiumpanel/eggs)
+See [docs/](docs/) for full documentation.
 
 ## Related
 
@@ -98,10 +70,4 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## License
 
-[MIT](LICENSE) - Feel free to use, modify, and distribute.
-
----
-
-<p align="center">
-  <sub>Built with care by the Sodium team</sub>
-</p>
+[MIT](LICENSE)

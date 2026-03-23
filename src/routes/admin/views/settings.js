@@ -243,12 +243,12 @@ function renderBrandingSettings(content, config) {
             <img id="logo-preview" src="${branding.logo || '/favicon.svg'}" alt="Logo" style="width: 48px; height: 48px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: contain; padding: 4px; background: var(--bg-secondary);" />
             <div style="display: flex; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="round-icon" style="font-size: 16px;">upload</span>
+                <span class="icon">${icons.upload}</span>
                 Upload Logo
                 <input type="file" id="logo-upload" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display: none;" />
               </label>
               ${branding.logo ? `<button type="button" class="btn btn-danger btn-sm" id="remove-logo-btn">
-                <span class="round-icon" style="font-size: 16px;">delete</span>
+                <span class="icon">${icons.delete}</span>
                 Remove
               </button>` : ''}
             </div>
@@ -262,12 +262,12 @@ function renderBrandingSettings(content, config) {
             <img id="favicon-preview" src="${branding.favicon || '/favicon.svg'}" alt="Favicon" style="width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--border); object-fit: contain; padding: 2px; background: var(--bg-secondary);" />
             <div style="display: flex; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="round-icon" style="font-size: 16px;">upload</span>
+                <span class="icon">${icons.upload}</span>
                 Upload Favicon
                 <input type="file" id="favicon-upload" accept="image/png,image/svg+xml,image/x-icon,image/webp" style="display: none;" />
               </label>
               ${branding.favicon ? `<button type="button" class="btn btn-danger btn-sm" id="remove-favicon-btn">
-                <span class="round-icon" style="font-size: 16px;">delete</span>
+                <span class="icon">${icons.delete}</span>
                 Remove
               </button>` : ''}
             </div>
@@ -293,12 +293,12 @@ function renderBrandingSettings(content, config) {
             <img id="ogImage-preview" src="${branding.ogImage || '/banner.png'}" alt="OG Image" style="width: 120px; height: 63px; border-radius: var(--radius-md); border: 1px solid var(--border); object-fit: cover; background: var(--bg-secondary);" />
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                <span class="round-icon" style="font-size: 16px;">upload</span>
+                <span class="icon">${icons.upload}</span>
                 Upload OG Image
                 <input type="file" id="og-image-upload" accept="image/png,image/jpeg,image/webp" style="display: none;" />
               </label>
               ${branding.ogImage ? `<button type="button" class="btn btn-danger btn-sm" id="remove-ogImage-btn">
-                <span class="round-icon" style="font-size: 16px;">delete</span>
+                <span class="icon">${icons.delete}</span>
                 Remove
               </button>` : ''}
               <small class="form-hint">Recommended: 1200×630px</small>

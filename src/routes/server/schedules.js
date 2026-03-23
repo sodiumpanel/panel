@@ -145,11 +145,11 @@ function attachScheduleListeners() {
       
       const id = btn.dataset.id;
       const card = btn.closest('.schedule-card');
-      const icon = btn.querySelector('.round-icon');
+      const iconEl = btn.querySelector('.icon');
       
       btn.disabled = true;
       card?.classList.add('executing');
-      if (icon) icon.textContent = 'sync';
+      if (iconEl) iconEl.innerHTML = icons.sync;
       
       try {
         await api(`/api/servers/${currentServerId}/schedules/${id}/execute`, { method: 'POST' });

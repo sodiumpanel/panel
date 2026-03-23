@@ -9,9 +9,9 @@ import { renderBreadcrumb, setupBreadcrumbListeners } from '../utils/ui.js';
 const navigateTo = (...args) => window.adminNavigate(...args);
 
 const WEBHOOK_TYPES = [
-  { id: 'discord', label: 'Discord', icon: 'smart_toy' },
-  { id: 'slack', label: 'Slack', icon: 'tag' },
-  { id: 'generic', label: 'Generic', icon: 'webhook' }
+  { id: 'discord', label: 'Discord', icon: icons.smart_toy },
+  { id: 'slack', label: 'Slack', icon: icons.tag },
+  { id: 'generic', label: 'Generic', icon: icons.webhook }
 ];
 
 const EVENT_CATEGORIES = {
@@ -120,7 +120,7 @@ function renderWebhookCard(webhook, isGlobal) {
     <div class="webhook-card ${!webhook.enabled ? 'disabled' : ''}">
       <div class="webhook-card-header">
         <div class="webhook-info">
-          <span class="webhook-type-icon round-icon">${typeInfo.icon}</span>
+          <span class="webhook-type-icon icon">${typeInfo.icon}</span>
           <div class="webhook-details">
             <span class="webhook-name">${escapeHtml(webhook.name)}</span>
             <span class="webhook-url">${escapeHtml(webhook.url)}</span>

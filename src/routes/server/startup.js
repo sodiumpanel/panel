@@ -247,7 +247,7 @@ function renderStartupForm(server, egg) {
     <div class="form-group" style="margin-top: 12px;">
       <label>Docker Image</label>
       <div class="input-wrapper">
-        <span class="round-icon">inventory_2</span>
+        <span class="icon">${icons.inventory_2}</span>
         <select name="docker_image" class="select-input">
           ${getDockerImagesOptions(server, egg)}
         </select>

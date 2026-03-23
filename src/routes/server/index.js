@@ -398,7 +398,7 @@ function showInstallingScreen() {
     <div class="installing-screen">
       <div class="installing-content">
         <div class="installing-icon">
-          <span class="round-icon spinning">settings</span>
+          <span class="icon spinning">${icons.settings}</span>
         </div>
         <h2>Server Installing</h2>
         <p>Your server is being set up. This may take a few minutes...</p>

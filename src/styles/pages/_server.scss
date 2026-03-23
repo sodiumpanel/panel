@@ -391,7 +391,7 @@
   margin-bottom: 8px;
 
   svg { width: 16px; height: 16px; color: var(--text-tertiary); }
-  .round-icon { font-size: 18px; color: var(--text-tertiary); }
+  .icon { font-size: 18px; color: var(--text-tertiary); }
   h3 { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
 }
 
@@ -592,7 +592,7 @@
   color: var(--text-tertiary);
   
   .directory & { background: var(--accent-muted); color: var(--accent); }
-  .round-icon { font-size: 16px; }
+  .icon { font-size: 16px; }
 }
 
 .file-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
@@ -694,7 +694,7 @@
   background: var(--bg-secondary);
   color: var(--text-tertiary);
   margin-bottom: .3rem;
-  .round-icon { font-size: 22px; }
+  .icon { font-size: 22px; }
   .directory & { background: var(--accent-muted); color: var(--accent); }
 }
 .file-grid-name {
@@ -811,11 +811,11 @@
   .console-terminal { padding: .2rem; }
   .files-tab .card { min-height: 280px; padding: .6rem; }
   .file-item { padding: .4rem; gap: .4rem; }
-  .file-icon { width: 24px; height: 24px; .round-icon { font-size: .9rem; } }
+  .file-icon { width: 24px; height: 24px; .icon { font-size: .9rem; } }
   .file-name { font-size: .75rem; }
   .file-meta { font-size: .6rem; }
-  .file-actions { opacity: 1; .btn { padding: .2rem; .round-icon { font-size: .9rem; } } }
-  .files-actions .btn { padding: .15rem; .round-icon { font-size: .95rem; } }
+  .file-actions { opacity: 1; .btn { padding: .2rem; .icon { font-size: .9rem; } } }
+  .files-actions .btn { padding: .15rem; .icon { font-size: .95rem; } }
   .files-actions { gap: .1rem; }
 }
 
@@ -971,7 +971,7 @@
   padding: 16px;
 
   .section-header {
-    svg, .round-icon { color: #ef4444; }
+    svg, .icon { color: #ef4444; }
     h3 { color: #ef4444; }
   }
 }
@@ -1080,10 +1080,10 @@
   border-radius: var(--radius-sm);
   margin-bottom: .75rem;
   
-  .round-icon { color: var(--warning); font-size: 1.1rem; flex-shrink: 0; }
+  .icon { color: var(--warning); font-size: 1.1rem; flex-shrink: 0; }
   p { font-size: .75rem; margin: 0; line-height: 1.4; }
   
-  &.danger { background: rgba(237, 66, 69, .08); border-color: rgba(237, 66, 69, .25); .round-icon { color: var(--danger); } }
+  &.danger { background: rgba(237, 66, 69, .08); border-color: rgba(237, 66, 69, .25); .icon { color: var(--danger); } }
 }
 
 @media (max-width: 768px) {
@@ -1118,7 +1118,7 @@
   align-items: center;
   justify-content: center;
   
-  .round-icon { font-size: 34px; color: var(--accent); }
+  .icon { font-size: 34px; color: var(--accent); }
   .spinning { animation: spin 2s linear infinite; }
 }
 
@@ -1253,7 +1253,7 @@
     text-align: center;
     flex: 1;
     
-    .round-icon {
+    .icon {
       font-size: 48px;
       color: var(--text-tertiary);
       margin-bottom: 12px;
@@ -1283,7 +1283,7 @@
   &.pending {
     opacity: 0.7;
     
-    .backup-icon .round-icon {
+    .backup-icon .icon {
       animation: spin 2s linear infinite;
     }
   }
@@ -1297,7 +1297,7 @@
     background: var(--accent-muted);
     border-radius: var(--radius-sm);
     
-    .round-icon {
+    .icon {
       font-size: 20px;
       color: var(--accent);
     }
@@ -1421,7 +1421,7 @@
     font-size: .75rem;
     color: var(--text-secondary);
     
-    .round-icon { font-size: 14px; }
+    .icon { font-size: 14px; }
   }
 }
 
@@ -1541,11 +1541,11 @@
 }
 
 .btn-refresh {
-  .round-icon {
+  .icon {
     transition: transform 0.3s ease;
   }
   
-  &.refreshing .round-icon {
+  &.refreshing .icon {
     animation: spin 1s linear infinite;
   }
 }
@@ -1624,7 +1624,7 @@
 
 .schedule-actions {
   .btn-ghost {
-    &.executing .round-icon {
+    &.executing .icon {
       animation: spin 1s linear infinite;
     }
   }
